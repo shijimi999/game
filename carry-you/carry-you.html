@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="data:," />
+    <!-- PWA prep: manifest / theme / home-screen icon (files live next to this HTML) -->
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <meta name="theme-color" content="#232b23" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="CARRY YOU" />
     <title>CARRY YOU ― 第1〜4章 完結 ―</title>
     <style>
       :root{
@@ -24,6 +31,19 @@
       .stage{ position:relative; border:2px solid var(--line); border-radius:10px; overflow:hidden;
         background:#0c120c; box-shadow:0 10px 30px rgba(0,0,0,.35); }
       canvas{ display:block; width:100%; height:auto; aspect-ratio:16/9; background:#87a06b; }
+      /* ---------- fullscreen ---------- */
+      .fs-btn{ position:absolute; top:8px; right:8px; min-height:2rem;
+        background:rgba(8,14,8,.74); color:#fff; border:1px solid rgba(255,255,255,.5);
+        border-radius:8px; padding:5px 11px; font-size:12.5px; font-weight:700; letter-spacing:.04em;
+        text-shadow:0 1px 2px #000; }
+      .fs-btn:hover{ background:rgba(8,14,8,.92); }
+      .stage:fullscreen{ width:100%; height:100%; border:none; border-radius:0; background:#000;
+        display:flex; align-items:center; justify-content:center; }
+      .stage:-webkit-full-screen{ width:100%; height:100%; border:none; border-radius:0; background:#000;
+        display:flex; align-items:center; justify-content:center; }
+      .stage:fullscreen canvas{ width:min(100vw,177.78vh); height:min(56.25vw,100vh); flex:none; }
+      .stage:-webkit-full-screen canvas{ width:min(100vw,177.78vh); height:min(56.25vw,100vh); flex:none; }
+      @media (max-width:640px){ .fs-btn{ font-size:11px; padding:4px 8px; } }
       /* ---------- HUD ---------- */
       .hud{ position:absolute; inset:0; pointer-events:none; font-size:13px; }
       .hud .tl{ position:absolute; top:8px; left:10px; display:flex; flex-direction:column; gap:5px; }
@@ -32,7 +52,7 @@
       .bar.listen>i{ background:#7ec8e3; }
       .bar.hp.low>i{ background:#e4572e; }
       .barlab{ color:#fff; text-shadow:0 1px 3px #000; font-size:11px; letter-spacing:.04em; }
-      .hud .tr{ position:absolute; top:8px; right:10px; text-align:right; color:#fff; text-shadow:0 1px 3px #000; line-height:1.55; }
+      .hud .tr{ position:absolute; top:48px; right:10px; text-align:right; color:#fff; text-shadow:0 1px 3px #000; line-height:1.55; }
       .hud .tr b{ color:#ffe9a8; }
       .prompt{ position:absolute; left:50%; bottom:52px; transform:translateX(-50%); max-width:92%;
         background:rgba(8,14,8,.82); color:#fff; border:1px solid rgba(255,255,255,.3); border-radius:8px;
@@ -107,6 +127,7 @@
     <div class="wrap">
       <div class="stage" id="stage">
         <canvas id="game" width="960" height="540"></canvas>
+        <button class="fs-btn" id="fsBtn" type="button" aria-label="フルスクリーン切替">⛶ フルスクリーン</button>
 
         <div class="hud" id="hud">
           <div class="tl">
@@ -146,13 +167,14 @@
                   <tr><td>J</td><td>鈍器で殴る／掴み中はナイフで仕留める／掴まれたら連打</td></tr>
                   <tr><td>E</td><td>調べる／拾う／背後で掴む</td></tr>
                   <tr><td>K</td><td>火炎瓶を投げる</td></tr>
-                  <tr><td>F</td><td>投擲物（空き瓶・レンガ）を投げる ― 着地点の音で敵を釣る</td></tr>
+                  <tr><td>V</td><td>投擲物（空き瓶・レンガ）を投げる ― 着地点の音で敵を釣る</td></tr>
                   <tr><td>H</td><td>包帯で回復</td></tr>
                   <tr><td>L</td><td>手製銃を撃つ（単発の切り札）</td></tr>
                   <tr><td>T</td><td>メイ「ついて来る／待つ」切替</td></tr>
                   <tr><td>1〜4</td><td>クラフト（ナイフ／火炎瓶／包帯／手製銃）</td></tr>
                   <tr><td>C</td><td>クラフト画面の開閉（パッドはBack）</td></tr>
                   <tr><td>P / Esc</td><td>ポーズ（パッドはStart）</td></tr>
+                  <tr><td>F／ボタン</td><td>フルスクリーン切替（画面右上のボタンでも切替可・Escで解除）</td></tr>
                 </table>
               </div>
               <div class="box">
@@ -181,6 +203,7 @@
             <button class="startbtn" id="startBtn2" style="background:var(--accent2); margin-top:8px;">▶ 第2章「夏」からはじめる</button>
             <button class="startbtn" id="startBtn3" style="background:#d9762e; margin-top:8px;">▶ 第3章「秋」からはじめる</button>
             <button class="startbtn" id="startBtn4" style="background:#7fb2d9; margin-top:8px;">▶ 第4章「冬」からはじめる（最終章）</button>
+            <button class="startbtn" id="fsBtnTitle" style="background:var(--chip); color:var(--ink); margin-top:8px;">⛶ フルスクリーン</button>
             <p class="note" style="margin-top:6px;">パッドでは十字キー／スティックで章を選び、A／Startで開始できます。</p>
             <p class="note" style="margin-top:2px;">音について：章ごとに環境音が流れます（最初のクリック／キー／ボタン入力のあとに始まります）。音量はポーズメニュー（P／Start）で 小／中／大／ミュート に切り替えできます。</p>
             <p class="note">※ パッドが反応しない場合は、このページをブラウザで直接開いて遊んでください（埋め込み表示ではブラウザ側の制限でGamepad APIが止まることがあります）。</p>
@@ -213,6 +236,7 @@
             <button class="startbtn sel" id="resumeBtn">▶ 再開する</button>
             <button class="startbtn" id="cpBtn" style="background:var(--chip); color:var(--ink); margin-top:8px;">チェックポイントからやり直す</button>
             <button class="startbtn" id="ambBtn" style="background:var(--chip); color:var(--ink); margin-top:8px;">環境音の音量：中（Aで切替）</button>
+            <button class="startbtn" id="fsBtnPause" style="background:var(--chip); color:var(--ink); margin-top:8px;">⛶ フルスクリーン</button>
           </div>
         </div>
 
@@ -1181,7 +1205,7 @@ function update(dt){
   if(pressedOnce['KeyK']) throwMolotov();
   if(pressedOnce['KeyH']) useBandage();
   if(pressedOnce['KeyL']) fireGun();
-  if(pressedOnce['KeyF']) throwThrowable();
+  if(pressedOnce['KeyV']) throwThrowable();   // 投擲はV（Fはフルスクリーン切替に割当）
   if(padOnce(7)){
     if(state.throwable) throwThrowable();   // a carried throwable takes priority over the selected item
     else if(state.selItem === 'molotov') throwMolotov();
@@ -3328,6 +3352,47 @@ document.getElementById('entrustBtn').addEventListener('click', ()=>{ if(state.m
 document.getElementById('escapeBtn').addEventListener('click', ()=>{ if(state.mode === 'finale' && finaleStage === 1){ finaleSel = 1; chooseEscape(); } });
 document.getElementById('epilogueBtn').addEventListener('click', ()=>{ if(state.mode === 'epilogue') toTitle(); });
 
+/* ---------- fullscreen (display only; internal resolution & game logic untouched) ----------
+   The stage element (canvas + HUD + overlays) goes fullscreen; CSS keeps the
+   canvas at 16:9, letterboxed on black. Toggle: the on-screen buttons, or
+   the F key (captured before the game input handler, so F never reaches the
+   game — the throwable throw moved to V). Esc exits natively. */
+function fsActive(){ return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+function updateFsBtns(){
+  const label = fsActive() ? '⛶ フルスクリーン解除' : '⛶ フルスクリーン';
+  ['fsBtn','fsBtnTitle','fsBtnPause'].forEach(id=>{
+    const b = document.getElementById(id);
+    if(b) b.textContent = label;
+  });
+}
+function toggleFullscreen(){
+  try{
+    if(fsActive()){
+      const ex = document.exitFullscreen || document.webkitExitFullscreen;
+      if(ex) ex.call(document);
+    } else {
+      const el = document.getElementById('stage');
+      const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+      if(req){ const r = req.call(el); if(r && r.catch) r.catch(()=>{}); }
+    }
+  }catch(e){}
+  setTimeout(updateFsBtns, 60);
+}
+document.addEventListener('fullscreenchange', updateFsBtns);
+document.addEventListener('webkitfullscreenchange', updateFsBtns);
+['fsBtn','fsBtnTitle','fsBtnPause'].forEach(id=>{
+  const b = document.getElementById(id);
+  if(b) b.addEventListener('click', toggleFullscreen);
+});
+addEventListener('keydown', e=>{
+  if(e.code === 'KeyF' && !e.repeat){
+    e.preventDefault();
+    e.stopPropagation();
+    ambFirstGesture();
+    toggleFullscreen();
+  }
+}, true);
+
 document.getElementById('startBtn').addEventListener('click', ()=>startGame(1));
 document.getElementById('startBtn2').addEventListener('click', ()=>startGame(2));
 document.getElementById('startBtn3').addEventListener('click', ()=>startGame(3));
@@ -3339,6 +3404,22 @@ document.getElementById('resumeBtn').addEventListener('click', ()=>{ if(state.mo
 document.getElementById('cpBtn').addEventListener('click', ()=>{ if(state.mode === 'pause'){ closePause(); respawn(); } });
 document.getElementById('ambBtn').addEventListener('click', ()=>{ if(state.mode === 'pause'){ state.pauseSel = 2; cycleAmbVol(); } });
 updateHUD();
+</script>
+<script>
+// PWA prep: register the service worker if available. Any failure (unsupported
+// browser, file://, missing sw.js) is ignored so the game always runs standalone.
+(function(){
+  try{
+    if('serviceWorker' in navigator){
+      window.addEventListener('load', function(){
+        try{
+          var p = navigator.serviceWorker.register('./sw.js');
+          if(p && p.catch) p.catch(function(){});
+        }catch(e){}
+      });
+    }
+  }catch(e){}
+})();
 </script>
   </body>
 </html>
