@@ -1,0 +1,3344 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>CARRY YOU ― 第1〜4章 完結 ―</title>
+    <style>
+      :root{
+        --bg:#101812; --panel:#1a241c; --panel2:#232f24; --ink:#eef3e6; --muted:#b9c6ac;
+        --accent:#8fce6e; --accent2:#f2c14e; --danger:#e4572e; --line:#3c4c3a;
+        --chip:#263326;
+      }
+      @media (prefers-color-scheme: light){
+        :root{ --bg:#dfe8d2; --panel:#f4f7ec; --panel2:#e7eedd; --ink:#22301f; --muted:#5a6b52;
+          --accent:#4c8a3f; --accent2:#b07f16; --danger:#c2431f; --line:#b9c6a4; --chip:#e2ecd4; }
+      }
+      *{ box-sizing:border-box; }
+      html,body{ margin:0; padding:0; background:var(--bg); color:var(--ink);
+        font-family:"Hiragino Kaku Gothic ProN","Yu Gothic UI","Noto Sans JP",system-ui,sans-serif; }
+      button{ min-height:2.25rem; font:inherit; cursor:pointer; }
+      .wrap{ max-width:1060px; margin:0 auto; padding:10px 12px 28px; }
+      .stage{ position:relative; border:2px solid var(--line); border-radius:10px; overflow:hidden;
+        background:#0c120c; box-shadow:0 10px 30px rgba(0,0,0,.35); }
+      canvas{ display:block; width:100%; height:auto; aspect-ratio:16/9; background:#87a06b; }
+      /* ---------- HUD ---------- */
+      .hud{ position:absolute; inset:0; pointer-events:none; font-size:13px; }
+      .hud .tl{ position:absolute; top:8px; left:10px; display:flex; flex-direction:column; gap:5px; }
+      .bar{ width:170px; height:12px; background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.35); border-radius:6px; overflow:hidden; }
+      .bar>i{ display:block; height:100%; background:#7ec850; transition:width .15s; }
+      .bar.listen>i{ background:#7ec8e3; }
+      .bar.hp.low>i{ background:#e4572e; }
+      .barlab{ color:#fff; text-shadow:0 1px 3px #000; font-size:11px; letter-spacing:.04em; }
+      .hud .tr{ position:absolute; top:8px; right:10px; text-align:right; color:#fff; text-shadow:0 1px 3px #000; line-height:1.55; }
+      .hud .tr b{ color:#ffe9a8; }
+      .prompt{ position:absolute; left:50%; bottom:52px; transform:translateX(-50%); max-width:92%;
+        background:rgba(8,14,8,.82); color:#fff; border:1px solid rgba(255,255,255,.3); border-radius:8px;
+        padding:7px 14px; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      .objective{ position:absolute; top:8px; left:50%; transform:translateX(-50%); color:#fff;
+        text-shadow:0 1px 4px #000; font-size:13px; background:rgba(8,14,8,.45); padding:4px 12px; border-radius:20px; white-space:nowrap; }
+      .mei-tag{ display:inline-block; background:rgba(8,14,8,.6); color:#cfe8bf; border-radius:6px; padding:2px 8px; }
+      .alert-flash{ position:absolute; inset:0; border:4px solid rgba(228,87,46,0); pointer-events:none; transition:border-color .2s; }
+      .alert-flash.on{ border-color:rgba(228,87,46,.55); }
+      .wind-ind{ position:absolute; top:38%; right:0; transform:translateY(-50%); writing-mode:vertical-rl;
+        background:rgba(10,20,30,.72); color:#dcecf5; border:1px solid rgba(255,255,255,.35); border-right:none;
+        border-radius:8px 0 0 8px; padding:10px 5px; font-size:12px; letter-spacing:.18em; }
+      .wind-ind.warn{ background:rgba(64,52,10,.78); color:#ffe9a8; }
+      .wind-ind.gust{ background:rgba(16,52,84,.85); color:#bfe6ff; font-weight:800; }
+      .fullmark{ display:inline-block; background:var(--accent2); color:#221a04; border-radius:20px;
+        padding:3px 12px; font-size:12.5px; font-weight:800; letter-spacing:.08em; margin:0 0 8px; }
+      /* ---------- overlays ---------- */
+      .overlay{ position:absolute; inset:0; display:flex; align-items:flex-start; justify-content:center;
+        background:rgba(10,16,10,.78); padding:10px; overflow:auto; }
+      .card{ background:var(--panel); color:var(--ink); border:1px solid var(--line); border-radius:12px;
+        max-width:640px; width:100%; padding:14px 18px; margin:auto 0; box-shadow:0 12px 40px rgba(0,0,0,.5); }
+      .card h1{ margin:0 0 2px; font-size:30px; letter-spacing:.14em; font-weight:800; }
+      .card h1 .you{ color:var(--accent); }
+      .sub{ color:var(--muted); margin:0 0 8px; font-size:12.5px; letter-spacing:.08em; }
+      .story{ line-height:1.65; font-size:13.5px; margin:0 0 10px; }
+      .cols{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+      @media (max-width:640px){ .cols{ grid-template-columns:1fr; } .card h1{ font-size:26px; } }
+      .box{ background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:8px 11px; font-size:12px; line-height:1.55; }
+      .box h3{ margin:0 0 6px; font-size:13px; color:var(--accent); letter-spacing:.06em; }
+      .box table{ border-collapse:collapse; }
+      .box td{ padding:1px 6px 1px 0; vertical-align:top; }
+      .box td:first-child{ font-weight:700; white-space:nowrap; color:var(--accent2); }
+      #padDiag{ font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; word-break:break-all; }
+      .pad-on{ color:var(--accent); font-weight:700; }
+      .startbtn{ margin-top:12px; width:100%; padding:11px; font-size:16px; font-weight:800; letter-spacing:.1em;
+        background:var(--accent); color:#10160e; border:none; border-radius:8px; }
+      .startbtn:hover{ filter:brightness(1.08); }
+      .craftrow{ display:flex; justify-content:space-between; gap:10px; border:1px solid var(--line); border-radius:8px; padding:8px 12px; margin-bottom:6px; background:var(--panel2); font-size:13px; }
+      .craftrow span{ color:var(--muted); }
+      .craftrow.sel{ border-color:var(--accent2); box-shadow:0 0 0 2px var(--accent2) inset; }
+      .craftrow.cant{ opacity:.5; }
+      .startbtn.sel{ outline:3px solid var(--accent2); outline-offset:2px; }
+      .hidden{ display:none !important; }
+      /* ---------- craft bar ---------- */
+      .craftbar{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+      .craft{ flex:1 1 150px; background:var(--panel); border:1px solid var(--line); color:var(--ink);
+        border-radius:8px; padding:8px 10px; text-align:left; line-height:1.45; }
+      .craft b{ display:block; font-size:14px; }
+      .craft span{ font-size:12px; color:var(--muted); }
+      .craft:disabled{ opacity:.45; cursor:not-allowed; }
+      .craft:not(:disabled):hover{ border-color:var(--accent); }
+      .row2{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+      .mini{ background:var(--chip); color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:8px 12px; }
+      .note{ color:var(--muted); font-size:12.5px; line-height:1.7; margin-top:10px; }
+      kbd{ background:var(--chip); border:1px solid var(--line); border-bottom-width:2px; border-radius:4px; padding:0 5px; font-size:11px; }
+      /* ---------- touch controls ---------- */
+      .touch{ display:none; margin-top:10px; gap:8px; justify-content:space-between; }
+      .touch .grp{ display:flex; gap:8px; }
+      .touch button{ width:52px; height:52px; border-radius:50%; background:var(--panel); color:var(--ink);
+        border:1px solid var(--line); font-size:15px; font-weight:700; touch-action:none; }
+      @media (pointer:coarse){ .touch{ display:flex; } }
+      @media (max-width:640px){
+        .overlay{ position:fixed; z-index:60; align-items:flex-start; }
+        .touch{ flex-wrap:wrap; row-gap:8px; }
+        .touch button{ width:46px; height:46px; font-size:13px; }
+        .hud .tr{ font-size:11px; }
+        .bar{ width:120px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="stage" id="stage">
+        <canvas id="game" width="960" height="540"></canvas>
+
+        <div class="hud" id="hud">
+          <div class="tl">
+            <div><div class="barlab">ワイアット 体力</div><div class="bar hp" id="hpBar"><i style="width:100%"></i></div></div>
+            <div><div class="barlab">聞き耳ゲージ（<kbd>Q</kbd> / RB長押し）</div><div class="bar listen" id="listenBar"><i style="width:100%"></i></div></div>
+            <div><span class="mei-tag" id="meiTag">メイ：ついて来る（<kbd>T</kbd> / LBで切替）</span></div>
+          </div>
+          <div class="tr" id="invBox"></div>
+          <div class="objective" id="objective">街の出口までメイを届けよう</div>
+          <div class="prompt hidden" id="prompt"></div>
+          <div class="alert-flash" id="alertFlash"></div>
+          <div class="wind-ind hidden" id="windInd">風：凪</div>
+        </div>
+
+        <div class="overlay" id="titleScreen">
+          <div class="card">
+            <h1>CARRY <span class="you">YOU</span></h1>
+            <p class="sub">第1章 ― 春 ― ／ 第2章 ― 夏 ― ／ 第3章 ― 秋 ― ／ 第4章 ― 冬 ―　崩れた街と郊外、渓谷、雪山を抜ける、小さな護送の物語</p>
+            <p class="fullmark hidden" id="fullClearMark">✦ 全章クリア ― 物語完結 ✦</p>
+            <p class="story">
+              崩壊から数年。感染しない体質の少女<strong>メイ</strong>を、山向こうの医療拠点へ届ける旅が始まる。
+              護衛は元運び屋の<strong>ワイアット</strong>。銃は作り物の単発が一丁きり。基本はステルスと鈍器と、耳を澄ますこと。
+              春の光の中、緑に飲まれていく街を、東の出口まで抜けよう。
+              第2章「夏」では、目が見えず音に集まる感染者と、拾って投げる瓶やレンガが新しい軸になる。
+              第3章「秋」は川沿いのキャンプ場と渓谷の吊り橋。落ち葉の音と川の水音が、ステルスの条件を変える。
+              そして最終章「冬」。吹雪の山道と雪の町を越えた先に、目的地の病院<strong>ヘイヴン・ジェネラル病院</strong>がある。
+              突風に紛れて進む冬のステルスと、病院で下す最後の選択で、旅は終わる。
+            </p>
+            <div class="cols">
+              <div class="box">
+                <h3>キーボード操作</h3>
+                <table>
+                  <tr><td>A / D・←→</td><td>移動（Shiftで走る＝音が大きい）</td></tr>
+                  <tr><td>W / Space</td><td>ジャンプ</td></tr>
+                  <tr><td>S / ↓（長押し）</td><td>しゃがむ（静か・隠れやすい）</td></tr>
+                  <tr><td>Q（長押し）</td><td>聞き耳モード（壁越しに敵の輪郭）</td></tr>
+                  <tr><td>J</td><td>鈍器で殴る／掴み中はナイフで仕留める／掴まれたら連打</td></tr>
+                  <tr><td>E</td><td>調べる／拾う／背後で掴む</td></tr>
+                  <tr><td>K</td><td>火炎瓶を投げる</td></tr>
+                  <tr><td>F</td><td>投擲物（空き瓶・レンガ）を投げる ― 着地点の音で敵を釣る</td></tr>
+                  <tr><td>H</td><td>包帯で回復</td></tr>
+                  <tr><td>L</td><td>手製銃を撃つ（単発の切り札）</td></tr>
+                  <tr><td>T</td><td>メイ「ついて来る／待つ」切替</td></tr>
+                  <tr><td>1〜4</td><td>クラフト（ナイフ／火炎瓶／包帯／手製銃）</td></tr>
+                  <tr><td>C</td><td>クラフト画面の開閉（パッドはBack）</td></tr>
+                  <tr><td>P / Esc</td><td>ポーズ（パッドはStart）</td></tr>
+                </table>
+              </div>
+              <div class="box">
+                <h3>コントローラー診断（Xbox系）</h3>
+                <div id="padDiag">コントローラーを探しています…<br>ボタンを押すと番号がここに出ます。</div>
+                <h3 style="margin-top:10px;">パッド配置（本家PS配置→Xbox読み替え）</h3>
+                <table>
+                  <tr><td>左スティック</td><td>移動</td></tr>
+                  <tr><td>L3(10)押し込み</td><td>ダッシュ切替（深倒しでは走らない／音が大きい）</td></tr>
+                  <tr><td>A(0)</td><td>ジャンプ（タイトルでは開始）</td></tr>
+                  <tr><td>B(1)</td><td>しゃがみ（切替式）</td></tr>
+                  <tr><td>X(2)</td><td>鈍器で殴る／掴み中はナイフキル／掴まれたら連打で振りほどく</td></tr>
+                  <tr><td>Y(3)</td><td>調べる・拾う／気づかれていない敵の背後で掴む</td></tr>
+                  <tr><td>LB(4)</td><td>メイ指示の切替（ついて来る／待つ）</td></tr>
+                  <tr><td>RB(5)長押し</td><td>聞き耳モード</td></tr>
+                  <tr><td>LT(6)長押し</td><td>狙う（火炎瓶・投擲物は軌道、手製銃は射線を表示）</td></tr>
+                  <tr><td>RT(7)</td><td>選択中アイテムを使う（包帯は長押しで回復）。投擲物を持っているときはそちらを投げる</td></tr>
+                  <tr><td>投擲物</td><td>空き瓶・レンガは拾うと1つまで保持。着地点で大きな音が鳴り、音特化型や見張りを釣れる</td></tr>
+                  <tr><td>十字キー</td><td>使うアイテムの切替（火炎瓶／手製銃／包帯）</td></tr>
+                  <tr><td>Back(8)</td><td>クラフト画面の開閉（中はスティック／十字で選択、A長押しで作成）</td></tr>
+                  <tr><td>Start(9)</td><td>ポーズ（チェックポイントからやり直し含む）</td></tr>
+                </table>
+              </div>
+            </div>
+            <button class="startbtn sel" id="startBtn">▶ 第1章「春」をはじめる</button>
+            <button class="startbtn" id="startBtn2" style="background:var(--accent2); margin-top:8px;">▶ 第2章「夏」からはじめる</button>
+            <button class="startbtn" id="startBtn3" style="background:#d9762e; margin-top:8px;">▶ 第3章「秋」からはじめる</button>
+            <button class="startbtn" id="startBtn4" style="background:#7fb2d9; margin-top:8px;">▶ 第4章「冬」からはじめる（最終章）</button>
+            <p class="note" style="margin-top:6px;">パッドでは十字キー／スティックで章を選び、A／Startで開始できます。</p>
+            <p class="note" style="margin-top:2px;">音について：章ごとに環境音が流れます（最初のクリック／キー／ボタン入力のあとに始まります）。音量はポーズメニュー（P／Start）で 小／中／大／ミュート に切り替えできます。</p>
+            <p class="note">※ パッドが反応しない場合は、このページをブラウザで直接開いて遊んでください（埋め込み表示ではブラウザ側の制限でGamepad APIが止まることがあります）。</p>
+          </div>
+        </div>
+
+        <div class="overlay hidden" id="clearScreen">
+          <div class="card">
+            <h1 style="font-size:26px;" id="clearTitle">第1章 ― クリア</h1>
+            <p class="story" id="clearStory"></p>
+            <p class="story" id="clearStats"></p>
+            <button class="startbtn" id="nextBtn">▶ 第2章「夏」へ進む</button>
+            <button class="startbtn" id="againBtn" style="background:var(--chip); color:var(--ink); margin-top:8px;">もう一度 第1章を遊ぶ</button>
+          </div>
+        </div>
+        <div class="overlay hidden" id="craftScreen">
+          <div class="card" style="max-width:520px;">
+            <h1 style="font-size:22px;">クラフト</h1>
+            <p class="sub">スティック／十字キーで選択 ― A長押しで作成 ― Backで閉じる</p>
+            <div id="craftList"></div>
+            <div class="bar" style="width:100%; margin-top:8px;"><i id="craftProg" style="width:0%"></i></div>
+            <p class="note" id="craftMats" style="margin-top:8px;"></p>
+          </div>
+        </div>
+
+        <div class="overlay hidden" id="pauseScreen">
+          <div class="card" style="max-width:420px;">
+            <h1 style="font-size:24px;">ポーズ</h1>
+            <p class="sub">スティック／十字キーで選択 ― Aで決定 ― Startで再開</p>
+            <button class="startbtn sel" id="resumeBtn">▶ 再開する</button>
+            <button class="startbtn" id="cpBtn" style="background:var(--chip); color:var(--ink); margin-top:8px;">チェックポイントからやり直す</button>
+            <button class="startbtn" id="ambBtn" style="background:var(--chip); color:var(--ink); margin-top:8px;">環境音の音量：中（Aで切替）</button>
+          </div>
+        </div>
+
+        <div class="overlay hidden" id="storyScreen">
+          <div class="card">
+            <h1 style="font-size:24px;" id="storyTitle">形見</h1>
+            <p class="story" id="storyText"></p>
+            <button class="startbtn sel" id="storyBtn">▶ つづける（A）</button>
+          </div>
+        </div>
+
+        <div class="overlay hidden" id="finaleScreen">
+          <div class="card">
+            <h1 style="font-size:24px;">ヘイヴン・ジェネラル病院</h1>
+            <p class="story" id="finaleText"></p>
+            <button class="startbtn sel" id="finaleNextBtn">▶ 話を聞く（A）</button>
+            <button class="startbtn hidden" id="entrustBtn" style="background:var(--accent);">メイを託す ― ワクチン研究のために</button>
+            <button class="startbtn hidden" id="escapeBtn" style="background:#7fb2d9; margin-top:8px;">連れて帰る ― この旅を、二人で続ける</button>
+          </div>
+        </div>
+
+        <div class="overlay hidden" id="epilogueScreen">
+          <div class="card">
+            <h1 style="font-size:24px;" id="epilogueTitle">エピローグ</h1>
+            <p class="story" id="epilogueText"></p>
+            <p class="story" style="text-align:center; letter-spacing:.2em; margin-top:14px;">― CARRY YOU　完 ―</p>
+            <button class="startbtn sel" id="epilogueBtn">▶ タイトルへ戻る（A）</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="craftbar" id="craftbar">
+        <button class="craft" data-craft="knife"><b>1：ナイフを作る <span id="cntKnife"></span></b><span>くず鉄1＋布1 ― 背後で掴んでから使う（Y→X）</span></button>
+        <button class="craft" data-craft="molotov"><b>2：火炎瓶を作る <span id="cntMolotov"></span></b><span>布1＋酒1 ― 投げて燃やす（大音量）</span></button>
+        <button class="craft" data-craft="bandage"><b>3：包帯を作る <span id="cntBandage"></span></b><span>布2 ― 選択してRT長押しで体力40回復</span></button>
+        <button class="craft" data-craft="gun"><b>4：手製銃を作る <span id="cntGun"></span></b><span>くず鉄2＋布1 ― 単発の切り札（大音量）</span></button>
+      </div>
+      <div class="row2">
+        <button class="mini" id="btnMei">メイ：ついて来る／待つ（T／LB）</button>
+        <button class="mini" id="btnListen">聞き耳（Q／RB長押し）</button>
+        <button class="mini" id="btnRestart">チェックポイントからやり直す（R）</button>
+      </div>
+
+      <div class="touch" id="touch">
+        <div class="grp">
+          <button data-t="left">◀</button><button data-t="right">▶</button><button data-t="down">▼</button>
+        </div>
+        <div class="grp">
+          <button data-t="listen">耳</button><button data-t="act">E</button><button data-t="atk">打</button><button data-t="jump">跳</button>
+        </div>
+      </div>
+
+      <p class="note">
+        遊び方のコツ：茂みや物陰では<strong>しゃがむと見つかりにくく</strong>なります。見張りの視界（帯）に長く入ると警戒→発砲→増援を呼ばれます。
+        走ると音の輪が広がり、敵が振り向きます。感染者「速い型」に掴まれたら <kbd>E</kbd>／パッド<kbd>X</kbd>連打で振りほどけます（掴まれ中は体力が減ります）。
+        扉の区切りで自動チェックポイント。素材を拾ってクラフトし、狭い隙間はメイだけが通れます。
+        パッド配置は本家（PS）準拠：Yで調べる・背後で掴む→Xでナイフキル、Bでしゃがみ、RB長押しで聞き耳、LTで狙ってRTで使う、十字キーでアイテム切替、Backでクラフト画面（A長押しで作成）、LBでメイ指示、Startでポーズ、ダッシュは左スティック押し込み（L3）のみです。タイトル画面でもA／Startで開始できます。
+        第2章「夏」では<strong>音特化型の感染者</strong>が登場します。目が見えない代わりに音に敏感で、ダッシュとジャンプの着地は大きな音、通常歩行は小さな音、しゃがみ歩きは無音です。音は広がるリングで見えます。
+        空き瓶やレンガは拾って1つまで保持でき、LTで狙ってRTで投げると着地点の音で敵を釣れます。高いフェンスでは、メイが先に越えて内側からロープはしごを下ろしてくれます。
+        第3章「秋」では<strong>落ち葉の積もった地面</strong>が足音を大きくします（歩行＝大音、しゃがみ歩き＝小音、静止＝無音）。逆に<strong>川辺では水音が音をかき消し</strong>、音の届く範囲（リング）が縮むので、聞き耳型のそばでも動きやすくなります。
+        細い倒木の橋では、メイだけが先に渡り、対岸の脚立を倒してワイアットが登れるようにしてくれます。吊り橋は高所の直線区間で、わずかに揺れます（落ちても川辺に着地するだけです）。
+        第4章「冬」では<strong>吹雪の突風</strong>が軸になります。突風の間は見張りの視界の帯が短くなり、こちらの立てる音も風に紛れて音のリングが縮みます（画面右端の風インジケーターと、横殴りの雪の流れで予兆と状態が読めます）。風の止み間は通常通りです。
+        雪の地面は歩行音を小さくしますが、ダッシュは雪を蹴って大きな音になります。病院では、雪で塞がれた換気口をメイが抜けて、内側から扉を開けてくれます。
+      </p>
+    </div>
+
+<script>
+"use strict";
+/* ============================================================
+   CARRY YOU ― 第1章試作 ― 横スクロール・ステルスアクション
+   ============================================================ */
+const cv = document.getElementById('game');
+const ctx = cv.getContext('2d');
+const VW = 960, VH = 540, GROUND_Y = 452;
+let WORLD_W = 5300;   // set per chapter by loadChapter()
+
+/* ---------- audio (tiny synth) ---------- */
+let AC = null;
+function beep(freq, dur, type, vol, slide){
+  if(!AC) return;
+  try{
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.type = type||'square'; o.frequency.value = freq;
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide, AC.currentTime + dur);
+    g.gain.value = vol||0.05;
+    g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime + dur);
+    o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + dur);
+  }catch(e){}
+}
+function noiseBurst(dur, vol){
+  if(!AC) return;
+  try{
+    const len = Math.floor(AC.sampleRate * dur), buf = AC.createBuffer(1, len, AC.sampleRate);
+    const d = buf.getChannelData(0); for(let i=0;i<len;i++) d[i] = (Math.random()*2-1) * (1 - i/len);
+    const s = AC.createBufferSource(); s.buffer = buf;
+    const g = AC.createGain(); g.gain.value = vol||0.12;
+    s.connect(g); g.connect(AC.destination); s.start();
+  }catch(e){}
+}
+const sfx = {
+  pickup(){ beep(880,.08,'square',.04); setTimeout(()=>beep(1320,.08,'square',.04),60); },
+  craft(){ beep(520,.07,'square',.05); setTimeout(()=>beep(760,.09,'square',.05),80); },
+  swing(){ noiseBurst(.08,.05); },
+  hit(){ noiseBurst(.12,.14); beep(140,.12,'sawtooth',.06,70); },
+  shot(){ noiseBurst(.25,.22); beep(90,.2,'sawtooth',.1,45); },
+  hurt(){ beep(220,.15,'sawtooth',.07,110); },
+  alarm(){ beep(660,.1,'square',.06); setTimeout(()=>beep(660,.12,'square',.06),130); },
+  grab(){ beep(180,.3,'sawtooth',.09,60); },
+  escape(){ beep(500,.1,'square',.06); setTimeout(()=>beep(750,.12,'square',.06),90); },
+  door(){ beep(300,.15,'triangle',.07,180); },
+  clear(){ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.22,'triangle',.07), i*140)); }
+};
+
+/* ---------- ambience (per-chapter synthesized environmental sound) ----------
+   Everything is generated with WebAudio — no audio files. One looping
+   noise buffer feeds filtered "wind / leaf rustle / stream" voices; birds,
+   cicadas and crows are little oscillator phrases scheduled per chapter.
+   Chapter switches crossfade: the old scene's gain fades out while the new
+   one fades in. Playback starts only after the first user gesture on the
+   title screen (browser autoplay policy): click / key / pad button. */
+const AMB_LABELS = ['ミュート','小','中','大'];
+const AMB_VOL = [0, 0.45, 0.85, 1.3];
+let ambVolIdx = 2;                 // default volume: 中
+let ambMaster = null, ambScene = null, ambNoiseBuf = null, ambTickT = 0;
+
+function ambInit(){
+  if(!AC){
+    try{ AC = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ return false; }
+  }
+  if(AC.state === 'suspended'){ try{ AC.resume(); }catch(e){} }
+  if(ambMaster) return true;
+  try{
+    ambMaster = AC.createGain();
+    ambMaster.gain.value = AMB_VOL[ambVolIdx];
+    ambMaster.connect(AC.destination);
+    const len = AC.sampleRate * 2;
+    ambNoiseBuf = AC.createBuffer(1, len, AC.sampleRate);
+    const d = ambNoiseBuf.getChannelData(0);
+    let last = 0;
+    for(let i = 0; i < len; i++){ // slightly pink-ish noise, so loops feel soft
+      const w = Math.random()*2-1;
+      last = (last + 0.02 * w) / 1.02;
+      d[i] = (last * 3 + w * 0.35) * 0.6;
+    }
+  }catch(e){ ambMaster = null; return false; }
+  return true;
+}
+function ambNoise(){ const s = AC.createBufferSource(); s.buffer = ambNoiseBuf; s.loop = true; return s; }
+function ambLFO(param, freq, depth, base){
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type = 'sine'; o.frequency.value = freq; g.gain.value = depth;
+  if(base !== undefined) param.value = base;
+  o.connect(g); g.connect(param); o.start();
+  return o;
+}
+/* a filtered-noise voice (wind / rustle / water) with slow self-motion */
+function ambVoice(scene, type, freq, q, level, wobbleF, wobbleD, gainWobbleF){
+  const src = ambNoise();
+  const f = AC.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+  const g = AC.createGain(); g.gain.value = level;
+  src.connect(f); f.connect(g); g.connect(scene.gain); src.start();
+  scene.nodes.push(src);
+  if(wobbleD) scene.nodes.push(ambLFO(f.frequency, wobbleF || 0.07, wobbleD, freq));
+  if(gainWobbleF) scene.nodes.push(ambLFO(g.gain, gainWobbleF, level * 0.45, level));
+  return { filter:f, gain:g, level };
+}
+function ambBird(scene){
+  if(scene.dead) return;
+  try{
+    const t0 = AC.currentTime + 0.05;
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.type = 'sine';
+    const base = 2300 + Math.random()*700;
+    const notes = 2 + Math.floor(Math.random()*3);
+    let t = t0;
+    g.gain.setValueAtTime(0.0001, t0);
+    for(let i = 0; i < notes; i++){
+      const f = base * (1 + Math.random()*0.25);
+      o.frequency.setValueAtTime(f * 0.8, t);
+      o.frequency.exponentialRampToValueAtTime(f * 1.25, t + 0.05);
+      o.frequency.exponentialRampToValueAtTime(f * 0.9, t + 0.11);
+      g.gain.exponentialRampToValueAtTime(0.05, t + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+      t += 0.16 + Math.random()*0.08;
+    }
+    o.connect(g); g.connect(scene.gain); o.start(t0); o.stop(t + 0.1);
+  }catch(e){}
+  scene.timers.push(setTimeout(()=>ambBird(scene), 4500 + Math.random()*8000));
+}
+function ambCrow(scene, vol){
+  if(scene.dead) return;
+  try{
+    const t0 = AC.currentTime + 0.05;
+    const caws = 1 + Math.floor(Math.random()*2);
+    for(let i = 0; i < caws; i++){
+      const o = AC.createOscillator(), f = AC.createBiquadFilter(), g = AC.createGain();
+      o.type = 'sawtooth';
+      const t = t0 + i * 0.42;
+      o.frequency.setValueAtTime(760, t);
+      o.frequency.exponentialRampToValueAtTime(430, t + 0.26);
+      f.type = 'bandpass'; f.frequency.value = 950; f.Q.value = 1.2;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol, t + 0.05);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+      o.connect(f); f.connect(g); g.connect(scene.gain); o.start(t); o.stop(t + 0.35);
+    }
+  }catch(e){}
+  scene.timers.push(setTimeout(()=>ambCrow(scene, vol), 10000 + Math.random()*12000));
+}
+function ambCicada(scene){
+  // summer chorus: a high carrier trembling fast, swelling in phrases
+  const o = AC.createOscillator(); o.type = 'triangle'; o.frequency.value = 6300;
+  const am = AC.createGain(); am.gain.value = 0.55;
+  const trem = AC.createOscillator(), tg = AC.createGain();
+  trem.type = 'sine'; trem.frequency.value = 190; tg.gain.value = 0.45;
+  trem.connect(tg); tg.connect(am.gain);
+  const phrase = AC.createGain(); phrase.gain.value = 0;
+  const out = AC.createGain(); out.gain.value = 0.085;
+  o.connect(am); am.connect(phrase); phrase.connect(out); out.connect(scene.gain);
+  o.start(); trem.start();
+  scene.nodes.push(o, trem);
+  const cycle = ()=>{
+    if(scene.dead) return;
+    phrase.gain.setTargetAtTime(0.9, AC.currentTime, 0.7);
+    scene.timers.push(setTimeout(()=>{
+      if(scene.dead) return;
+      phrase.gain.setTargetAtTime(0.12, AC.currentTime, 0.9);
+    }, 3200 + Math.random()*2200));
+    scene.timers.push(setTimeout(cycle, 6500 + Math.random()*3500));
+  };
+  cycle();
+}
+function ambHum(scene){
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type = 'sine'; o.frequency.value = 100; g.gain.value = 0;
+  const o2 = AC.createOscillator(), g2 = AC.createGain();
+  o2.type = 'sine'; o2.frequency.value = 200; g2.gain.value = 0;
+  o.connect(g); g.connect(scene.gain); o2.connect(g2); g2.connect(scene.gain);
+  o.start(); o2.start(); scene.nodes.push(o, o2);
+  return { g, g2 };
+}
+function ambBuildScene(ch){
+  const scene = { chapter: ch, gain: AC.createGain(), nodes: [], timers: [], dead: false, ctrl: {}, interiorF: 0 };
+  scene.gain.gain.value = 0;
+  scene.gain.connect(ambMaster);
+  if(ch === 1){           // spring: soft wind, leaf rustle, occasional birdsong
+    ambVoice(scene, 'bandpass', 420, 0.6, 0.14, 0.06, 120, 0.11);
+    ambVoice(scene, 'bandpass', 3400, 0.7, 0.035, 0.5, 700, 0.9);
+    scene.timers.push(setTimeout(()=>ambBird(scene), 1500));
+  } else if(ch === 2){    // summer: cicada chorus, warm wind, distant crows
+    ambVoice(scene, 'bandpass', 480, 0.6, 0.11, 0.05, 130, 0.09);
+    ambVoice(scene, 'bandpass', 2600, 0.7, 0.02, 0.6, 500, 1.1);
+    ambCicada(scene);
+    scene.timers.push(setTimeout(()=>ambCrow(scene, 0.028), 6000));
+  } else if(ch === 3){    // autumn: wind through dry leaves, the stream, crows
+    ambVoice(scene, 'bandpass', 380, 0.6, 0.10, 0.06, 110, 0.12);
+    ambVoice(scene, 'bandpass', 2900, 0.8, 0.05, 0.4, 800, 0.8);
+    const sp = ambVoice(scene, 'bandpass', 1150, 0.5, 0.07, 0.23, 260, 0.31);
+    const sb = ambVoice(scene, 'lowpass', 480, 0.4, 0.05, 0.17, 60, 0.21);
+    scene.ctrl.stream = [sp, sb];
+    scene.timers.push(setTimeout(()=>ambCrow(scene, 0.045), 4000));
+  } else {                // winter: blizzard tied to the gust cycle + hospital hum
+    const w = ambVoice(scene, 'bandpass', 400, 0.9, 0.16, 0.05, 60, 0.07);
+    const w2 = ambVoice(scene, 'bandpass', 1500, 1.1, 0.03, 0.13, 300, 0.19);
+    scene.ctrl.wind = w; scene.ctrl.wind2 = w2;
+    scene.ctrl.hum = ambHum(scene);
+  }
+  return scene;
+}
+function ambStopScene(scene){
+  scene.dead = true;
+  scene.timers.forEach(clearTimeout);
+  try{ scene.gain.gain.setTargetAtTime(0, AC.currentTime, 0.5); }catch(e){}
+  setTimeout(()=>{
+    scene.nodes.forEach(n=>{ try{ n.stop(); }catch(e){} try{ n.disconnect(); }catch(e){} });
+    try{ scene.gain.disconnect(); }catch(e){}
+  }, 2200);
+}
+function ambSetChapter(ch){
+  if(!ambMaster) return;
+  if(ambScene && ambScene.chapter === ch && !ambScene.dead) return;
+  const old = ambScene;
+  let scene = null;
+  try{ scene = ambBuildScene(ch); }catch(e){ return; }
+  ambScene = scene;
+  scene.gain.gain.setTargetAtTime(1, AC.currentTime, 0.8);   // crossfade in over ~2s
+  if(old) ambStopScene(old);
+}
+/* dynamic levels: ch.3's stream swells near the water; ch.4's wind follows
+   the blizzard gust cycle (state.windLevel) and dies down inside the
+   hospital, where only a low indoor hum remains */
+function ambTick(dt){
+  if(!ambScene || ambScene.dead || !AC) return;
+  ambTickT -= dt;
+  if(ambTickT > 0) return;
+  ambTickT = 0.18;
+  const t = AC.currentTime, p = state.player;
+  if(ambScene.chapter === 3 && ambScene.ctrl.stream){
+    const near = zoneAt(p.x + p.w/2, p.y).water;
+    ambScene.ctrl.stream[0].gain.gain.setTargetAtTime(near ? 0.20 : 0.07, t, 0.6);
+    ambScene.ctrl.stream[1].gain.gain.setTargetAtTime(near ? 0.13 : 0.05, t, 0.6);
+  } else if(ambScene.chapter === 4 && ambScene.ctrl.wind){
+    const inside = p.x > 3980 ? 1 : 0;   // past the hospital entrance door
+    ambScene.interiorF += (inside - ambScene.interiorF) * 0.25;
+    const f = ambScene.interiorF, wl = state.windLevel || 0;
+    ambScene.ctrl.wind.gain.gain.setTargetAtTime((0.15 + wl * 0.34) * (1 - f * 0.82), t, 0.35);
+    ambScene.ctrl.wind.filter.frequency.setTargetAtTime((380 + wl * 560) * (1 - f * 0.3), t, 0.35);
+    ambScene.ctrl.wind2.gain.gain.setTargetAtTime((0.025 + wl * 0.075) * (1 - f * 0.85), t, 0.35);
+    if(ambScene.ctrl.hum){
+      ambScene.ctrl.hum.g.gain.setTargetAtTime(0.05 * f, t, 0.5);
+      ambScene.ctrl.hum.g2.gain.setTargetAtTime(0.016 * f, t, 0.5);
+    }
+  }
+}
+function ambFirstGesture(){
+  if(ambInit()) ambSetChapter(state.chapter);
+}
+addEventListener('pointerdown', ambFirstGesture);
+addEventListener('keydown', ambFirstGesture);
+function cycleAmbVol(){
+  ambVolIdx = (ambVolIdx + 1) % 4;
+  if(ambMaster && AC) ambMaster.gain.setTargetAtTime(AMB_VOL[ambVolIdx], AC.currentTime, 0.08);
+  renderPause();
+}
+
+/* ---------- input ---------- */
+const keys = {};
+let pressedOnce = {};   // edge-triggered keys, consumed each frame
+addEventListener('keydown', e=>{
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
+  if(!keys[e.code]) pressedOnce[e.code] = true;
+  keys[e.code] = true;
+});
+addEventListener('keyup', e=>{ keys[e.code] = false; });
+
+/* gamepad */
+let padIndex = null, padPrev = [], padPressed = {};
+addEventListener('gamepadconnected', e=>{ padIndex = e.gamepad.index; });
+addEventListener('gamepaddisconnected', e=>{ if(padIndex === e.gamepad.index) padIndex = null; });
+function pollPad(){
+  padPressed = {};
+  let gp = null;
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  for(const p of pads){ if(p && p.connected){ gp = p; padIndex = p.index; break; } }
+  if(!gp) return null;
+  gp.buttons.forEach((b,i)=>{
+    const now = !!b.pressed, was = !!padPrev[i];
+    if(now && !was) padPressed[i] = true;
+    padPrev[i] = now;
+  });
+  return gp;
+}
+function diagLoop(){
+  const el = document.getElementById('padDiag');
+  // read the pad directly here so this loop never consumes the edge-triggered
+  // padPressed state that the main loop relies on (e.g. starting with A/Start)
+  let gp = null;
+  const allPads = navigator.getGamepads ? navigator.getGamepads() : [];
+  for(const p of allPads){ if(p && p.connected){ gp = p; break; } }
+  if(el && !document.getElementById('titleScreen').classList.contains('hidden') || el && state.mode==='title'){
+    if(gp){
+      const btns = [];
+      gp.buttons.forEach((b,i)=>{ if(b.pressed) btns.push(i); });
+      const ax = gp.axes.map(a=>a.toFixed(2)).join(', ');
+      el.innerHTML = '<span class="pad-on">接続中:</span> ' + gp.id.slice(0,60) +
+        '<br>押しているボタン番号: <b>' + (btns.length? btns.join(', ') : 'なし') + '</b>' +
+        '<br>スティック軸: [' + ax + ']';
+    } else {
+      el.innerHTML = '未接続 ― コントローラーのボタンをどれか押すと認識されます。<br>（キーボードだけでも遊べます）';
+    }
+  }
+  requestAnimationFrame(diagLoop);
+}
+
+/* touch buttons */
+const touchState = {};
+document.querySelectorAll('#touch button').forEach(btn=>{
+  const k = btn.dataset.t;
+  const on = e=>{ e.preventDefault(); touchState[k] = true; if(k==='act'||k==='jump'||k==='atk') pressedOnce['touch_'+k]=true; };
+  const off = e=>{ e.preventDefault(); touchState[k] = false; };
+  btn.addEventListener('pointerdown', on); btn.addEventListener('pointerup', off);
+  btn.addEventListener('pointerleave', off); btn.addEventListener('pointercancel', off);
+});
+let listenBtnHeld = false;
+const lb = document.getElementById('btnListen');
+lb.addEventListener('pointerdown', e=>{ e.preventDefault(); listenBtnHeld = true; });
+['pointerup','pointerleave','pointercancel'].forEach(ev=>lb.addEventListener(ev, ()=>{ listenBtnHeld = false; }));
+
+/* ---------- world data (per chapter; chapter 1 data is the original, untouched) ---------- */
+const CH1 = { id:1, worldW:5300, startX:90, meiX:40, clearX:5080, exitLabel:'街の出口 →', solids: [
+  {x:-40, y:GROUND_Y, w:WORLD_W+80, h:120},                        // ground
+  {x:300, y:372, w:150, h:16}, {x:640, y:330, w:130, h:16},         // platforms A
+  {x:1330, y:368, w:170, h:16}, {x:1720, y:306, w:150, h:16}, {x:2050, y:368, w:170, h:16},
+  {x:2760, y:360, w:150, h:16}, {x:3080, y:300, w:150, h:16},
+  {x:3560, y:362, w:170, h:16}, {x:3920, y:304, w:140, h:16},
+  {x:4360, y:364, w:160, h:16}, {x:4720, y:312, w:150, h:16},
+  // step platforms: the high ledges above rise 122-148px from the ground (max jump
+  // is ~112px) and sit 190-220px past the low ledges, so each gets a mid step
+  {x:495, y:348, w:95, h:16}, {x:1555, y:334, w:105, h:16},
+  {x:3785, y:330, w:95, h:16}, {x:4585, y:334, w:100, h:16},
+  {x:980, y:396, w:64, h:56, cover:true},                            // crates (block shots & sight)
+  {x:1980, y:392, w:96, h:60, cover:true},                          // wrecked car body
+  {x:2980, y:396, w:64, h:56, cover:true},
+  {x:4480, y:392, w:96, h:60, cover:true},
+  {x:3380, y:252, w:26, h:200, gate:true},                          // locked gate (opened by Mei)
+],
+  hideZones: [
+  {x:520, y:404, w:110, h:48, kind:'grass'}, {x:1130, y:404, w:120, h:48, kind:'grass'},
+  {x:1560, y:404, w:130, h:48, kind:'grass'}, {x:2260, y:404, w:120, h:48, kind:'grass'},
+  {x:2650, y:404, w:110, h:48, kind:'shadow'}, {x:3220, y:404, w:120, h:48, kind:'grass'},
+  {x:3740, y:404, w:120, h:48, kind:'grass'}, {x:4180, y:404, w:110, h:48, kind:'shadow'},
+  {x:4860, y:404, w:130, h:48, kind:'grass'},
+],
+  doors: [ {x:1250}, {x:2580}, {x:4080} ]  // checkpoint doors
+};
+const GAP = { x1:3354, x2:3406, gateX:3380 };    // crawl gap beside the gate (Mei only)
+
+CH1.makePickups = function(){ return [
+  {x:340, y:GROUND_Y-14, kind:'cloth'}, {x:680, y:296, kind:'scrap'}, {x:1010, y:362, kind:'cloth'},
+  {x:520, y:GROUND_Y-14, kind:'alcohol'}, {x:900, y:GROUND_Y-14, kind:'bat'},
+  {x:1420, y:334, kind:'scrap'}, {x:1620, y:GROUND_Y-14, kind:'cloth'}, {x:1780, y:272, kind:'alcohol'},
+  {x:2130, y:334, kind:'cloth'}, {x:2340, y:GROUND_Y-14, kind:'scrap'}, {x:2480, y:GROUND_Y-14, kind:'bat'},
+  {x:2840, y:326, kind:'cloth'}, {x:3140, y:266, kind:'scrap'}, {x:3300, y:GROUND_Y-14, kind:'alcohol'},
+  {x:3640, y:328, kind:'cloth'}, {x:3980, y:270, kind:'scrap'}, {x:4200, y:GROUND_Y-14, kind:'alcohol'},
+  {x:4440, y:330, kind:'cloth'}, {x:4780, y:278, kind:'scrap'}, {x:4960, y:GROUND_Y-14, kind:'cloth'},
+  {x:1500, y:GROUND_Y-14, kind:'bat'},
+].map(p=>({...p, taken:false, w:16, h:14})); }
+
+CH1.makeEnemies = function(){ return [
+  {type:'guard', x:820, y:GROUND_Y, min:700, max:1120, dir:1, hp:2},
+  {type:'guard', x:1820, y:GROUND_Y, min:1660, max:2240, dir:-1, hp:2},
+  {type:'inf',   x:2180, y:GROUND_Y, min:2060, max:2440, dir:1, hp:2},
+  {type:'guard', x:2960, y:GROUND_Y, min:2780, max:3300, dir:1, hp:2},
+  {type:'inf',   x:3760, y:GROUND_Y, min:3620, max:4020, dir:-1, hp:2},
+  {type:'guard', x:4620, y:GROUND_Y, min:4420, max:4990, dir:1, hp:2},
+].map(e=>({...e, w:26, h:52, state:'patrol', detect:0, shootCd:0, stun:0, alertT:0, wanderT:Math.random()*2, speed: e.type==='guard'?0.85:0.6, alive:true, reinforced:false})); }
+
+/* ---------- chapter 2 ― 夏 ― 郊外の住宅地とモーテル ----------
+   All platform rises stay within the ~112px jump (most ≤84px, with step
+   platforms wherever a ledge is higher, same rule as the chapter 1 fix). */
+const CH2 = { id:2, worldW:5250, startX:90, meiX:40, clearX:5050, exitLabel:'次の街へ →',
+  fence:{ x:2380, w:22, topY:256 },
+  solids: [
+    {x:-40, y:GROUND_Y, w:5330, h:120},                              // ground
+    {x:820, y:368, w:130, h:16},                                     // house porch (rise 84)
+    {x:1500, y:392, w:100, h:16}, {x:1560, y:336, w:130, h:16},      // garden step → shed roof
+    {x:560, y:404, w:90, h:48, cover:true, hedge:true},              // hedge (cover)
+    {x:1150, y:392, w:96, h:60, cover:true},                         // wrecked car on the street
+    {x:1980, y:404, w:90, h:48, cover:true, hedge:true},             // hedge
+    {x:2380, y:256, w:22, h:196, fence:true},                        // tall fence — Mei goes over first
+    {x:2830, y:398, w:100, h:16}, {x:2905, y:360, w:100, h:16},      // steps up to the motel balcony
+    {x:3050, y:326, w:920, h:18, balcony:true},                      // motel 2F exterior corridor
+    {x:4020, y:372, w:100, h:16},                                    // step back down
+    {x:4360, y:416, w:56, h:36, cover:true, pool:true},              // poolside cover
+    {x:4760, y:368, w:130, h:16},                                    // last ledge (rise 84)
+  ],
+  hideZones: [
+    {x:430, y:404, w:120, h:48, kind:'grass'}, {x:1020, y:404, w:120, h:48, kind:'grass'},
+    {x:1620, y:404, w:120, h:48, kind:'shadow'}, {x:2150, y:404, w:120, h:48, kind:'grass'},
+    {x:2680, y:404, w:120, h:48, kind:'grass'}, {x:3180, y:404, w:120, h:48, kind:'shadow'},
+    {x:3760, y:404, w:120, h:48, kind:'grass'}, {x:4420, y:404, w:120, h:48, kind:'grass'},
+    {x:4880, y:404, w:120, h:48, kind:'grass'},
+  ],
+  doors: [ {x:1250}, {x:2500}, {x:3950} ]  // checkpoint gates / motel doors
+};
+CH2.makePickups = function(){ return [
+  {x:320, y:GROUND_Y-14, kind:'cloth'}, {x:700, y:GROUND_Y-14, kind:'bottle'}, {x:880, y:354, kind:'scrap'},
+  {x:1010, y:GROUND_Y-14, kind:'bat'}, {x:1300, y:GROUND_Y-14, kind:'alcohol'}, {x:1610, y:322, kind:'cloth'},
+  {x:1700, y:GROUND_Y-14, kind:'brick'}, {x:2080, y:GROUND_Y-14, kind:'cloth'},
+  {x:2560, y:GROUND_Y-14, kind:'bottle'}, {x:3120, y:GROUND_Y-14, kind:'cloth'}, {x:3420, y:312, kind:'scrap'},
+  {x:3580, y:GROUND_Y-14, kind:'alcohol'}, {x:3760, y:312, kind:'brick'}, {x:4150, y:GROUND_Y-14, kind:'bat'},
+  {x:4480, y:GROUND_Y-14, kind:'cloth'}, {x:4820, y:354, kind:'scrap'}, {x:4980, y:GROUND_Y-14, kind:'alcohol'},
+].map(p=>({...p, taken:false, w:16, h:14})); };
+CH2.makeEnemies = function(){ return [
+  {type:'guard',    x:820,  y:GROUND_Y, min:640,  max:1080, dir:1,  hp:2},
+  {type:'listener', x:1650, y:GROUND_Y, min:1420, max:1960, dir:1,  hp:3},
+  {type:'guard',    x:2150, y:GROUND_Y, min:2000, max:2300, dir:-1, hp:2},
+  {type:'listener', x:2750, y:GROUND_Y, min:2580, max:2980, dir:1,  hp:3},
+  {type:'guard',    x:3350, y:GROUND_Y, min:3180, max:3620, dir:1,  hp:2},
+  {type:'inf',      x:3780, y:GROUND_Y, min:3640, max:3960, dir:-1, hp:2},
+  {type:'guard',    x:4520, y:GROUND_Y, min:4300, max:4780, dir:1,  hp:2},
+].map(e=>({...e, w:26, h:52, state: e.type==='guard' ? 'patrol' : 'wander', detect:0, shootCd:0, stun:0, alertT:0, wanderT:Math.random()*2, speed: e.type==='guard' ? 0.85 : (e.type==='listener' ? 0.5 : 0.6), alive:true, reinforced:false, hearX:0, hearY:0, rushT:0})); };
+
+/* ---------- chapter 3 ― 秋 ― 川沿いのキャンプ場と吊り橋 ----------
+   New ground rules via zoneAt(): leaf litter makes even a plain walk loud
+   and a crouch-walk audible (standing still stays silent); riverside water
+   noise shrinks every sound the player makes (rings visibly smaller).
+   The suspension bridge is a high straight deck — falling off only drops
+   Wyatt to the riverbank below, never death. All rises ≤112px as before. */
+const CH3 = { id:3, worldW:5300, startX:90, meiX:40, clearX:5080, exitLabel:'渓谷の出口 →',
+  cliff:{ x:2350, w:30, topY:302 },
+  bridge:{ x:3680, y:340, w:900 },
+  leafZones: [ {x:300, w:700}, {x:1760, w:480}, {x:2950, w:620} ],
+  waterZones: [ {x:1480, w:260}, {x:2260, w:120}, {x:3600, w:1100} ],
+  solids: [
+    {x:-40, y:GROUND_Y, w:5380, h:120},                              // ground
+    {x:620, y:368, w:130, h:16},                                     // log pile platform (rise 84)
+    {x:1240, y:360, w:140, h:16},                                    // rock ledge by the campfire (rise 92)
+    {x:900, y:392, w:110, h:60, cover:true, rv:true},                // camper van
+    {x:1520, y:416, w:70, h:36, cover:true, picnic:true},            // picnic table
+    {x:1980, y:404, w:64, h:48, cover:true},                         // crate stack by the stream
+    {x:2350, y:302, w:30, h:150, cliff:true},                        // rock face — the fallen-log bridge point
+    {x:2760, y:368, w:130, h:16},                                    // far-bank ledge (rise 84)
+    {x:3120, y:404, w:64, h:48, cover:true},                         // crate
+    {x:3560, y:396, w:100, h:16},                                    // bridge approach step (rise 56)
+    {x:3680, y:340, w:900, h:14, bridge:true},                       // suspension bridge deck (rise 56)
+    {x:4620, y:396, w:100, h:16},                                    // far approach step
+    {x:4820, y:368, w:130, h:16},                                    // last ledge (rise 84)
+  ],
+  hideZones: [
+    {x:430, y:404, w:120, h:48, kind:'grass'}, {x:1080, y:404, w:120, h:48, kind:'grass'},
+    {x:1620, y:404, w:120, h:48, kind:'shadow'}, {x:2150, y:404, w:120, h:48, kind:'grass'},
+    {x:2680, y:404, w:120, h:48, kind:'grass'}, {x:3300, y:404, w:120, h:48, kind:'shadow'},
+    {x:3900, y:404, w:120, h:48, kind:'grass'}, {x:4480, y:404, w:120, h:48, kind:'grass'},
+    {x:4950, y:404, w:120, h:48, kind:'grass'},
+  ],
+  doors: [ {x:1250}, {x:2500}, {x:4780} ]  // camp gate / past the cliff / past the bridge
+};
+CH3.makePickups = function(){ return [
+  {x:330, y:GROUND_Y-14, kind:'cloth'}, {x:660, y:354, kind:'scrap'}, {x:960, y:GROUND_Y-14, kind:'bottle'},
+  {x:1120, y:GROUND_Y-14, kind:'bat'}, {x:1300, y:346, kind:'alcohol'}, {x:1560, y:GROUND_Y-14, kind:'cloth'},
+  {x:1860, y:GROUND_Y-14, kind:'brick'}, {x:2140, y:GROUND_Y-14, kind:'cloth'}, {x:2460, y:GROUND_Y-14, kind:'bottle'},
+  {x:2830, y:354, kind:'scrap'}, {x:3180, y:GROUND_Y-14, kind:'alcohol'}, {x:3480, y:GROUND_Y-14, kind:'cloth'},
+  {x:4200, y:326, kind:'brick'}, {x:4420, y:GROUND_Y-14, kind:'bat'}, {x:4700, y:GROUND_Y-14, kind:'cloth'},
+  {x:4880, y:354, kind:'scrap'}, {x:5000, y:GROUND_Y-14, kind:'alcohol'},
+].map(p=>({...p, taken:false, w:16, h:14})); };
+CH3.makeEnemies = function(){ return [
+  {type:'guard',    x:820,  y:GROUND_Y, min:620,  max:1180, dir:1,  hp:2},
+  {type:'listener', x:1980, y:GROUND_Y, min:1780, max:2220, dir:1,  hp:3},
+  {type:'inf',      x:2820, y:GROUND_Y, min:2620, max:3080, dir:-1, hp:2},
+  {type:'guard',    x:3300, y:GROUND_Y, min:3120, max:3520, dir:1,  hp:2},
+  {type:'guard',    x:4080, y:340,     min:3760, max:4480, dir:1,  hp:2},
+  {type:'inf',      x:4920, y:GROUND_Y, min:4720, max:5060, dir:-1, hp:2},
+].map(e=>({...e, w:26, h:52, state: e.type==='guard' ? 'patrol' : 'wander', detect:0, shootCd:0, stun:0, alertT:0, wanderT:Math.random()*2, speed: e.type==='guard' ? 0.85 : (e.type==='listener' ? 0.5 : 0.6), alive:true, reinforced:false, hearX:0, hearY:0, rushT:0})); };
+
+/* ---------- chapter 4 ― 冬 ― 吹雪の山道、雪の町、ヘイヴン・ジェネラル病院 ----------
+   Finale. Blizzard gusts shorten guard vision bands and swallow the
+   player's noise (rings shrink); between gusts everything is normal.
+   Snow muffles plain walking but a dash kicks up a loud spray. The
+   hospital's snow-choked vent is Mei's last gap (the chapter 1 callback):
+   she slips through and opens the door from inside. All rises ≤112px. */
+const CH4 = { id:4, worldW:5450, startX:90, meiX:40, clearX:5150, exitLabel:'処置室 →',
+  vent:{ x:4400, w:26, topY:302 },
+  keepsakeX:3680, choiceX:4940, escapeExitX:3980,
+  solids: [
+    {x:-40, y:GROUND_Y, w:5530, h:120},                              // snow-covered ground
+    {x:520, y:368, w:130, h:16},                                     // mountain ledge (rise 84)
+    {x:1080, y:360, w:140, h:16},                                    // rock shelf (rise 92)
+    {x:1640, y:368, w:130, h:16},                                    // mountain ledge
+    {x:760, y:404, w:84, h:48, cover:true, snow:true},               // snowdrift
+    {x:1980, y:404, w:84, h:48, cover:true, snow:true},              // snowdrift at the town edge
+    {x:2240, y:368, w:130, h:16},                                    // buried house porch (rise 84)
+    {x:2560, y:392, w:96, h:60, cover:true},                         // snow-buried car
+    {x:2920, y:360, w:140, h:16},                                    // rooftop ledge (rise 92)
+    {x:3340, y:368, w:130, h:16},                                    // town ledge
+    {x:3120, y:404, w:84, h:48, cover:true, snow:true},              // snowdrift
+    {x:3760, y:368, w:130, h:16},                                    // hospital approach ledge (rise 84)
+    {x:4120, y:404, w:84, h:48, cover:true, hosp:true},              // hospital reception desk (cover)
+    {x:4400, y:302, w:26, h:150, ventDoor:true},                     // locked hospital door — vent beside it
+    {x:4620, y:396, w:64, h:56, cover:true, hosp:true},              // ward cabinet (cover)
+    {x:4860, y:392, w:96, h:60, cover:true, hosp:true},              // hospital beds (cover)
+  ],
+  hideZones: [
+    {x:430, y:404, w:120, h:48, kind:'shadow'}, {x:1020, y:404, w:120, h:48, kind:'shadow'},
+    {x:1560, y:404, w:120, h:48, kind:'shadow'}, {x:2150, y:404, w:120, h:48, kind:'shadow'},
+    {x:2680, y:404, w:120, h:48, kind:'shadow'}, {x:3300, y:404, w:120, h:48, kind:'shadow'},
+    {x:3900, y:404, w:120, h:48, kind:'shadow'}, {x:4520, y:404, w:120, h:48, kind:'shadow'},
+    {x:4980, y:404, w:120, h:48, kind:'shadow'},
+  ],
+  doors: [ {x:1250}, {x:2500}, {x:3950} ]  // mountain hut / town gate / hospital entrance
+};
+CH4.makePickups = function(){ return [
+  {x:330, y:GROUND_Y-14, kind:'cloth'}, {x:580, y:354, kind:'scrap'}, {x:900, y:GROUND_Y-14, kind:'bottle'},
+  {x:1140, y:346, kind:'alcohol'}, {x:1420, y:GROUND_Y-14, kind:'bat'}, {x:1700, y:354, kind:'cloth'},
+  {x:2050, y:GROUND_Y-14, kind:'brick'}, {x:2300, y:354, kind:'scrap'}, {x:2620, y:GROUND_Y-14, kind:'cloth'},
+  {x:2980, y:346, kind:'alcohol'}, {x:3400, y:354, kind:'cloth'}, {x:3660, y:GROUND_Y-14, kind:'bottle'},
+  {x:3820, y:354, kind:'scrap'}, {x:4200, y:GROUND_Y-14, kind:'cloth'}, {x:4560, y:GROUND_Y-14, kind:'brick'},
+  {x:4920, y:GROUND_Y-14, kind:'alcohol'}, {x:5060, y:GROUND_Y-14, kind:'cloth'},
+].map(p=>({...p, taken:false, w:16, h:14})); };
+CH4.makeEnemies = function(){ return [
+  {type:'guard',    x:900,  y:GROUND_Y, min:680,  max:1180, dir:1,  hp:2},
+  {type:'listener', x:1500, y:GROUND_Y, min:1300, max:1780, dir:1,  hp:3},
+  {type:'inf',      x:2320, y:GROUND_Y, min:2120, max:2620, dir:-1, hp:2},
+  {type:'guard',    x:2980, y:GROUND_Y, min:2780, max:3300, dir:1,  hp:2},
+  {type:'listener', x:3480, y:GROUND_Y, min:3300, max:3720, dir:1,  hp:3},
+  {type:'guard',    x:4160, y:GROUND_Y, min:4020, max:4340, dir:1,  hp:2},
+  {type:'guard',    x:4680, y:GROUND_Y, min:4520, max:4820, dir:-1, hp:2},
+  {type:'guard',    x:5000, y:GROUND_Y, min:4880, max:5120, dir:1,  hp:2},
+].map(e=>({...e, w:26, h:52, state: e.type==='guard' ? 'patrol' : 'wander', detect:0, shootCd:0, stun:0, alertT:0, wanderT:Math.random()*2, speed: e.type==='guard' ? 0.85 : (e.type==='listener' ? 0.5 : 0.6), alive:true, reinforced:false, hearX:0, hearY:0, rushT:0})); };
+
+let CH = CH1;
+let solids = CH1.solids, hideZones = CH1.hideZones, doors = CH1.doors;
+function chapterDef(ch){ return ch === 4 ? CH4 : (ch === 3 ? CH3 : (ch === 2 ? CH2 : CH1)); }
+function loadChapter(ch){
+  CH = chapterDef(ch);
+  WORLD_W = CH.worldW;
+  solids = CH.solids; hideZones = CH.hideZones; doors = CH.doors;
+}
+
+/* ---------- game state ---------- */
+const RECIPES = {
+  knife:   { scrap:1, cloth:1, alcohol:0, label:'ナイフ' },
+  molotov: { scrap:0, cloth:1, alcohol:1, label:'火炎瓶' },
+  bandage: { scrap:0, cloth:2, alcohol:0, label:'包帯' },
+  gun:     { scrap:2, cloth:1, alcohol:0, label:'手製銃' },
+};
+let state;
+function freshState(ch){
+  const DEF = chapterDef(ch);
+  return {
+    mode:'title', time:0, camX:0, shake:0, chapter: DEF.id,
+    throwable:null, thrown:[], ladderDown:false, meiHold:false, climb:null,
+    player:{ x:DEF.startX, y:GROUND_Y, w:26, h:54, vx:0, vy:0, dir:1, hp:100, crouch:false, onGround:true,
+             bat:0, swingT:0, hurtT:0, grabbedBy:null, mash:0, mashNeed:8, dead:false, grabbing:null, grabT:0 },
+    mei:{ x:DEF.meiX, y:GROUND_Y, w:20, h:42, vx:0, vy:0, dir:1, mode:'follow', onGround:true, task:null, taskT:0, phase:0, stuckT:0, stuckX:DEF.meiX },
+    inv:{ scrap:0, cloth:0, alcohol:0, knife:0, molotov:0, bandage:0, gun:0 },
+    enemies: DEF.makeEnemies(), pickups: DEF.makePickups(),
+    bullets:[], bottles:[], fires:[], rings:[], parts:[], flashes:[], embers:[],
+    listen:100, listening:false, runLock:false, selItem:'molotov', aiming:false, healT:0,
+    crouchPad:false, craftOpen:false, craftSel:0, craftHold:0, menuAxPrev:0, pauseSel:0,
+    checkpoint:{ x:DEF.startX, meiX:DEF.meiX, doorIdx:-1 },
+    gateOpen:false, gateY:0, gateTaskDone:false,
+    windPhase:'calm', windT:5, windLevel:0,
+    ventOpen:false, keepsakeSeen:false, finaleDone:false, escape:false, escapeSpawned:false,
+    alertLevel:0, reinforcedSections:{}, kills:0, crafts:0,
+    msg:'', msgT:0, startedAt:0,
+  };
+}
+state = freshState(1);
+
+function setMsg(t, dur){ state.msg = t; state.msgT = dur||3; }
+function addRing(x, y, r, color){ state.rings.push({x, y, r:8, maxR:r, color:color||'255,255,255', life:1}); }
+function noise(x, y, radius, kind){
+  // chapter 4 blizzard: during a gust the wind swallows sound — every ring shrinks
+  if(state.chapter === 4 && state.windPhase === 'gust') radius = Math.round(radius * 0.55);
+  addRing(x, y, radius);
+  for(const e of state.enemies){
+    if(!e.alive) continue;
+    const d = Math.hypot(e.x - x, (e.y-26) - y);
+    if(d < radius){
+      if(e.type === 'listener'){
+        // blind but sound-specialised: any heard noise sends it rushing to the spot
+        if(e.stun <= 0 && e.state !== 'grabbed'){ e.hearX = x; e.hearY = y; e.state = 'rush'; e.rushT = 5; }
+        continue;
+      }
+      if(e.state==='patrol' || e.state==='wander'){ e.state = e.type==='guard' ? 'suspicious' : 'chaseLook'; e.lookX = x; e.alertT = 2.2; if(e.type==='inf' && kind==='loud') { e.state='chase'; } }
+    }
+  }
+}
+function damagePlayer(n){
+  const p = state.player;
+  if(p.hurtT > 0 && !p.grabbedBy) return;
+  p.hp -= n; p.hurtT = .35; sfx.hurt();
+  if(p.hp <= 0){ p.hp = 0; p.dead = true; setTimeout(respawn, 900); }
+}
+function respawn(){
+  const cp = state.checkpoint;
+  state.player.x = cp.x; state.player.y = GROUND_Y; state.player.hp = 70;
+  state.player.vx = state.player.vy = 0; state.player.dead = false; state.player.grabbedBy = null; state.player.grabbing = null;
+  state.climb = null;
+  for(const e of state.enemies){ if(e.state === 'grabbed') e.state = 'patrol'; }
+  state.mei.x = cp.meiX; state.mei.y = GROUND_Y; state.mei.task = null;
+  state.mei.stuckT = 0; state.mei.stuckX = cp.meiX;
+  state.bullets = []; state.bottles = [];
+  // enemies near the checkpoint reset to calm patrol
+  for(const e of state.enemies){ if(Math.abs(e.x - cp.x) < 1100){ e.state = e.type==='guard'?'patrol':'wander'; e.detect = 0; } }
+  setMsg('チェックポイントから再開', 2.5);
+}
+
+/* ---------- physics helpers ---------- */
+function collide(ent, dx, dy){
+  ent.x += dx;
+  for(const s of solids){
+    if(s.gate && state.gateOpen && state.gateY > 150) continue;
+    if(s.ventDoor && state.ventOpen) continue;
+    if(ent.x < s.x + s.w && ent.x + ent.w > s.x && ent.y - ent.h < s.y + s.h && ent.y > s.y){
+      if(dx > 0) ent.x = s.x - ent.w; else if(dx < 0) ent.x = s.x + s.w;
+    }
+  }
+  ent.y += dy;
+  ent.onGround = false;
+  for(const s of solids){
+    if(s.gate && state.gateOpen && state.gateY > 150) continue;
+    if(s.ventDoor && state.ventOpen) continue;
+    if(ent.x < s.x + s.w && ent.x + ent.w > s.x && ent.y - ent.h < s.y + s.h && ent.y > s.y){
+      if(dy > 0){ ent.y = s.y; ent.vy = 0; ent.onGround = true; }
+      else if(dy < 0){ ent.y = s.y + s.h + ent.h; ent.vy = 0; }
+    }
+  }
+  if(ent.x < 0) ent.x = 0;
+  if(ent.x > WORLD_W - ent.w) ent.x = WORLD_W - ent.w;
+}
+function losBlocked(x1, y1, x2, y2){
+  for(const s of solids){
+    if(!s.cover && !s.gate && !s.fence && !s.ventDoor) continue;
+    if(s.gate && state.gateOpen && state.gateY > 150) continue;
+    if(s.ventDoor && state.ventOpen) continue;
+    for(let t=0.1; t<1; t+=0.1){
+      const x = x1 + (x2-x1)*t, y = y1 + (y2-y1)*t;
+      if(x > s.x && x < s.x+s.w && y > s.y && y < s.y+s.h) return true;
+    }
+  }
+  return false;
+}
+function playerHidden(){
+  const p = state.player;
+  if(!p.crouch) return false;
+  for(const z of hideZones){ if(p.x + p.w > z.x && p.x < z.x + z.w && p.y > z.y) return true; }
+  return false;
+}
+/* chapter 3 ground zones: leaf litter is loud underfoot; riverside water
+   noise swallows the player's sound. Chapters 1–2 define no zones, so this
+   always returns false there and their noise behaviour is unchanged.
+   The water bonus only applies near ground level — not up on the bridge. */
+function zoneAt(x, y){
+  let leaf = false, water = false;
+  if(CH.leafZones) for(const z of CH.leafZones){ if(x >= z.x && x <= z.x + z.w){ leaf = true; break; } }
+  if(CH.waterZones && (y === undefined || y > GROUND_Y - 40)) for(const z of CH.waterZones){ if(x >= z.x && x <= z.x + z.w){ water = true; break; } }
+  return { leaf, water };
+}
+
+/* ---------- crafting / items ---------- */
+function canCraft(k){
+  const r = RECIPES[k];
+  return state.inv.scrap >= r.scrap && state.inv.cloth >= r.cloth && state.inv.alcohol >= r.alcohol;
+}
+function doCraft(k){
+  if(state.mode !== 'play') return;
+  if(!canCraft(k)){ setMsg('素材が足りない：' + RECIPES[k].label + '（くず鉄' + RECIPES[k].scrap + ' 布' + RECIPES[k].cloth + ' 酒' + RECIPES[k].alcohol + '）', 2.5); return; }
+  const r = RECIPES[k];
+  state.inv.scrap -= r.scrap; state.inv.cloth -= r.cloth; state.inv.alcohol -= r.alcohol;
+  state.inv[k]++; state.crafts++; sfx.craft();
+  setMsg(RECIPES[k].label + 'を作った', 2);
+}
+document.querySelectorAll('[data-craft]').forEach(b=> b.addEventListener('click', ()=>doCraft(b.dataset.craft)));
+document.getElementById('btnMei').addEventListener('click', toggleMei);
+document.getElementById('btnRestart').addEventListener('click', ()=>{ if(state.mode==='play') respawn(); });
+function toggleMei(){
+  if(state.mei.task) return;
+  state.mei.mode = state.mei.mode === 'follow' ? 'wait' : 'follow';
+  setMsg(state.mei.mode === 'follow' ? 'メイ：ついて来る' : 'メイ：ここで待つ', 1.6);
+}
+
+/* ---------- combat actions ---------- */
+function swingBat(){
+  const p = state.player;
+  if(p.bat <= 0 || p.swingT > 0) return;
+  p.swingT = .28; sfx.swing(); noise(p.x + p.w/2, p.y - 30, 90);
+  const hx = p.dir > 0 ? p.x + p.w : p.x - 30;
+  for(const e of state.enemies){
+    if(!e.alive) continue;
+    if(e.x < hx + 34 && e.x + e.w > hx && Math.abs(e.y - p.y) < 60){
+      e.hp--; e.stun = 1.2; e.state = 'stunned'; p.bat--; sfx.hit();
+      state.parts.push({x:e.x+13, y:e.y-40, vx:(Math.random()-.5)*2, vy:-3, life:.6, c:'#d84f35'});
+      if(e.hp <= 0){ e.alive = false; state.kills++; setMsg(e.type==='guard' ? '見張りを倒した' : '感染者を倒した', 1.6); }
+      if(p.bat <= 0) setMsg('鈍器が壊れた', 1.8);
+    }
+  }
+}
+/* grab an unaware guard from behind (Y), then finish with the knife (X) */
+function tryGrab(){
+  const p = state.player;
+  for(const e of state.enemies){
+    if(!e.alive || e.type !== 'guard') continue;
+    const behind = (p.x < e.x && e.dir < 0) || (p.x > e.x && e.dir > 0) || Math.abs(p.x - e.x) < 20;
+    if(Math.abs(p.x - e.x) < 42 && Math.abs(p.y - e.y) < 40 && e.detect < 55 && behind){
+      p.grabbing = e; p.grabT = 4; e.state = 'grabbed';
+      setMsg('掴んだ！ X／Jでナイフキル（放っておくと振りほどかれる）', 2.4);
+      return true;
+    }
+  }
+  return false;
+}
+function grabKill(){
+  const p = state.player, e = p.grabbing;
+  if(!e) return;
+  if(state.inv.knife <= 0){ setMsg('ナイフがない！ クラフト（Back）で作ろう', 2); return; }
+  e.alive = false; state.inv.knife--; state.kills++; p.grabbing = null; sfx.hit();
+  p.killAt = state.time;
+  for(let i = 0; i < 6; i++) state.parts.push({x:e.x + 13, y:e.y - 30, vx:(Math.random()-.5)*3, vy:-2 - Math.random()*2, life:.4, c:'#f4f1e6'});
+  setMsg('ステルスキル ― 静かに仕留めた（ナイフ消費）', 2.2);
+}
+function releaseGrab(alert){
+  const p = state.player, e = p.grabbing;
+  if(!e) return;
+  p.grabbing = null;
+  if(e.alive){ e.state = alert ? 'suspicious' : 'patrol'; if(alert) e.detect = Math.max(e.detect, 80); }
+}
+/* item selection (d-pad) */
+const ITEM_ORDER = ['molotov','gun','bandage'];
+const ITEM_LABEL = { molotov:'火炎瓶', gun:'手製銃', bandage:'包帯' };
+/* throwable (bottle / brick): carried separately from craft items, max 1.
+   LT aims, RT throws; it lands with a loud noise that draws the sound-type
+   infected and makes human guards turn and grow suspicious. */
+const THROW_LABEL = { bottle:'空き瓶', brick:'レンガ' };
+function throwThrowable(){
+  const p = state.player;
+  if(!state.throwable) return;
+  state.thrown.push({ x:p.x + p.w/2, y:p.y - 46, vx:p.dir * 5.2, vy:-4.5, kind:state.throwable });
+  setMsg(THROW_LABEL[state.throwable] + 'を投げた ― 着地点の音に注意', 1.6);
+  state.throwable = null;
+  noiseBurst(.06, .05);
+}
+function cycleItem(d){
+  let i = ITEM_ORDER.indexOf(state.selItem);
+  i = (i + d + ITEM_ORDER.length) % ITEM_ORDER.length;
+  state.selItem = ITEM_ORDER[i];
+  setMsg('選択中アイテム：' + ITEM_LABEL[state.selItem] + ' ×' + state.inv[state.selItem] + '（RTで使う）', 1.4);
+}
+/* craft menu (Back) */
+const CRAFT_ORDER = ['knife','molotov','bandage','gun'];
+function renderCraftMenu(){
+  const list = document.getElementById('craftList');
+  if(!list) return;
+  list.innerHTML = CRAFT_ORDER.map((k, i)=>{
+    const r = RECIPES[k], parts = [];
+    if(r.scrap) parts.push('くず鉄' + r.scrap);
+    if(r.cloth) parts.push('布' + r.cloth);
+    if(r.alcohol) parts.push('酒' + r.alcohol);
+    return '<div class="craftrow' + (i === state.craftSel ? ' sel' : '') + (canCraft(k) ? '' : ' cant') + '"><b>' +
+      r.label + '</b><span>' + parts.join('＋') + ' ― 所持 ×' + state.inv[k] + (canCraft(k) ? '' : '（素材不足）') + '</span></div>';
+  }).join('');
+  document.getElementById('craftMats').textContent = '素材 ― くず鉄 ' + state.inv.scrap + '／布 ' + state.inv.cloth + '／酒 ' + state.inv.alcohol;
+  document.getElementById('craftProg').style.width = Math.min(100, state.craftHold / 0.6 * 100) + '%';
+}
+function handleCraftMenu(dt, gp){
+  const ay = gp ? (gp.axes[1] || 0) : 0;
+  let nav = 0;
+  if(padPressed[12] || pressedOnce['ArrowUp'] || pressedOnce['KeyW']) nav = -1;
+  if(padPressed[13] || pressedOnce['ArrowDown'] || pressedOnce['KeyS']) nav = 1;
+  if(ay < -0.5 && state.menuAxPrev >= -0.5) nav = -1;
+  if(ay >  0.5 && state.menuAxPrev <=  0.5) nav = 1;
+  state.menuAxPrev = ay;
+  if(nav){ state.craftSel = (state.craftSel + nav + CRAFT_ORDER.length) % CRAFT_ORDER.length; state.craftHold = 0; }
+  if(padPressed[1]){ state.craftOpen = false; return; }   // B closes too
+  const holding = (gp && gp.buttons[0] && gp.buttons[0].pressed) || keys['Enter'];
+  if(holding){
+    state.craftHold += dt;
+    if(state.craftHold >= 0.6){ doCraft(CRAFT_ORDER[state.craftSel]); state.craftHold = 0; }
+  } else state.craftHold = 0;
+  renderCraftMenu();
+}
+/* pause (Start) */
+let pauseAxPrev = 0;
+function openPause(){
+  if(state.mode !== 'play') return;
+  state.mode = 'pause'; state.pauseSel = 0;
+  document.getElementById('pauseScreen').classList.remove('hidden');
+  renderPause();
+}
+function closePause(){
+  state.mode = 'play';
+  document.getElementById('pauseScreen').classList.add('hidden');
+}
+function renderPause(){
+  document.getElementById('resumeBtn').classList.toggle('sel', state.pauseSel === 0);
+  document.getElementById('cpBtn').classList.toggle('sel', state.pauseSel === 1);
+  const ab = document.getElementById('ambBtn');
+  if(ab){
+    ab.classList.toggle('sel', state.pauseSel === 2);
+    ab.textContent = '環境音の音量：' + AMB_LABELS[ambVolIdx] + '（Aで切替）';
+  }
+}
+function handlePauseInput(gp){
+  const ay = gp ? (gp.axes[1] || 0) : 0;
+  let nav = 0;
+  if(padPressed[12] || pressedOnce['ArrowUp'] || pressedOnce['KeyW'] || (ay < -0.5 && pauseAxPrev >= -0.5)) nav = -1;
+  if(padPressed[13] || pressedOnce['ArrowDown'] || pressedOnce['KeyS'] || (ay > 0.5 && pauseAxPrev <= 0.5)) nav = 1;
+  pauseAxPrev = ay;
+  if(nav) state.pauseSel = (state.pauseSel + nav + 3) % 3;
+  renderPause();
+  if(padPressed[9] || pressedOnce['Escape'] || pressedOnce['KeyP']){ closePause(); return; }
+  if(padPressed[0] || pressedOnce['Enter'] || pressedOnce['Space']){
+    if(state.pauseSel === 0) closePause();
+    else if(state.pauseSel === 1){ closePause(); respawn(); }
+    else cycleAmbVol();
+  }
+}
+function throwMolotov(){
+  const p = state.player;
+  if(state.inv.molotov <= 0) return;
+  state.inv.molotov--;
+  state.bottles.push({ x:p.x + p.w/2, y:p.y - 46, vx:p.dir * 5.2, vy:-4.5 });
+}
+function useBandage(){
+  const p = state.player;
+  if(state.inv.bandage <= 0 || p.hp >= 100) return;
+  state.inv.bandage--; p.hp = Math.min(100, p.hp + 40); sfx.craft();
+  setMsg('包帯で手当てした', 1.6);
+}
+function fireGun(){
+  const p = state.player;
+  if(state.inv.gun <= 0) return;
+  state.inv.gun--; sfx.shot(); state.shake = 6;
+  noise(p.x + p.w/2, p.y - 34, 430, 'loud');
+  const y = p.y - 36;
+  let best = null, bd = 1e9;
+  for(const e of state.enemies){
+    if(!e.alive) continue;
+    const dx = (e.x + e.w/2) - (p.x + p.w/2);
+    if(Math.sign(dx) === p.dir && Math.abs(dx) < 460 && Math.abs((e.y-26) - y) < 44){
+      if(Math.abs(dx) < bd && !losBlocked(p.x + p.w/2, y, e.x + e.w/2, e.y - 26)){ bd = Math.abs(dx); best = e; }
+    }
+  }
+  state.parts.push({x:p.x + p.w/2 + p.dir*20, y, vx:p.dir*3, vy:0, life:.15, c:'#ffd76e'});
+  state.flashes.push({x:p.x + p.w/2 + p.dir*24, y, dir:p.dir, t:.09});
+  if(best){ best.alive = false; state.kills++; setMsg('手製銃が命中 ― 倒した（大音量で敵が寄ってくる）', 2.4); }
+  else setMsg('手製銃を撃った ― 外れた（大音量！）', 2.2);
+}
+
+/* ---------- update ---------- */
+function update(dt){
+  const p = state.player, m = state.mei;
+  state.time += dt;
+  if(state.msgT > 0) state.msgT -= dt;
+  if(state.shake > 0) state.shake = Math.max(0, state.shake - dt*22);
+
+  /* --- chapter 4 blizzard cycle: calm → warning (予兆) → gust → calm --- */
+  if(state.chapter === 4){
+    state.windT -= dt;
+    if(state.windT <= 0){
+      if(state.windPhase === 'calm'){ state.windPhase = 'warn'; state.windT = 2; }
+      else if(state.windPhase === 'warn'){ state.windPhase = 'gust'; state.windT = 4 + Math.random()*2; setMsg('突風！ 見張りの視界は短く、音は風に紛れる ― 今が進むとき', 2.2); }
+      else { state.windPhase = 'calm'; state.windT = 4 + Math.random()*3; }
+    }
+    state.windLevel += ((state.windPhase === 'gust' ? 1 : 0) - state.windLevel) * Math.min(1, dt*2.2);
+  }
+
+  const gp = pollPad();
+  const ax = gp ? (gp.axes[0]||0) : 0;
+  const padBtn = i => gp && gp.buttons[i] && gp.buttons[i].pressed;
+  const padOnce = i => !!padPressed[i];
+
+  /* --- input mapping (TLOU layout read onto an Xbox pad) --- */
+  const left  = keys['KeyA'] || keys['ArrowLeft']  || ax < -0.3 || touchState.left;
+  const right = keys['KeyD'] || keys['ArrowRight'] || ax >  0.3 || touchState.right;
+  const down  = keys['KeyS'] || keys['ArrowDown']  || touchState.down;
+
+  /* --- pause (Start) --- */
+  if(padOnce(9) || pressedOnce['Escape'] || pressedOnce['KeyP']){ openPause(); pressedOnce = {}; updateHUD(); return; }
+
+  /* --- craft menu (Back toggles) --- */
+  if(padOnce(8) || pressedOnce['KeyC']){ state.craftOpen = !state.craftOpen; state.craftHold = 0; }
+  if(state.craftOpen){ handleCraftMenu(dt, gp); pressedOnce = {}; updateHUD(); return; }
+
+  const jumpP = pressedOnce['Space'] || pressedOnce['KeyW'] || pressedOnce['ArrowUp'] || padOnce(0) || pressedOnce['touch_jump'];
+  const actP  = pressedOnce['KeyE'] || padOnce(3) || pressedOnce['touch_act'];   // Y:調べる・拾う・掴む
+  const atkP  = pressedOnce['KeyJ'] || padOnce(2) || pressedOnce['touch_atk'];   // X:近接・ナイフキル・連打
+  const wantListen = keys['KeyQ'] || padBtn(5) || listenBtnHeld || touchState.listen;   // RB長押し：聞き耳
+  if(padOnce(1)) state.crouchPad = !state.crouchPad;                            // B：しゃがみ切替
+  if(padOnce(10)){ state.runLock = !state.runLock; setMsg(state.runLock ? 'ダッシュ（L3）：ON' : 'ダッシュ（L3）：OFF', 1.2); }   // ダッシュはL3のみ
+  const run = keys['ShiftLeft'] || keys['ShiftRight'] || state.runLock;
+  state.aiming = padBtn(6);                                                     // LT長押し：狙う
+
+  if(pressedOnce['Digit1']) doCraft('knife');
+  if(pressedOnce['Digit2']) doCraft('molotov');
+  if(pressedOnce['Digit3']) doCraft('bandage');
+  if(pressedOnce['Digit4']) doCraft('gun');
+  if(pressedOnce['KeyT'] || padOnce(4)) toggleMei();                            // LB：メイ指示
+  /* 十字キー：使うアイテムの切替（はしご昇降中は上下を昇降に譲る） */
+  if(!state.climb){
+    if(padOnce(12) || padOnce(14)) cycleItem(-1);
+    if(padOnce(13) || padOnce(15)) cycleItem(1);
+  }
+  /* アイテム使用：キーボードは直接キー、パッドはRTで選択中アイテム */
+  if(pressedOnce['KeyK']) throwMolotov();
+  if(pressedOnce['KeyH']) useBandage();
+  if(pressedOnce['KeyL']) fireGun();
+  if(pressedOnce['KeyF']) throwThrowable();
+  if(padOnce(7)){
+    if(state.throwable) throwThrowable();   // a carried throwable takes priority over the selected item
+    else if(state.selItem === 'molotov') throwMolotov();
+    else if(state.selItem === 'gun') fireGun();
+  }
+  if(state.selItem === 'bandage' && padBtn(7)){
+    state.healT += dt;
+    if(state.healT >= 0.9){ useBandage(); state.healT = 0; }
+  } else state.healT = 0;
+  if(pressedOnce['KeyR']) respawn();
+
+  /* --- listen mode --- */
+  state.listening = wantListen && state.listen > 2 && !p.grabbedBy;
+  if(state.listening) state.listen = Math.max(0, state.listen - 26*dt);
+  else state.listen = Math.min(100, state.listen + 11*dt);
+
+  /* --- grabbed by infected --- */
+  if(p.grabbedBy){
+    if(p.grabbing) releaseGrab(false);
+    const g = p.grabbedBy;
+    if(!g.alive){ p.grabbedBy = null; }
+    else{
+      p.hp -= 9*dt; p.hurtT = .2;
+      if(actP || atkP){ p.mash++; beep(300 + p.mash*30, .05, 'square', .04); }
+      if(p.mash >= p.mashNeed){
+        p.grabbedBy = null; p.mash = 0; g.stun = 2.4; g.state = 'stunned';
+        g.x += (g.x < p.x ? -50 : 50); sfx.escape(); setMsg('振りほどいた！', 1.6);
+      }
+      if(p.hp <= 0){ p.hp = 0; p.dead = true; p.grabbedBy = null; setTimeout(respawn, 900); }
+    }
+  } else if(state.climb){
+    /* --- ladder climbing (chapter 2 rope ladder / chapter 3 stepladder) --- */
+    const F = state.climb.ref || CH2.fence;
+    const upIn = keys['KeyW'] || keys['ArrowUp'] || (gp && (gp.axes[1]||0) < -0.4) || padBtn(12);
+    const dnIn = keys['KeyS'] || keys['ArrowDown'] || (gp && (gp.axes[1]||0) > 0.4) || padBtn(13);
+    let cvy = 0; if(upIn) cvy = -2.4; if(dnIn) cvy = 2.4;
+    p.vx = 0; p.vy = 0; p.crouch = false; p.h = 54; p.dir = state.climb.side === 0 ? 1 : -1;
+    p.y += cvy;
+    if(p.y <= F.topY + 2){
+      p.y = F.topY + 2;
+      if(cvy < 0){ // over the top: cross to the other face of the fence
+        state.climb.side = state.climb.side === 0 ? 1 : 0;
+        p.x = state.climb.side === 0 ? F.x - p.w - 4 : F.x + F.w + 4;
+        p.y = F.topY + 8;
+      }
+    }
+    if(p.y < GROUND_Y - 30) state.climb.left = true;   // actually left the ground
+    if(p.y >= GROUND_Y){ p.y = GROUND_Y; if(state.climb.left){ state.climb = null; p.onGround = true; } }
+    if(jumpP && state.climb){ state.climb = null; p.vy = -5; p.onGround = false; }
+    if(p.swingT > 0) p.swingT -= dt;
+    if(p.hurtT > 0) p.hurtT -= dt;
+  } else {
+    /* --- movement --- */
+    p.crouch = (!!down || state.crouchPad) && p.onGround;
+    const spd = (p.crouch ? 1.15 : (run ? 3.1 : 2.05)) * (p.grabbing ? 0.55 : 1);
+    p.vx = 0;
+    if(left){ p.vx = -spd; p.dir = -1; }
+    if(right){ p.vx = spd; p.dir = 1; }
+    if(jumpP && p.onGround){ state.crouchPad = false; p.crouch = false; p.vy = -11.4; p.onGround = false; }
+    p.vy += 0.55; if(p.vy > 14) p.vy = 14;
+    const h = p.crouch ? 38 : 54; p.h = h;
+    const prevVy = p.vy, wasGround = p.onGround;
+    collide(p, p.vx, p.vy);
+    const zn = zoneAt(p.x + p.w/2, p.y);
+    if(!wasGround && p.onGround){ // landing noise: a full jump lands LOUD, a small drop quieter
+      let lr = prevVy > 6 ? 118 : (prevVy > 3 ? 55 : 0);
+      if(lr && zn.leaf) lr = Math.max(lr, 105);            // leaves crunch even on a soft landing
+      if(lr && zn.water) lr = Math.round(lr * .45);        // the stream swallows most of it
+      if(lr) noise(p.x + p.w/2, p.y - 4, lr, (prevVy > 6 && !zn.water) ? 'loud' : undefined);
+    }
+    if(p.vx !== 0 && p.onGround){
+      if(!p.crouch){
+        let wr = run ? 110 : 42;
+        if(zn.leaf) wr = run ? 150 : 105;                  // leaf litter: a plain walk is LOUD, a run worse
+        if(zn.water) wr = Math.round(wr * .45);            // riverside: the water noise covers footsteps
+        if(state.chapter === 4) wr = run ? 148 : 26;       // snow: walking is muffled, a dash kicks up a loud spray
+        noise(p.x + p.w/2, p.y - 8, wr);
+      } else if(zn.leaf){
+        noise(p.x + p.w/2, p.y - 8, zn.water ? 18 : 40);   // crouch-walk in leaves: a small crunch (silent elsewhere)
+      }
+    }
+    if(p.swingT > 0) p.swingT -= dt;
+    if(p.hurtT > 0) p.hurtT -= dt;
+    if(atkP && !p.grabbing) swingBat();
+
+    /* --- interact (Y / E) --- */
+    if(actP && !p.grabbing){
+      if(!tryGrab()){
+        if(state.chapter === 1){
+          // gate puzzle: send Mei through the crawl gap
+          if(!state.gateOpen && Math.abs(p.x - GAP.gateX) < 110 && !m.task){
+            if(Math.abs(m.x - GAP.gateX) < 320){
+              m.task = 'gap'; m.taskT = 0; setMsg('メイが隙間をくぐっている…', 2.5);
+            } else setMsg('メイが遠い。「ついて来る」にして近くへ連れて来よう', 2.5);
+          }
+        } else if(state.chapter === 2) {
+          // chapter 2: Mei climbs the tall fence first and lowers a rope ladder,
+          // or Wyatt climbs the ladder once it is down (either face works)
+          const F = CH2.fence;
+          if(!state.ladderDown && Math.abs(p.x - F.x) < 110 && !m.task){
+            if(Math.abs(m.x - F.x) < 320){
+              m.task = 'fence'; m.phase = 0; m.taskT = 0; setMsg('メイがフェンスを登っている…', 2.5);
+            } else setMsg('メイが遠い。「ついて来る」にして近くへ連れて来よう', 2.5);
+          } else if(state.ladderDown && Math.abs((p.x + p.w/2) - F.x) < 60){
+            state.climb = { side: p.x < F.x ? 0 : 1, left:false, ref: CH2.fence };
+            p.x = state.climb.side === 0 ? F.x - p.w - 4 : F.x + F.w + 4;
+            p.vx = 0; p.vy = 0; state.crouchPad = false;
+            setMsg('ロープはしご ― ↑↓で登り降り、頂上で向こう側へ渡る', 2.4);
+          }
+        } else if(state.chapter === 4) {
+          // chapter 4: Mei slips through the snow-choked vent and opens the
+          // locked hospital door from inside (the chapter 1 gap, recalled)
+          const V = CH4.vent;
+          if(!state.ventOpen && Math.abs(p.x - V.x) < 110 && !m.task){
+            if(Math.abs(m.x - V.x) < 320){
+              m.task = 'vent'; m.phase = 0; m.taskT = 0; setMsg('メイが雪の換気口を抜けている…', 2.5);
+            } else setMsg('メイが遠い。「ついて来る」にして近くへ連れて来よう', 2.5);
+          }
+        } else {
+          // chapter 3: Mei crosses the narrow fallen log first, then knocks
+          // the stepladder down so Wyatt can climb the rock face
+          const C = CH3.cliff;
+          if(!state.ladderDown && Math.abs(p.x - C.x) < 110 && !m.task){
+            if(Math.abs(m.x - C.x) < 320){
+              m.task = 'log'; m.phase = 0; m.taskT = 0; setMsg('メイが倒木を渡っている…', 2.5);
+            } else setMsg('メイが遠い。「ついて来る」にして近くへ連れて来よう', 2.5);
+          } else if(state.ladderDown && Math.abs((p.x + p.w/2) - C.x) < 60){
+            state.climb = { side: p.x < C.x ? 0 : 1, left:false, ref: CH3.cliff };
+            p.x = state.climb.side === 0 ? C.x - p.w - 4 : C.x + C.w + 4;
+            p.vx = 0; p.vy = 0; state.crouchPad = false;
+            setMsg('脚立 ― ↑↓で登り降り、頂上で向こう側へ渡る', 2.4);
+          }
+        }
+      }
+    }
+    /* --- holding a grabbed enemy: X finishes with the knife --- */
+    if(p.grabbing){
+      const ge = p.grabbing;
+      if(!ge.alive){ p.grabbing = null; }
+      else {
+        ge.x = p.x + (p.dir > 0 ? p.w - 4 : -ge.w + 4); ge.y = p.y; ge.dir = -p.dir;
+        p.grabT -= dt;
+        if(atkP) grabKill();
+        else if(p.grabT <= 0){ releaseGrab(true); setMsg('振りほどかれた！ 気づかれたかもしれない', 2); }
+      }
+    }
+    // pickups
+    for(const pk of state.pickups){
+      if(pk.taken) continue;
+      if(Math.abs((pk.x) - (p.x + 4)) < 34 && Math.abs(pk.y - (p.y - 14)) < 46){
+        if(pk.kind === 'bat'){
+          if(actP && p.bat <= 0){ pk.taken = true; p.bat = 3; sfx.pickup(); setMsg('鈍器（木のバット）を拾った ― 耐久3', 2.2); }
+        } else if(pk.kind === 'bottle' || pk.kind === 'brick'){
+          if(!state.throwable){
+            pk.taken = true; state.throwable = pk.kind; sfx.pickup();
+            setMsg(THROW_LABEL[pk.kind] + 'を拾った ― LTで狙ってRTで投げる（着地点の音で敵を釣れる）', 2.6);
+          }
+        } else {
+          pk.taken = true; state.inv[pk.kind]++; sfx.pickup();
+          setMsg({scrap:'くず鉄を拾った', cloth:'布を拾った', alcohol:'酒瓶を拾った'}[pk.kind], 1.4);
+        }
+      }
+    }
+  }
+
+  /* --- Mei AI --- */
+  updateMei(dt);
+  /* --- gate opening animation --- */
+  if(state.gateOpen && state.gateY < 190) state.gateY += 60*dt;
+
+  /* --- enemies --- */
+  let anyAlert = false;
+  for(const e of state.enemies){
+    if(!e.alive) continue;
+    if(e.type === 'guard') updateGuard(e, dt);
+    else if(e.type === 'listener') updateListener(e, dt);
+    else updateInf(e, dt);
+    if(e.state === 'alert' || e.state === 'chase' || e.state === 'rush') anyAlert = true;
+  }
+  document.getElementById('alertFlash').classList.toggle('on', anyAlert);
+
+  /* --- bullets --- */
+  for(const b of state.bullets){
+    b.x += b.vx; b.life -= dt;
+    let hitWall = false;
+    for(const s of solids){ if(s.cover && b.x > s.x && b.x < s.x + s.w && b.y > s.y && b.y < s.y + s.h) hitWall = true; }
+    if(hitWall){ b.life = 0; continue; }
+    if(!p.grabbedBy && b.x > p.x && b.x < p.x + p.w && b.y > p.y - p.h && b.y < p.y){
+      b.life = 0; damagePlayer(13);
+    }
+    if(m.task !== 'gap' && b.x > m.x && b.x < m.x + m.w && b.y > m.y - m.h && b.y < m.y){
+      b.life = 0; // Mei scrambles away unharmed (she is never a target)
+    }
+  }
+  state.bullets = state.bullets.filter(b => b.life > 0);
+
+  /* --- molotov bottles & fires --- */
+  for(const bo of state.bottles){
+    bo.vy += 0.4; bo.x += bo.vx; bo.y += bo.vy;
+    bo.trail = bo.trail || []; bo.trail.push({x:bo.x, y:bo.y}); if(bo.trail.length > 14) bo.trail.shift();
+    if(bo.y >= GROUND_Y - 6){
+      bo.dead = true; sfx.shot(); noise(bo.x, GROUND_Y - 10, 300, 'loud');
+      state.fires.push({ x: bo.x - 44, y: GROUND_Y - 34, w: 88, h: 34, t: 3.2 });
+    }
+  }
+  state.bottles = state.bottles.filter(b => !b.dead);
+
+  /* --- thrown bottles & bricks: land with a big noise ring --- */
+  for(const t of state.thrown){
+    const prevY = t.y;
+    t.vy += 0.4; t.x += t.vx; t.y += t.vy;
+    let impactY = null;
+    if(t.y >= GROUND_Y - 4) impactY = GROUND_Y - 4;
+    else for(const s of solids){
+      if(s.gate || s.fence) continue;
+      if(t.vy > 0 && prevY <= s.y && t.y >= s.y && t.x > s.x && t.x < s.x + s.w){ impactY = s.y; break; }
+    }
+    if(impactY !== null){
+      t.dead = true;
+      noise(t.x, impactY, 270, 'loud');
+      if(t.kind === 'bottle'){ noiseBurst(.16, .18); beep(1750, .09, 'square', .05, 900); }
+      else { noiseBurst(.09, .12); beep(120, .1, 'sawtooth', .07, 60); }
+      for(let i = 0; i < 6; i++) state.parts.push({ x:t.x, y:impactY - 4, vx:(Math.random()-.5)*3.4, vy:-1 - Math.random()*2.4, life:.35, c: t.kind === 'bottle' ? '#bfe8f2' : '#c47a5a' });
+    }
+  }
+  state.thrown = state.thrown.filter(t => !t.dead);
+  for(const f of state.fires){
+    f.t -= dt;
+    for(const e of state.enemies){
+      if(e.alive && e.x + e.w > f.x && e.x < f.x + f.w && e.y > f.y){ e.hp -= 2.2*dt; if(e.hp <= 0){ e.alive = false; state.kills++; } }
+    }
+    if(p.x + p.w > f.x && p.x < f.x + f.w && p.y > f.y) damagePlayer(16*dt + 2);
+  }
+  for(const f of state.fires) if(f.t <= 0) state.embers.push({ x:f.x, w:f.w, t:2.6 });
+  state.fires = state.fires.filter(f => f.t > 0);
+  for(const em of state.embers) em.t -= dt;
+  state.embers = state.embers.filter(em => em.t > 0);
+  for(const fl of state.flashes) fl.t -= dt;
+  state.flashes = state.flashes.filter(fl => fl.t > 0);
+
+  /* --- rings & particles --- */
+  for(const r of state.rings){ r.r += (r.maxR - r.r) * 6*dt + 40*dt; r.life -= dt*1.4; }
+  state.rings = state.rings.filter(r => r.life > 0);
+  for(const pt of state.parts){ pt.x += pt.vx; pt.y += pt.vy; pt.vy += .3; pt.life -= dt; }
+  state.parts = state.parts.filter(pt => pt.life > 0);
+
+  /* --- checkpoints --- */
+  doors.forEach((d, i)=>{
+    if(p.x > d.x && state.checkpoint.doorIdx < i){
+      state.checkpoint = { x: d.x + 26, meiX: d.x - 30, doorIdx: i };
+      sfx.door(); setMsg('チェックポイント ― 扉' + (i+1), 2.2);
+    }
+  });
+
+  /* --- chapter 3 zone hints (leaf litter / riverside), once per entry --- */
+  if(state.chapter === 3){
+    const zn2 = zoneAt(p.x + p.w/2, p.y);
+    if(zn2.leaf && !state._wasLeaf && state.msgT <= 0) setMsg('落ち葉の上 ― 歩くと大きな音がする（しゃがみ歩きなら小さい音、止まれば無音）', 2.8);
+    else if(zn2.water && !state._wasWater && state.msgT <= 0) setMsg('川辺 ― 水音が足音をかき消している（音の届く範囲が狭い）', 2.8);
+    state._wasLeaf = zn2.leaf; state._wasWater = zn2.water;
+  }
+
+  /* --- clear / chapter 4 finale triggers --- */
+  if(state.chapter === 4){
+    // Wyatt's past, revealed through his daughter's keepsake on the hospital approach
+    if(!state.keepsakeSeen && p.x > CH4.keepsakeX){
+      state.keepsakeSeen = true;
+      openKeepsake();
+      pressedOnce = {};
+      updateHUD();
+      return;
+    }
+    // the final choice, inside the hospital
+    if(state.ventOpen && !state.finaleDone && !state.escape && p.x > CH4.choiceX){
+      if(Math.abs(m.x - p.x) < 260){ openFinale(); pressedOnce = {}; updateHUD(); return; }
+      else if(state.msgT <= 0) setMsg('処置室の前だ。メイを待とう ― 近くに来るまで進めない', 2);
+    }
+    // escape ending: slip back out through the hospital entrance
+    if(state.escape && p.x < CH4.escapeExitX){
+      state.escape = false; state.finaleDone = true;
+      showEpilogue('escape');
+      pressedOnce = {};
+      updateHUD();
+      return;
+    }
+  } else if(p.x > CH.clearX){
+    if(Math.abs(m.x - p.x) < 260) showClear();
+    else if(state.msgT <= 0) setMsg('出口だ。メイを待とう ― 近くに来るまで進めない', 2);
+  }
+
+  /* --- camera --- */
+  const target = Math.max(0, Math.min(WORLD_W - VW, p.x - VW*0.42));
+  state.camX += (target - state.camX) * Math.min(1, dt*6);
+
+  pressedOnce = {};
+  updateHUD();
+}
+
+/* ---------- sound-specialised infected (chapter 2) ----------
+   Blind: no vision at all. noise() points it at the last sound it heard;
+   it rushes there, searches, then settles back to wandering. Touching the
+   player grabs him exactly like the fast type (mash X/E to break free). */
+function updateListener(e, dt){
+  const p = state.player;
+  if(e.stun > 0){ e.stun -= dt; if(e.stun <= 0) e.state = 'wander'; return; }
+  if(p.grabbedBy === e) return;
+  const tryGrabPlayer = ()=>{
+    if(Math.abs(p.x - e.x) < 30 && Math.abs(p.y - e.y) < 44 && !p.dead && !p.grabbedBy){
+      p.grabbedBy = e; p.mash = 0; sfx.grab();
+      setMsg('掴まれた！ X／Eを連打して振りほどけ！', 2.5);
+      return true;
+    }
+    return false;
+  };
+  if(e.state === 'rush'){
+    const dx = e.hearX - (e.x + e.w/2);
+    e.dir = dx > 0 ? 1 : -1;
+    if(Math.abs(dx) > 14) e.x += e.dir * 3.3;
+    else { e.state = 'search'; e.alertT = 2.6; }
+    e.rushT -= dt;
+    if(e.rushT <= 0 && e.state === 'rush'){ e.state = 'search'; e.alertT = 2; }
+    tryGrabPlayer();
+    return;
+  }
+  if(e.state === 'search'){
+    e.alertT -= dt;
+    e.wanderT -= dt;
+    if(e.wanderT <= 0){ e.wanderT = .7 + Math.random()*.8; e.dir *= -1; }
+    if(tryGrabPlayer()) return;
+    if(e.alertT <= 0) e.state = 'wander';
+    return;
+  }
+  // wander (also its initial state)
+  e.state = 'wander';
+  e.wanderT -= dt;
+  if(e.wanderT <= 0){ e.wanderT = 1.8 + Math.random()*2.2; if(Math.random() < .5) e.dir *= -1; }
+  e.x += e.dir * e.speed;
+  if(e.x < e.min){ e.x = e.min; e.dir = 1; }
+  if(e.x > e.max){ e.x = e.max; e.dir = -1; }
+  tryGrabPlayer();
+}
+
+function updateMei(dt){
+  const p = state.player, m = state.mei;
+  if(m.task === 'fence'){
+    // chapter 2: Mei scrambles over the tall fence, then lowers a rope ladder
+    const F = CH2.fence;
+    m.taskT += dt;
+    const nearX = F.x - m.w - 8, farX = F.x + F.w + 26;
+    if(m.phase === 0){           // walk to the fence
+      m.dir = nearX > m.x ? 1 : -1;
+      if(Math.abs(m.x - nearX) > 3){ m.x += Math.sign(nearX - m.x) * 1.7; m.y = GROUND_Y; }
+      else m.phase = 1;
+    } else if(m.phase === 1){    // climb up the outside
+      m.y -= 2.3; m.dir = 1;
+      if(m.y <= F.topY){ m.y = F.topY; m.phase = 2; }
+    } else if(m.phase === 2){    // cross the top
+      m.x += 1.7; m.dir = 1; m.y = F.topY;
+      if(m.x >= farX - 12) m.phase = 3;
+    } else if(m.phase === 3){    // climb down inside
+      m.y += 2.3;
+      if(m.y >= GROUND_Y){ m.y = GROUND_Y; m.phase = 4; }
+    } else {                     // lower the rope ladder for Wyatt
+      state.ladderDown = true; sfx.door();
+      setMsg('メイが内側からロープはしごを下ろした！ フェンス脇で Y／E：登る', 3.5);
+      state.checkpoint = { x: F.x + 70, meiX: F.x + 100, doorIdx: Math.max(state.checkpoint.doorIdx, 1) };
+      state.meiHold = true;
+      m.task = null; m.phase = 0;
+    }
+    return;
+  }
+  if(m.task === 'vent'){
+    // chapter 4: Mei wriggles through the snow-choked vent at the base of the
+    // locked hospital door, then releases the latch from inside
+    const V = CH4.vent;
+    m.taskT += dt;
+    const nearX = V.x - m.w - 10, farX = V.x + V.w + 30;
+    if(m.phase === 0){           // walk to the vent
+      m.dir = nearX > m.x ? 1 : -1;
+      if(Math.abs(m.x - nearX) > 3){ m.x += Math.sign(nearX - m.x) * 1.7; m.y = GROUND_Y; }
+      else m.phase = 1;
+    } else if(m.phase === 1){    // crawl through the vent (low, slow)
+      m.dir = 1; m.x += 0.85; m.y = GROUND_Y;
+      if(m.x >= farX) m.phase = 2;
+    } else {                     // open the door from inside
+      state.ventOpen = true; sfx.door();
+      setMsg('メイが内側から扉を開けた！ ― あの日の隙間と同じだ', 3.5);
+      state.checkpoint = { x: V.x + 70, meiX: V.x + 100, doorIdx: Math.max(state.checkpoint.doorIdx, 2) };
+      state.meiHold = true;
+      m.task = null; m.phase = 0;
+    }
+    return;
+  }
+  if(m.task === 'log'){
+    // chapter 3: Mei crosses the narrow fallen log over the rock face, then
+    // knocks the stepladder on the far bank down for Wyatt
+    const C = CH3.cliff;
+    m.taskT += dt;
+    const nearX = C.x - m.w - 10, farX = C.x + C.w + 28;
+    if(m.phase === 0){           // walk to the log
+      m.dir = nearX > m.x ? 1 : -1;
+      if(Math.abs(m.x - nearX) > 3){ m.x += Math.sign(nearX - m.x) * 1.7; m.y = GROUND_Y; }
+      else m.phase = 1;
+    } else if(m.phase === 1){    // scramble up the leaning log on the near side
+      m.y -= 2.2; m.dir = 1;
+      if(m.y <= C.topY - 11){ m.y = C.topY - 11; m.phase = 2; }
+    } else if(m.phase === 2){    // tiptoe across the log itself
+      m.x += 1.5; m.dir = 1; m.y = C.topY - 11;
+      if(m.x >= farX - 12) m.phase = 3;
+    } else if(m.phase === 3){    // climb down the far bank
+      m.y += 2.3;
+      if(m.y >= GROUND_Y){ m.y = GROUND_Y; m.phase = 4; }
+    } else {                     // knock the stepladder down for Wyatt
+      state.ladderDown = true; sfx.door();
+      setMsg('メイが対岸の脚立を倒した！ 崖の脇で Y／E：登る', 3.5);
+      state.checkpoint = { x: C.x + 80, meiX: C.x + 110, doorIdx: Math.max(state.checkpoint.doorIdx, 1) };
+      state.meiHold = true;
+      m.task = null; m.phase = 0;
+    }
+    return;
+  }
+  if(state.meiHold){
+    // Mei stays past the obstacle until Wyatt has crossed over too
+    const OX = state.chapter === 4 ? CH4.vent.x + CH4.vent.w
+      : (state.chapter === 3 ? CH3.cliff.x + CH3.cliff.w : CH2.fence.x + CH2.fence.w);
+    if(p.x > OX) state.meiHold = false;
+    else { m.vx = 0; m.vy += .55; if(m.vy > 14) m.vy = 14; collide(m, 0, m.vy); return; }
+  }
+  if(m.task === 'gap'){
+    m.taskT += dt;
+    // crawl through the gap (ignores the gate), then pull the lever inside
+    const targetX = GAP.gateX + 70;
+    m.dir = 1;
+    if(m.x < targetX){ m.x += 1.1; m.y = GROUND_Y; }
+    else if(!state.gateOpen){
+      state.gateOpen = true; sfx.door();
+      setMsg('メイが内側から閂（かんぬき）を外した！ 扉が開いた', 3);
+      state.checkpoint = { x: GAP.gateX + 60, meiX: GAP.gateX + 90, doorIdx: Math.max(state.checkpoint.doorIdx, 1.5) };
+      m.task = null;
+    }
+    return;
+  }
+  if(m.mode === 'wait'){ m.vx = 0; m.stuckT = 0; collide(m, 0, (m.vy += .5)); return; }
+  const dx = (p.x - 44 * p.dir) - m.x;
+  const dist = Math.abs(dx);
+  if(dist > 560){ m.x = p.x - 40 * p.dir; m.y = p.y; m.stuckT = 0; m.stuckX = m.x; }        // catch-up warp (keeps the prototype smooth)
+  else if(dist > 46){
+    m.vx = Math.sign(dx) * Math.min(2.6, dist * 0.06 + 0.7);
+    m.dir = Math.sign(dx);
+    // hop small steps / obstacles
+    if(m.onGround && Math.abs(dx) > 60 && state.enemies.some(e=>e.alive && Math.abs(e.x-m.x)<30)) m.vy = -8;
+    /* stuck rescue: some spots can never be hopped — e.g. chapter 1's wrecked
+       car at x4480 has a platform (y364) hanging right over it, so Mei's hop
+       bonks the platform underside (her feet cap at y422) and she can never
+       clear the car top (y392), while Wyatt waits on the step above, far
+       under the 560px warp range. If she is trying to follow but her x has
+       barely moved for a while, she scrambles over off-screen and rejoins
+       Wyatt (same placement as the long-distance warp). */
+    if(Math.abs(m.x - m.stuckX) > 6){ m.stuckX = m.x; m.stuckT = 0; }
+    else {
+      m.stuckT += dt;
+      if(m.stuckT > 1.4){
+        m.x = p.x - 40 * p.dir; m.y = p.y; m.vy = 0;
+        m.stuckT = 0; m.stuckX = m.x;
+        return;
+      }
+    }
+  } else { m.vx = 0; m.stuckT = 0; m.stuckX = m.x; }
+  m.vy += .55; if(m.vy > 14) m.vy = 14;
+  // start the hop a little BEFORE she reaches a jumpable obstacle, so she
+  // meets it mid-arc instead of jumping flat against its face
+  if(m.vx !== 0 && m.onGround){
+    for(const s of solids){
+      if(s.gate || s.fence || s.ventDoor || s.cliff) continue;   // scripted crossings are not hers to jump
+      if(!(s.y < m.y && s.y + s.h > m.y - m.h)) continue;        // must overlap her body height (same test as collide)
+      if(m.y - s.y > 100) continue;                              // too tall for her hop anyway
+      const gap = m.vx > 0 ? s.x - (m.x + m.w) : m.x - (s.x + s.w);
+      if(gap >= 0 && gap < 14){ m.vy = -10.5; break; }
+    }
+  }
+  // simple hop when blocked horizontally
+  const beforeX = m.x;
+  collide(m, m.vx, m.vy);
+  if(m.vx !== 0 && Math.abs(m.x - beforeX) < Math.abs(m.vx) * .35 && m.onGround) { m.vy = -10.5; collide(m, m.vx, m.vy); }
+}
+
+function seePlayer(e, range, height){
+  const p = state.player;
+  if(p.dead) return 0;
+  // chapter 4: a blizzard gust cuts the guards' vision band down hard
+  if(state.chapter === 4 && state.windPhase === 'gust') range = Math.round(range * 0.58);
+  const ex = e.x + e.w/2, ey = e.y - 38;
+  const px = p.x + p.w/2, py = p.y - p.h/2;
+  const dx = px - ex;
+  if(Math.sign(dx) !== e.dir && Math.abs(dx) > 24) return 0;
+  if(Math.abs(dx) > range || Math.abs(py - ey) > height) return 0;
+  if(losBlocked(ex, ey, px, py)) return 0;
+  let rate = 1.6 - Math.abs(dx)/range;         // closer = faster
+  if(playerHidden()) rate *= 0.12;
+  if(p.crouch) rate *= 0.55;
+  if(state.listening) rate *= 1;               // no bonus either way
+  return Math.max(0.12, rate);
+}
+
+function updateGuard(e, dt){
+  const p = state.player;
+  if(e.state === 'grabbed') return;   // held by the player; positioned in the player update
+  if(e.stun > 0){ e.stun -= dt; e.state = 'stunned'; if(e.stun <= 0) e.state = 'patrol'; return; }
+  const rate = seePlayer(e, 235, 44);
+  if(rate > 0) e.detect = Math.min(100, e.detect + rate * 62 * dt);
+  else e.detect = Math.max(0, e.detect - 26*dt);
+
+  if(e.detect >= 100 && e.state !== 'alert'){ e.state = 'alert'; e.alertT = 7; sfx.alarm(); setMsg('見つかった！ 隠れるか、戦って逃げよう', 2.4); }
+  else if(e.detect >= 42 && e.state === 'patrol'){ e.state = 'suspicious'; e.alertT = 2.4; }
+
+  if(e.state === 'alert'){
+    anyAlertSpread(e);
+    e.alertT -= dt;
+    e.dir = p.x > e.x ? 1 : -1;
+    e.shootCd -= dt;
+    // keep some distance, don't be unfair
+    const d = Math.abs(p.x - e.x);
+    if(d > 300) e.x += e.dir * 1.15;
+    if(e.shootCd <= 0 && d < 430 && !losBlocked(e.x + e.w/2, e.y - 36, p.x + p.w/2, p.y - 30)){
+      e.shootCd = 1.05 + Math.random()*.3;
+      sfx.shot(); noise(e.x + e.w/2, e.y - 36, 380, 'loud');
+      const sx = e.x + e.w/2 + e.dir*18, sy = e.y - 36;
+      const tx = p.x + p.w/2, ty = p.y - 28;
+      const len = Math.hypot(tx-sx, ty-sy) || 1;
+      state.bullets.push({ x:sx, y:sy, vx:(tx-sx)/len*7.4, vy:(ty-sy)/len*7.4, life:1.1 });
+      state.flashes.push({ x:sx + e.dir*12, y:sy, dir:e.dir, t:.08 });
+      state.shake = Math.max(state.shake, 2);
+    }
+    if(e.alertT <= 0 && e.detect < 30){ e.state = 'patrol'; e.detect = 0; }
+    // reinforcements: once per area per alert
+    const sec = Math.floor(e.x / 1300);
+    if(!state.reinforcedSections[sec] && e.alertT < 5.2){
+      state.reinforcedSections[sec] = true;
+      const rx = Math.max(60, Math.min(WORLD_W - 120, e.x + (p.x > e.x ? -520 : 520)));
+      state.enemies.push({ type:'guard', x:rx, y:GROUND_Y, w:26, h:52, min:rx-160, max:rx+160, dir: p.x > rx ? 1 : -1,
+        hp:2, state:'alert', detect:100, shootCd:1.4, stun:0, alertT:6, wanderT:0, speed:.95, alive:true });
+      setMsg('増援が来た！ 数が増える前に離れよう', 2.6);
+    }
+    return;
+  }
+  if(e.state === 'suspicious'){
+    e.alertT -= dt;
+    if(e.lookX !== undefined) e.dir = e.lookX > e.x ? 1 : -1;
+    else e.dir = p.x > e.x ? 1 : -1;
+    if(e.alertT <= 0 && e.detect < 42){ e.state = 'patrol'; e.lookX = undefined; }
+    return;
+  }
+  // patrol
+  e.x += e.dir * e.speed;
+  if(e.x < e.min){ e.x = e.min; e.dir = 1; }
+  if(e.x > e.max){ e.x = e.max; e.dir = -1; }
+}
+function anyAlertSpread(src){
+  for(const e of state.enemies){
+    if(e !== src && e.alive && e.type === 'guard' && Math.abs(e.x - src.x) < 340 && e.state !== 'alert'){
+      e.state = 'alert'; e.alertT = 6; e.detect = 100;
+    }
+  }
+}
+function updateInf(e, dt){
+  const p = state.player;
+  if(e.stun > 0){ e.stun -= dt; if(e.stun <= 0) e.state = 'wander'; return; }
+  if(p.grabbedBy === e) return;
+  const rate = seePlayer(e, 165, 40);
+  if(rate > 0) e.detect = Math.min(100, e.detect + rate * 80 * dt);
+  else if(e.state !== 'chase') e.detect = Math.max(0, e.detect - 20*dt);
+  if(e.detect >= 70) e.state = 'chase';
+  if(e.state === 'chase'){
+    e.dir = p.x > e.x ? 1 : -1;
+    e.x += e.dir * 2.9;
+    if(rate === 0){ e.loseT = (e.loseT||0) + dt; if(e.loseT > 3.5){ e.state = 'wander'; e.detect = 0; e.loseT = 0; } }
+    else e.loseT = 0;
+    // grab
+    if(Math.abs(p.x - e.x) < 30 && Math.abs(p.y - e.y) < 44 && !p.dead){
+      p.grabbedBy = e; p.mash = 0; sfx.grab();
+      setMsg('掴まれた！ X／Eを連打して振りほどけ！', 2.5);
+    }
+    return;
+  }
+  if(e.state === 'chaseLook'){
+    e.alertT -= dt; if(e.lookX !== undefined) e.dir = e.lookX > e.x ? 1 : -1;
+    if(e.alertT <= 0) e.state = 'wander';
+    return;
+  }
+  // wander
+  e.wanderT -= dt;
+  if(e.wanderT <= 0){ e.wanderT = 1.6 + Math.random()*2; if(Math.random() < .5) e.dir *= -1; }
+  e.x += e.dir * e.speed;
+  if(e.x < e.min){ e.x = e.min; e.dir = 1; }
+  if(e.x > e.max){ e.x = e.max; e.dir = -1; }
+}
+
+/* ---------- HUD ---------- */
+const hpFill = document.querySelector('#hpBar i');
+const liFill = document.querySelector('#listenBar i');
+const invBox = document.getElementById('invBox');
+const promptEl = document.getElementById('prompt');
+const objEl = document.getElementById('objective');
+function updateHUD(){
+  const p = state.player;
+  hpFill.style.width = Math.max(0, p.hp) + '%';
+  document.getElementById('hpBar').classList.toggle('low', p.hp < 35);
+  liFill.style.width = state.listen + '%';
+  invBox.innerHTML =
+    'くず鉄 <b>' + state.inv.scrap + '</b>　布 <b>' + state.inv.cloth + '</b>　酒 <b>' + state.inv.alcohol + '</b><br>' +
+    'ナイフ <b>' + state.inv.knife + '</b>　火炎瓶 <b>' + state.inv.molotov + '</b>　包帯 <b>' + state.inv.bandage + '</b>　手製銃 <b>' + state.inv.gun + '</b><br>' +
+    '鈍器の耐久 <b>' + (p.bat > 0 ? p.bat : 'なし') + '</b>　投擲物 <b>' + (state.throwable ? THROW_LABEL[state.throwable] : 'なし') + '</b><br>' +
+    '▶ 選択中：<b>' + ITEM_LABEL[state.selItem] + ' ×' + state.inv[state.selItem] + '</b>（十字キーで切替／RTで使う）';
+  document.getElementById('cntKnife').textContent = '×' + state.inv.knife;
+  document.getElementById('cntMolotov').textContent = '×' + state.inv.molotov;
+  document.getElementById('cntBandage').textContent = '×' + state.inv.bandage;
+  document.getElementById('cntGun').textContent = '×' + state.inv.gun;
+  document.querySelectorAll('[data-craft]').forEach(b=>{ b.disabled = !canCraft(b.dataset.craft); });
+  document.getElementById('meiTag').textContent = state.mei.task === 'gap' ? 'メイ：隙間をくぐり中…'
+    : state.mei.task === 'fence' ? 'メイ：フェンスを越えている…'
+    : state.mei.task === 'log' ? 'メイ：倒木を渡っている…'
+    : state.mei.task === 'vent' ? 'メイ：換気口を抜けている…'
+    : ('メイ：' + (state.mei.mode === 'follow' ? 'ついて来る' : '待っている') + '（T／LBで切替）');
+  document.getElementById('btnMei').textContent = 'メイ：' + (state.mei.mode === 'follow' ? 'ついて来る' : '待っている') + '（T／LBで切替）';
+  // chapter 4 wind indicator (screen edge): phase is readable at a glance
+  const windEl = document.getElementById('windInd');
+  if(state.chapter === 4){
+    windEl.classList.remove('hidden');
+    windEl.classList.toggle('gust', state.windPhase === 'gust');
+    windEl.classList.toggle('warn', state.windPhase === 'warn');
+    windEl.textContent = state.windPhase === 'gust' ? '風：突風！ 視界↓・音は風の中'
+      : state.windPhase === 'warn' ? '風：強くなる… 突風の予兆' : '風：凪';
+  } else windEl.classList.add('hidden');
+  objEl.textContent = state.chapter === 4
+    ? (state.escape ? '警戒状態の病院を抜けて、入口まで戻る（←）'
+      : !state.ventOpen && p.x > 3980 && p.x < 4500 ? '雪で塞がれた換気口 ― 通れるのはメイだけ'
+      : (p.x > 4500 ? '病院の奥、処置室へ' : '吹雪の山道と雪の町を越えて、ヘイヴン・ジェネラル病院へ（→）'))
+    : state.chapter === 3
+    ? (!state.ladderDown && p.x > 1900 && p.x < 2450 ? '倒木の橋 ― 細すぎて渡れるのはメイだけ'
+      : (p.x > 4600 ? '吊り橋を渡れば、もうすぐ渓谷の出口' : '川沿いのキャンプ場を抜けて、吊り橋を渡ろう（→）'))
+    : state.chapter === 2
+    ? (!state.ladderDown && p.x > 1950 && p.x < 2500 ? '高いフェンス ― メイなら越えられるかも'
+      : (p.x > 4700 ? 'モーテルの裏口はもうすぐ' : 'モーテルを抜けて次の街へ進もう（→）'))
+    : (!state.gateOpen && p.x > 2900 && p.x < 3560 ? '閂のかかった扉 ― メイだけが通れる隙間がある'
+      : (p.x > 4700 ? 'もうすぐ街の出口' : '街の出口までメイを届けよう（→）'));
+  // contextual prompt
+  let prompt = '';
+  if(state.msgT > 0 && state.msg) prompt = state.msg;
+  else if(p.grabbedBy) prompt = '掴まれている！ X／E連打 あと ' + (p.mashNeed - p.mash) + ' 回';
+  else if(p.grabbing) prompt = '掴んでいる！ X／J：ナイフで仕留める（ナイフ ×' + state.inv.knife + '）';
+  else if(state.climb) prompt = 'はしごを登っている ― ↑↓：登る／降りる　A／Space：離れる';
+  else if(state.aiming && state.throwable) prompt = '狙っている ― RTで' + THROW_LABEL[state.throwable] + 'を投げる（着地点の音で敵を釣れる）';
+  else if(state.selItem === 'bandage' && state.healT > 0) prompt = '包帯で手当て中… RTを押し続ける';
+  else if(state.aiming && state.selItem !== 'bandage' && state.inv[state.selItem] > 0) prompt = '狙っている ― RTで' + (state.selItem === 'molotov' ? '投げる' : '撃つ');
+  else {
+    for(const e of state.enemies){
+      if(e.alive && e.type === 'guard' && Math.abs(e.x - p.x) < 42 && e.detect < 55){ prompt = 'Y／E：背後から掴む → X／Jでナイフキル'; break; }
+    }
+    if(!prompt && state.chapter === 1 && !state.gateOpen && Math.abs(p.x - GAP.gateX) < 110) prompt = 'Y／E：メイに隙間を通ってもらう';
+    if(!prompt && state.chapter === 2 && !state.ladderDown && Math.abs(p.x - CH2.fence.x) < 110) prompt = 'Y／E：メイにフェンスを越えてもらう';
+    if(!prompt && state.chapter === 2 && state.ladderDown && Math.abs((p.x + p.w/2) - CH2.fence.x) < 60) prompt = 'Y／E：ロープはしごを登る';
+    if(!prompt && state.chapter === 3 && !state.ladderDown && Math.abs(p.x - CH3.cliff.x) < 110) prompt = 'Y／E：メイに倒木を渡ってもらう';
+    if(!prompt && state.chapter === 3 && state.ladderDown && Math.abs((p.x + p.w/2) - CH3.cliff.x) < 60) prompt = 'Y／E：脚立を登る';
+    if(!prompt && state.chapter === 4 && !state.ventOpen && Math.abs(p.x - CH4.vent.x) < 110) prompt = 'Y／E：メイに換気口を抜けてもらう';
+    if(!prompt && state.throwable){ for(const pk of state.pickups){ if(!pk.taken && (pk.kind === 'bottle' || pk.kind === 'brick') && Math.abs(pk.x - p.x) < 36 && Math.abs(pk.y - (p.y-14)) < 46){ prompt = '投擲物は1つまで（今は' + THROW_LABEL[state.throwable] + 'を持っている）'; break; } } }
+    if(!prompt){ for(const pk of state.pickups){ if(!pk.taken && pk.kind === 'bat' && p.bat <= 0 && Math.abs(pk.x - p.x) < 36 && Math.abs(pk.y - (p.y-14)) < 46){ prompt = 'Y／E：鈍器を拾う'; break; } } }
+    if(!prompt && p.bat > 0 && state.enemies.some(e=>e.alive && Math.abs(e.x-p.x)<44 && Math.abs(e.y-p.y)<50)) prompt = 'X／J：鈍器で殴る';
+  }
+  promptEl.textContent = prompt;
+  promptEl.classList.toggle('hidden', !prompt);
+  document.getElementById('craftScreen').classList.toggle('hidden', !state.craftOpen);
+  if(state.craftOpen) renderCraftMenu();
+}
+
+/* ---------- drawing ---------- */
+function hash1(n){ const s = Math.sin(n * 12.9898) * 43758.5453; return s - Math.floor(s); }
+
+/* ---------- render-only helpers (2nd graphics pass) ----------
+   Everything below observes game state and only changes how things are
+   drawn: accumulated-travel walk cycles, air/land poses, posture-linked
+   shadows, hit knockback & death ghosts, listen-mode silhouettes,
+   landmark scenery, a foreground parallax strip, and offscreen-cached
+   static background layers. No game logic, numbers or layout change. */
+let DRAW_DT = 0, DRAW_FRAME = 0;
+let SILHOUETTE = null;   // when set, drawPerson & friends render as one flat glowing colour
+
+/* static sky & warm wash: gradients baked once into offscreen canvases */
+const skyCacheC = document.createElement('canvas'); skyCacheC.width = VW; skyCacheC.height = VH;
+{ const g = skyCacheC.getContext('2d');
+  const sky = g.createLinearGradient(0, 0, 0, VH);
+  sky.addColorStop(0, '#9ec9ee'); sky.addColorStop(.5, '#cfe3c2'); sky.addColorStop(1, '#f2e9c2');
+  g.fillStyle = sky; g.fillRect(0, 0, VW, VH); }
+const washCacheC = document.createElement('canvas'); washCacheC.width = VW; washCacheC.height = VH;
+{ const g = washCacheC.getContext('2d');
+  const wash = g.createLinearGradient(0, 0, 0, VH);
+  wash.addColorStop(0, 'rgba(255,246,196,.12)'); wash.addColorStop(.6, 'rgba(255,246,196,.03)'); wash.addColorStop(1, 'rgba(110,150,80,.06)');
+  g.fillStyle = wash; g.fillRect(0, 0, VW, VH); }
+/* summer variants: harder light, deeper blue sky, hotter horizon */
+const skyCache2C = document.createElement('canvas'); skyCache2C.width = VW; skyCache2C.height = VH;
+{ const g = skyCache2C.getContext('2d');
+  const sky = g.createLinearGradient(0, 0, 0, VH);
+  sky.addColorStop(0, '#5ea9e6'); sky.addColorStop(.45, '#a5d2e6'); sky.addColorStop(.75, '#e6eabd'); sky.addColorStop(1, '#f9ecc0');
+  g.fillStyle = sky; g.fillRect(0, 0, VW, VH); }
+const washCache2C = document.createElement('canvas'); washCache2C.width = VW; washCache2C.height = VH;
+{ const g = washCache2C.getContext('2d');
+  const wash = g.createLinearGradient(0, 0, 0, VH);
+  wash.addColorStop(0, 'rgba(255,250,214,.20)'); wash.addColorStop(.55, 'rgba(255,244,190,.06)'); wash.addColorStop(1, 'rgba(120,160,70,.08)');
+  g.fillStyle = wash; g.fillRect(0, 0, VW, VH); }
+/* autumn variants: dusk over the valley — violet sky melting into orange */
+const skyCache3C = document.createElement('canvas'); skyCache3C.width = VW; skyCache3C.height = VH;
+{ const g = skyCache3C.getContext('2d');
+  const sky = g.createLinearGradient(0, 0, 0, VH);
+  sky.addColorStop(0, '#6b4a7a'); sky.addColorStop(.42, '#c96a3f'); sky.addColorStop(.75, '#ef9a4e'); sky.addColorStop(1, '#f7c873');
+  g.fillStyle = sky; g.fillRect(0, 0, VW, VH); }
+const washCache3C = document.createElement('canvas'); washCache3C.width = VW; washCache3C.height = VH;
+{ const g = washCache3C.getContext('2d');
+  const wash = g.createLinearGradient(0, 0, 0, VH);
+  wash.addColorStop(0, 'rgba(255,170,80,.16)'); wash.addColorStop(.55, 'rgba(255,150,70,.05)'); wash.addColorStop(1, 'rgba(90,50,30,.10)');
+  g.fillStyle = wash; g.fillRect(0, 0, VW, VH); }
+/* winter variants: flat overcast light, everything pale blue-grey */
+const skyCache4C = document.createElement('canvas'); skyCache4C.width = VW; skyCache4C.height = VH;
+{ const g = skyCache4C.getContext('2d');
+  const sky = g.createLinearGradient(0, 0, 0, VH);
+  sky.addColorStop(0, '#9fb4c4'); sky.addColorStop(.5, '#c3d2dc'); sky.addColorStop(1, '#e8eff3');
+  g.fillStyle = sky; g.fillRect(0, 0, VW, VH); }
+const washCache4C = document.createElement('canvas'); washCache4C.width = VW; washCache4C.height = VH;
+{ const g = washCache4C.getContext('2d');
+  const wash = g.createLinearGradient(0, 0, 0, VH);
+  wash.addColorStop(0, 'rgba(220,235,245,.14)'); wash.addColorStop(.6, 'rgba(210,228,240,.05)'); wash.addColorStop(1, 'rgba(120,140,160,.10)');
+  g.fillStyle = wash; g.fillRect(0, 0, VW, VH); }
+const sunGlow = { x: NaN, grad: null };
+
+/* per-season palettes for the shared scenery painters (spring / summer) */
+const PAL1 = { hills:'#a9bf92', far:'#93a988', near:'#71855f', ivy:'#59863f', ivyLight:'#6fa34e',
+  groundBase:'#7c7a68', groundA:'#847f6c', groundB:'#78755f', groundC:'#716e5c', seam:'#8b8977', edge:'#5f7d43',
+  tuft:'#67984f', tuftH:1, flowerA:'#f2d06b', flowerB:'#e88bb0', grassDeep:'#4f7d38', hideFlower:'#f2a7c3',
+  fg:'rgba(24,36,20,.92)', mote:'255,250,214' };
+const PAL2 = { hills:'#79a75c', far:'#87a37e', near:'#5c744a', ivy:'#3f7031', ivyLight:'#4e8a3a',
+  groundBase:'#88836e', groundA:'#8f8a76', groundB:'#837e6a', groundC:'#7a7663', seam:'#98937e', edge:'#4e7d33',
+  tuft:'#4e8a3a', tuftH:1.55, flowerA:'#f2d06b', flowerB:'#e4572e', grassDeep:'#3a6b2c', hideFlower:'#f28c5c',
+  fg:'rgba(18,32,16,.94)', mote:'255,240,190' };
+const PAL3 = { hills:'#b0703f', far:'#9a6248', near:'#7d4f38', ivy:'#b3542e', ivyLight:'#d97b3f',
+  groundBase:'#7a6a52', groundA:'#847457', groundB:'#75644c', groundC:'#6e5c45', seam:'#8a795e', edge:'#a85f2e',
+  tuft:'#b98a3f', tuftH:1.2, flowerA:'#e4572e', flowerB:'#f2c14e', grassDeep:'#8a5a2a', hideFlower:'#e88a3a',
+  fg:'rgba(40,24,14,.92)', mote:'255,190,120' };
+const PAL4 = { hills:'#c2d0da', far:'#a7b8c4', near:'#8799a8', ivy:'#718796', ivyLight:'#93a9b8',
+  groundBase:'#dde5ea', groundA:'#e4ebef', groundB:'#d3dde3', groundC:'#c9d5dc', seam:'#bcc9d2', edge:'#f6fafc',
+  tuft:'#c3d2da', tuftH:.6, flowerA:'#ffffff', flowerB:'#e8f1f6', grassDeep:'#93a9b8', hideFlower:'#ffffff',
+  fg:'rgba(50,64,76,.92)', mote:'255,255,255' };
+let CURPAL = PAL1;
+
+/* parallax layer cache: a layer is re-rendered only when its parallax
+   offset crosses a step boundary (the step divides the layer's repeat
+   period, so the pattern never pops); the leftover fraction shifts the
+   cached image. Gradients & hundreds of rects stop running every frame. */
+function makeLayer(){ const c = document.createElement('canvas'); c.width = VW + 320; c.height = VH; return { c, g: c.getContext('2d'), key: '' }; }
+const hillsCache = makeLayer(), farCache = makeLayer(), nearCache = makeLayer();
+function blitLayer(cache, off, step, render){
+  const base = Math.floor(off / step) * step;
+  const key = state.chapter + '|' + base;   // palette switches with the chapter
+  if(cache.key !== key){
+    cache.key = key;
+    const g = cache.g;
+    g.clearRect(0, 0, cache.c.width, cache.c.height);
+    g.save(); g.translate(160, 0); render(g, base); g.restore();
+  }
+  ctx.drawImage(cache.c, -160 - (off - base), 0);
+}
+function drawHillsInto(g, hillOff){
+  g.fillStyle = CURPAL.hills;
+  g.beginPath(); g.moveTo(-90, GROUND_Y);
+  for(let x = -90; x <= VW + 90; x += 40){
+    const wx = x + hillOff;
+    g.lineTo(x, GROUND_Y - 118 - Math.sin(wx * .006) * 34 - Math.sin(wx * .017) * 12);
+  }
+  g.lineTo(VW + 90, GROUND_Y); g.closePath(); g.fill();
+}
+function drawFarInto(g, farOff){
+  for(let i = 0; i < 26; i++){
+    const bx = i * 210 - (farOff % 210) - 60, bh = 130 + ((i * 53) % 110);
+    g.fillStyle = CURPAL.far;
+    if(i % 4 === 1){ g.fillRect(bx, GROUND_Y - bh, 96, bh); g.fillRect(bx + 96, GROUND_Y - bh * .62, 54, bh * .62); }
+    else g.fillRect(bx, GROUND_Y - bh, 150, bh);
+    if(i % 3 === 0) g.fillRect(bx + 30, GROUND_Y - bh - 10, 8, 10);            // broken rooftop block
+    if(i % 5 === 2) g.fillRect(bx + 110, GROUND_Y - bh - 16, 4, 16);          // bent antenna
+    g.fillStyle = 'rgba(240,246,225,.45)';
+    for(let r = 0; r < 3; r++) for(let c = 0; c < 3; c++)
+      if(hash1(i * 31 + r * 7 + c) > .45) g.fillRect(bx + 18 + c * 44, GROUND_Y - bh + 20 + r * 40, 20, 26);
+    g.fillStyle = '#79a75e';
+    if(i % 3 === 0) g.fillRect(bx + 38, GROUND_Y - bh - 8, 62, 10);           // shrubs on the roof
+    if(i % 2 === 0) g.fillRect(bx + 122, GROUND_Y - bh + 30, 8, 44 + (i % 3) * 14); // hanging vines
+    // --- landmark silhouettes break the even spacing (long repeat cycle) ---
+    if(i % 9 === 4){ // lone tree growing out of a rooftop
+      g.fillStyle = '#7d9a6b'; g.fillRect(bx + 66, GROUND_Y - bh - 16, 5, 16);
+      g.beginPath(); g.arc(bx + 68, GROUND_Y - bh - 24, 15, 0, 7); g.arc(bx + 54, GROUND_Y - bh - 16, 10, 0, 7); g.arc(bx + 82, GROUND_Y - bh - 17, 11, 0, 7); g.fill();
+    }
+    if(i % 11 === 6){ // collapsed billboard tilted across the roofline
+      g.save(); g.translate(bx + 118, GROUND_Y - bh - 6); g.rotate(.32);
+      g.fillStyle = '#8a9a80'; g.fillRect(-34, -20, 68, 22);
+      g.fillStyle = 'rgba(240,246,225,.5)'; g.fillRect(-28, -15, 40, 6); g.restore();
+      g.fillStyle = '#7d8f74'; g.fillRect(bx + 96, GROUND_Y - bh - 4, 5, 20); g.fillRect(bx + 140, GROUND_Y - bh - 10, 5, 26);
+    }
+    if(i % 13 === 8){ // toppled water tower
+      g.fillStyle = '#82997a';
+      g.beginPath(); g.ellipse(bx + 40, GROUND_Y - bh - 12, 26, 10, .5, 0, 7); g.fill();
+      g.fillRect(bx + 22, GROUND_Y - bh - 4, 5, 14); g.fillRect(bx + 52, GROUND_Y - bh - 8, 5, 18);
+    }
+  }
+}
+function drawNearInto(g, nearOff){
+  for(let i = 0; i < 16; i++){
+    const bx = i * 380 - (nearOff % 380) - 80, bh = 210 + ((i * 71) % 90);
+    g.fillStyle = CURPAL.near;
+    g.fillRect(bx, GROUND_Y - bh, 250, bh);
+    if(i % 5 === 3) g.fillRect(bx + 150, GROUND_Y - bh - 26, 60, 26);
+    g.fillStyle = 'rgba(38,50,36,.55)';
+    for(let r = 0; r < 4; r++) for(let c = 0; c < 4; c++){
+      if(hash1(i * 57 + r * 11 + c * 3) > .3){
+        g.fillRect(bx + 22 + c*54, GROUND_Y - bh + 26 + r*46, 30, 30);
+        if(hash1(i * 91 + r + c) > .82){ g.fillStyle = 'rgba(196,220,175,.35)'; g.fillRect(bx + 22 + c*54, GROUND_Y - bh + 26 + r*46, 30, 8); g.fillStyle = 'rgba(38,50,36,.55)'; }
+      }
+    }
+    g.strokeStyle = 'rgba(40,48,36,.5)'; g.lineWidth = 2; g.beginPath();
+    const crx = bx + 40 + hash1(i * 13) * 160;
+    g.moveTo(crx, GROUND_Y - bh + 8); g.lineTo(crx + 8, GROUND_Y - bh + 60); g.lineTo(crx - 4, GROUND_Y - bh + 110); g.stroke();
+    const ivyH = 90 + (i % 3) * 26;
+    g.fillStyle = CURPAL.ivy;
+    g.fillRect(bx + 8, GROUND_Y - ivyH, 26, ivyH);
+    g.fillRect(bx + 196, GROUND_Y - ivyH * .6, 20, ivyH * .6);
+    g.fillStyle = '#f0a8c0';
+    for(let f = 0; f < 4; f++) g.fillRect(bx + 10 + hash1(i * 7 + f * 3) * 22, GROUND_Y - hash1(i * 17 + f) * ivyH, 4, 4);
+    // (the swaying ivy tuft & hanging vine are drawn live by drawNearSway)
+    // --- landmark silhouettes ---
+    if(i % 6 === 2){ // toppled sign hanging by one chain
+      g.strokeStyle = 'rgba(40,48,36,.7)'; g.lineWidth = 2; g.beginPath();
+      g.moveTo(bx + 176, GROUND_Y - bh); g.lineTo(bx + 184, GROUND_Y - bh + 26); g.stroke();
+      g.save(); g.translate(bx + 184, GROUND_Y - bh + 26); g.rotate(-.14);
+      g.fillStyle = '#5c7050'; g.fillRect(-26, 0, 52, 30);
+      g.fillStyle = 'rgba(240,246,225,.4)'; g.fillRect(-20, 6, 30, 5); g.fillRect(-20, 16, 22, 5);
+      g.restore();
+    }
+    if(i % 8 === 5){ // street tree bursting up in front of the wall
+      g.fillStyle = '#4c3d2c'; g.fillRect(bx + 226, GROUND_Y - 64, 9, 64); g.fillRect(bx + 214, GROUND_Y - 84, 6, 26);
+      g.fillStyle = '#4f7d38';
+      g.beginPath(); g.arc(bx + 230, GROUND_Y - 96, 30, 0, 7); g.arc(bx + 204, GROUND_Y - 78, 20, 0, 7); g.arc(bx + 256, GROUND_Y - 80, 22, 0, 7); g.fill();
+      g.fillStyle = '#67984f'; g.beginPath(); g.arc(bx + 222, GROUND_Y - 104, 16, 0, 7); g.fill();
+    }
+    if(i % 10 === 7){ // overturned car at the building base
+      g.fillStyle = '#4c585e'; g.fillRect(bx + 30, GROUND_Y - 20, 74, 18);
+      g.fillStyle = '#5d6a72'; g.fillRect(bx + 44, GROUND_Y - 28, 44, 10);
+      g.fillStyle = '#2c2f31'; g.beginPath(); g.arc(bx + 48, GROUND_Y - 26, 8, 0, 7); g.arc(bx + 88, GROUND_Y - 26, 8, 0, 7); g.fill();
+      g.fillStyle = '#557f3e'; g.fillRect(bx + 36, GROUND_Y - 32, 40, 5);
+    }
+  }
+}
+/* the two time-animated bits of the near layer, drawn live over the cache */
+function drawNearSway(nearOff, T){
+  for(let i = 0; i < 16; i++){
+    const bx = i * 380 - (nearOff % 380) - 80, bh = 210 + ((i * 71) % 90);
+    const ivyH = 90 + (i % 3) * 26;
+    ctx.fillStyle = CURPAL.ivyLight;
+    ctx.fillRect(bx + 12 + Math.sin(T * 1.6 + i) * 1.5, GROUND_Y - ivyH - 6, 16, 8);
+    ctx.fillStyle = CURPAL.ivy;
+    const vx2 = bx + 120 + (i % 4) * 22, vl = 40 + (i % 3) * 18;
+    ctx.fillRect(vx2 + Math.sin(T * 1.8 + i * 2) * 2, GROUND_Y - bh, 4, vl);
+  }
+}
+/* topmost solid surface at/below the entity's feet — where an airborne
+   character's shadow actually lands */
+function groundBelowY(ent){
+  let best = null;
+  for(const s of solids){
+    if(s.gate && state.gateOpen && state.gateY > 150) continue;
+    if(ent.x + ent.w > s.x && ent.x < s.x + s.w && s.y >= ent.y - 2 && (best === null || s.y < best)) best = s.y;
+  }
+  return best === null ? GROUND_Y : best;
+}
+/* Walk phase from accumulated travel (not world x): legs stop when the
+   character stops, and teleports/reversals can't desync the stride.
+   Per-frame travel is capped so Mei's catch-up warp doesn't spin her legs.
+   Also tracks the landing moment for the touchdown pose. Once per frame. */
+function animAcc(ent, phys){
+  const rs = ent._rs || (ent._rs = { lx:null, acc:0, wasG:true, landT:0, f:-1 });
+  if(rs.f === DRAW_FRAME) return rs;
+  rs.f = DRAW_FRAME;
+  if(rs.lx === null) rs.lx = ent.x;
+  const dx = Math.abs(ent.x - rs.lx); rs.lx = ent.x;
+  rs.acc += Math.min(dx, 4.5);
+  if(phys){
+    if(ent.onGround && !rs.wasG) rs.landT = .18;
+    rs.wasG = !!ent.onGround;
+    if(rs.landT > 0) rs.landT -= DRAW_DT;
+  }
+  return rs;
+}
+/* Frame watcher (render-only): turns state transitions into visual juice —
+   bat hits get knockback + a bigger particle burst, deaths get a falling
+   ghost body, and starting a grab fires the lunge flash. */
+const alivePrev = new Map();
+let lastEnemiesArr = null, ghosts = [], grabFxT = 0, prevGrabbing = null;
+function watchEntities(){
+  const p = state.player;
+  if(state.enemies !== lastEnemiesArr){ alivePrev.clear(); ghosts = []; lastEnemiesArr = state.enemies; }
+  if(grabFxT > 0) grabFxT -= DRAW_DT;
+  if(p.grabbing && !prevGrabbing) grabFxT = .22;
+  prevGrabbing = p.grabbing;
+  for(const e of state.enemies){
+    const prev = alivePrev.get(e);
+    if(e.alive){
+      if(prev && prev.hp - e.hp >= .5){
+        e._kbT = .28; e._kbDir = (e.x + e.w/2) < (p.x + p.w/2) ? -1 : 1; e._kbFrame = -1;
+        for(let i = 0; i < 7; i++) state.parts.push({ x:e.x + e.w/2, y:e.y - 34, vx:(Math.random()-.5)*4 + e._kbDir*1.6, vy:-1 - Math.random()*3, life:.3 + Math.random()*.3, c: i % 2 ? '#f0e9d8' : '#d84f35' });
+      }
+      alivePrev.set(e, { hp:e.hp, x:e.x, y:e.y, dir:e.dir, type:e.type });
+    } else if(prev){
+      const knife = p.killAt !== undefined && Math.abs(state.time - p.killAt) < .12;
+      ghosts.push({ x:prev.x, y:prev.y, dir:prev.dir, type:prev.type, t:0,
+        kbDir: (prev.x + 13) < (p.x + p.w/2) ? -1 : 1, slide: knife ? 6 : 22, crumple: knife });
+      for(let i = 0; i < 5; i++) state.parts.push({ x:prev.x + 13, y:prev.y - 30, vx:(Math.random()-.5)*3, vy:-1 - Math.random()*2, life:.35, c:'#c9452c' });
+      alivePrev.delete(e);
+    }
+  }
+}
+function drawGhosts(){
+  for(const g of ghosts){
+    g.t += DRAW_DT;
+    const prog = Math.min(1, g.t / .55);
+    const ox = g.kbDir * g.slide * (1 - (1 - prog) * (1 - prog));
+    ctx.save(); ctx.globalAlpha = 1 - prog;
+    drawPerson(g.x + ox, g.y, 52, g.type === 'guard'
+      ? { body:'#4c5a68', legs:'#333c44', skin:'#d8a075', hair:'#22282e', cap:'#39434d', belt:'#2c343c', shoe:'#20262b' }
+      : g.type === 'listener'
+      ? { body:'#6a705f', legs:'#4c5044', skin:'#c9d1a3', hair:'#8a9470', patch:'#59614c', shoe:'#3c4034' }
+      : { body:'#7d8471', legs:'#5c6152', skin:'#b9c49a', hair:'#3c4433', patch:'#5f6650', shoe:'#454a3c' },
+      g.dir, prog > (g.crumple ? .25 : .45), 0, { flinch:1, hunch: g.type !== 'guard' });
+    ctx.restore();
+  }
+  ghosts = ghosts.filter(g => g.t < .55);
+}
+/* pickup shapes for listen mode — same shapes as the world, one glow colour */
+function drawPickupSil(pk){
+  const bob = Math.sin(state.time * 3 + pk.x) * 2;
+  ctx.fillStyle = SILHOUETTE || '#ffe9a8';
+  if(pk.kind === 'scrap'){ ctx.fillRect(pk.x, pk.y + bob, 13, 9); ctx.fillRect(pk.x + 3, pk.y + 3 + bob, 7, 4); }
+  else if(pk.kind === 'cloth'){ ctx.fillRect(pk.x, pk.y + bob, 14, 10); ctx.fillRect(pk.x, pk.y + 4 + bob, 14, 3); }
+  else if(pk.kind === 'alcohol'){ ctx.fillRect(pk.x + 3, pk.y + bob, 8, 13); ctx.fillRect(pk.x + 5, pk.y - 3 + bob, 4, 4); }
+  else if(pk.kind === 'bat'){ ctx.save(); ctx.translate(pk.x + 8, pk.y + 6 + bob); ctx.rotate(-.6); ctx.fillRect(-3, -12, 6, 24); ctx.restore(); }
+  else if(pk.kind === 'bottle'){ ctx.fillRect(pk.x + 3, pk.y + bob, 8, 13); ctx.fillRect(pk.x + 5, pk.y - 3 + bob, 4, 4); }
+  else if(pk.kind === 'brick'){ ctx.fillRect(pk.x, pk.y + 3 + bob, 15, 9); ctx.fillRect(pk.x + 7, pk.y + 3 + bob, 2, 4); }
+}
+/* chapter 2 world-space scenery: suburban houses with gardens, then the
+   two-storey motel with its sign, and the drained pool in the courtyard */
+function drawSummerScenery(){
+  // --- houses along the residential stretch ---
+  for(let i = 0; i < 7; i++){
+    const hx = 40 + i * 335, hw = 250, hh = 148 + hash1(i * 7.7) * 46, top = GROUND_Y - hh;
+    ctx.fillStyle = i % 3 === 0 ? '#c9b299' : (i % 3 === 1 ? '#b4bfae' : '#c4c0ae');
+    ctx.fillRect(hx, top + 42, hw, hh - 42);
+    ctx.fillStyle = i % 2 ? '#77563f' : '#5f6a72';
+    ctx.beginPath(); ctx.moveTo(hx - 12, top + 46); ctx.lineTo(hx + hw/2, top - 8); ctx.lineTo(hx + hw + 12, top + 46); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(60,50,40,.55)';
+    ctx.fillRect(hx + 26, top + 74, 34, 40); ctx.fillRect(hx + hw - 60, top + 74, 34, 40);
+    ctx.fillStyle = '#6d5b40'; ctx.fillRect(hx + hw/2 - 13, top + hh - 76, 26, 34);
+    ctx.fillStyle = '#8a7a66'; ctx.fillRect(hx + hw/2 - 30, top + hh - 44, 60, 6);
+    // garden hedge row with summer flowers
+    ctx.fillStyle = '#3a6b2c';
+    for(let gx = hx + 4; gx < hx + hw - 8; gx += 16){ ctx.beginPath(); ctx.arc(gx + 8, GROUND_Y - 8, 11 + hash1(gx * 1.3) * 4, 0, 7); ctx.fill(); }
+    ctx.fillStyle = '#e4572e';
+    for(let f = 0; f < 5; f++) ctx.fillRect(hx + 14 + hash1(i * 31 + f * 7) * (hw - 30), GROUND_Y - 16 - hash1(i * 17 + f) * 8, 4, 4);
+    if(i % 2 === 0){ // street tree, deep summer green
+      const tx = hx + hw + 26;
+      ctx.fillStyle = '#4c3d2c'; ctx.fillRect(tx, GROUND_Y - 74, 9, 74);
+      ctx.fillStyle = '#3f7031';
+      ctx.beginPath(); ctx.arc(tx + 4, GROUND_Y - 96, 32, 0, 7); ctx.arc(tx - 20, GROUND_Y - 78, 22, 0, 7); ctx.arc(tx + 28, GROUND_Y - 80, 24, 0, 7); ctx.fill();
+      ctx.fillStyle = '#4e8a3a'; ctx.beginPath(); ctx.arc(tx - 2, GROUND_Y - 108, 18, 0, 7); ctx.fill();
+    }
+    // mailbox at the kerb
+    ctx.fillStyle = '#7a4a3a'; ctx.fillRect(hx + hw - 26, GROUND_Y - 26, 5, 26);
+    ctx.fillStyle = '#a85f4a'; ctx.fillRect(hx + hw - 32, GROUND_Y - 34, 18, 10);
+  }
+  // --- motel building behind the balcony ---
+  const mx = 2970, mw = 1160, mTop = GROUND_Y - 252;
+  ctx.fillStyle = '#c7b299'; ctx.fillRect(mx, mTop, mw, 252);
+  ctx.fillStyle = '#8a4f3a'; ctx.fillRect(mx, mTop, mw, 14);
+  ctx.fillStyle = '#a85f4a'; ctx.fillRect(mx, 318, mw, 8);
+  for(let dx = mx + 30; dx < mx + mw - 40; dx += 108){
+    ctx.fillStyle = '#5d4a36';
+    ctx.fillRect(dx, GROUND_Y - 78, 30, 78);
+    ctx.fillRect(dx, 326 - 74, 30, 74);
+    ctx.fillStyle = 'rgba(50,44,36,.6)';
+    ctx.fillRect(dx + 44, GROUND_Y - 70, 36, 44); ctx.fillRect(dx + 44, 326 - 66, 36, 40);
+  }
+  // weathered MOTEL sign on a pole by the entrance
+  ctx.fillStyle = '#4c4438'; ctx.fillRect(2932, GROUND_Y - 210, 8, 210);
+  ctx.fillStyle = '#274b63'; ctx.fillRect(2904, GROUND_Y - 252, 64, 46);
+  ctx.fillStyle = '#f2e3b0'; ctx.font = 'bold 15px sans-serif'; ctx.fillText('MOTEL', 2910, GROUND_Y - 224);
+  ctx.fillStyle = '#e4572e'; ctx.fillRect(2910, GROUND_Y - 218, 52, 3);
+  // --- drained pool in the courtyard ---
+  const px = 4180, pw = 400;
+  ctx.fillStyle = '#d8d2c0'; ctx.fillRect(px - 10, GROUND_Y + 2, pw + 20, 8);
+  ctx.fillStyle = '#8fb6ba'; ctx.fillRect(px, GROUND_Y + 10, pw, 26);
+  ctx.strokeStyle = 'rgba(70,90,95,.6)'; ctx.lineWidth = 2; ctx.beginPath();
+  ctx.moveTo(px + 30, GROUND_Y + 12); ctx.lineTo(px + 70, GROUND_Y + 24); ctx.lineTo(px + 58, GROUND_Y + 34);
+  ctx.moveTo(px + pw - 90, GROUND_Y + 12); ctx.lineTo(px + pw - 60, GROUND_Y + 26); ctx.stroke();
+  ctx.fillStyle = '#4e8a3a'; ctx.fillRect(px + pw/2 - 30, GROUND_Y + 14, 60, 5);
+  ctx.fillStyle = '#8a7a66'; ctx.fillRect(px + pw + 26, GROUND_Y - 40, 4, 40);
+  ctx.fillStyle = '#c9b299'; ctx.beginPath(); ctx.moveTo(px + pw + 6, GROUND_Y - 40); ctx.lineTo(px + pw + 52, GROUND_Y - 40); ctx.lineTo(px + pw + 29, GROUND_Y - 54); ctx.closePath(); ctx.fill();
+}
+/* chapter 3 world-space scenery: the riverside campground (tents, a dead
+   campfire, autumn trees), the stream in the water zones, leaf litter in
+   the leaf zones, and the suspension bridge's towers & cables (its deck
+   is a solid, painted in the solids loop with a gentle sway) */
+function drawAutumnScenery(){
+  const T = performance.now() / 1000;
+  const B = CH3.bridge;
+  // --- suspension bridge: gorge shade, towers, main cable & suspenders ---
+  ctx.fillStyle = 'rgba(58,34,18,.28)'; ctx.fillRect(B.x - 20, B.y + 14, B.w + 40, GROUND_Y - B.y - 10);
+  ctx.fillStyle = '#5d4630';
+  for(const tx of [B.x - 24, B.x + B.w + 12]){
+    ctx.fillRect(tx, 246, 12, GROUND_Y - 246);
+    ctx.fillRect(tx - 6, 246, 24, 8);
+    ctx.fillRect(tx - 6, 330, 24, 7);
+  }
+  ctx.strokeStyle = '#3e2f20'; ctx.lineWidth = 3; ctx.beginPath();
+  for(let i = 0; i <= 24; i++){
+    const t = i / 24, cxp = B.x - 18 + (B.w + 36) * t;
+    const cyp = 250 + Math.sin(t * Math.PI) * 74;
+    if(i === 0) ctx.moveTo(cxp, cyp); else ctx.lineTo(cxp, cyp);
+  }
+  ctx.stroke();
+  ctx.lineWidth = 1.5; ctx.beginPath();
+  for(let x = B.x + 20; x < B.x + B.w; x += 56){
+    const t = (x - (B.x - 18)) / (B.w + 36);
+    const cyp = 250 + Math.sin(t * Math.PI) * 74;
+    ctx.moveTo(x, cyp); ctx.lineTo(x, B.y + Math.sin(T * 1.4 + x * .01) * 2);
+  }
+  ctx.stroke();
+  // --- the stream along the water zones: dusk-brown, catching the light ---
+  for(const z of CH3.waterZones){
+    ctx.fillStyle = '#6e4f36'; ctx.fillRect(z.x, GROUND_Y + 2, z.w, 12);
+    ctx.fillStyle = '#8a6742'; ctx.fillRect(z.x, GROUND_Y + 2, z.w, 4);
+    ctx.strokeStyle = 'rgba(255,205,150,.55)'; ctx.lineWidth = 1.5; ctx.beginPath();
+    for(let x = z.x + 6; x < z.x + z.w - 12; x += 34){
+      const yo = GROUND_Y + 7 + Math.sin(T * 2.4 + x * .05) * 1.5;
+      ctx.moveTo(x, yo); ctx.lineTo(x + 16, yo);
+    }
+    ctx.stroke();
+  }
+  // --- leaf litter carpeting the leaf zones (loud ground, readable at a glance) ---
+  for(const z of CH3.leafZones){
+    ctx.fillStyle = 'rgba(196,102,38,.30)'; ctx.fillRect(z.x, GROUND_Y, z.w, 12);
+    for(let x = z.x + 4; x < z.x + z.w; x += 13){
+      const lh = hash1(x * 1.93);
+      ctx.fillStyle = ['#d96f2e','#b5501f','#e8a33d','#9c5a24'][Math.floor(lh * 4)];
+      ctx.fillRect(x, GROUND_Y + 2 + lh * 7, 6, 3);
+    }
+  }
+  // --- tents at the campground ---
+  for(const tnt of [{x:300, c:'#c96a2e'}, {x:1720, c:'#7d7a4c'}]){
+    ctx.fillStyle = tnt.c;
+    ctx.beginPath(); ctx.moveTo(tnt.x, GROUND_Y); ctx.lineTo(tnt.x + 45, GROUND_Y - 62); ctx.lineTo(tnt.x + 90, GROUND_Y); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(40,26,16,.65)';
+    ctx.beginPath(); ctx.moveTo(tnt.x + 45, GROUND_Y - 62); ctx.lineTo(tnt.x + 58, GROUND_Y); ctx.lineTo(tnt.x + 32, GROUND_Y); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#5d4630'; ctx.lineWidth = 2; ctx.beginPath();
+    ctx.moveTo(tnt.x + 45, GROUND_Y - 62); ctx.lineTo(tnt.x + 45, GROUND_Y - 74); ctx.stroke();
+  }
+  // --- campfire remains: stone ring, charred logs, one last ember ---
+  ctx.fillStyle = '#8a8578';
+  for(let i = 0; i < 7; i++){ const a = i / 7 * Math.PI * 2; ctx.fillRect(1150 + Math.cos(a) * 20 - 4, GROUND_Y - 4 + Math.sin(a) * 3, 8, 6); }
+  ctx.fillStyle = '#3a332a';
+  ctx.save(); ctx.translate(1150, GROUND_Y - 4); ctx.rotate(.5); ctx.fillRect(-16, -3, 32, 6); ctx.rotate(-1); ctx.fillRect(-16, -3, 32, 6); ctx.restore();
+  const glow = .5 + Math.sin(T * 7) * .2;
+  ctx.fillStyle = 'rgba(255,120,40,' + (glow * .5) + ')'; ctx.fillRect(1146, GROUND_Y - 7, 8, 4);
+  // --- autumn trees along the valley (maples & dry gold) ---
+  for(let i = 0; i < 9; i++){
+    const tx = 180 + i * 590 + hash1(i * 4.7) * 120;
+    if(Math.abs(tx - CH3.cliff.x) < 90 || (tx > 3550 && tx < 4750)) continue;
+    ctx.fillStyle = '#4c3a28'; ctx.fillRect(tx, GROUND_Y - 84, 9, 84); ctx.fillRect(tx - 12, GROUND_Y - 108, 6, 30);
+    const cols = ['#c2541f','#d9762e','#e8a33d'];
+    ctx.fillStyle = cols[i % 3];
+    ctx.beginPath(); ctx.arc(tx + 4, GROUND_Y - 118, 34, 0, 7); ctx.arc(tx - 24, GROUND_Y - 98, 24, 0, 7); ctx.arc(tx + 30, GROUND_Y - 100, 26, 0, 7); ctx.fill();
+    ctx.fillStyle = cols[(i + 1) % 3]; ctx.beginPath(); ctx.arc(tx - 4, GROUND_Y - 128, 20, 0, 7); ctx.fill();
+  }
+  // --- ripples around Wyatt's feet while he stands in the stream ---
+  const pp = state.player;
+  if(zoneAt(pp.x + pp.w/2, pp.y).water && pp.onGround){
+    ctx.strokeStyle = 'rgba(255,220,170,.5)'; ctx.lineWidth = 1.5;
+    const rr = 6 + (T * 14 % 12);
+    ctx.beginPath(); ctx.ellipse(pp.x + pp.w/2, GROUND_Y + 6, rr, rr * .3, 0, 0, 7); ctx.stroke();
+  }
+}
+/* chapter 4 world-space scenery: snowy pines on the mountain path, houses
+   buried to their eaves in the town, and Haven General Hospital — a big
+   white building run by the Haven Foundation — at the end of the road */
+function drawWinterScenery(){
+  const T = performance.now() / 1000;
+  // --- snow pines along the mountain path ---
+  for(let i = 0; i < 6; i++){
+    const tx = 240 + i * 330 + hash1(i * 6.3) * 90;
+    if(tx > 1950) break;
+    ctx.fillStyle = '#4c4034'; ctx.fillRect(tx, GROUND_Y - 40, 8, 40);
+    for(let tier = 0; tier < 3; tier++){
+      const tw = 64 - tier * 16, ty = GROUND_Y - 52 - tier * 30;
+      ctx.fillStyle = '#3d5c48';
+      ctx.beginPath(); ctx.moveTo(tx - tw/2 + 4, ty + 26); ctx.lineTo(tx + 4, ty); ctx.lineTo(tx + tw/2 + 4, ty + 26); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#eef4f8';
+      ctx.beginPath(); ctx.moveTo(tx - tw/2 + 10, ty + 22); ctx.lineTo(tx + 4, ty + 2); ctx.lineTo(tx + tw/2 - 2, ty + 22); ctx.closePath(); ctx.fill();
+    }
+  }
+  // --- houses buried in snow (only roofs & upper walls above the drifts) ---
+  for(let i = 0; i < 5; i++){
+    const hx = 2080 + i * 330, hw = 240, hh = 128 + hash1(i * 8.1) * 30, top = GROUND_Y - hh;
+    ctx.fillStyle = i % 2 ? '#b9c2c9' : '#c4bdb2';
+    ctx.fillRect(hx, top + 40, hw, hh - 40);
+    ctx.fillStyle = '#6d5a4a';
+    ctx.beginPath(); ctx.moveTo(hx - 10, top + 44); ctx.lineTo(hx + hw/2, top - 4); ctx.lineTo(hx + hw + 10, top + 44); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#eef4f8'; // thick snow cap on the roof
+    ctx.beginPath(); ctx.moveTo(hx - 10, top + 40); ctx.lineTo(hx + hw/2, top - 8); ctx.lineTo(hx + hw + 10, top + 40); ctx.lineTo(hx + hw - 6, top + 46); ctx.lineTo(hx + hw/2, top + 6); ctx.lineTo(hx + 6, top + 46); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(70,80,90,.6)';
+    ctx.fillRect(hx + 28, top + 66, 30, 34); ctx.fillRect(hx + hw - 58, top + 66, 30, 34);
+    ctx.fillStyle = '#8a97a0'; ctx.fillRect(hx + hw/2 - 12, top + hh - 58, 24, 58); // door, half-buried
+    ctx.fillStyle = '#eef4f8'; // drift piled against the front
+    ctx.beginPath(); ctx.arc(hx + 30, GROUND_Y, 44, Math.PI, 0); ctx.arc(hx + hw - 40, GROUND_Y, 52, Math.PI, 0); ctx.fill();
+    ctx.fillRect(hx, GROUND_Y - 8, hw, 8);
+  }
+  // --- Haven General Hospital ---
+  const hx = 3940, hw = 1420, hTop = GROUND_Y - 268;
+  ctx.fillStyle = '#dde5ea'; ctx.fillRect(hx, hTop, hw, 268);
+  ctx.fillStyle = '#b9c8d2'; ctx.fillRect(hx, hTop, hw, 16); ctx.fillRect(hx, GROUND_Y - 118, hw, 7);
+  ctx.fillStyle = 'rgba(90,110,125,.55)';
+  for(let wx = hx + 34; wx < hx + hw - 50; wx += 92) for(let wy = hTop + 44; wy < GROUND_Y - 140; wy += 52)
+    if(hash1(wx * .37 + wy) > .25) ctx.fillRect(wx, wy, 44, 30);
+  ctx.fillStyle = '#f4f8fa'; ctx.fillRect(hx + 130, hTop + 26, 330, 44);   // name board
+  ctx.fillStyle = '#33506b'; ctx.font = 'bold 21px sans-serif';
+  ctx.fillText('ヘイヴン・ジェネラル病院', hx + 144, hTop + 55);
+  ctx.fillStyle = '#7d97a8'; ctx.font = '11px sans-serif';
+  ctx.fillText('HAVEN FOUNDATION ― 医療NGO ヘイヴン財団', hx + 480, hTop + 55);
+  ctx.fillStyle = '#c9452c'; // medical cross above the entrance
+  ctx.fillRect(hx + 76, hTop + 30, 12, 36); ctx.fillRect(hx + 64, hTop + 42, 36, 12);
+  // entrance porch with icicles
+  ctx.fillStyle = '#aebfcc'; ctx.fillRect(hx + 30, GROUND_Y - 108, 130, 10);
+  ctx.fillStyle = '#5d6d78'; ctx.fillRect(hx + 38, GROUND_Y - 98, 8, 98); ctx.fillRect(hx + 144, GROUND_Y - 98, 8, 98);
+  ctx.fillStyle = '#dfeaf2';
+  for(let ix = hx + 36; ix < hx + 152; ix += 14) ctx.fillRect(ix, GROUND_Y - 98, 3, 8 + hash1(ix) * 10);
+  ctx.fillStyle = '#3e4c55'; ctx.fillRect(hx + 62, GROUND_Y - 84, 66, 84); // entrance doors
+  ctx.fillStyle = '#8fb6c9'; ctx.fillRect(hx + 68, GROUND_Y - 78, 24, 60); ctx.fillRect(hx + 98, GROUND_Y - 78, 24, 60);
+  // snowdrifts heaped along the hospital front
+  ctx.fillStyle = '#eef4f8';
+  for(let dx = hx + 10; dx < hx + hw - 40; dx += 120){
+    ctx.beginPath(); ctx.arc(dx + 40, GROUND_Y, 42 + hash1(dx) * 18, Math.PI, 0); ctx.fill();
+  }
+  ctx.fillRect(hx, GROUND_Y - 6, hw, 6);
+  // footprints in the snow where Wyatt stands (his own trail, fading west)
+  const pp = state.player;
+  ctx.fillStyle = 'rgba(140,165,182,.5)';
+  for(let i = 1; i < 7; i++) ctx.fillRect(pp.x - i * 26, GROUND_Y + 4 + (i % 2) * 5, 9, 3);
+  // breath puffs in the cold air
+  if(Math.floor(T * 1.4 + pp.x * .01) % 2 === 0){
+    ctx.fillStyle = 'rgba(255,255,255,.4)';
+    ctx.beginPath(); ctx.arc(pp.x + pp.w/2 + pp.dir * 18, pp.y - 44, 3.5, 0, 7); ctx.fill();
+  }
+}
+function draw(){
+  const camX = Math.round(state.camX + (Math.random()-.5) * state.shake);
+  const T = performance.now() / 1000;
+  DRAW_FRAME++;
+  DRAW_DT = Math.min(.05, Math.max(0, T - (draw._pt || T))); draw._pt = T;
+  watchEntities();
+  CURPAL = state.chapter === 4 ? PAL4 : (state.chapter === 3 ? PAL3 : (state.chapter === 2 ? PAL2 : PAL1));
+  const summer = state.chapter === 2;
+  const autumn = state.chapter === 3;
+  const winter = state.chapter === 4;
+  ctx.save();
+  // sky — soft spring morning / hard summer light / autumn dusk / winter overcast (pre-rendered per chapter)
+  ctx.drawImage(winter ? skyCache4C : (autumn ? skyCache3C : (summer ? skyCache2C : skyCacheC)), 0, 0);
+  // sun with a soft glow (gradient object cached until the sun drifts)
+  const sunX = 800 - (camX * 0.04) % 260, sunY = summer ? 46 : (autumn ? 128 : (winter ? 84 : 62)), sunR = summer ? 155 : (autumn ? 175 : (winter ? 130 : 120));
+  if(!sunGlow.grad || Math.abs(sunX - sunGlow.x) >= 2 || sunGlow.ch !== state.chapter){
+    const g2 = ctx.createRadialGradient(sunX, sunY, 6, sunX, sunY, sunR);
+    if(summer){ g2.addColorStop(0, 'rgba(255,252,225,.98)'); g2.addColorStop(.25, 'rgba(255,248,195,.6)'); g2.addColorStop(1, 'rgba(255,248,195,0)'); }
+    else if(winter){ g2.addColorStop(0, 'rgba(240,248,252,.8)'); g2.addColorStop(.25, 'rgba(225,238,246,.35)'); g2.addColorStop(1, 'rgba(225,238,246,0)'); }
+    else if(autumn){ g2.addColorStop(0, 'rgba(255,214,150,.95)'); g2.addColorStop(.25, 'rgba(255,170,90,.55)'); g2.addColorStop(1, 'rgba(255,170,90,0)'); }
+    else { g2.addColorStop(0, 'rgba(255,250,205,.95)'); g2.addColorStop(.25, 'rgba(255,244,180,.5)'); g2.addColorStop(1, 'rgba(255,244,180,0)'); }
+    sunGlow.grad = g2; sunGlow.x = sunX; sunGlow.ch = state.chapter;
+  }
+  ctx.fillStyle = sunGlow.grad; ctx.fillRect(sunX - sunR, sunY - sunR, sunR * 2, sunR * 2);
+  ctx.fillStyle = autumn ? '#ffd9a0' : (winter ? '#eef6fa' : '#fffbe8'); ctx.beginPath(); ctx.arc(sunX, sunY, 24, 0, 7); ctx.fill();
+  // drifting clouds (slowest parallax)
+  ctx.fillStyle = autumn ? 'rgba(255,183,150,.5)' : (winter ? 'rgba(238,245,250,.65)' : 'rgba(255,255,255,.55)');
+  for(let i = 0; i < 6; i++){
+    const cx = ((i * 300 + T * (5 + i * 1.7) - camX * 0.06) % (VW + 320) + VW + 320) % (VW + 320) - 160;
+    const cy = 34 + (i % 3) * 38 + Math.sin(T * .3 + i) * 3, cw = 90 + (i % 3) * 40;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, cw * .5, 13, 0, 0, 7); ctx.ellipse(cx + cw * .28, cy + 3, cw * .34, 10, 0, 0, 7); ctx.ellipse(cx - cw * .3, cy + 4, cw * .3, 9, 0, 0, 7);
+    ctx.fill();
+  }
+  // distant tree-covered hills (parallax 0.10) — cached offscreen layer
+  blitLayer(hillsCache, camX * 0.1, 40, drawHillsInto);
+
+  // far ruined skyline (parallax 0.25) — cached layer with landmark silhouettes
+  blitLayer(farCache, camX * 0.25, 42, drawFarInto);
+  // near buildings (parallax 0.55) — cached layer; swaying ivy & vines stay live
+  blitLayer(nearCache, camX * 0.55, 38, drawNearInto);
+  drawNearSway(camX * 0.55, T);
+
+  ctx.translate(-camX, 0);
+
+  // ground: cracked street with grass — per-tile variation breaks the repetition;
+  // summer bakes it lighter and grows the grass taller and deeper green
+  ctx.fillStyle = CURPAL.groundBase; ctx.fillRect(camX - 10, GROUND_Y, VW + 20, VH - GROUND_Y);
+  for(let x = Math.floor(camX/64)*64; x < camX + VW + 64; x += 64){
+    const th = hash1(x * .77);
+    ctx.fillStyle = th > .66 ? CURPAL.groundA : (th > .33 ? CURPAL.groundB : CURPAL.groundC);
+    ctx.fillRect(x, GROUND_Y, 64, VH - GROUND_Y);
+    if(th > .55){ ctx.fillStyle = 'rgba(52,54,44,.35)'; ctx.fillRect(x + 8 + th * 30, GROUND_Y + 22 + th * 30, 22, 10); } // stain
+    if(th < .4){ // crack
+      ctx.strokeStyle = 'rgba(40,40,34,.55)'; ctx.lineWidth = 2; ctx.beginPath();
+      ctx.moveTo(x + 10 + th * 40, GROUND_Y + 4); ctx.lineTo(x + 16 + th * 40, GROUND_Y + 22); ctx.lineTo(x + 8 + th * 40, GROUND_Y + 40); ctx.stroke();
+    }
+    ctx.fillStyle = CURPAL.edge; ctx.fillRect(x, GROUND_Y, 64, 3); // grassy street edge
+  }
+  ctx.fillStyle = CURPAL.seam;
+  for(let x = Math.floor(camX/64)*64; x < camX + VW + 64; x += 64) ctx.fillRect(x, GROUND_Y, 3, VH - GROUND_Y);
+  // swaying grass tufts & seasonal flowers along the street edge
+  for(let x = Math.floor(camX/46)*46; x < camX + VW + 46; x += 46){
+    const hsh = hash1(x * 1.31), th2 = CURPAL.tuftH;
+    const sway = Math.sin(T * 2.1 + x * .35) * 2;
+    ctx.fillStyle = CURPAL.tuft;
+    ctx.fillRect(x, GROUND_Y - 3, 14 + hsh*16, 5);
+    ctx.fillRect(x + 3 + sway, GROUND_Y - (10 + hsh*4) * th2, 3, (8 + hsh*4) * th2);
+    ctx.fillRect(x + 9 + sway * .6, GROUND_Y - (8 + hsh*3) * th2, 3, (6 + hsh*3) * th2);
+    if(hsh > .55){ ctx.fillStyle = hsh > .8 ? CURPAL.flowerA : CURPAL.flowerB; ctx.fillRect(x + 6 + sway, GROUND_Y - (13 + hsh*4) * th2, 4, 4); }
+    if(hsh < .18){ ctx.fillStyle = '#ffffff'; ctx.fillRect(x + 12 + sway, GROUND_Y - 11 * th2, 3, 3); }
+  }
+  if(summer) drawSummerScenery();
+  if(autumn) drawAutumnScenery();
+  if(winter) drawWinterScenery();
+  // platforms & covers
+  for(const s of solids){
+    if(s.y === GROUND_Y && !s.cover && !s.gate) continue;
+    if(s.gate){
+      ctx.fillStyle = '#5d4a36';
+      const gy = s.y - (state.gateOpen ? state.gateY : 0);
+      ctx.fillRect(s.x, gy, s.w, s.h);
+      ctx.fillStyle = '#77603f'; for(let i = 0; i < 5; i++) ctx.fillRect(s.x, gy + 18 + i*38, s.w, 6);
+      // crawl gap marker (small hole at the fence beside the gate)
+      ctx.fillStyle = '#2c2418'; ctx.fillRect(GAP.x1 - 8, GROUND_Y - 26, 14, 26);
+      ctx.fillStyle = '#8fce6e'; ctx.font = '11px sans-serif';
+      if(!state.gateOpen) ctx.fillText('← メイの隙間', GAP.x1 - 66, GROUND_Y - 36);
+      continue;
+    }
+    if(s.fence){
+      // tall wooden fence (chapter 2): planks, rails, summer ivy — and the rope
+      // ladders Mei lowers on both faces once she has crossed
+      ctx.fillStyle = '#6d5b40'; ctx.fillRect(s.x, s.y, s.w, s.h);
+      ctx.fillStyle = '#77603f'; ctx.fillRect(s.x, s.y + 30, s.w, 6); ctx.fillRect(s.x, s.y + 110, s.w, 6);
+      ctx.fillStyle = 'rgba(50,38,24,.5)'; ctx.fillRect(s.x + s.w/2 - 1, s.y, 2, s.h);
+      ctx.fillStyle = '#3f7031'; ctx.fillRect(s.x - 3, s.y + 60, 5, 90); ctx.fillRect(s.x + s.w - 2, s.y + 20, 5, 70);
+      if(state.ladderDown){
+        for(const lx2 of [s.x - 7, s.x + s.w + 2]){
+          ctx.strokeStyle = '#c9bfa5'; ctx.lineWidth = 2; ctx.beginPath();
+          ctx.moveTo(lx2, s.y + 2); ctx.lineTo(lx2, GROUND_Y);
+          ctx.moveTo(lx2 + 5, s.y + 2); ctx.lineTo(lx2 + 5, GROUND_Y); ctx.stroke();
+          ctx.fillStyle = '#a9804f';
+          for(let ry = s.y + 14; ry < GROUND_Y - 4; ry += 15) ctx.fillRect(lx2 - 1, ry, 7, 3);
+        }
+      }
+      continue;
+    }
+    if(s.ventDoor){
+      // locked hospital door (chapter 4): steel door, the snow-choked vent at
+      // its base that only Mei fits through, and the door slid open once she
+      // releases the latch from inside
+      const V = CH4.vent;
+      ctx.fillStyle = '#5d6a72'; ctx.fillRect(s.x - 8, s.y, s.w + 16, s.h);
+      ctx.fillStyle = '#6d7c84'; ctx.fillRect(s.x - 8, s.y, s.w + 16, 8);
+      if(state.ventOpen){
+        ctx.fillStyle = '#232a2e'; ctx.fillRect(s.x, s.y + 8, s.w, s.h - 8);   // dark passage
+        ctx.fillStyle = '#7e8c94'; ctx.fillRect(s.x + s.w - 2, s.y + 8, 5, s.h - 8); // door slid aside
+      } else {
+        ctx.fillStyle = '#7e8c94'; ctx.fillRect(s.x, s.y + 8, s.w, s.h - 8);
+        ctx.fillStyle = '#4c585e'; ctx.fillRect(s.x, s.y + 66, s.w, 5);
+        ctx.fillStyle = '#ffd76e'; ctx.fillRect(s.x + s.w/2 - 3, s.y + 50, 6, 10); // latch plate
+      }
+      // the vent: dark grille at ground level, half-buried in snow
+      ctx.fillStyle = '#2c3438'; ctx.fillRect(V.x - 34, GROUND_Y - 30, 26, 30);
+      ctx.fillStyle = '#4c585e';
+      for(let vy = GROUND_Y - 26; vy < GROUND_Y - 4; vy += 6) ctx.fillRect(V.x - 32, vy, 22, 2);
+      ctx.fillStyle = '#eef4f8'; ctx.fillRect(V.x - 38, GROUND_Y - 8, 34, 8);
+      ctx.beginPath(); ctx.arc(V.x - 24, GROUND_Y - 8, 8, 0, 7); ctx.fill();
+      ctx.fillStyle = '#7fb2d9'; ctx.font = '11px sans-serif';
+      if(!state.ventOpen) ctx.fillText('換気口（メイだけ通れる）', V.x - 118, GROUND_Y - 40);
+      continue;
+    }
+    if(s.cover){
+      if(s.snow){ // snowdrift: soft white mound with a blue-grey shade side
+        ctx.fillStyle = '#eef4f8'; ctx.fillRect(s.x + 4, s.y + 12, s.w - 8, s.h - 12);
+        ctx.beginPath(); ctx.arc(s.x + s.w * .3, s.y + 14, s.w * .3, 0, 7); ctx.arc(s.x + s.w * .68, s.y + 12, s.w * .26, 0, 7); ctx.fill();
+        ctx.fillStyle = '#c9d8e2'; ctx.fillRect(s.x + s.w * .55, s.y + 20, s.w * .4, s.h - 22);
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(s.x + 10, s.y + 2, 16, 4); ctx.fillRect(s.x + s.w - 30, s.y + 5, 12, 3);
+      } else if(s.hosp){ // hospital furniture: cabinet & beds with white sheets
+        ctx.fillStyle = '#8a97a0'; ctx.fillRect(s.x, s.y + 8, s.w, s.h - 8);
+        ctx.fillStyle = '#e8eef2'; ctx.fillRect(s.x, s.y, s.w, 10);
+        ctx.fillStyle = '#b8c6ce'; ctx.fillRect(s.x + 6, s.y + 20, s.w - 12, 4); ctx.fillRect(s.x + 6, s.y + 34, s.w - 12, 4);
+        ctx.fillStyle = '#c9452c'; ctx.fillRect(s.x + s.w - 14, s.y + 2, 8, 6);
+      } else if(s.hedge){ // trimmed garden hedge, deep summer green with flowers
+        ctx.fillStyle = '#3a6b2c'; ctx.fillRect(s.x, s.y + 10, s.w, s.h - 10);
+        for(let bx = s.x + 8; bx < s.x + s.w; bx += 15){ ctx.beginPath(); ctx.arc(bx, s.y + 12, 10, 0, 7); ctx.fill(); }
+        ctx.fillStyle = '#4e8a3a';
+        for(let bx = s.x + 10; bx < s.x + s.w; bx += 22){ ctx.beginPath(); ctx.arc(bx, s.y + 8, 6, 0, 7); ctx.fill(); }
+        ctx.fillStyle = '#e4572e'; ctx.fillRect(s.x + 12, s.y + 4, 4, 4); ctx.fillRect(s.x + s.w - 18, s.y + 10, 4, 4);
+      } else if(s.pool){ // poolside: metal ladder rails & a sun-bleached deck chair
+        ctx.fillStyle = '#b9c0c4';
+        ctx.fillRect(s.x + 6, s.y, 5, s.h); ctx.fillRect(s.x + s.w - 11, s.y, 5, s.h); ctx.fillRect(s.x + 6, s.y + 4, s.w - 12, 4);
+        ctx.fillStyle = '#d8d2c0'; ctx.fillRect(s.x + 14, s.y + 16, 28, 6); ctx.fillRect(s.x + 14, s.y + 26, 28, 5);
+        ctx.fillStyle = '#67984f'; ctx.fillRect(s.x + 8, s.y - 4, s.w - 20, 5);
+      } else if(s.rv){ // camper van: boxy body, windows, door, roof weeds, flat wheels
+        ctx.fillStyle = '#cfc8b4'; ctx.fillRect(s.x, s.y + 6, s.w, s.h - 12);
+        ctx.fillStyle = '#e6e0cc'; ctx.fillRect(s.x, s.y, s.w, 10);
+        ctx.fillStyle = '#7d94a0'; ctx.fillRect(s.x + 10, s.y + 16, 26, 16); ctx.fillRect(s.x + s.w - 34, s.y + 16, 22, 16);
+        ctx.fillStyle = '#8a6742'; ctx.fillRect(s.x + s.w/2 - 10, s.y + 14, 20, s.h - 20);
+        ctx.fillStyle = '#b5501f'; ctx.fillRect(s.x + 4, s.y + 40, s.w - 8, 5);
+        ctx.fillStyle = '#2c2f31';
+        ctx.beginPath(); ctx.arc(s.x + 20, s.y + s.h - 2, 9, 0, 7); ctx.arc(s.x + s.w - 20, s.y + s.h - 2, 9, 0, 7); ctx.fill();
+        ctx.fillStyle = '#67984f'; ctx.fillRect(s.x + 12, s.y - 4, s.w - 40, 5);
+      } else if(s.picnic){ // picnic table: plank top, benches, fallen leaves resting on it
+        ctx.fillStyle = '#7d6242'; ctx.fillRect(s.x, s.y, s.w, 7);
+        ctx.fillStyle = '#6d543a'; ctx.fillRect(s.x + 2, s.y + 18, s.w - 4, 6);
+        ctx.fillStyle = '#5d4630';
+        ctx.fillRect(s.x + 8, s.y + 7, 6, s.h - 7); ctx.fillRect(s.x + s.w - 14, s.y + 7, 6, s.h - 7);
+        ctx.fillStyle = '#c2541f'; ctx.fillRect(s.x + 10, s.y - 5, 16, 5); ctx.fillRect(s.x + s.w - 30, s.y - 4, 12, 4);
+      } else if(s.w > 80){ // wrecked car body: windows, rust, flat wheels, grass on top
+        ctx.fillStyle = '#5d6a72'; ctx.fillRect(s.x, s.y + 8, s.w, s.h - 8);
+        ctx.fillStyle = '#6d7c84'; ctx.fillRect(s.x + 8, s.y, s.w - 26, 12);
+        ctx.fillStyle = '#a8c4cc'; ctx.fillRect(s.x + 16, s.y + 2, 22, 8); ctx.fillRect(s.x + 48, s.y + 2, 20, 8);
+        ctx.fillStyle = '#8a5a38';
+        ctx.fillRect(s.x + 6, s.y + 30, 16, 9); ctx.fillRect(s.x + s.w - 26, s.y + 20, 12, 7);
+        ctx.fillStyle = '#2c2f31';
+        ctx.beginPath(); ctx.arc(s.x + 18, s.y + s.h - 4, 9, 0, 7); ctx.arc(s.x + s.w - 18, s.y + s.h - 4, 9, 0, 7); ctx.fill();
+        ctx.fillStyle = '#557f3e'; ctx.fillRect(s.x + 10, s.y - 5, s.w - 30, 6);
+        ctx.fillStyle = '#e88bb0'; ctx.fillRect(s.x + 20, s.y - 9, 4, 4);
+      } else { // wooden crate: plank seams, cracks, moss — varied by position
+        const ch = hash1(s.x * .37);
+        ctx.fillStyle = ch > .5 ? '#6d5b40' : '#63543c'; ctx.fillRect(s.x, s.y, s.w, s.h);
+        ctx.fillStyle = '#83704e'; ctx.fillRect(s.x, s.y, s.w, 8);
+        ctx.fillStyle = 'rgba(50,38,24,.5)';
+        ctx.fillRect(s.x + s.w * .33, s.y + 8, 3, s.h - 8); ctx.fillRect(s.x + s.w * .66, s.y + 8, 3, s.h - 8);
+        ctx.fillRect(s.x, s.y + s.h - 10, s.w, 3);
+        if(ch > .35){ ctx.strokeStyle = 'rgba(50,38,24,.6)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(s.x + 8, s.y + 12); ctx.lineTo(s.x + 20, s.y + 30); ctx.lineTo(s.x + 14, s.y + 44); ctx.stroke(); }
+        ctx.fillStyle = '#557f3e'; ctx.fillRect(s.x + 6, s.y - 5, s.w - 20, 6);
+        if(ch > .6){ ctx.fillStyle = '#67984f'; ctx.fillRect(s.x + s.w - 14, s.y + s.h - 12, 10, 12); }
+      }
+      continue;
+    }
+    if(s.cliff){
+      // rock face with strata; a fallen log spans its top (Mei's bridge) and,
+      // once she knocks it down, a stepladder leans on the near face
+      ctx.fillStyle = '#6e5a44'; ctx.fillRect(s.x, s.y, s.w, s.h);
+      ctx.fillStyle = '#7d684e'; ctx.fillRect(s.x, s.y, s.w, 10); ctx.fillRect(s.x, s.y + 52, s.w, 8); ctx.fillRect(s.x, s.y + 104, s.w, 8);
+      ctx.fillStyle = 'rgba(46,34,22,.5)'; ctx.fillRect(s.x + 6, s.y + 20, 4, 26); ctx.fillRect(s.x + s.w - 10, s.y + 70, 4, 30);
+      ctx.fillStyle = '#8a5a2a'; ctx.fillRect(s.x - 4, s.y - 6, s.w + 8, 5);   // leaf litter on top
+      // the fallen log: from the near bank, across the top, to the far bank
+      ctx.fillStyle = '#5d4630'; ctx.fillRect(s.x - 118, s.y - 12, s.w + 236, 11);
+      ctx.fillStyle = '#6d543a'; ctx.fillRect(s.x - 118, s.y - 12, s.w + 236, 4);
+      ctx.fillStyle = '#8a6f4d'; ctx.beginPath(); ctx.arc(s.x - 118, s.y - 6, 6, 0, 7); ctx.fill();
+      ctx.fillStyle = '#5d4630'; ctx.fillRect(s.x + 40, s.y - 26, 5, 15); ctx.fillRect(s.x - 60, s.y - 22, 4, 11);
+      // leaning log Mei scrambles up on the near side
+      ctx.save(); ctx.translate(s.x - 30, GROUND_Y); ctx.rotate(.18);
+      ctx.fillStyle = '#5d4630'; ctx.fillRect(-5, -168, 10, 168); ctx.restore();
+      if(state.ladderDown){
+        // stepladder knocked down against the near face (+ a rope on the far face)
+        ctx.strokeStyle = '#a9804f'; ctx.lineWidth = 3; ctx.beginPath();
+        ctx.moveTo(s.x - 30, GROUND_Y); ctx.lineTo(s.x - 3, s.y + 4);
+        ctx.moveTo(s.x - 14, GROUND_Y); ctx.lineTo(s.x + 4, s.y + 10); ctx.stroke();
+        ctx.lineWidth = 2; ctx.beginPath();
+        for(let i = 1; i <= 6; i++){
+          const t = i / 7;
+          ctx.moveTo(s.x - 30 + 27 * t - 4, GROUND_Y - (GROUND_Y - s.y) * t);
+          ctx.lineTo(s.x - 14 + 18 * t + 4, GROUND_Y - (GROUND_Y - s.y - 6) * t);
+        }
+        ctx.stroke();
+        ctx.strokeStyle = '#c9bfa5'; ctx.lineWidth = 2; ctx.beginPath();
+        ctx.moveTo(s.x + s.w + 3, s.y + 2); ctx.lineTo(s.x + s.w + 3, GROUND_Y); ctx.stroke();
+      }
+      continue;
+    }
+    if(s.bridge){
+      // suspension bridge deck: wooden planks on ropes, swaying gently in
+      // the wind (visual only — the collision deck stays level)
+      const swy = Math.sin(T * 1.4) * 2;
+      ctx.strokeStyle = '#3e2f20'; ctx.lineWidth = 3; ctx.beginPath();
+      ctx.moveTo(s.x - 6, s.y + 10 + swy); ctx.lineTo(s.x + s.w + 6, s.y + 10 + swy); ctx.stroke();
+      for(let x = s.x; x < s.x + s.w; x += 22){
+        const ph3 = hash1(x * .61);
+        ctx.fillStyle = ph3 > .5 ? '#7d6242' : '#74603f';
+        ctx.fillRect(x, s.y + swy * (0.5 + ph3 * 0.5), 20, 9);
+      }
+      ctx.strokeStyle = '#4c3a26'; ctx.lineWidth = 2; ctx.beginPath();
+      ctx.moveTo(s.x - 4, s.y - 22 + swy); ctx.lineTo(s.x + s.w + 4, s.y - 22 + swy); ctx.stroke();
+      ctx.fillStyle = '#5d4630';
+      for(let x = s.x + 8; x < s.x + s.w; x += 44) ctx.fillRect(x, s.y - 22 + swy, 4, 24);
+      continue;
+    }
+    // stone platform: per-platform cracks, stains, moss and a swaying tuft
+    const ph2 = hash1(s.x * .53 + s.y);
+    ctx.fillStyle = ph2 > .5 ? '#6f6a58' : '#6a6554'; ctx.fillRect(s.x, s.y, s.w, s.h);
+    ctx.fillStyle = '#8f8a72'; ctx.fillRect(s.x, s.y, s.w, 5);
+    ctx.fillStyle = 'rgba(52,50,40,.4)'; ctx.fillRect(s.x + 10 + ph2 * Math.max(10, s.w - 50), s.y + 8, 20, 5);
+    ctx.strokeStyle = 'rgba(52,50,40,.55)'; ctx.lineWidth = 2; ctx.beginPath();
+    ctx.moveTo(s.x + 16 + ph2 * 40, s.y + 2); ctx.lineTo(s.x + 22 + ph2 * 40, s.y + 11); ctx.stroke();
+    ctx.fillStyle = '#67984f'; ctx.fillRect(s.x + 8, s.y - 4, Math.min(60, s.w - 16), 5);
+    ctx.fillRect(s.x + s.w - 24, s.y - 3, 14, 4);
+    const tsway = Math.sin(T * 2.1 + s.x * .35) * 1.6;
+    ctx.fillRect(s.x + 14 + tsway, s.y - 10, 3, 7); ctx.fillRect(s.x + s.w - 20 + tsway * .6, s.y - 9, 3, 6);
+    if(ph2 > .55){ ctx.fillStyle = CURPAL.flowerB; ctx.fillRect(s.x + 16 + tsway, s.y - 12, 4, 4); }
+    if(s.balcony){ // motel exterior corridor: railing above, support posts below
+      ctx.fillStyle = '#6d5b40';
+      for(let rx = s.x + 6; rx < s.x + s.w; rx += 30) ctx.fillRect(rx, s.y - 24, 4, 24);
+      ctx.fillRect(s.x, s.y - 26, s.w, 5);
+      ctx.fillStyle = '#8a7a66';
+      for(let px2 = s.x + 60; px2 < s.x + s.w; px2 += 220) ctx.fillRect(px2, s.y + s.h, 8, GROUND_Y - (s.y + s.h));
+    }
+  }
+  // checkpoint doors
+  for(const d of doors){
+    ctx.fillStyle = '#4e5d43'; ctx.fillRect(d.x, GROUND_Y - 108, 10, 108); ctx.fillRect(d.x + 62, GROUND_Y - 108, 10, 108);
+    ctx.fillRect(d.x, GROUND_Y - 108, 72, 10);
+    ctx.fillStyle = state.checkpoint.x > d.x ? '#ffd76e' : '#9fb98f';
+    ctx.fillRect(d.x + 28, GROUND_Y - 96, 16, 10);
+  }
+  // exit gate (position & label come from the chapter definition)
+  ctx.fillStyle = '#476b3a'; ctx.fillRect(CH.clearX + 20, GROUND_Y - 150, 14, 150); ctx.fillRect(CH.clearX + 130, GROUND_Y - 150, 14, 150);
+  ctx.fillRect(CH.clearX + 20, GROUND_Y - 150, 124, 12);
+  ctx.fillStyle = '#fff2c0'; ctx.font = 'bold 15px sans-serif'; ctx.fillText(CH.exitLabel, CH.clearX + 12, GROUND_Y - 164);
+  ctx.fillStyle = CURPAL.flowerB;
+  for(let i = 0; i < 8; i++) ctx.fillRect(CH.clearX + i*22, GROUND_Y - 6 - (i%3)*3, 5, 5);
+
+  // hide zones
+  for(const z of hideZones){
+    if(z.kind === 'grass'){
+      ctx.fillStyle = CURPAL.grassDeep;
+      for(let x = z.x; x < z.x + z.w; x += 9){
+        const swy = Math.sin(T * 2.3 + x * .3) * 2;
+        ctx.fillRect(x, z.y + 8, 5, z.h - 6); ctx.fillRect(x + 3 + swy, z.y, 4, z.h - 16);
+        ctx.fillRect(x + 6 + swy * .5, z.y + 4, 3, z.h - 20);
+      }
+      ctx.fillStyle = CURPAL.hideFlower; ctx.fillRect(z.x + 14, z.y + 6, 4, 4); ctx.fillRect(z.x + z.w - 22, z.y + 12, 4, 4);
+    } else {
+      ctx.fillStyle = 'rgba(24,32,22,.45)'; ctx.fillRect(z.x, z.y - 22, z.w, z.h + 22);
+      ctx.fillStyle = '#54604c'; ctx.fillRect(z.x, z.y - 26, z.w, 6);
+    }
+  }
+
+  // vision bands (below characters)
+  if(!state.listening){
+    for(const e of state.enemies){
+      if(!e.alive || e.type !== 'guard') continue;
+      const ex = e.x + e.w/2, ey = e.y - 36;
+      // chapter 4: the drawn band matches the gust-shortened vision range
+      const len = state.chapter === 4 ? Math.round(235 - 99 * state.windLevel) : 235, hh = 46;
+      ctx.fillStyle = e.state === 'alert' ? 'rgba(228,60,30,.30)' : (e.detect > 40 ? 'rgba(242,193,78,.34)' : 'rgba(255,240,170,.20)');
+      ctx.beginPath();
+      ctx.moveTo(ex, ey);
+      ctx.lineTo(ex + e.dir * len, ey - hh/2); ctx.lineTo(ex + e.dir * len, ey + hh/2);
+      ctx.closePath(); ctx.fill();
+    }
+  }
+  // noise rings
+  for(const r of state.rings){
+    ctx.strokeStyle = 'rgba(' + r.color + ',' + (r.life * .5) + ')'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, 7); ctx.stroke();
+  }
+  // fires — layered flickering flames, ground glow, smoke and rising sparks
+  for(const f of state.fires){
+    const fade = Math.min(1, f.t / .8), midX = f.x + f.w/2;
+    const gl = ctx.createRadialGradient(midX, GROUND_Y - 4, 6, midX, GROUND_Y - 4, f.w * .85);
+    gl.addColorStop(0, 'rgba(255,150,50,' + (.35 * fade) + ')'); gl.addColorStop(1, 'rgba(255,150,50,0)');
+    ctx.fillStyle = gl; ctx.fillRect(f.x - f.w * .4, GROUND_Y - 60, f.w * 1.8, 64);
+    ctx.fillStyle = 'rgba(70,64,60,' + (.3 * fade) + ')';
+    for(let i = 0; i < 3; i++){
+      const sp = (T * 22 + i * 17) % 44;
+      ctx.beginPath(); ctx.ellipse(midX + Math.sin(T * 2 + i * 2.1) * 8 + (i - 1) * 14, f.y - 12 - sp, 9 + sp * .22, 6, 0, 0, 7); ctx.fill();
+    }
+    for(let x = f.x + 2; x < f.x + f.w; x += 9){
+      const fh = hash1(x * 1.7), fl = Math.sin(T * 21 + x * 1.3) * 4 + Math.sin(T * 33 + x) * 2;
+      const hgt = (16 + fh * 18) * fade;
+      ctx.fillStyle = 'rgba(224,84,28,.88)'; ctx.fillRect(x, f.y + f.h - hgt + fl * .3, 8, hgt);
+      ctx.fillStyle = '#f28c2e'; ctx.fillRect(x + 1, f.y + f.h - hgt * .72 + fl * .3, 6, hgt * .72);
+      ctx.fillStyle = '#ffd76e'; ctx.fillRect(x + 2, f.y + f.h - hgt * .45 + fl * .3, 4, hgt * .45);
+    }
+    ctx.fillStyle = 'rgba(255,190,90,.9)';
+    for(let i = 0; i < 4; i++){
+      const sp = (T * (26 + i * 7) + i * 23) % 40;
+      ctx.fillRect(f.x + 8 + hash1(f.x + i * 9) * (f.w - 16) + Math.sin(T * 3 + i) * 3, f.y + f.h - 8 - sp, 2.5, 2.5);
+    }
+  }
+  // embers left after a fire dies down (visual only — no damage)
+  for(const em of state.embers){
+    const a = Math.min(1, em.t / 1.2);
+    ctx.fillStyle = 'rgba(40,36,32,' + (a * .35) + ')'; ctx.fillRect(em.x + 6, GROUND_Y - 5, em.w - 12, 3);
+    for(let x = em.x + 4; x < em.x + em.w; x += 11){
+      const pl = .5 + Math.sin(T * 6 + x) * .5;
+      ctx.fillStyle = 'rgba(255,' + Math.floor(90 + pl * 70) + ',40,' + (a * (.35 + pl * .5)) + ')';
+      ctx.fillRect(x, GROUND_Y - 3, 5, 3);
+    }
+  }
+  // pickups
+  for(const pk of state.pickups){
+    if(pk.taken) continue;
+    const bob = Math.sin(state.time * 3 + pk.x) * 2;
+    if(pk.kind === 'scrap'){ ctx.fillStyle = '#b9c0c4'; ctx.fillRect(pk.x, pk.y + bob, 13, 9); ctx.fillStyle = '#7e868c'; ctx.fillRect(pk.x + 3, pk.y + 3 + bob, 7, 4); }
+    if(pk.kind === 'cloth'){ ctx.fillStyle = '#e8e2d2'; ctx.fillRect(pk.x, pk.y + bob, 14, 10); ctx.fillStyle = '#c9bfa5'; ctx.fillRect(pk.x, pk.y + 4 + bob, 14, 3); }
+    if(pk.kind === 'alcohol'){ ctx.fillStyle = '#5d8a4c'; ctx.fillRect(pk.x + 3, pk.y + bob, 8, 13); ctx.fillStyle = '#3f6633'; ctx.fillRect(pk.x + 5, pk.y - 3 + bob, 4, 4); }
+    if(pk.kind === 'bat'){ ctx.fillStyle = '#a9804f'; ctx.save(); ctx.translate(pk.x + 8, pk.y + 6 + bob); ctx.rotate(-.6); ctx.fillRect(-3, -12, 6, 24); ctx.restore(); }
+    if(pk.kind === 'bottle'){ ctx.fillStyle = '#9fd4e0'; ctx.fillRect(pk.x + 3, pk.y + bob, 8, 13); ctx.fillStyle = '#6fa8ba'; ctx.fillRect(pk.x + 5, pk.y - 3 + bob, 4, 4); ctx.fillStyle = 'rgba(255,255,255,.65)'; ctx.fillRect(pk.x + 4, pk.y + 2 + bob, 2, 8); }
+    if(pk.kind === 'brick'){ ctx.fillStyle = '#9c4a38'; ctx.fillRect(pk.x, pk.y + 3 + bob, 15, 9); ctx.fillStyle = '#7c3828'; ctx.fillRect(pk.x, pk.y + 7 + bob, 15, 2); ctx.fillRect(pk.x + 7, pk.y + 3 + bob, 2, 4); }
+  }
+  // thrown bottles & bricks in flight (they burst into noise on landing)
+  for(const t of state.thrown){
+    ctx.save(); ctx.translate(t.x, t.y); ctx.rotate(state.time * 10);
+    if(t.kind === 'bottle'){ ctx.fillStyle = '#9fd4e0'; ctx.fillRect(-3, -6, 6, 12); ctx.fillStyle = '#6fa8ba'; ctx.fillRect(-1.5, -9, 3, 3); }
+    else { ctx.fillStyle = '#9c4a38'; ctx.fillRect(-7, -4, 14, 8); ctx.fillStyle = '#7c3828'; ctx.fillRect(-7, -1, 14, 2); }
+    ctx.restore();
+  }
+  // bottles in flight — fire trail, spinning bottle, flickering lit rag
+  for(const b of state.bottles){
+    if(b.trail) for(let i = 0; i < b.trail.length; i++){
+      const tp = b.trail[i], a = i / b.trail.length;
+      ctx.fillStyle = 'rgba(242,' + Math.floor(120 + a * 80) + ',40,' + (a * .5) + ')';
+      ctx.fillRect(tp.x - 2, tp.y - 2, 4, 4);
+    }
+    ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(state.time * 9);
+    ctx.fillStyle = '#5d8a4c'; ctx.fillRect(-3, -6, 6, 12);
+    ctx.fillStyle = '#3f6633'; ctx.fillRect(-1.5, -9, 3, 3);
+    ctx.restore();
+    const fl = Math.sin(state.time * 26 + b.x) * 1.6;
+    ctx.fillStyle = '#f28c2e'; ctx.fillRect(b.x - 2, b.y - 14 + fl * .4, 4, 5 + fl);
+    ctx.fillStyle = '#ffd76e'; ctx.fillRect(b.x - 1, b.y - 12 + fl * .4, 2, 3);
+  }
+
+  // aim guides (LT hold): throwable / molotov trajectory, gun line of fire
+  if(state.aiming && state.mode === 'play'){
+    const p = state.player;
+    if(state.throwable){
+      let bx = p.x + p.w/2, by = p.y - 46, vx = p.dir * 5.2, vy = -4.5;
+      ctx.fillStyle = 'rgba(190,235,255,.9)';
+      for(let i = 0; i < 30; i++){ vy += 0.4; bx += vx; by += vy; if(by >= GROUND_Y - 6) break; if(i % 2 === 0) ctx.fillRect(bx - 2, by - 2, 4, 4); }
+      ctx.strokeStyle = 'rgba(190,235,255,.55)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(bx, by, 10, 0, 7); ctx.stroke();
+    } else if(state.selItem === 'molotov' && state.inv.molotov > 0){
+      let bx = p.x + p.w/2, by = p.y - 46, vx = p.dir * 5.2, vy = -4.5;
+      ctx.fillStyle = 'rgba(255,240,190,.85)';
+      for(let i = 0; i < 30; i++){ vy += 0.4; bx += vx; by += vy; if(by >= GROUND_Y - 6) break; if(i % 2 === 0) ctx.fillRect(bx - 2, by - 2, 4, 4); }
+    } else if(state.selItem === 'gun' && state.inv.gun > 0){
+      const sx = p.x + p.w/2, sy = p.y - 36;
+      let ex = sx + p.dir * 460;
+      for(let d = 30; d < 460; d += 15){ if(losBlocked(sx, sy, sx + p.dir * d, sy)){ ex = sx + p.dir * d; break; } }
+      ctx.strokeStyle = 'rgba(255,90,60,.8)'; ctx.lineWidth = 2; ctx.setLineDash([8, 6]);
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, sy); ctx.stroke(); ctx.setLineDash([]);
+    }
+  }
+
+  drawMei(); drawPlayer();
+  drawGhosts();
+  for(const e of state.enemies) if(e.alive) drawEnemy(e);
+  // bullets
+  ctx.fillStyle = '#ffe9a8';
+  for(const b of state.bullets) ctx.fillRect(b.x - 3, b.y - 1, 6, 2);
+  // muzzle flashes (enemy rifles & the player's handmade gun)
+  for(const fl of state.flashes){
+    const a = Math.max(0, fl.t / .09), r = 13 * a + 3;
+    ctx.save(); ctx.translate(fl.x, fl.y); ctx.globalAlpha = a;
+    ctx.fillStyle = '#fff3b0';
+    ctx.beginPath(); ctx.arc(0, 0, 4.5 * a + 1, 0, 7); ctx.fill();
+    ctx.fillRect(fl.dir > 0 ? 0 : -r, -2, r, 4);
+    ctx.fillRect(-1.6, -r * .62, 3.2, r * 1.24);
+    ctx.fillStyle = '#ffb347';
+    ctx.fillRect(fl.dir > 0 ? 2 : -r * .6, -1.2, r * .55, 2.4);
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
+  // particles
+  for(const pt of state.parts){ ctx.fillStyle = pt.c; ctx.fillRect(pt.x, pt.y, 4, 4); }
+  ctx.restore();
+
+  // foreground parallax (1.3x): near grass & rubble silhouettes sliding past
+  // in front of the street — occlusion that sells the depth
+  const fgOff = camX * 1.3, fgSlot = Math.floor(fgOff / 92);
+  for(let i = -1; i < VW / 92 + 2; i++){
+    const wi = fgSlot + i, bx = wi * 92 - fgOff, fh = hash1(wi * 3.71);
+    if(fh < .3) continue;
+    ctx.fillStyle = CURPAL.fg;
+    if(fh > .78){ // rubble chunk
+      ctx.fillRect(bx + 6, VH - 16, 34, 16); ctx.fillRect(bx + 14, VH - 25, 20, 9); ctx.fillRect(bx + 40, VH - 10, 14, 10);
+    } else if(fh > .62){ // broken post stub
+      ctx.fillRect(bx + 10, VH - 40 - fh * 14, 7, 40 + fh * 14); ctx.fillRect(bx + 6, VH - 44 - fh * 14, 15, 6);
+    } else { // grass clump
+      const swy = Math.sin(T * 2.2 + wi * 1.7) * 2;
+      ctx.fillRect(bx + 4, VH - 15, 5, 15); ctx.fillRect(bx + 12 + swy, VH - 22, 4, 22);
+      ctx.fillRect(bx + 20 + swy * .6, VH - 18, 4, 18); ctx.fillRect(bx + 27, VH - 12, 4, 12);
+    }
+  }
+
+  // drifting pollen & dust motes in the seasonal light (screen space);
+  // autumn instead sends leaves past on the wind
+  if(autumn){
+    for(let i = 0; i < 24; i++){
+      const fall = (T * (14 + hash1(i * 3.3) * 16) + hash1(i * 7.9) * (VH + 80)) % (VH + 80);
+      const lx = ((hash1(i * 5.1) * (VW + 80) + Math.sin(T * .9 + i * 1.9) * 26 + T * 9) % (VW + 80)) - 40;
+      const ly = fall - 40;
+      ctx.save(); ctx.translate(lx, ly); ctx.rotate(T * (1 + hash1(i)) + i);
+      ctx.fillStyle = ['#d96f2e','#c24e24','#e8a33d','#a85f2e'][i % 4];
+      ctx.fillRect(-3.5, -2, 7, 4);
+      ctx.restore();
+    }
+  } else {
+  const moteN = summer ? 16 : 26;
+  for(let i = 0; i < moteN; i++){
+    const mx = ((hash1(i * 7.3) * (VW + 60) + T * (7 + hash1(i * 3.9) * 12)) % (VW + 40)) - 20 + Math.sin(T * .8 + i * 1.7) * 9;
+    const my = 30 + hash1(i * 3.1) * 400 + Math.sin(T * .6 + i) * 12;
+    const ms = 1 + hash1(i * 5.7) * 2.2, tw = .3 + .7 * Math.abs(Math.sin(T * 1.4 + i * 2.3));
+    ctx.fillStyle = 'rgba(' + CURPAL.mote + ',' + (.5 * tw) + ')';
+    ctx.fillRect(mx, my, ms, ms);
+  }
+  }
+  // soft warm light wash over the whole scene (pre-rendered per chapter)
+  ctx.drawImage(state.chapter === 4 ? washCache4C : (autumn ? washCache3C : (summer ? washCache2C : washCacheC)), 0, 0);
+  // winter snowfall (screen space): the flow direction & speed ARE the wind
+  // readout — a warn phase leans the snow, a gust drives it near-horizontal
+  if(state.chapter === 4){
+    const wl = state.windLevel, warnLean = state.windPhase === 'warn' ? .35 : 0;
+    const drift = 6 + wl * 150 + warnLean * 40;
+    for(let i = 0; i < 90; i++){
+      const fallSpd = 22 + hash1(i * 3.7) * 30 + wl * 26;
+      const sx = ((hash1(i * 7.9) * (VW + 120) + T * drift * (0.5 + hash1(i * 1.3))) % (VW + 120)) - 60;
+      const sy = ((hash1(i * 5.3) * (VH + 60) + T * fallSpd) % (VH + 60)) - 30;
+      const ss = 1.4 + hash1(i * 9.1) * 2.4;
+      ctx.fillStyle = 'rgba(255,255,255,' + (0.5 + wl * 0.4) + ')';
+      if(wl > .45){ ctx.save(); ctx.translate(sx, sy); ctx.rotate(-.32); ctx.fillRect(-ss * 2.6, -.8, ss * 5.2, 1.6); ctx.restore(); }
+      else ctx.fillRect(sx, sy, ss, ss);
+    }
+    if(state.windPhase === 'gust'){ // whiteout veil at the height of the gust
+      ctx.fillStyle = 'rgba(240,248,252,' + (0.10 + 0.06 * Math.sin(T * 7)) + ')'; ctx.fillRect(0, 0, VW, VH);
+    }
+  }
+  // summer heat haze: slow shimmering bands hanging over the hot street
+  if(summer){
+    for(let i = 0; i < 3; i++){
+      const yy = 306 + i * 48 + Math.sin(T * 2.2 + i * 1.3) * 2;
+      ctx.strokeStyle = 'rgba(255,255,255,' + (.045 + .02 * Math.sin(T * 3 + i)) + ')';
+      ctx.lineWidth = 11; ctx.beginPath();
+      for(let x = 0; x <= VW; x += 32){
+        const yo = Math.sin(x * .02 + T * 2.6 + i * 1.7) * 3;
+        if(x === 0) ctx.moveTo(x, yy + yo); else ctx.lineTo(x, yy + yo);
+      }
+      ctx.stroke();
+    }
+  }
+
+  // listen mode overlay + silhouettes
+  if(state.listening){
+    ctx.fillStyle = 'rgba(6,10,20,.82)'; ctx.fillRect(0, 0, VW, VH);
+    const vg = ctx.createRadialGradient(VW/2, VH/2, VH * .32, VW/2, VH/2, VH * .78);
+    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.5)');
+    ctx.fillStyle = vg; ctx.fillRect(0, 0, VW, VH);
+    ctx.save(); ctx.translate(-camX, 0);
+    const p = state.player;
+    // silhouettes, not boxes: the real character/item shapes, redrawn in one
+    // glowing colour (twice, for a stronger halo) so type reads from the shape
+    function silDraw(fn, color){
+      ctx.save(); ctx.shadowColor = color; ctx.shadowBlur = 13;
+      SILHOUETTE = color; fn(); fn();
+      SILHOUETTE = null; ctx.restore();
+    }
+    for(const e of state.enemies){
+      if(!e.alive) continue;
+      if(Math.hypot(e.x - p.x, e.y - p.y) > 400) continue;
+      const col = e.type === 'guard' ? '#ff9d5c' : (e.type === 'listener' ? '#ffe14d' : '#ff5c5c');
+      silDraw(()=>drawEnemy(e), col);
+      ctx.fillStyle = col; ctx.font = 'bold 10px sans-serif';
+      ctx.fillText(e.type === 'guard' ? '見張り' : (e.type === 'listener' ? '聞き耳型' : '感染者'), e.x, e.y - e.h - 8);
+    }
+    for(const pk of state.pickups){
+      if(pk.taken || Math.hypot(pk.x - p.x, pk.y - p.y) > 400) continue;
+      silDraw(()=>drawPickupSil(pk), '#ffe9a8');
+    }
+    silDraw(drawPlayer, '#8fd8ff');
+    silDraw(drawMei, '#ffb7dd');
+    ctx.restore();
+    ctx.fillStyle = '#bfe8ff'; ctx.font = '13px sans-serif';
+    ctx.fillText('聞き耳モード ― 壁越しに敵の輪郭が見える', 14, VH - 14);
+  }
+  if(state.player.dead){
+    ctx.fillStyle = 'rgba(20,0,0,.5)'; ctx.fillRect(0, 0, VW, VH);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 26px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('倒れた… チェックポイントへ戻る', VW/2, VH/2); ctx.textAlign = 'left';
+  }
+  if(state.player.grabbedBy){
+    ctx.fillStyle = 'rgba(120,10,10,.28)'; ctx.fillRect(0, 0, VW, VH);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 20px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('掴まれている！ X／E 連打で振りほどけ（あと ' + (state.player.mashNeed - state.player.mash) + '）', VW/2, 70);
+    ctx.textAlign = 'left';
+  }
+}
+function drawShadow(cx, y, w, alphaMul){
+  if(SILHOUETTE) return;
+  const a = alphaMul || 1;
+  ctx.fillStyle = 'rgba(26,34,22,' + Math.min(.5, .18 * a) + ')';
+  ctx.beginPath(); ctx.ellipse(cx, y - 1, w * 1.5, w * .42, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = 'rgba(26,34,22,' + Math.min(.62, .30 * a) + ')';
+  ctx.beginPath(); ctx.ellipse(cx, y - 1, w, w * .3, 0, 0, 7); ctx.fill();
+}
+/* Pixel character with pose variants: walk / run / crouch / hide, arm modes
+   (swing, hold, reach), flinch offset, body shake, hunch & head twitch. */
+function drawPerson(x, y, h, colors, dir, crouch, walkPhase, o){
+  o = o || {};
+  if(SILHOUETTE) colors = { body:SILHOUETTE, legs:SILHOUETTE, skin:SILHOUETTE, hair:SILHOUETTE, cap:SILHOUETTE, belt:SILHOUETTE, patch:SILHOUETTE, shoe:SILHOUETTE };
+  const moving = !!o.moving, run = !!o.run;
+  const sw = moving ? Math.sin(walkPhase) * (run ? 6.5 : 4.2) : 0;
+  const bob = moving && !crouch ? Math.abs(Math.cos(walkPhase)) * (run ? 2.4 : 1.4) : 0;
+  const W = h * .52;
+  const legLen = crouch ? h * .2 : h * .36;
+  const hipY = y - legLen;
+  const torsoH = crouch ? h * .36 : h * .4;
+  const torsoY = hipY - torsoH + (crouch ? 3 : 0) - bob + (o.land ? 3 : 0) + (o.hide ? 2 : 0);
+  const lean = (o.hunch ? 3.5 : 0) + (run && moving ? 2 : 0);
+  const fx = x - (o.flinch || 0) * dir * 3 + (o.shake || 0);
+  // legs — alternating stride with foot lift; crouched legs fold under
+  ctx.fillStyle = colors.legs;
+  if(crouch){
+    ctx.fillRect(fx + 2, hipY - 2, W * .6, 5);
+    ctx.fillRect(fx + 3, y - 5, 6, 5); ctx.fillRect(fx + W - 9, y - 5, 6, 5);
+    ctx.fillStyle = colors.shoe || '#2e2a24';
+    ctx.fillRect(fx + 2, y - 3, 9, 3); ctx.fillRect(fx + W - 10, y - 3, 9, 3);
+  } else if(o.land){
+    // touchdown: knees bent deep to absorb it, feet planted flat
+    ctx.fillRect(fx + 2, hipY, 7, legLen - 6); ctx.fillRect(fx + W - 9, hipY, 7, legLen - 6);
+    ctx.fillRect(fx + 3, hipY + legLen - 8, 9, 4); ctx.fillRect(fx + W - 10, hipY + legLen - 8, 9, 4);
+    ctx.fillStyle = colors.shoe || '#2e2a24';
+    ctx.fillRect(fx + 1, y - 3, 10, 3); ctx.fillRect(fx + W - 10, y - 3, 10, 3);
+  } else if(o.air === 'rise'){
+    // rising: legs tucked up under the body
+    ctx.fillRect(fx + 3, hipY, 6, legLen * .48);
+    ctx.fillRect(fx + 3 - (dir > 0 ? 5 : -1), hipY + legLen * .48, 10, 4);
+    ctx.fillRect(fx + W - 9, hipY, 6, legLen * .4);
+    ctx.fillRect(fx + W - 9 - (dir > 0 ? 5 : -1), hipY + legLen * .4, 10, 4);
+    ctx.fillStyle = colors.shoe || '#2e2a24';
+    ctx.fillRect(fx + 3 - (dir > 0 ? 7 : 0), hipY + legLen * .48, 5, 4);
+    ctx.fillRect(fx + W - 9 - (dir > 0 ? 7 : 0), hipY + legLen * .4, 5, 4);
+  } else if(o.air){
+    // falling: legs stretched down, toes pointed, slight split
+    ctx.fillRect(fx + 2, hipY, 6, legLen - 1); ctx.fillRect(fx + W - 8, hipY, 6, legLen - 4);
+    ctx.fillStyle = colors.shoe || '#2e2a24';
+    ctx.fillRect(fx + 2, y - 3, 5, 3); ctx.fillRect(fx + W - 8, y - 6, 5, 3);
+  } else {
+    const lift1 = moving ? Math.max(0, Math.sin(walkPhase)) * 3 : 0;
+    const lift2 = moving ? Math.max(0, -Math.sin(walkPhase)) * 3 : 0;
+    const l1 = fx + 3 + sw * .55, l2 = fx + W - 9 - sw * .55;
+    ctx.fillRect(l1, hipY, 6, legLen - 3 - lift1); ctx.fillRect(l2, hipY, 6, legLen - 3 - lift2);
+    ctx.fillStyle = colors.shoe || '#2e2a24';
+    ctx.fillRect(l1 - 1, y - 3 - lift1, 8, 3); ctx.fillRect(l2 - 1, y - 3 - lift2, 8, 3);
+  }
+  // torso (top edge shifts with lean / hunch)
+  ctx.fillStyle = colors.body;
+  ctx.fillRect(fx + Math.min(0, lean * dir), torsoY, W + Math.abs(lean), torsoH);
+  if(colors.belt){ ctx.fillStyle = colors.belt; ctx.fillRect(fx, hipY - 4, W, 4); }
+  if(colors.patch){ ctx.fillStyle = colors.patch; ctx.fillRect(fx + W * .58, torsoY + torsoH * .38, 6, 8); ctx.fillRect(fx + W * .2, torsoY + torsoH * .66, 5, 6); }
+  // arms
+  const shY = torsoY + 3;
+  if(o.arms === 'reach'){
+    const tw = Math.sin(state.time * 13 + x * 1.3) * 1.6;
+    ctx.fillStyle = colors.body;
+    ctx.fillRect(fx + (dir > 0 ? W - 1 : -9), shY + 3 + tw, 10, 4);
+    ctx.fillRect(fx + (dir > 0 ? W - 3 : -7), shY + 10 - tw, 10, 4);
+    ctx.fillStyle = colors.skin;
+    ctx.fillRect(fx + (dir > 0 ? W + 8 : -12), shY + 3 + tw, 3, 4);
+  } else if(o.arms === 'hold'){
+    ctx.fillStyle = colors.body;
+    ctx.fillRect(fx + (dir > 0 ? W - 2 : -10), shY + 5, 12, 5);
+  } else if(o.air){
+    // airborne: arms thrown out sideways for balance
+    ctx.fillStyle = colors.body;
+    ctx.fillRect(fx - 3, shY + 1, 6, 4); ctx.fillRect(fx + W - 3, shY + 1, 6, 4);
+    ctx.fillStyle = colors.skin;
+    ctx.fillRect(fx - 5, shY + 1, 3, 4); ctx.fillRect(fx + W + 2, shY + 1, 3, 4);
+  } else if(crouch || o.land){
+    ctx.fillStyle = colors.body;
+    ctx.fillRect(fx + (dir > 0 ? W - 4 : -1), shY + 4, 5, torsoH * .55);
+  } else {
+    const asw = moving ? -sw * .5 : 0;
+    ctx.fillStyle = colors.body;
+    ctx.fillRect(fx + 1, shY + asw * .4, 5, torsoH * .6);
+    ctx.fillRect(fx + W - 6, shY - asw * .4, 5, torsoH * .6);
+    ctx.fillStyle = colors.skin;
+    ctx.fillRect(fx + 1, shY + torsoH * .6 + asw * .4, 5, 4);
+    ctx.fillRect(fx + W - 6, shY + torsoH * .6 - asw * .4, 5, 4);
+  }
+  // head — hair (or cap), one eye pixel on the facing side, optional open mouth
+  const headS = h * .3;
+  const headX = fx + W / 2 - headS / 2 + lean * dir + (o.twitch ? Math.sin(state.time * 21 + x * 2.1) * 1.3 : 0);
+  const headY = torsoY - headS + 2 + (o.hunch ? 3 : 0);
+  ctx.fillStyle = colors.skin; ctx.fillRect(headX, headY, headS, headS);
+  ctx.fillStyle = colors.hair; ctx.fillRect(headX - 1, headY - 2, headS + 2, headS * .4);
+  if(colors.cap){ ctx.fillStyle = colors.cap; ctx.fillRect(headX - 1, headY - 3, headS + 2, 5); ctx.fillRect(headX + (dir > 0 ? headS - 1 : -5), headY + 1, 6, 3); }
+  if(!SILHOUETTE){
+    ctx.fillStyle = 'rgba(28,22,18,.9)';
+    ctx.fillRect(headX + (dir > 0 ? headS - 5 : 3), headY + headS * .46, 2, 2.4);
+  }
+  if(o.mouth && !SILHOUETTE){ ctx.fillStyle = '#59362c'; ctx.fillRect(headX + (dir > 0 ? headS - 6 : 2), headY + headS * .76, 4, 2); }
+}
+function drawPlayer(){
+  const p = state.player;
+  const rs = animAcc(p, true);
+  // posture-linked contact shadow: crouched = smaller & darker; airborne =
+  // fainter & smaller, cast on the surface actually below
+  const gy = p.onGround ? p.y : groundBelowY(p);
+  const hgt = Math.max(0, gy - p.y);
+  if(p.crouch) drawShadow(p.x + p.w/2, p.y, 11, 1.5);
+  else drawShadow(p.x + p.w/2, gy, 16 * Math.max(.45, 1 - hgt / 240), Math.max(.3, 1 - hgt / 300));
+  if(p.hurtT > 0 && Math.floor(state.time*16) % 2 === 0) ctx.globalAlpha = .45;
+  const moving = Math.abs(p.vx) > 0.1 && p.onGround;
+  const run = moving && Math.abs(p.vx) > 2.4;
+  const killP = p.killAt !== undefined && state.time - p.killAt < .35;
+  // grab → knife sequence (visual only): a short lunge in as the grab lands,
+  // then a deeper lunge driving the thrust on the kill
+  let lx = p.x;
+  if(grabFxT > 0) lx += p.dir * Math.sin((1 - grabFxT / .22) * Math.PI) * 5;
+  if(killP) lx += p.dir * Math.sin(Math.min(1, (state.time - p.killAt) / .35) * Math.PI) * 7;
+  drawPerson(lx, p.y, 54,
+    { body:'#6b4f35', legs:'#3e4a3a', skin:'#e0aa7e', hair:'#4a3826', belt:'#4a3826', shoe:'#33291f' },
+    p.dir, p.crouch, rs.acc * (run ? .5 : .4),
+    { moving, run, flinch: p.hurtT > 0 ? 1 : 0,
+      air: !p.onGround ? (p.vy < -2 ? 'rise' : 'fall') : null,
+      land: rs.landT > 0 && p.onGround, hide: playerHidden(),
+      shake: p.grabbedBy ? Math.sin(state.time * 42) * 1.6 : 0,
+      arms: (p.grabbing || killP) ? 'hold' : (state.climb ? 'reach' : undefined) });
+  // backpack
+  ctx.fillStyle = SILHOUETTE || '#54683f'; ctx.fillRect(lx + (p.dir > 0 ? -3 : p.w - 5), p.y - 44 + (p.crouch?12:0), 8, 18);
+  ctx.fillStyle = SILHOUETTE || '#6d8452'; ctx.fillRect(lx + (p.dir > 0 ? -3 : p.w - 5), p.y - 44 + (p.crouch?12:0), 8, 5);
+  // bat — bigger back-swing while it connects
+  if(p.bat > 0){
+    ctx.fillStyle = SILHOUETTE || '#a9804f';
+    const bx = lx + p.w/2 + p.dir * 14, by = p.y - 34 + (p.crouch?10:0);
+    ctx.save(); ctx.translate(bx, by); ctx.rotate(p.swingT > 0 ? p.dir * -1.9 : p.dir * .5); ctx.fillRect(-2, -16, 5, 22); ctx.restore();
+  }
+  // knife: held out while grabbing; thrust with a slash arc on the stealth kill
+  if(p.grabbing || killP){
+    const kx = lx + p.w/2 + p.dir * (killP ? 24 : 17), ky = p.y - 33 + (p.crouch?10:0);
+    ctx.save(); ctx.translate(kx, ky); ctx.rotate(p.dir * (killP ? .95 : .25));
+    ctx.fillStyle = SILHOUETTE || '#8a6f4d'; ctx.fillRect(-5, -1.5, 5, 3);
+    ctx.fillStyle = SILHOUETTE || '#dde3e8'; ctx.fillRect(0, -1.5, 13, 3);
+    ctx.restore();
+    if(killP && !SILHOUETTE){
+      ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(lx + p.w/2 + p.dir * 18, p.y - 32, 20, p.dir > 0 ? -.7 : Math.PI - .7, p.dir > 0 ? .5 : Math.PI + .5); ctx.stroke();
+    }
+  }
+  ctx.globalAlpha = 1;
+  if(playerHidden() && !SILHOUETTE){ ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.font = '11px sans-serif'; ctx.fillText('隠れている', p.x - 8, p.y - 68); }
+}
+function drawMei(){
+  const m = state.mei;
+  const crawling = m.task === 'gap' || m.task === 'vent';
+  const rs = animAcc(m, true);
+  const gy = m.onGround ? m.y : groundBelowY(m);
+  const hgt = Math.max(0, gy - m.y);
+  if(crawling) drawShadow(m.x + m.w/2, m.y, 9, 1.5);
+  else drawShadow(m.x + m.w/2, gy, 12 * Math.max(.5, 1 - hgt / 240), Math.max(.35, 1 - hgt / 300));
+  const moving = Math.abs(m.vx) > 0.15;
+  drawPerson(m.x, m.y, crawling ? 30 : 42, { body:'#d9c26a', legs:'#7a6a4f', skin:'#f0bc90', hair:'#7c4a2d', shoe:'#5d4c36' }, m.dir, crawling, rs.acc * .5,
+    { moving, run: moving && Math.abs(m.vx) > 2,
+      air: (!crawling && !m.onGround) ? (m.vy < -2 ? 'rise' : 'fall') : null,
+      land: !crawling && rs.landT > 0 && m.onGround });
+  ctx.fillStyle = SILHOUETTE || '#d84f6e'; ctx.fillRect(m.x + 7, m.y - (crawling?30:42) - 3, 8, 5); // ribbon
+  if(!SILHOUETTE){
+    ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.font = '10px sans-serif';
+    ctx.fillText(m.mode === 'wait' && !m.task ? '待機中' : 'メイ', m.x + 1, m.y - (crawling?36:50));
+  }
+}
+function drawEnemy(e){
+  const isG = e.type === 'guard';
+  const isL = e.type === 'listener';
+  const chasing = e.state === 'chase';
+  const rushing = e.state === 'rush';
+  const rs = animAcc(e, false);
+  // visual knockback from a bat hit (set by the frame watcher): the body is
+  // shoved back and recoils, then settles — positions/logic untouched
+  if(e._kbT > 0 && e._kbFrame !== DRAW_FRAME){ e._kbFrame = DRAW_FRAME; e._kbT -= DRAW_DT; }
+  const kbOff = e._kbT > 0 ? e._kbDir * Math.sin(Math.min(1, e._kbT / .28) * Math.PI) * 7 : 0;
+  ctx.save(); ctx.translate(kbOff, 0);
+  drawShadow(e.x + e.w/2, e.y, 15);
+  if(!isG && (chasing || rushing) && !SILHOUETTE){ // speed streaks mark the fast types
+    ctx.fillStyle = 'rgba(240,246,230,.35)';
+    ctx.fillRect(e.x + (e.dir > 0 ? -14 : e.w + 2), e.y - 40, 12, 3);
+    ctx.fillRect(e.x + (e.dir > 0 ? -10 : e.w + 2), e.y - 26, 9, 3);
+  }
+  const moving = isG ? (e.state === 'patrol' || e.state === 'alert')
+                      : (e.state === 'wander' || chasing || e.state === 'chaseLook' || rushing || e.state === 'search');
+  drawPerson(e.x, e.y, 52, isG
+    ? { body:'#4c5a68', legs:'#333c44', skin:'#d8a075', hair:'#22282e', cap:'#39434d', belt:'#2c343c', shoe:'#20262b' }
+    : isL
+    ? { body:'#6a705f', legs:'#4c5044', skin:'#c9d1a3', hair:'#8a9470', patch:'#59614c', shoe:'#3c4034' }
+    : { body:'#7d8471', legs:'#5c6152', skin:'#b9c49a', hair:'#3c4433', patch:'#5f6650', shoe:'#454a3c' },
+    e.dir, false, rs.acc * (isG ? .42 : .55),
+    { moving, run: chasing || rushing, hunch: !isG, twitch: !isG, mouth: e.type === 'inf',
+      flinch: e._kbT > 0 ? 1 : (e.stun > 0 ? .8 : 0),
+      shake: e.state === 'grabbed' ? Math.sin(state.time * 30 + e.x) * 1.4 : 0,
+      arms: (!isG && (chasing || rushing)) ? 'reach' : undefined });
+  if(isL){ // fungal growth bursting from the head — blind, all ears (also reads in silhouette)
+    const hx = e.x + e.w/2, hy = e.y - 47;
+    ctx.fillStyle = SILHOUETTE || '#cfd6a8';
+    ctx.beginPath();
+    ctx.arc(hx - 4, hy, 7, 0, 7); ctx.arc(hx + 4, hy - 3, 6, 0, 7); ctx.arc(hx, hy + 3, 6.5, 0, 7);
+    ctx.fill();
+    ctx.fillStyle = SILHOUETTE || '#aab38a';
+    ctx.fillRect(hx - 7, hy + 4, 3, 7); ctx.fillRect(hx + 4, hy + 5, 3, 6);   // drooping tendrils
+    ctx.fillRect(hx - 1, hy + 6, 2.5, 5);
+  }
+  if(isG){ // rifle — shouldered higher while alert
+    const ry = e.y - (e.state === 'alert' ? 38 : 34);
+    ctx.fillStyle = SILHOUETTE || '#22262a'; ctx.fillRect(e.x + e.w/2 + e.dir*4 - (e.dir<0?20:0), ry, 22, 4);
+    ctx.fillStyle = SILHOUETTE || '#3a4046'; ctx.fillRect(e.x + e.w/2 + e.dir*4 - (e.dir<0?20:0), ry - 2, 8, 2);
+  }
+  // status mark + detection meter
+  if(!SILHOUETTE){
+  ctx.font = 'bold 14px sans-serif';
+  if(e.state === 'alert' || e.state === 'chase' || e.state === 'rush'){ ctx.fillStyle = '#ff5c3a'; ctx.fillText('！', e.x + 8, e.y - 66); }
+  else if(e.detect > 25 || e.state === 'suspicious' || e.state === 'chaseLook' || e.state === 'search'){ ctx.fillStyle = '#f2c14e'; ctx.fillText('？', e.x + 8, e.y - 66); }
+  if(e.detect > 3 && e.state !== 'alert' && e.state !== 'chase'){
+    ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(e.x - 2, e.y - 62, 30, 5);
+    ctx.fillStyle = e.detect > 60 ? '#e4572e' : '#f2c14e'; ctx.fillRect(e.x - 2, e.y - 62, 30 * e.detect/100, 5);
+  }
+  if(e.stun > 0){ ctx.fillStyle = '#ffe9a8'; ctx.font = '12px sans-serif'; ctx.fillText('✦✦', e.x + 2, e.y - 66); }
+  }
+  ctx.restore();
+}
+
+/* ---------- main loop ---------- */
+let lastT = performance.now();
+function loop(now){
+  const dt = Math.min(0.033, (now - lastT) / 1000); lastT = now;
+  ambTick(dt);
+  if(state.mode === 'play'){ update(dt); }
+  else if(state.mode === 'pause'){ const gp = pollPad(); handlePauseInput(gp); pressedOnce = {}; }
+  else {
+    pollPad();
+    if(state.mode === 'title'){
+      if(!ambMaster && Object.keys(padPressed).length) ambFirstGesture();   // first pad input starts the ambience
+      if(padPressed[12] || padPressed[13] || padPressed[14] || padPressed[15] ||
+         pressedOnce['ArrowUp'] || pressedOnce['ArrowDown'] || pressedOnce['ArrowLeft'] || pressedOnce['ArrowRight']){
+        titleSel = (titleSel + 1) % 4; renderTitleSel();
+      }
+      if(padPressed[9] || padPressed[0] || pressedOnce['Enter'] || pressedOnce['Space']) startGame(titleSel + 1);
+    } else if(state.mode === 'clear'){
+      if(padPressed[9] || padPressed[0] || pressedOnce['Enter'] || pressedOnce['Space']) clearPrimary();
+    } else if(state.mode === 'story'){
+      if(padPressed[9] || padPressed[0] || pressedOnce['Enter'] || pressedOnce['Space']) closeKeepsake();
+    } else if(state.mode === 'finale'){
+      handleFinaleInput();
+    } else if(state.mode === 'epilogue'){
+      if(padPressed[9] || padPressed[0] || pressedOnce['Enter'] || pressedOnce['Space']) toTitle();
+    }
+    pressedOnce = {};
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+requestAnimationFrame(diagLoop);
+
+/* ---------- start / restart / chapter flow ---------- */
+let titleSel = 0;   // 0..3 = chapters 1-4 on the title screen
+let gameFullCleared = false;   // set when either ending is reached (this session)
+let clearPrimary = ()=>startGame(1), clearAgain = ()=>startGame(1);
+function renderTitleSel(){
+  document.getElementById('startBtn').classList.toggle('sel', titleSel === 0);
+  document.getElementById('startBtn2').classList.toggle('sel', titleSel === 1);
+  document.getElementById('startBtn3').classList.toggle('sel', titleSel === 2);
+  document.getElementById('startBtn4').classList.toggle('sel', titleSel === 3);
+}
+function startGame(ch){
+  ch = (ch === 2 || ch === 3 || ch === 4) ? ch : 1;
+  try{ AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if(AC.state === 'suspended') AC.resume(); }catch(e){}
+  if(ambInit()) ambSetChapter(ch);   // crossfade the ambience to this chapter
+  loadChapter(ch);
+  state = freshState(ch);
+  state.mode = 'play';
+  state.startedAt = performance.now();
+  document.getElementById('titleScreen').classList.add('hidden');
+  document.getElementById('clearScreen').classList.add('hidden');
+  document.getElementById('pauseScreen').classList.add('hidden');
+  document.getElementById('craftScreen').classList.add('hidden');
+  document.getElementById('storyScreen').classList.add('hidden');
+  document.getElementById('finaleScreen').classList.add('hidden');
+  document.getElementById('epilogueScreen').classList.add('hidden');
+  setMsg(ch === 4
+    ? '冬。吹雪の山道。突風の間は見張りの視界が短く、音も風に紛れる ― 画面右端の風を見て進もう。雪の上の歩行音は小さいが、ダッシュは雪を蹴ってうるさい'
+    : ch === 3
+    ? '秋の渓谷。落ち葉の上は歩くだけで大きな音 ― しゃがみ歩きでそっと。川辺では水音が足音を消してくれる'
+    : ch === 2
+    ? '夏の郊外。音に集まる「聞き耳型」に気をつけろ ― しゃがみ歩きは無音、瓶を投げれば音で釣れる'
+    : '春の街。メイと一緒に東へ進もう ― 茂みでは S／B でしゃがむと隠れられる', 5);
+  updateHUD();
+}
+function toTitle(){
+  loadChapter(1);
+  state = freshState(1);
+  state.mode = 'title';
+  titleSel = 0; renderTitleSel();
+  document.getElementById('fullClearMark').classList.toggle('hidden', !gameFullCleared);
+  document.getElementById('titleScreen').classList.remove('hidden');
+  document.getElementById('clearScreen').classList.add('hidden');
+  document.getElementById('pauseScreen').classList.add('hidden');
+  document.getElementById('craftScreen').classList.add('hidden');
+  document.getElementById('storyScreen').classList.add('hidden');
+  document.getElementById('finaleScreen').classList.add('hidden');
+  document.getElementById('epilogueScreen').classList.add('hidden');
+  ambSetChapter(1);   // back to spring ambience on the title screen
+  updateHUD();
+}
+function showClear(){
+  state.mode = 'clear'; sfx.clear();
+  const ch = state.chapter;
+  const sec = Math.round((performance.now() - state.startedAt)/1000);
+  document.getElementById('clearTitle').textContent = ch === 1 ? '第1章 ― クリア' : (ch === 2 ? '第2章 ― クリア' : '第3章 ― クリア');
+  document.getElementById('clearStory').innerHTML = ch === 1
+    ? '街の東口を抜けた。花の匂いのする風が、二人の背中を押す。<br>「ねえワイアット、夏の街ってどんな色？」<br>「……行けば分かる。」'
+    : ch === 2
+    ? 'モーテルの裏口を抜けると、夏草の向こうに次の街の輪郭が見えた。<br>「蝉、まだ鳴いてるね」<br>「ああ。……秋は、もっと静かだ」<br><br>―― 第3章（秋）へ、つづく'
+    : '吊り橋を渡り切ると、谷の向こうに雪をかぶった山並みが見えた。医療拠点は、あの山のふもとだ。<br>「寒くなってきたね」<br>「ああ。……冬は、もうすぐそこだ」<br><br>―― 第4章（冬）へ、つづく';
+  document.getElementById('clearStats').textContent =
+    '所要時間 ' + Math.floor(sec/60) + '分' + (sec%60) + '秒 ／ 倒した敵 ' + state.kills + ' ／ 作ったアイテム ' + state.crafts + '個';
+  const nextBtn = document.getElementById('nextBtn'), againBtn = document.getElementById('againBtn');
+  if(ch === 1){
+    nextBtn.textContent = '▶ 第2章「夏」へ進む';
+    againBtn.textContent = 'もう一度 第1章を遊ぶ';
+    clearPrimary = ()=>startGame(2); clearAgain = ()=>startGame(1);
+  } else if(ch === 2){
+    nextBtn.textContent = '▶ 第3章「秋」へ進む';
+    againBtn.textContent = 'もう一度 第2章を遊ぶ';
+    clearPrimary = ()=>startGame(3); clearAgain = ()=>startGame(2);
+  } else {
+    nextBtn.textContent = '▶ 第4章「冬」へ進む（最終章）';
+    againBtn.textContent = 'もう一度 第3章を遊ぶ';
+    clearPrimary = ()=>startGame(4); clearAgain = ()=>startGame(3);
+  }
+  document.getElementById('clearScreen').classList.remove('hidden');
+}
+/* ---------- chapter 4 story beats: keepsake, the choice, the endings ---------- */
+function openKeepsake(){
+  state.mode = 'story';
+  document.getElementById('storyTitle').textContent = '形見 ― 病院の見える場所で';
+  document.getElementById('storyText').innerHTML =
+    '雪の町の外れ。病院の明かりが見える場所で、ワイアットは足を止め、胸ポケットから古い写真を取り出した。色あせた写真の中で、幼い女の子が笑っている。<br><br>' +
+    '「……娘だ。エマっていう」<br>それ以上多くは語らなかった。感染が広がり始めた頃、熱にうなされる娘を、彼はどこへも運んでやれなかった。薬も、医者も、間に合わなかった。<br><br>' +
+    '写真をしまい、彼はメイの手を取った。「今度は、間に合わせる」<br>メイは何も聞かず、その手を握り返した。';
+  document.getElementById('storyScreen').classList.remove('hidden');
+}
+function closeKeepsake(){
+  document.getElementById('storyScreen').classList.add('hidden');
+  state.mode = 'play';
+  setMsg('病院はもうすぐそこだ', 2.5);
+}
+let finaleStage = 0, finaleSel = 0;   // 0 = dialogue, 1 = the choice; sel: 0 = entrust, 1 = take her home
+function openFinale(){
+  state.mode = 'finale'; finaleStage = 0; finaleSel = 0;
+  document.getElementById('finaleText').innerHTML =
+    '白い廊下。医療NGO「ヘイヴン財団」の医師は、包み隠さず話した。<br><br>' +
+    '「私たちは本気でワクチンを作ろうとしています。メイさんの体質は、その鍵になる。……ですが、正直に言います。必要な処置は大きな手術で、<strong>メイさんの命に関わる危険が高い</strong>。成功する保証は、どこにもありません」<br><br>' +
+    '「決めるのは、連れてきたあなただ」<br>メイはワイアットの顔を見上げた。「ワイアットが決めて。……わたしは、どっちでもいいよ」';
+  document.getElementById('finaleNextBtn').classList.remove('hidden');
+  document.getElementById('entrustBtn').classList.add('hidden');
+  document.getElementById('escapeBtn').classList.add('hidden');
+  renderFinaleSel();
+  document.getElementById('finaleScreen').classList.remove('hidden');
+}
+function renderFinaleSel(){
+  document.getElementById('finaleNextBtn').classList.toggle('sel', finaleStage === 0);
+  document.getElementById('entrustBtn').classList.toggle('sel', finaleStage === 1 && finaleSel === 0);
+  document.getElementById('escapeBtn').classList.toggle('sel', finaleStage === 1 && finaleSel === 1);
+}
+function finaleAdvance(){
+  if(finaleStage === 0){
+    finaleStage = 1;
+    document.getElementById('finaleText').innerHTML =
+      '託せば、多くの命を救うかもしれない研究が進む。ただし、メイは二度と戻らないかもしれない。<br>' +
+      '連れて帰れば、この旅は続く。答えの出ないまま、それでも二人で。<br><br>―― ワイアットの答えは。';
+    document.getElementById('finaleNextBtn').classList.add('hidden');
+    document.getElementById('entrustBtn').classList.remove('hidden');
+    document.getElementById('escapeBtn').classList.remove('hidden');
+    renderFinaleSel();
+  } else if(finaleSel === 0) chooseEntrust();
+  else chooseEscape();
+}
+function handleFinaleInput(){
+  if(finaleStage === 1 && (padPressed[12] || padPressed[13] || padPressed[14] || padPressed[15] ||
+     pressedOnce['ArrowUp'] || pressedOnce['ArrowDown'] || pressedOnce['ArrowLeft'] || pressedOnce['ArrowRight'])){
+    finaleSel = finaleSel === 0 ? 1 : 0; renderFinaleSel();
+  }
+  if(padPressed[9] || padPressed[0] || pressedOnce['Enter'] || pressedOnce['Space']) finaleAdvance();
+}
+function chooseEntrust(){
+  state.finaleDone = true;
+  document.getElementById('finaleScreen').classList.add('hidden');
+  showEpilogue('entrust');
+}
+function chooseEscape(){
+  state.finaleDone = true; state.escape = true;
+  document.getElementById('finaleScreen').classList.add('hidden');
+  state.mode = 'play';
+  // the hospital goes on alert: interior guards converge, fresh ones rush in
+  for(const e of state.enemies){
+    if(e.alive && e.type === 'guard' && e.x > 3900){ e.state = 'alert'; e.detect = 100; e.alertT = 30; }
+  }
+  if(!state.escapeSpawned){
+    state.escapeSpawned = true;
+    for(const gx of [4280, 4620]){
+      state.enemies.push({ type:'guard', x:gx, y:GROUND_Y, w:26, h:52, min:gx-160, max:gx+160, dir:-1,
+        hp:2, state:'alert', detect:100, shootCd:1.2, stun:0, alertT:30, wanderT:0, speed:.95, alive:true });
+    }
+  }
+  sfx.alarm();
+  setMsg('「連れて帰る」― ワイアットはメイの手を取った。警戒状態の病院を抜けて、入口まで戻ろう！（←）', 4);
+}
+function showEpilogue(kind){
+  state.mode = 'epilogue';
+  gameFullCleared = true;
+  sfx.clear();
+  const sec = Math.round((performance.now() - state.startedAt)/1000);
+  document.getElementById('epilogueTitle').textContent = kind === 'entrust' ? 'エピローグ ― 託す' : 'エピローグ ― 連れて帰る';
+  document.getElementById('epilogueText').innerHTML = (kind === 'entrust'
+    ? '処置室の扉が閉まる前、メイは振り返って、小さく手を振った。いつもの、少し困ったような笑顔で。<br><br>' +
+      'ワイアットは病院の前の雪に立って、長いこと動けなかった。写真の中の笑顔と、今の笑顔が、頭の中で重なっては離れた。<br><br>' +
+      '吹雪は止んでいた。処置室の明かりは、まだ点いている。<br>その先のことは、まだ誰にも分からない。ただ、彼が「間に合わせた」ことだけは、確かだった。'
+    : '警報と足音をかいくぐり、二人は病院の入口を抜けた。雪原に、小さな足跡が二列、どこまでも続いていく。<br><br>' +
+      '「これから、どうするの？」<br>「……決めてない。けど、まあ」<br>ワイアットは西の空を見た。「飯のうまい町が、あっちにあるらしい」<br><br>' +
+      '答えは出なかった。けれど旅は続く。二人の足跡は、雪の上に、まっすぐ並んでいた。') +
+    '<br><br>所要時間 ' + Math.floor(sec/60) + '分' + (sec%60) + '秒 ／ 倒した敵 ' + state.kills + ' ／ 作ったアイテム ' + state.crafts + '個';
+  document.getElementById('epilogueScreen').classList.remove('hidden');
+}
+document.getElementById('storyBtn').addEventListener('click', ()=>{ if(state.mode === 'story') closeKeepsake(); });
+document.getElementById('finaleNextBtn').addEventListener('click', ()=>{ if(state.mode === 'finale') finaleAdvance(); });
+document.getElementById('entrustBtn').addEventListener('click', ()=>{ if(state.mode === 'finale' && finaleStage === 1){ finaleSel = 0; chooseEntrust(); } });
+document.getElementById('escapeBtn').addEventListener('click', ()=>{ if(state.mode === 'finale' && finaleStage === 1){ finaleSel = 1; chooseEscape(); } });
+document.getElementById('epilogueBtn').addEventListener('click', ()=>{ if(state.mode === 'epilogue') toTitle(); });
+
+document.getElementById('startBtn').addEventListener('click', ()=>startGame(1));
+document.getElementById('startBtn2').addEventListener('click', ()=>startGame(2));
+document.getElementById('startBtn3').addEventListener('click', ()=>startGame(3));
+document.getElementById('startBtn4').addEventListener('click', ()=>startGame(4));
+document.getElementById('nextBtn').addEventListener('click', ()=>clearPrimary());
+document.getElementById('againBtn').addEventListener('click', ()=>clearAgain());
+renderTitleSel();
+document.getElementById('resumeBtn').addEventListener('click', ()=>{ if(state.mode === 'pause') closePause(); });
+document.getElementById('cpBtn').addEventListener('click', ()=>{ if(state.mode === 'pause'){ closePause(); respawn(); } });
+document.getElementById('ambBtn').addEventListener('click', ()=>{ if(state.mode === 'pause'){ state.pauseSel = 2; cycleAmbVol(); } });
+updateHUD();
+</script>
+  </body>
+</html>

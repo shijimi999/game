@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light" />
+<link rel="icon" href="data:," />
+<title>CARRY YOU</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", YuGothic, "Noto Sans JP", system-ui, sans-serif;
+    background: #aeb8ab;
+    color: #fff;
+    overflow-x: hidden;
+  }
+
+  .poster {
+    position: relative;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  /* ---------- scene ---------- */
+  .scene {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+  }
+  .scene svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  /* soft overcast light + quiet vignette, poster-like */
+  .veil {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(to bottom, rgba(38,46,40,.18) 0%, rgba(38,46,40,0) 26%, rgba(38,46,40,0) 52%, rgba(24,30,26,.38) 100%),
+      radial-gradient(120% 90% at 50% 42%, rgba(0,0,0,0) 55%, rgba(20,26,22,.28) 100%);
+  }
+
+  /* ---------- content ---------- */
+  .content {
+    text-align: center;
+    padding: 3rem 1.25rem 4.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(2.6rem, 10vw, 5.6rem);
+    font-weight: 300;
+    letter-spacing: .34em;
+    /* compensate the trailing tracking so it sits optically centred */
+    text-indent: .34em;
+    line-height: 1.15;
+    color: #f4f6f2;
+    text-shadow: 0 1px 2px rgba(20,28,22,.45), 0 2px 22px rgba(20,28,22,.35);
+    white-space: nowrap;
+  }
+
+  .start {
+    margin-top: clamp(2.2rem, 6vh, 3.6rem);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 52px;
+    padding: .8rem 2.1rem;
+    border: 1px solid rgba(244,246,242,.85);
+    background: rgba(24,32,26,.32);
+    color: #f4f6f2;
+    font-size: .95rem;
+    letter-spacing: .18em;
+    text-indent: .18em;
+    text-decoration: none;
+    transition: background .25s ease, border-color .25s ease;
+  }
+  .start:hover { background: rgba(24,32,26,.55); border-color: #fff; }
+  .start:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 3px;
+    background: rgba(24,32,26,.55);
+  }
+
+  .notes {
+    margin: clamp(1.4rem, 4vh, 2rem) 0 0;
+    display: flex;
+    align-items: center;
+    gap: .9em;
+    font-size: .78rem;
+    letter-spacing: .22em;
+    text-indent: .22em;
+    color: rgba(238,242,236,.88);
+    text-shadow: 0 1px 6px rgba(20,28,22,.5);
+  }
+  .notes .sep {
+    width: 3px; height: 3px;
+    background: rgba(238,242,236,.7);
+    flex: none;
+  }
+
+  @media (max-width: 480px) {
+    h1 { font-size: clamp(2.1rem, 12.5vw, 2.6rem); letter-spacing: .26em; text-indent: .26em; }
+    .start { width: min(78vw, 300px); padding-left: 1rem; padding-right: 1rem; }
+    .notes { font-size: .72rem; letter-spacing: .16em; text-indent: .16em; gap: .7em; }
+    .content { padding-bottom: 5.5rem; }
+  }
+</style>
+</head>
+<body>
+<main class="poster">
+
+  <!-- Pixel-art scene: spring, an overgrown ruined city under a soft overcast sky.
+       Wyatt (left, taller) and Mei (right, smaller) stand side by side looking out over it. -->
+  <div class="scene" role="img" aria-label="緑に覆われた廃れた街を、ワイアットとメイが並んで見渡しているドット絵風の風景">
+    <svg viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice" shape-rendering="crispEdges" aria-hidden="true" focusable="false">
+      <!-- sky -->
+      <rect x="0" y="0" width="1200" height="675" fill="#b7c2b2"/>
+      <rect x="0" y="0" width="1200" height="120" fill="#c3cec0"/>
+      <rect x="0" y="300" width="1200" height="90" fill="#aebba9"/>
+
+      <!-- clouds: flat, soft, stepped -->
+      <g fill="#dde3da" opacity="0.85">
+        <rect x="90" y="64" width="220" height="16"/><rect x="130" y="48" width="130" height="16"/><rect x="150" y="80" width="170" height="12"/>
+        <rect x="760" y="44" width="260" height="16"/><rect x="810" y="28" width="140" height="16"/><rect x="800" y="60" width="190" height="12"/>
+        <rect x="430" y="110" width="180" height="12"/><rect x="470" y="98" width="100" height="12"/>
+      </g>
+      <g fill="#9fab9e" opacity="0.55">
+        <rect x="240" y="150" width="200" height="12"/><rect x="880" y="140" width="170" height="12"/>
+      </g>
+
+      <!-- far skyline -->
+      <g fill="#8b9a8b">
+        <rect x="0" y="250" width="90" height="280"/>
+        <rect x="330" y="210" width="80" height="320"/>
+        <rect x="800" y="230" width="70" height="300"/>
+        <rect x="1120" y="260" width="80" height="270"/>
+      </g>
+      <g fill="#7d8f7e">
+        <rect x="180" y="280" width="60" height="250"/>
+        <rect x="960" y="290" width="60" height="240"/>
+      </g>
+
+      <!-- main buildings -->
+      <!-- left building -->
+      <rect x="70" y="170" width="270" height="360" fill="#5d6d5e"/>
+      <rect x="70" y="170" width="270" height="14" fill="#526354"/>
+      <!-- centre building -->
+      <rect x="425" y="120" width="350" height="410" fill="#55665a"/>
+      <rect x="425" y="120" width="350" height="14" fill="#49594d"/>
+      <!-- right building -->
+      <rect x="860" y="185" width="270" height="345" fill="#61705f"/>
+      <rect x="860" y="185" width="270" height="14" fill="#54624f"/>
+
+      <!-- windows -->
+      <g fill="#2e3a32">
+        <!-- left -->
+        <rect x="100" y="215" width="34" height="42"/><rect x="160" y="215" width="34" height="42"/><rect x="220" y="215" width="34" height="42"/><rect x="275" y="215" width="34" height="42"/>
+        <rect x="100" y="285" width="34" height="42"/><rect x="220" y="285" width="34" height="42"/><rect x="275" y="285" width="34" height="42"/>
+        <rect x="100" y="355" width="34" height="42"/><rect x="160" y="355" width="34" height="42"/><rect x="275" y="355" width="34" height="42"/>
+        <rect x="160" y="425" width="34" height="42"/><rect x="220" y="425" width="34" height="42"/>
+        <!-- centre -->
+        <rect x="460" y="165" width="38" height="46"/><rect x="530" y="165" width="38" height="46"/><rect x="600" y="165" width="38" height="46"/><rect x="670" y="165" width="38" height="46"/>
+        <rect x="460" y="240" width="38" height="46"/><rect x="600" y="240" width="38" height="46"/><rect x="670" y="240" width="38" height="46"/>
+        <rect x="530" y="315" width="38" height="46"/><rect x="600" y="315" width="38" height="46"/><rect x="670" y="315" width="38" height="46"/>
+        <rect x="460" y="390" width="38" height="46"/><rect x="530" y="390" width="38" height="46"/><rect x="670" y="390" width="38" height="46"/>
+        <!-- right -->
+        <rect x="890" y="230" width="34" height="42"/><rect x="950" y="230" width="34" height="42"/><rect x="1045" y="230" width="34" height="42"/>
+        <rect x="890" y="300" width="34" height="42"/><rect x="1045" y="300" width="34" height="42"/>
+        <rect x="950" y="370" width="34" height="42"/><rect x="1045" y="370" width="34" height="42"/>
+        <rect x="890" y="440" width="34" height="42"/>
+      </g>
+      <!-- a few lit / broken windows -->
+      <g fill="#46544a">
+        <rect x="160" y="285" width="34" height="42"/><rect x="530" y="240" width="38" height="46"/><rect x="950" y="300" width="34" height="42"/>
+      </g>
+      <g fill="#232d26">
+        <rect x="600" y="165" width="18" height="46"/><rect x="220" y="355" width="16" height="42"/>
+      </g>
+
+      <!-- cracks -->
+      <g fill="#3c4a3f">
+        <rect x="505" y="200" width="6" height="60"/><rect x="511" y="255" width="16" height="6"/><rect x="521" y="261" width="6" height="44"/>
+        <rect x="150" y="330" width="6" height="52"/><rect x="156" y="376" width="14" height="6"/>
+        <rect x="990" y="270" width="6" height="48"/><rect x="996" y="312" width="14" height="6"/><rect x="1004" y="318" width="6" height="36"/>
+      </g>
+
+      <!-- vines hanging from roofs -->
+      <g fill="#57744c">
+        <rect x="120" y="184" width="8" height="86"/><rect x="112" y="238" width="8" height="14"/><rect x="128" y="252" width="8" height="12"/>
+        <rect x="300" y="184" width="8" height="58"/>
+        <rect x="455" y="134" width="8" height="104"/><rect x="447" y="200" width="8" height="14"/><rect x="463" y="216" width="8" height="12"/>
+        <rect x="720" y="134" width="8" height="72"/>
+        <rect x="905" y="199" width="8" height="66"/><rect x="1090" y="199" width="8" height="92"/><rect x="1082" y="258" width="8" height="12"/>
+      </g>
+      <!-- ivy patches -->
+      <g fill="#5f7f55">
+        <rect x="70" y="400" width="60" height="50"/><rect x="90" y="380" width="34" height="22"/><rect x="76" y="446" width="40" height="20"/>
+        <rect x="660" y="430" width="70" height="55"/><rect x="690" y="408" width="36" height="24"/>
+        <rect x="1050" y="420" width="80" height="60"/><rect x="1076" y="398" width="38" height="24"/>
+        <rect x="425" y="470" width="55" height="40"/><rect x="300" y="470" width="40" height="34"/>
+      </g>
+      <g fill="#6d8f60">
+        <rect x="84" y="410" width="16" height="14"/><rect x="112" y="428" width="14" height="12"/><rect x="676" y="442" width="16" height="14"/><rect x="1066" y="434" width="16" height="14"/><rect x="440" y="480" width="14" height="12"/>
+      </g>
+      <g fill="#4c6a44">
+        <rect x="98" y="392" width="12" height="12"/><rect x="700" y="420" width="12" height="12"/><rect x="1090" y="412" width="12" height="12"/><rect x="318" y="480" width="12" height="10"/>
+      </g>
+
+      <!-- tilted sign on right building -->
+      <g>
+        <rect x="930" y="330" width="86" height="30" fill="#77806f"/>
+        <rect x="930" y="330" width="86" height="6" fill="#646e5c"/>
+        <rect x="940" y="342" width="40" height="6" fill="#4c5546"/>
+      </g>
+
+      <!-- street / ground -->
+      <rect x="0" y="530" width="1200" height="145" fill="#6a6e66"/>
+      <rect x="0" y="530" width="1200" height="10" fill="#7a7e74"/>
+      <rect x="0" y="600" width="1200" height="75" fill="#5d6059"/>
+      <!-- road markings, faded -->
+      <g fill="#a9ada0" opacity="0.6">
+        <rect x="120" y="586" width="70" height="8"/><rect x="280" y="586" width="70" height="8"/><rect x="850" y="586" width="70" height="8"/><rect x="1010" y="586" width="70" height="8"/>
+      </g>
+      <!-- ground cracks -->
+      <g fill="#45483f">
+        <rect x="180" y="620" width="90" height="5"/><rect x="262" y="620" width="5" height="26"/>
+        <rect x="900" y="636" width="80" height="5"/><rect x="906" y="612" width="5" height="26"/>
+        <rect x="60" y="556" width="54" height="5"/>
+      </g>
+      <!-- rubble -->
+      <g fill="#54574f">
+        <rect x="140" y="512" width="52" height="18"/><rect x="152" y="500" width="28" height="12"/>
+        <rect x="1010" y="516" width="60" height="14"/><rect x="1030" y="504" width="26" height="12"/>
+      </g>
+      <g fill="#484b44"><rect x="160" y="506" width="12" height="8"/><rect x="1040" y="510" width="12" height="8"/></g>
+
+      <!-- abandoned car, left -->
+      <g>
+        <rect x="196" y="486" width="150" height="34" fill="#5b6660"/>
+        <rect x="222" y="462" width="88" height="26" fill="#5b6660"/>
+        <rect x="234" y="468" width="30" height="16" fill="#39433c"/>
+        <rect x="272" y="468" width="28" height="16" fill="#39433c"/>
+        <rect x="196" y="512" width="150" height="8" fill="#49524c"/>
+        <rect x="216" y="516" width="26" height="20" fill="#262b27"/>
+        <rect x="302" y="516" width="26" height="20" fill="#262b27"/>
+        <rect x="240" y="492" width="20" height="10" fill="#71806f"/>
+        <rect x="206" y="478" width="10" height="30" fill="#57744c"/>
+      </g>
+
+      <!-- grass tufts along the street -->
+      <g fill="#5f7f55">
+        <rect x="40" y="516" width="6" height="16"/><rect x="52" y="510" width="6" height="22"/><rect x="64" y="518" width="6" height="14"/>
+        <rect x="380" y="518" width="6" height="14"/><rect x="392" y="512" width="6" height="20"/>
+        <rect x="800" y="516" width="6" height="16"/><rect x="812" y="510" width="6" height="22"/><rect x="824" y="518" width="6" height="14"/>
+        <rect x="1150" y="516" width="6" height="16"/><rect x="1162" y="512" width="6" height="20"/>
+      </g>
+      <g fill="#6d8f60">
+        <rect x="356" y="522" width="6" height="10"/><rect x="776" y="522" width="6" height="10"/><rect x="108" y="524" width="6" height="10"/>
+      </g>
+
+      <!-- ======== Wyatt & Mei, from behind, centre foreground ======== -->
+      <!-- soft shadows -->
+      <rect x="512" y="624" width="96" height="10" fill="#3f423c" opacity="0.55"/>
+      <rect x="524" y="620" width="72" height="6" fill="#3f423c" opacity="0.55"/>
+      <rect x="622" y="624" width="66" height="9" fill="#3f423c" opacity="0.55"/>
+      <rect x="632" y="620" width="46" height="5" fill="#3f423c" opacity="0.55"/>
+
+      <!-- Wyatt -->
+      <g>
+        <!-- legs -->
+        <rect x="532" y="566" width="20" height="52" fill="#3b4145"/>
+        <rect x="560" y="566" width="20" height="52" fill="#33393d"/>
+        <!-- boots -->
+        <rect x="530" y="614" width="24" height="10" fill="#24221e"/>
+        <rect x="558" y="614" width="24" height="10" fill="#24221e"/>
+        <!-- arms -->
+        <rect x="512" y="486" width="14" height="62" fill="#54453a"/>
+        <rect x="586" y="486" width="14" height="62" fill="#4a3d33"/>
+        <rect x="512" y="544" width="14" height="10" fill="#bd9a7d"/>
+        <rect x="586" y="544" width="14" height="10" fill="#b08e6f"/>
+        <!-- torso: worn brown jacket -->
+        <rect x="524" y="478" width="64" height="92" fill="#5d4b3b"/>
+        <rect x="524" y="478" width="64" height="10" fill="#524233"/>
+        <rect x="524" y="556" width="64" height="14" fill="#4c3d30"/>
+        <!-- backpack -->
+        <rect x="536" y="492" width="40" height="52" fill="#47523f"/>
+        <rect x="536" y="492" width="40" height="10" fill="#3d4836"/>
+        <rect x="546" y="512" width="20" height="18" fill="#525f49"/>
+        <rect x="530" y="486" width="8" height="30" fill="#3d4836"/>
+        <rect x="574" y="486" width="8" height="30" fill="#3d4836"/>
+        <!-- neck & head (back) -->
+        <rect x="546" y="466" width="20" height="14" fill="#a9856a"/>
+        <rect x="534" y="428" width="44" height="42" fill="#c39a76"/>
+        <!-- hair -->
+        <rect x="534" y="428" width="44" height="24" fill="#33291f"/>
+        <rect x="534" y="428" width="10" height="34" fill="#33291f"/>
+        <rect x="568" y="428" width="10" height="34" fill="#2c231a"/>
+        <rect x="540" y="420" width="32" height="10" fill="#33291f"/>
+      </g>
+
+      <!-- Mei -->
+      <g>
+        <!-- legs -->
+        <rect x="634" y="576" width="14" height="42" fill="#57626c"/>
+        <rect x="654" y="576" width="14" height="42" fill="#4d5862"/>
+        <!-- shoes -->
+        <rect x="632" y="614" width="18" height="9" fill="#3a332b"/>
+        <rect x="652" y="614" width="18" height="9" fill="#332d26"/>
+        <!-- arms -->
+        <rect x="622" y="520" width="10" height="44" fill="#a3905c"/>
+        <rect x="672" y="520" width="10" height="44" fill="#97834f"/>
+        <rect x="622" y="560" width="10" height="9" fill="#c39a76"/>
+        <rect x="672" y="560" width="10" height="9" fill="#b8906a"/>
+        <!-- torso: faded mustard top -->
+        <rect x="630" y="512" width="44" height="68" fill="#b3a065"/>
+        <rect x="630" y="512" width="44" height="8" fill="#a3905c"/>
+        <rect x="630" y="568" width="44" height="12" fill="#97834f"/>
+        <!-- small backpack -->
+        <rect x="640" y="524" width="26" height="34" fill="#96716d"/>
+        <rect x="640" y="524" width="26" height="8" fill="#85625e"/>
+        <rect x="647" y="538" width="12" height="12" fill="#a37d78"/>
+        <!-- neck & head (back) -->
+        <rect x="644" y="502" width="16" height="12" fill="#bd9a7d"/>
+        <rect x="634" y="470" width="36" height="36" fill="#cda37e"/>
+        <!-- hair, tied back -->
+        <rect x="634" y="470" width="36" height="20" fill="#4a3826"/>
+        <rect x="634" y="470" width="8" height="28" fill="#4a3826"/>
+        <rect x="662" y="470" width="8" height="28" fill="#41301f"/>
+        <rect x="640" y="462" width="24" height="10" fill="#4a3826"/>
+        <rect x="648" y="500" width="8" height="12" fill="#41301f"/>
+        <!-- faded cap, worn backwards -->
+        <rect x="632" y="458" width="40" height="10" fill="#a87a72"/>
+        <rect x="664" y="466" width="12" height="6" fill="#96716d"/>
+      </g>
+    </svg>
+  </div>
+  <div class="veil" aria-hidden="true"></div>
+
+  <div class="content">
+    <h1>CARRY YOU</h1>
+    <a class="start" href="./carry-you.html">第1章からはじめる</a>
+    <p class="notes"><span>全4章収録</span><span class="sep" aria-hidden="true"></span><span>コントロールパッド対応</span></p>
+  </div>
+
+</main>
+</body>
+</html>
