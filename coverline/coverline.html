@@ -1,0 +1,2713 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" href="data:," />
+    <title>2Dカバーシューター試作</title>
+    <style>
+      :root{
+        --bg:#0c0e11; --panel:#15181d; --panel2:#1b1f26; --line:#2b3038;
+        --ink:#e8e6e1; --dim:#9aa0a8; --faint:#6b7078;
+        --accent:#ff8c1a; --accent2:#ffb35c; --danger:#ff4d42; --ok:#57d977;
+        --hp:#e8483f; --armor:#4db2ff;
+      }
+      *{ box-sizing:border-box; }
+      html,body{ margin:0; padding:0; background:var(--bg); color:var(--ink);
+        font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP","Yu Gothic UI",sans-serif; }
+      button{ min-height:2.25rem; font:inherit; cursor:pointer; }
+      #wrap{ max-width:1120px; margin:0 auto; padding:14px 14px 26px; }
+      #stage{ position:relative; width:100%; aspect-ratio:16/9; background:#000;
+        border:1px solid var(--line); border-radius:6px; overflow:hidden;
+        box-shadow:0 10px 34px rgba(0,0,0,.55); outline:none; }
+      /* プレイ中はタッチのスクロール／ズームを無効化（メニューのスクロールは妨げない） */
+      #stage:not(.menu){ touch-action:none; }
+      /* ---------- タッチ操作 ---------- */
+      #touchUI{ position:absolute; inset:0; z-index:6; pointer-events:none; }
+      .stickBase{ position:absolute; width:96px; height:96px; border:2px solid rgba(255,255,255,.35);
+        border-radius:50%; background:rgba(10,12,14,.22); display:none; pointer-events:none; }
+      .stickKnob{ position:absolute; left:50%; top:50%; width:44px; height:44px; margin:-22px 0 0 -22px;
+        border-radius:50%; background:rgba(255,140,26,.5); border:2px solid rgba(255,255,255,.55); }
+      #tbtns{ position:absolute; right:8px; bottom:70px; display:grid; grid-template-columns:repeat(2,56px); gap:8px; }
+      .tbtn{ pointer-events:auto; touch-action:none; min-height:44px; padding:4px 2px; font-size:12px; font-weight:700;
+        color:var(--ink); background:rgba(10,12,14,.72); border:1px solid var(--line); border-radius:8px; }
+      .tbtn:active{ background:rgba(255,140,26,.55); border-color:var(--accent); }
+      #tbPause{ position:absolute; top:52px; left:10px; width:44px; min-height:36px; }
+      @media (max-width:700px){
+        #tbtns{ grid-template-columns:repeat(4,48px); bottom:52px; right:6px; gap:6px; }
+        .tbtn{ min-height:38px; font-size:11px; }
+        #tbPause{ top:46px; }
+      }
+      /* メニュー表示中はステージが内容の高さに伸びて、パネルが切れないようにする */
+      #stage.menu{ aspect-ratio:auto; }
+      #stage.menu .screen{ position:relative; }
+      #stage.menu .panel{ max-height:none; }
+      canvas#game{ position:absolute; inset:0; width:100%; height:100%;
+        image-rendering:pixelated; image-rendering:crisp-edges; }
+      #dmgflash{ position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse at center, transparent 55%, rgba(255,40,30,.55) 100%); opacity:0; }
+      #lowhp{ position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse at center, transparent 58%, rgba(255,40,30,.4) 100%); opacity:0; transition:opacity .3s; }
+
+      /* ---------- HUD ---------- */
+      #hud{ position:absolute; inset:0; pointer-events:none; font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace; }
+      .hidden{ display:none !important; }
+      #objective{ position:absolute; top:10px; left:50%; transform:translateX(-50%);
+        background:rgba(10,12,14,.78); border:1px solid var(--line); border-left:4px solid var(--accent);
+        padding:6px 14px; font-size:13px; letter-spacing:.04em; white-space:nowrap; max-width:92%; }
+      #objective b{ color:var(--accent2); }
+      #padstatus{ position:absolute; top:10px; left:10px; font-size:11px; color:var(--dim);
+        background:rgba(10,12,14,.7); border:1px solid var(--line); padding:5px 9px; }
+      #padstatus.on{ color:var(--ok); border-color:#2c4a34; }
+      #sndstatus{ position:absolute; top:40px; left:10px; font-size:11px; color:var(--dim);
+        background:rgba(10,12,14,.7); border:1px solid var(--line); padding:5px 9px; pointer-events:auto; cursor:pointer; }
+      #sndstatus.on{ color:var(--ink); }
+      #sndstatus.off{ color:var(--faint); }
+      #padstatusTitle{ font-size:12px; color:var(--dim); background:var(--panel2); border:1px solid var(--line);
+        padding:6px 10px; margin-top:12px; font-family:ui-monospace,Menlo,Consolas,monospace; }
+      #padstatusTitle.on{ color:var(--ok); border-color:#2c4a34; }
+      .padDiag{ font-size:11px; color:var(--dim); background:rgba(10,12,14,.55); border:1px solid var(--line);
+        padding:6px 10px; margin-top:8px; font-family:ui-monospace,Menlo,Consolas,monospace;
+        white-space:pre-line; line-height:1.55; word-break:break-all; }
+      #padstatus.blocked, #padstatusTitle.blocked{ color:#ffb35c; border-color:#7a5320; }
+      .padBlockHelp{ font-size:12.5px; color:var(--ink); background:rgba(60,40,8,.35); border:1px solid #7a5320;
+        padding:10px 12px; margin-top:8px; line-height:1.75; }
+      .padBlockHelp b{ color:var(--accent2); }
+      .padBlockHelp ul{ margin:6px 0 4px; padding-left:20px; }
+      .padBlockHelp li{ margin:3px 0; }
+      .padBlockHelp .btnPadRetry{ margin-top:8px; background:transparent; color:var(--ink);
+        border:1px solid #7a5320; padding:8px 16px; border-radius:4px; font-size:13px; }
+      .padBlockHelp .btnPadRetry:hover{ border-color:var(--accent); }
+      #mmapWrap{ position:absolute; top:10px; right:10px; background:rgba(10,12,14,.78); border:1px solid var(--line); padding:4px; }
+      #mmapWrap .cap{ font-size:9px; color:var(--faint); text-align:center; letter-spacing:.2em; padding-top:2px; }
+      canvas#minimap{ display:block; width:132px; height:99px; }
+      #bl{ position:absolute; left:14px; bottom:12px; }
+      #hpLabel{ font-size:10px; color:var(--dim); letter-spacing:.18em; margin-bottom:3px; }
+      #hpBarOuter{ width:210px; height:13px; background:rgba(0,0,0,.65); border:1px solid var(--line); }
+      #hpBar{ height:100%; width:100%; background:var(--hp); transition:width .12s; }
+      #kitRow{ margin-top:6px; font-size:12px; color:var(--dim); }
+      #kitRow .kit{ display:inline-block; border:1px solid var(--line); background:rgba(10,12,14,.7); padding:2px 8px; margin-right:6px; color:var(--ink); }
+      #kitRow .kit b{ color:var(--armor); }
+      #br{ position:absolute; right:14px; bottom:12px; text-align:right; }
+      #weapName{ font-size:13px; letter-spacing:.03em; }
+      #weapName .rar{ font-weight:700; }
+      #weapAlt{ font-size:11px; color:var(--dim); margin-top:2px; white-space:nowrap; }
+      #ammo{ font-size:30px; line-height:1; font-weight:700; }
+      #ammo small{ font-size:13px; color:var(--dim); font-weight:400; }
+      #ammo.reload{ color:var(--accent2); font-size:16px; }
+      #turretCd{ margin-top:5px; font-size:11px; color:var(--dim); }
+      #turretCd .bar{ display:inline-block; width:74px; height:7px; background:rgba(0,0,0,.6); border:1px solid var(--line); vertical-align:middle; margin-left:6px; }
+      #turretCd .bar i{ display:block; height:100%; background:var(--accent); width:100%; }
+      #turretCd.ready{ color:var(--accent2); }
+      #pickupPrompt{ position:absolute; left:50%; bottom:86px; transform:translateX(-50%);
+        background:rgba(10,12,14,.9); border:1px solid var(--line); padding:9px 14px; min-width:250px; text-align:left; }
+      #pickupPrompt .pn{ font-size:14px; font-weight:700; }
+      #pickupPrompt .pd{ font-size:11px; color:var(--dim); margin-top:2px; }
+      #pickupPrompt .pk{ font-size:11px; color:var(--accent2); margin-top:5px; }
+      #pickupPrompt .up{ color:var(--ok); } #pickupPrompt .down{ color:var(--danger); }
+      #holdBar{ height:4px; background:#000; border:1px solid var(--line); margin-top:6px; }
+      #holdFill{ height:100%; width:0%; background:var(--accent); }
+      #toast{ position:absolute; top:64px; left:50%; transform:translateX(-50%); text-align:center;
+        font-size:20px; font-weight:700; letter-spacing:.14em; color:#fff; text-shadow:0 2px 10px #000; opacity:0; transition:opacity .25s; }
+      #toast small{ display:block; font-size:12px; color:var(--accent2); letter-spacing:.08em; margin-top:4px; font-weight:400; }
+      #bossWrap{ position:absolute; top:52px; left:50%; transform:translateX(-50%); width:min(430px,70%); }
+      #bossWrap .bn{ font-size:11px; letter-spacing:.2em; color:#ffb3ae; text-align:center; margin-bottom:3px; text-shadow:0 1px 4px #000; }
+      #bossBarOuter{ height:9px; background:rgba(0,0,0,.7); border:1px solid #5a2b28; }
+      #bossBar{ height:100%; background:var(--danger); width:100%; transition:width .12s; }
+      #hint{ position:absolute; bottom:64px; left:50%; transform:translateX(-50%); font-size:12px; color:#ffd9ae;
+        background:rgba(10,12,14,.75); padding:4px 12px; border:1px solid var(--line); white-space:nowrap; }
+
+      /* ---------- Screens ---------- */
+      .screen{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+        background:rgba(6,7,9,.82); padding:18px; overflow:auto; }
+      .panel{ background:var(--panel); border:1px solid var(--line); border-top:3px solid var(--accent);
+        max-width:760px; width:100%; padding:15px 20px; max-height:100%; overflow:auto; scrollbar-width:thin; }
+      .panel h1{ margin:0 0 2px; font-size:23px; letter-spacing:.06em; }
+      .panel h1 .en{ color:var(--accent); }
+      .panel .sub{ color:var(--dim); font-size:12.5px; margin-bottom:10px; line-height:1.6; }
+      .panel h2{ font-size:13px; letter-spacing:.14em; color:var(--accent2); margin:12px 0 6px; }
+      .missions{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+      @media (max-width:640px){ .missions{ grid-template-columns:1fr; } }
+      .mcard{ text-align:left; background:var(--panel2); border:1px solid var(--line); color:var(--ink);
+        padding:9px 12px; border-radius:4px; min-height:44px; }
+      .mcard:hover:not(:disabled){ border-color:var(--accent); }
+      .mcard:disabled{ opacity:.45; cursor:not-allowed; }
+      .mcard .mt{ font-size:15px; font-weight:700; margin-bottom:4px; }
+      .mcard .md{ font-size:12px; color:var(--dim); line-height:1.6; }
+      .mcard .diff{ font-size:11px; color:var(--accent2); margin-top:7px; letter-spacing:.08em; }
+      .mcard .lock{ font-size:11px; color:var(--faint); margin-top:7px; }
+      .mcard .clear{ font-size:11px; color:var(--ok); margin-top:7px; }
+      table.ctrl{ border-collapse:collapse; width:100%; font-size:12px; }
+      table.ctrl td{ padding:2px 8px 2px 0; vertical-align:top; color:var(--dim); line-height:1.45; }
+      table.ctrl td.k{ color:var(--ink); white-space:nowrap; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; }
+      .cols{ display:grid; grid-template-columns:1fr 1fr; gap:0 26px; }
+      @media (max-width:640px){ .cols{ grid-template-columns:1fr; } }
+      .note{ font-size:12px; color:var(--faint); line-height:1.7; margin-top:12px; }
+      .bigbtn{ background:var(--accent); color:#16100a; border:none; font-weight:700; padding:10px 22px;
+        border-radius:4px; font-size:15px; letter-spacing:.05em; }
+      .bigbtn:hover{ background:var(--accent2); }
+      .ghostbtn{ background:transparent; color:var(--ink); border:1px solid var(--line); padding:10px 18px; border-radius:4px; font-size:14px; }
+      .ghostbtn:hover{ border-color:var(--accent); }
+      .btnrow{ display:flex; gap:10px; flex-wrap:wrap; margin-top:18px; }
+      #lootList{ font-size:13px; line-height:1.9; }
+      #lootList .none{ color:var(--faint); }
+      .statgrid{ display:flex; gap:22px; flex-wrap:wrap; font-size:13px; color:var(--dim); margin-top:6px; }
+      .statgrid b{ color:var(--ink); font-size:19px; display:block; font-family:ui-monospace,Menlo,Consolas,monospace; }
+      #helpbar{ margin-top:12px; background:var(--panel); border:1px solid var(--line); padding:10px 14px;
+        font-size:12px; color:var(--dim); line-height:1.9; }
+      #helpbar b{ color:var(--ink); font-weight:600; }
+      #helpbar .pad{ color:var(--accent2); }
+      kbd{ font-family:ui-monospace,Menlo,Consolas,monospace; background:#262b33; border:1px solid #3a4048;
+        border-bottom-width:2px; border-radius:3px; padding:0 5px; font-size:11px; color:var(--ink); }
+    </style>
+  </head>
+  <body>
+    <div id="wrap">
+      <div id="stage" class="menu" tabindex="0">
+        <canvas id="game" width="480" height="270"></canvas>
+        <div id="dmgflash"></div>
+        <div id="lowhp"></div>
+
+        <div id="hud" class="hidden">
+          <div id="padstatus">🎮 コントローラー未接続</div>
+          <div id="sndstatus" class="on" title="クリック／Mキーで環境音のON・OFF">🔊 環境音 ON（Mで切替）</div>
+          <div id="objective">—</div>
+          <div id="mmapWrap"><canvas id="minimap" width="144" height="108"></canvas><div class="cap">TACTICAL MAP</div></div>
+          <div id="bossWrap" class="hidden"><div class="bn">⚠ 重装ターゲット</div><div id="bossBarOuter"><div id="bossBar"></div></div></div>
+          <div id="toast"></div>
+          <div id="bl">
+            <div id="hpLabel">AGENT INTEGRITY</div>
+            <div id="hpBarOuter"><div id="hpBar"></div></div>
+            <div id="kitRow"><span class="kit">＋ アーマーキット <b id="kitCount">3</b></span><span id="kitKey">F / RB</span></div>
+          </div>
+          <div id="br">
+            <div id="weapName">—</div>
+            <div id="weapAlt">—</div>
+            <div id="ammo">-- <small>/ ∞</small></div>
+            <div id="turretCd">タレット <span id="turretState">READY</span><span class="bar"><i id="turretFill"></i></span></div>
+          </div>
+          <div id="pickupPrompt" class="hidden">
+            <div class="pn" id="pkName">—</div>
+            <div class="pd" id="pkDesc">—</div>
+            <div class="pk" id="pkKey">E長押し / X長押しで拾う</div>
+            <div id="holdBar"><div id="holdFill"></div></div>
+          </div>
+          <div id="hint" class="hidden"></div>
+        </div>
+
+        <div class="screen" id="scr-title">
+          <div class="panel">
+            <h1>COVER<span class="en">LINE</span> ― 奪還作戦 ―</h1>
+            <div class="sub">
+              ウイルス禍で封鎖された大都市ニューホープ。無法者に占拠された街区を、市民防衛局のエージェントとして取り戻せ。
+              車やバリケードに張り付き、身を乗り出して撃つ――カバー撃ち合いがすべての試作版。
+            </div>
+            <h2>ミッション選択</h2>
+            <div class="missions" id="missionList"></div>
+            <h2>操作</h2>
+            <div class="cols">
+              <table class="ctrl">
+                <tr><td class="k">W A S D</td><td>移動</td></tr>
+                <tr><td class="k">マウス</td><td>照準 ／ 左クリック：射撃</td></tr>
+                <tr><td class="k">Space</td><td>カバーに吸着 ／ 解除（車・バリケードの近くで）</td></tr>
+                <tr><td class="k">右クリック長押し</td><td>カバーから身を乗り出す（この間だけ撃てる・当たる）</td></tr>
+                <tr><td class="k">Shift</td><td>ロール（回避・一瞬無敵）</td></tr>
+                <tr><td class="k">R</td><td>リロード</td></tr>
+                <tr><td class="k">E 長押し</td><td>武器を拾う（落ちた武器の近くで）。アーマーキットは触れれば自動で拾う</td></tr>
+                <tr><td class="k">1 / 2</td><td>武器切り替え</td></tr>
+                <tr><td class="k">Q</td><td>タレット設置</td></tr>
+                <tr><td class="k">F</td><td>アーマーキット（回復）</td></tr>
+                <tr><td class="k">M</td><td>環境音 ON／OFF（風・遠くの銃声・地響き）</td></tr>
+                <tr><td class="k">Esc</td><td>ポーズ</td></tr>
+              </table>
+              <table class="ctrl">
+                <tr><td class="k">左スティック</td><td>移動</td></tr>
+                <tr><td class="k">十字キー</td><td>移動（スティックのないパッド用）</td></tr>
+                <tr><td class="k">右スティック</td><td>照準（近くの敵へ軽くアシスト）</td></tr>
+                <tr><td class="k">RT</td><td>射撃</td></tr>
+                <tr><td class="k">LT 長押し</td><td>カバーから身を乗り出す</td></tr>
+                <tr><td class="k">A</td><td>カバーに吸着 ／ 解除</td></tr>
+                <tr><td class="k">B</td><td>ロール（回避・一瞬無敵）</td></tr>
+                <tr><td class="k">X</td><td>リロード ／ 近くの武器は長押しで拾う</td></tr>
+                <tr><td class="k">Y</td><td>武器切り替え</td></tr>
+                <tr><td class="k">LB</td><td>タレット設置</td></tr>
+                <tr><td class="k">RB</td><td>アーマーキット（回復）</td></tr>
+                <tr><td class="k">START</td><td>ポーズ</td></tr>
+              </table>
+            </div>
+            <div id="padstatusTitle">🎮 コントローラー未接続（キーボード/マウス可）</div>
+            <div style="margin-top:8px;"><button type="button" class="ghostbtn btnSndToggle" style="padding:7px 14px; font-size:13px;">🔊 環境音：ON（風・遠くの銃声・地響き）</button></div>
+            <div class="padDiag">【コントローラー診断】</div>
+            <div class="padBlockHelp hidden">
+              <b>この表示環境では、コントローラー機能がブロックされています。</b><br>
+              診断の「取得エラー」にある通り、この画面を埋め込んでいるアプリ／ブラウザ側が Gamepad API の利用をポリシーで禁止しているため、ゲーム側からコントローラーを読み取ること自体ができません。パッド本体・USB接続・ボタン押下の問題ではありません（HORI製でも同じ結果になります）。
+              <ul>
+                <li>対処法：このページを Chrome / Edge などのブラウザで通常のタブとして直接開くと、Gamepad API が許可され、コントローラーで遊べます。開いたあと、画面を一度クリックしてからパッドのボタンを押してください。</li>
+                <li>この埋め込み表示のままでは、キーボード／マウス（スマホ・タブレットではタッチ）で全機能を遊べます。</li>
+                <li>環境を変えたら、下のボタンでもう一度検出を試せます。</li>
+              </ul>
+              <button type="button" class="btnPadRetry">コントローラー検出を再試行</button>
+            </div>
+            <div class="note">
+              コントローラーは、ゲーム画面を一度クリック（タップ）してからボタンを押すと認識します。Xbox系のほか、HORIなどの社外パッドにも対応しています（非標準マッピングの読み替え、十字キーだけのパッドでの移動、トリガーが軸で届く機種にも対応）。認識すると上の欄と左上に機種名つきで「接続中」と表示されます。未接続のままのときは上の「コントローラー診断」を見てください：いずれかのスロットに機種名（id）が出ていればブラウザには見えていて、ボタン番号や軸の値がボタン操作に反応するかで切り分けられます。全スロット「なし」の場合は、この画面を開いているブラウザ側がパッド入力を受け取れていない状態です。診断に「permissions policy」と出ている場合は、表示環境側がコントローラー機能を禁止している状態で、上の案内が対処法になります（ボタンを押しても認識しません）。カバー中は正面の弾を防げますが側面・背後からは当たります。敵もカバーを使い、タレットは囮にもなります。
+              スマホ・タブレットではタッチでも遊べます：画面の左半分をドラッグで移動、右半分をドラッグで照準（強く倒すと射撃）、カバーやタレットは画面のボタンから使えます。
+            </div>
+          </div>
+        </div>
+
+        <div class="screen hidden" id="scr-result">
+          <div class="panel">
+            <h1>MISSION <span class="en">COMPLETE</span></h1>
+            <div class="sub" id="resMission">—</div>
+            <div class="statgrid">
+              <div>キル<b id="resKills">0</b></div>
+              <div>クリアタイム<b id="resTime">0:00</b></div>
+              <div>持ち帰った武器<b id="resLoot">0</b></div>
+            </div>
+            <h2>所持武器（枠は2つまで）</h2>
+            <div id="lootList"></div>
+            <div class="btnrow">
+              <button class="bigbtn" id="btnNext">次のミッションへ</button>
+              <button class="ghostbtn" id="btnBackSelect">ミッション選択に戻る</button>
+              <button class="ghostbtn" id="btnRetry2">同じミッションを再挑戦</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen hidden" id="scr-over">
+          <div class="panel">
+            <h1>AGENT <span style="color:var(--danger)">DOWN</span></h1>
+            <div class="sub">エージェントは行動不能になった。カバーの位置と、身を乗り出すタイミングを見直してみよう。</div>
+            <div class="statgrid">
+              <div>キル<b id="overKills">0</b></div>
+              <div>到達エリア<b id="overZone">-</b></div>
+            </div>
+            <div class="btnrow">
+              <button class="bigbtn" id="btnRetry">リトライ</button>
+              <button class="ghostbtn" id="btnOverSelect">ミッション選択に戻る</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen hidden" id="scr-pause">
+          <div class="panel">
+            <h1>PAUSED</h1>
+            <div class="sub">Esc / STARTでもう一度押すと再開します。</div>
+            <div class="padDiag">【コントローラー診断】</div>
+            <div class="padBlockHelp hidden">
+              <b>この表示環境では、コントローラー機能がブロックされています。</b><br>
+              この画面を埋め込んでいるアプリ／ブラウザ側が Gamepad API の利用をポリシーで禁止しているため、ゲーム側からはコントローラーを読み取れません。パッド本体やUSB接続の問題ではありません。このページを Chrome / Edge などのブラウザで通常のタブとして直接開くと、コントローラーで遊べます。
+              <br><button type="button" class="btnPadRetry">コントローラー検出を再試行</button>
+            </div>
+            <div class="btnrow">
+              <button class="bigbtn" id="btnResume">再開する</button>
+              <button class="ghostbtn btnSndToggle">🔊 環境音：ON</button>
+              <button class="ghostbtn" id="btnQuitMission">ミッションを中断して選択に戻る</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="touchUI" class="hidden">
+          <div class="stickBase" id="baseL"><div class="stickKnob"></div></div>
+          <div class="stickBase" id="baseR"><div class="stickKnob"></div></div>
+          <button class="tbtn" id="tbPause" type="button" aria-label="ポーズ">⏸</button>
+          <div id="tbtns">
+            <button class="tbtn" id="tbCover" type="button">カバー</button>
+            <button class="tbtn" id="tbRoll" type="button">ロール</button>
+            <button class="tbtn" id="tbLean" type="button">構える</button>
+            <button class="tbtn" id="tbPickup" type="button">拾う</button>
+            <button class="tbtn" id="tbTurret" type="button">タレット</button>
+            <button class="tbtn" id="tbReload" type="button">リロード</button>
+            <button class="tbtn" id="tbKit" type="button">回復</button>
+            <button class="tbtn" id="tbSwap" type="button">切替</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="helpbar">
+        <b>カバー：</b>車やバリケードの近くで <kbd>Space</kbd> / <span class="pad">A</span> を押すと吸着。吸着中は左右移動でカバー沿いに動ける。
+        撃つときは <kbd>右クリック</kbd> / <span class="pad">LT</span> で身を乗り出す（その間は敵の弾も当たる）。
+        <b>タレット：</b><kbd>Q</kbd> / <span class="pad">LB</span>。 <b>拾う：</b>武器の近くで <kbd>E</kbd> / <span class="pad">X</span> 長押し。今の武器との強さ比較が出る。アーマーキットは触れれば自動で拾う。
+        <b>タッチ：</b>左半分ドラッグ＝移動、右半分ドラッグ＝照準・射撃、ボタンでカバー／ロール／タレット等。
+        <b>環境音：</b><kbd>M</kbd> で ON／OFF。風と街の低い残響に混じって、遠くの銃声や地響きが時々聞こえる（戦闘の気配は音だけの演出で、実際の敵とは連動しない）。
+      </div>
+    </div>
+
+<script>
+"use strict";
+/* ============================================================
+   COVERLINE ― 2Dカバーシューター試作
+   斜め見下ろし / カバー吸着 / 武器ドロップ / タレット / ミッション制
+   ============================================================ */
+const VW = 480, VH = 270;                 // 内部解像度（ドット絵）
+const WORLD_W = 1440, WORLD_H = 1080;
+const cv = document.getElementById('game');
+const ctx = cv.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+const mm = document.getElementById('minimap').getContext('2d');
+
+/* ---------- ユーティリティ ---------- */
+const clamp = (v,a,b)=> v<a?a : v>b?b : v;
+const dist2 = (ax,ay,bx,by)=>{ const dx=ax-bx, dy=ay-by; return dx*dx+dy*dy; };
+const angLerp = (a,b,t)=>{ let d=(b-a)%(Math.PI*2); if(d>Math.PI)d-=Math.PI*2; if(d<-Math.PI)d+=Math.PI*2; return a+d*t; };
+function mulberry32(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function segRect(x1,y1,x2,y2,r){
+  // 線分と矩形の交差（LOS判定用）
+  const dx=x2-x1, dy=y2-y1; let tmin=0, tmax=1;
+  const p=[-dx,dx,-dy,dy], q=[x1-r.x, r.x+r.w-x1, y1-r.y, r.y+r.h-y1];
+  for(let i=0;i<4;i++){ if(Math.abs(p[i])<1e-9){ if(q[i]<0) return false; }
+    else { const t=q[i]/p[i]; if(p[i]<0){ if(t>tmax) return false; if(t>tmin) tmin=t; } else { if(t<tmin) return false; if(t<tmax) tmax=t; } } }
+  return true;
+}
+function losBlocked(x1,y1,x2,y2,rects){ for(const r of rects){ if(segRect(x1,y1,x2,y2,r)) return true; } return false; }
+function pointInRect(x,y,r,pad){ pad=pad||0; return x>=r.x-pad && x<=r.x+r.w+pad && y>=r.y-pad && y<=r.y+r.h+pad; }
+function fmtTime(s){ const m=Math.floor(s/60), ss=Math.floor(s%60); return m+":"+String(ss).padStart(2,"0"); }
+
+/* ---------- サウンド（簡易シンセ） ---------- */
+let AC=null;
+function audio(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC&&AC.state==="suspended"){ try{ const pr=AC.resume(); if(pr&&pr.catch) pr.catch(()=>{}); }catch(e){} } return AC; }
+function beep(freq,dur,type,vol,slide){
+  const ac=audio(); if(!ac) return;
+  const o=ac.createOscillator(), g=ac.createGain();
+  o.type=type||"square"; o.frequency.setValueAtTime(freq,ac.currentTime);
+  if(slide) o.frequency.exponentialRampToValueAtTime(Math.max(30,freq+slide),ac.currentTime+dur);
+  g.gain.setValueAtTime(vol||0.05,ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0008,ac.currentTime+dur);
+  o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+dur);
+}
+function shotSound(enemy){ beep(enemy?300:190, 0.07, "square", enemy?0.018:0.045, -120); }
+function hitSound(){ beep(720,0.05,"square",0.03,-300); }
+function pickupSound(){ beep(520,0.09,"triangle",0.06,300); setTimeout(()=>beep(880,0.12,"triangle",0.05,200),70); }
+
+/* ---------- 環境音（全てWeb Audio合成・音声ファイルなし） ----------
+   土台：風（ノイズ＋ローパス、LFOでうねる）＋街の低い残響（極低域ノイズ）。
+   単発イベント（数秒〜十数秒に1回、ランダム）：
+     ・遠くの銃声：こもった単発／短いバースト。方向（パン）と距離感（ローパスの低さ・音量）を毎回変える
+     ・遠くの地響き：遠方での爆発や崩落を思わせる、低域ノイズ＋40Hz台サインのうなり。大きいときだけ画面が微かに揺れる
+   戦闘の「気配」専用の演出で、実際の敵・ゾーンとは連動しない。
+   ブラウザの制約で、最初のクリック／キー操作までは鳴らせない（audio() の resume と同じタイミングで開始する）。 */
+let ambNodes=null, ambStarted=false, ambMuted=false, ambTimer=null, ambNoiseBuf=null;
+function getNoiseBuf(ac){
+  if(ambNoiseBuf) return ambNoiseBuf;
+  const len = Math.floor(ac.sampleRate*2);
+  ambNoiseBuf = ac.createBuffer(1, len, ac.sampleRate);
+  const d = ambNoiseBuf.getChannelData(0);
+  for(let i=0;i<len;i++) d[i]=Math.random()*2-1;
+  return ambNoiseBuf;
+}
+function ambOut(pan){
+  // 環境音の出口：パン（あれば）→ マスターゲイン
+  const ac=AC; if(!ac||!ambNodes) return null;
+  if(typeof ac.createStereoPanner==="function"){
+    const p=ac.createStereoPanner(); p.pan.value=clamp(pan||0,-0.85,0.85);
+    p.connect(ambNodes.master); return p;
+  }
+  return ambNodes.master;
+}
+function startAmbient(){
+  const ac=audio(); if(!ac) return;
+  if(ambStarted){ updateAmbGain(); return; }
+  try{
+    const master=ac.createGain();
+    master.gain.value = ambMuted?0:1.0;
+    master.connect(ac.destination);
+    ambNodes={ master };
+    // 風
+    const windSrc=ac.createBufferSource(); windSrc.buffer=getNoiseBuf(ac); windSrc.loop=true; windSrc.playbackRate.value=0.9;
+    const windFil=ac.createBiquadFilter(); windFil.type="lowpass"; windFil.frequency.value=360; windFil.Q.value=0.4;
+    const windGain=ac.createGain(); windGain.gain.value=0.052;
+    windSrc.connect(windFil); windFil.connect(windGain); windGain.connect(master); windSrc.start();
+    const lfo=ac.createOscillator(); lfo.type="sine"; lfo.frequency.value=0.08;
+    const lfoG=ac.createGain(); lfoG.gain.value=120; lfo.connect(lfoG); lfoG.connect(windFil.frequency); lfo.start();
+    const lfo2=ac.createOscillator(); lfo2.type="sine"; lfo2.frequency.value=0.045;
+    const lfo2G=ac.createGain(); lfo2G.gain.value=0.018; lfo2.connect(lfo2G); lfo2G.connect(windGain.gain); lfo2.start();
+    // 街の低い残響
+    const rumSrc=ac.createBufferSource(); rumSrc.buffer=getNoiseBuf(ac); rumSrc.loop=true; rumSrc.playbackRate.value=0.3;
+    const rumFil=ac.createBiquadFilter(); rumFil.type="lowpass"; rumFil.frequency.value=105; rumFil.Q.value=0.3;
+    const rumGain=ac.createGain(); rumGain.gain.value=0.078;
+    rumSrc.connect(rumFil); rumFil.connect(rumGain); rumGain.connect(master); rumSrc.start();
+    ambStarted=true;
+    scheduleAmbEvent(1500+Math.random()*2500);   // 最初の気配はわりと早めに
+  }catch(e){ ambStarted=false; ambNodes=null; }
+}
+function updateAmbGain(){
+  if(ambNodes && AC){
+    let st="title"; try{ st=game.state; }catch(e){}
+    const target = ambMuted?0 : (st==="paused"?0.5 : st==="playing"?1.0 : 0.75);
+    try{ ambNodes.master.gain.setTargetAtTime(target, AC.currentTime, 0.45); }catch(e){}
+  }
+  updateSndUI();
+}
+function updateSndUI(){
+  const s=document.getElementById('sndstatus');
+  if(s){
+    s.textContent = ambMuted ? "🔇 環境音 OFF（MでON）" : "🔊 環境音 ON（Mで切替）";
+    s.classList.toggle('on', !ambMuted); s.classList.toggle('off', ambMuted);
+  }
+  document.querySelectorAll('.btnSndToggle').forEach(b=>{
+    b.textContent = ambMuted ? "🔇 環境音：OFF" : "🔊 環境音：ON（風・遠くの銃声・地響き）";
+  });
+}
+function toggleAmbMute(){
+  ambMuted=!ambMuted;
+  if(!ambMuted) startAmbient();
+  updateAmbGain();
+}
+function scheduleAmbEvent(delay){
+  if(ambTimer) clearTimeout(ambTimer);
+  ambTimer=setTimeout(()=>{
+    try{ playAmbEvent(); }catch(e){}
+    scheduleAmbEvent(4500+Math.random()*9500);   // 次の気配まで約5〜14秒
+  }, delay);
+}
+function playAmbEvent(){
+  if(ambMuted||!AC||AC.state!=="running"||!ambNodes) return;
+  let st="title"; try{ st=game.state; }catch(e){}
+  if(st!=="playing") return;                    // 遠くの戦闘音はミッション中だけ（タイトルでは風と残響のみ）
+  const r=Math.random();
+  if(r<0.40) ambBurst();
+  else if(r<0.74) ambSingleShots();
+  else ambBoom();
+}
+function ambDistantShot(when, vol, pan, cutoff){
+  const ac=AC; if(!ac||!ambNodes) return;
+  const t=ac.currentTime+when;
+  const out=ambOut(pan); if(!out) return;
+  // こもった破裂音（ノイズをローパスで丸める）
+  const src=ac.createBufferSource(); src.buffer=getNoiseBuf(ac); src.playbackRate.value=0.65+Math.random()*0.45;
+  src.playbackRate.setValueAtTime(src.playbackRate.value, t);
+  const fil=ac.createBiquadFilter(); fil.type="lowpass"; fil.frequency.value=cutoff; fil.Q.value=0.6;
+  const g=ac.createGain();
+  g.gain.setValueAtTime(0.0008,t); g.gain.exponentialRampToValueAtTime(Math.max(0.001,vol),t+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0008,t+0.22);
+  src.connect(fil); fil.connect(g); g.connect(out);
+  src.start(t, Math.random()*1.2, 0.3); src.stop(t+0.32);
+  // 低い「ドン」という胴鳴り
+  const o=ac.createOscillator(); o.type="sine";
+  o.frequency.setValueAtTime(105,t); o.frequency.exponentialRampToValueAtTime(48,t+0.16);
+  const og=ac.createGain();
+  og.gain.setValueAtTime(0.0008,t); og.gain.exponentialRampToValueAtTime(Math.max(0.001,vol*0.55),t+0.012);
+  og.gain.exponentialRampToValueAtTime(0.0008,t+0.2);
+  o.connect(og); og.connect(out); o.start(t); o.stop(t+0.24);
+  // 街に反響する薄いエコー
+  if(Math.random()<0.65){
+    const t2=t+0.20+Math.random()*0.14;
+    const src2=ac.createBufferSource(); src2.buffer=getNoiseBuf(ac); src2.playbackRate.value=0.6;
+    const fil2=ac.createBiquadFilter(); fil2.type="lowpass"; fil2.frequency.value=Math.max(280,cutoff*0.55);
+    const g2=ac.createGain();
+    g2.gain.setValueAtTime(0.0008,t2); g2.gain.exponentialRampToValueAtTime(Math.max(0.001,vol*0.32),t2+0.01);
+    g2.gain.exponentialRampToValueAtTime(0.0008,t2+0.18);
+    src2.connect(fil2); fil2.connect(g2); g2.connect(out);
+    src2.start(t2, Math.random()*1.2, 0.25); src2.stop(t2+0.28);
+  }
+}
+function ambSingleShots(){
+  const pan=(Math.random()*2-1)*0.8;
+  const far=Math.random();                        // 距離感：遠いほど暗く・小さく
+  const cutoff= far>0.6 ? 420+Math.random()*160 : 650+Math.random()*300;
+  const base= far>0.6 ? 0.055+Math.random()*0.036 : 0.085+Math.random()*0.055;
+  const n=1+((Math.random()*2.4)|0);              // 1〜3発、間隔は不揃い
+  let t=0;
+  for(let i=0;i<n;i++){ ambDistantShot(t, base*(0.8+Math.random()*0.45), pan+(Math.random()*0.14-0.07), cutoff); t+=0.35+Math.random()*0.75; }
+}
+function ambBurst(){
+  const pan=(Math.random()*2-1)*0.8;
+  const cutoff=520+Math.random()*320;
+  const base=0.070+Math.random()*0.050;
+  const n=3+((Math.random()*5)|0);                // 3〜7連射
+  let t=0;
+  for(let i=0;i<n;i++){ ambDistantShot(t, base*(0.75+Math.random()*0.5), pan+(Math.random()*0.1-0.05), cutoff); t+=0.085+Math.random()*0.075; }
+}
+function ambBoom(){
+  const ac=AC; if(!ac||!ambNodes) return;
+  const t=ac.currentTime+0.03;
+  const pan=(Math.random()*2-1)*0.55;
+  const out=ambOut(pan); if(!out) return;
+  const big=Math.random()<0.35;
+  const vol= big ? 0.25+Math.random()*0.09 : 0.145+Math.random()*0.065;
+  const dur= big ? 2.3 : 1.5;
+  // 低域ノイズのうなり（地響きの本体）
+  const src=ac.createBufferSource(); src.buffer=getNoiseBuf(ac); src.loop=true; src.playbackRate.value=0.28;
+  const fil=ac.createBiquadFilter(); fil.type="lowpass"; fil.frequency.value=125; fil.Q.value=0.4;
+  const g=ac.createGain();
+  g.gain.setValueAtTime(0.0008,t); g.gain.exponentialRampToValueAtTime(vol,t+0.28);
+  g.gain.exponentialRampToValueAtTime(0.0008,t+dur);
+  src.connect(fil); fil.connect(g); g.connect(out);
+  src.start(t); src.stop(t+dur+0.1);
+  // 40Hz台のサインで床を震わせる成分
+  const o=ac.createOscillator(); o.type="sine";
+  o.frequency.setValueAtTime(52,t); o.frequency.exponentialRampToValueAtTime(29,t+dur*0.8);
+  const og=ac.createGain();
+  og.gain.setValueAtTime(0.0008,t); og.gain.exponentialRampToValueAtTime(vol*0.85,t+0.22);
+  og.gain.exponentialRampToValueAtTime(0.0008,t+dur);
+  o.connect(og); og.connect(out); o.start(t); o.stop(t+dur+0.1);
+  // 大きい地響きのときだけ、画面がごく微かに揺れる（ゲームバランスには影響しない範囲）
+  if(big){ try{ if(game.state==="playing") game.shake=Math.min(1.1,(game.shake||0)+0.55); }catch(e){} }
+}
+
+/* ---------- 武器定義 ---------- */
+const WTYPES = {
+  AR:  { label:"アサルトライフル", name:"AR-7 リバティ",   dmg:11, interval:0.105, mag:30, reload:1.5, spread:0.045, bspeed:400, pellets:1, range:300, auto:true  },
+  SMG: { label:"サブマシンガン",   name:"SMG-9 ラッシュ",  dmg:7,  interval:0.062, mag:38, reload:1.3, spread:0.085, bspeed:370, pellets:1, range:230, auto:true  },
+  SG:  { label:"ショットガン",     name:"SG-12 ブリーチ",  dmg:6,  interval:0.85,  mag:6,  reload:2.1, spread:0.16,  bspeed:330, pellets:6, range:150, auto:false },
+  MR:  { label:"マークスマン",     name:"MR-6 ワーデン",   dmg:42, interval:0.72,  mag:8,  reload:1.8, spread:0.006, bspeed:560, pellets:1, range:420, auto:false }
+};
+const RARITIES = [
+  { label:"スタンダード", color:"#cfd2d6", mul:1.00, w:42 },
+  { label:"改良型",       color:"#57d977", mul:1.14, w:28 },
+  { label:"レア",         color:"#4db2ff", mul:1.30, w:17 },
+  { label:"エピック",     color:"#c07dff", mul:1.52, w:9  },
+  { label:"レジェンダリー", color:"#ff8c1a", mul:1.80, w:4  }
+];
+function makeWeapon(type, rarIdx){
+  const base = WTYPES[type], rar = RARITIES[rarIdx];
+  return { type, rar:rarIdx, name:rar.label+" "+base.name,
+    dmg:Math.round(base.dmg*rar.mul), interval:base.interval, mag:Math.round(base.mag*(rarIdx>=3?1.25:1)),
+    reload:base.reload, spread:base.spread, bspeed:base.bspeed, pellets:base.pellets, range:base.range, auto:base.auto };
+}
+function weaponDPS(w){ return Math.round(w.dmg*w.pellets/w.interval); }
+function rollRarity(rng){
+  let tot=0; for(const r of RARITIES) tot+=r.w;
+  let x=rng()*tot;
+  for(let i=0;i<RARITIES.length;i++){ x-=RARITIES[i].w; if(x<=0) return i; }
+  return 0;
+}
+function rollWeapon(rng){
+  const types=["AR","AR","SMG","SMG","SG","MR"];
+  return makeWeapon(types[Math.floor(rng()*types.length)], rollRarity(rng));
+}
+
+/* ---------- ミッション定義 ---------- */
+const MISSIONS = [
+  { id:0, name:"奪還：5番街交差点", diff:"難易度 ★☆☆", hpMul:1.0, dmgMul:1.0, seed:1101,
+    brief:"占拠された交差点を2か所制圧し、帰還ポイントへ戻れ。",
+    zones:[ {x:500,y:380, foes:["R","R","S","R"]},
+            {x:940,y:740, foes:["R","S","R","R","S"]} ] },
+  { id:1, name:"制圧：地下鉄入口広場", diff:"難易度 ★★☆", hpMul:1.25, dmgMul:1.15, seed:2202,
+    brief:"広場と路地を3か所制圧せよ。敵の火力が上がっている。",
+    zones:[ {x:940,y:380, foes:["R","R","S","R","S"]},
+            {x:720,y:560, foes:["R","S","R","R","S","R"]},
+            {x:500,y:740, foes:["S","R","R","S","R","R"]} ] },
+  { id:2, name:"決戦：市庁舎前", diff:"難易度 ★★★", hpMul:1.5, dmgMul:1.3, seed:3303,
+    brief:"最終防衛線を突破し、重装ターゲットを排除せよ。",
+    zones:[ {x:500,y:380, foes:["R","S","R","R","S","R"]},
+            {x:940,y:740, foes:["S","R","R","S","R","R","S"]},
+            {x:720,y:560, foes:["R","S","R","H","S","R"]} ] }
+];
+const EXTRACT = { x:120, y:950 };
+const SPAWN = { x:120, y:950 };
+
+/* ---------- ドット絵スプライト生成 ---------- */
+function makeSpr(w,h,fn){
+  const c=document.createElement('canvas'); c.width=w; c.height=h;
+  const g=c.getContext('2d'); fn(g); return c;
+}
+function px(g,x,y,w,h,col){ g.fillStyle=col; g.fillRect(x|0,y|0,w,h); }
+const SPR = {};
+function buildSprites(){
+  /* ===== プレイヤー：18x22、歩行4コマ＋待機＋しゃがみ＋乗り出し =====
+     輪郭(濃色)で囲み、面に明／中／暗の3階調を置くことで小さくても立体感が出る */
+  const drawPlayerBody=(g,leg)=>{
+    // 脚（歩行コマで位置が変わる）
+    if(leg===0){ // 左前・右後
+      px(g,4,15,4,5,"#2f3a44"); px(g,10,15,4,4,"#232c34");
+      px(g,3,19,5,2,"#12151a"); px(g,10,18,5,2,"#12151a");
+      px(g,4,15,4,1,"#46525e"); px(g,6,17,1,2,"#ff8c1a");
+    } else if(leg===1){ // 両足そろえ（通過）
+      px(g,5,15,3,5,"#2f3a44"); px(g,9,15,3,5,"#2b3540");
+      px(g,4,19,4,2,"#12151a"); px(g,9,19,4,2,"#12151a");
+    } else if(leg===2){ // 右前・左後
+      px(g,10,15,4,5,"#2f3a44"); px(g,4,15,4,4,"#232c34");
+      px(g,9,19,5,2,"#12151a"); px(g,3,18,5,2,"#12151a");
+      px(g,10,15,4,1,"#46525e"); px(g,10,17,1,2,"#ff8c1a");
+    } else { // 静止
+      px(g,4,15,4,5,"#323e49"); px(g,10,15,4,5,"#2b3540");
+      px(g,3,19,5,2,"#12151a"); px(g,10,19,5,2,"#12151a");
+      px(g,4,17,1,2,"#4a5866"); px(g,13,17,1,2,"#3a4652");
+    }
+    px(g,4,14,10,2,"#1e2a30"); // ベルト
+    px(g,8,14,2,2,"#c9a227"); // バックル
+    // 胴体：ベスト＋ジャケット（ティール）
+    px(g,3,8,12,7,"#1b232a"); // 輪郭
+    px(g,4,8,10,6,"#2e7d74"); px(g,4,8,10,2,"#3a9a8d"); px(g,11,10,3,4,"#25665e");
+    px(g,6,9,6,5,"#24343c"); // 防弾ベスト
+    px(g,6,9,6,1,"#334a55"); px(g,7,11,1,2,"#ff8c1a"); px(g,10,11,1,2,"#57d977"); // ポーチ／発光
+    px(g,8,9,2,5,"#ff8c1a"); // 中央ジップ（オレンジライン）
+    // 腕：左は垂れ、右は銃を支える
+    px(g,1,9,3,6,"#25665e"); px(g,1,9,3,2,"#3a9a8d"); px(g,1,14,3,2,"#c9a186");
+    px(g,14,9,3,5,"#25665e"); px(g,14,13,3,2,"#1a1e24");
+    // 頭：キャップ＋顔＋ヘッドセット
+    px(g,5,4,8,4,"#d8b08c"); px(g,5,4,8,1,"#e8c39c"); px(g,12,5,1,3,"#b98a6e");
+    px(g,6,6,1,1,"#1a1a1a"); px(g,11,6,1,1,"#1a1a1a"); // 目
+    px(g,4,1,10,3,"#20262e"); px(g,3,3,12,2,"#ff8c1a"); px(g,4,1,10,1,"#39424e"); // キャップ＋つば
+    px(g,13,4,2,3,"#15181d"); px(g,14,6,1,3,"#15181d"); // ヘッドセット＋マイク
+    px(g,5,3,2,1,"#ffb35c");
+    // 背中のバックパック（上端に少し見える）
+    px(g,6,7,6,2,"#1d4f4b"); px(g,8,7,2,1,"#ff8c1a");
+  };
+  SPR.playerWalk=[0,1,2,1].map(leg=>makeSpr(18,22,g=>drawPlayerBody(g,leg)));
+  SPR.player = makeSpr(18,22,g=>drawPlayerBody(g,3));
+  SPR.playerIdle = SPR.player;
+  SPR.playerCover = makeSpr(18,18,g=>{ // しゃがみ：頭を下げ、膝を折り、背を丸める
+    px(g,4,12,11,4,"#2f3a44"); px(g,3,15,6,2,"#12151a"); px(g,11,15,6,2,"#12151a"); // 折った脚＋ブーツ
+    px(g,3,7,12,6,"#1b232a"); px(g,4,7,10,5,"#2e7d74"); px(g,4,7,10,1,"#3a9a8d");
+    px(g,6,8,6,4,"#24343c"); px(g,8,8,2,4,"#ff8c1a");
+    px(g,1,8,3,4,"#25665e"); px(g,14,8,3,4,"#25665e"); px(g,1,11,3,2,"#c9a186");
+    px(g,5,2,8,4,"#d8b08c"); px(g,6,4,1,1,"#1a1a1a"); px(g,11,4,1,1,"#1a1a1a");
+    px(g,4,0,10,3,"#20262e"); px(g,3,2,12,2,"#ff8c1a");
+    px(g,6,6,6,1,"#1d4f4b");
+  });
+  SPR.playerLean = makeSpr(18,22,g=>{ // 乗り出し：体をひねり両手で銃を構え、片膝立ち
+    px(g,3,15,4,5,"#2f3a44"); px(g,10,14,4,3,"#232c34"); px(g,2,19,5,2,"#12151a"); px(g,10,17,6,2,"#12151a");
+    px(g,9,13,5,2,"#2f3a44"); // 前に出した膝
+    px(g,4,14,10,2,"#1e2a30"); px(g,8,14,2,2,"#c9a227");
+    px(g,3,8,12,7,"#1b232a"); px(g,4,8,10,6,"#2e7d74"); px(g,4,8,10,2,"#3a9a8d");
+    px(g,6,9,6,5,"#24343c"); px(g,8,9,2,5,"#ff8c1a"); px(g,7,11,1,2,"#57d977");
+    px(g,1,9,3,4,"#25665e"); px(g,14,9,3,4,"#25665e"); px(g,14,12,3,2,"#c9a186"); // 両腕を前へ
+    px(g,5,4,8,4,"#d8b08c"); px(g,6,6,1,1,"#1a1a1a"); px(g,11,6,1,1,"#1a1a1a");
+    px(g,4,1,10,3,"#20262e"); px(g,3,3,12,2,"#ff8c1a"); px(g,13,4,2,3,"#15181d");
+  });
+  /* ===== 敵：種類でシルエットから違う ===== */
+  const foeRBody=(g,leg)=>{
+    if(leg===0){ px(g,4,15,4,5,"#3c4148"); px(g,10,15,4,4,"#2e3238"); px(g,3,19,5,2,"#101216"); px(g,10,18,5,2,"#101216"); }
+    else if(leg===1){ px(g,5,15,3,5,"#3c4148"); px(g,9,15,3,5,"#343a41"); px(g,4,19,4,2,"#101216"); px(g,9,19,4,2,"#101216"); }
+    else if(leg===2){ px(g,10,15,4,5,"#3c4148"); px(g,4,15,4,4,"#2e3238"); px(g,9,19,5,2,"#101216"); px(g,3,18,5,2,"#101216"); }
+    else { px(g,4,15,4,5,"#3c4148"); px(g,10,15,4,5,"#343a41"); px(g,3,19,5,2,"#101216"); px(g,10,19,5,2,"#101216"); }
+    px(g,4,14,10,1,"#22262c");
+    px(g,3,8,12,7,"#191d22"); px(g,4,8,10,6,"#7a4a35"); px(g,4,8,10,2,"#96603f"); px(g,11,10,3,4,"#5d3423");
+    px(g,6,9,6,5,"#4a3628"); px(g,7,10,4,1,"#c9a227"); px(g,8,12,2,2,"#2b2f36"); // ベスト＋弾帯
+    px(g,1,9,3,6,"#6b4030"); px(g,14,9,3,5,"#6b4030"); px(g,1,14,3,2,"#c9a186"); px(g,14,13,3,2,"#b98a6e");
+    px(g,5,4,8,4,"#d0a07c"); px(g,6,6,1,1,"#1a1a1a"); px(g,11,6,1,1,"#1a1a1a"); px(g,5,7,8,1,"#8a5a3a"); // 髭
+    px(g,4,1,10,3,"#5d3423"); px(g,4,1,10,1,"#7a4a35"); px(g,3,3,12,1,"#3f2517"); // バンダナ／キャップ
+  };
+  SPR.foeRWalk=[0,1,2,1].map(leg=>makeSpr(18,22,g=>foeRBody(g,leg)));
+  SPR.foeR = makeSpr(18,22,g=>foeRBody(g,3));
+  SPR.foeRCover = makeSpr(18,18,g=>{
+    px(g,4,12,11,4,"#3c4148"); px(g,3,15,6,2,"#101216"); px(g,11,15,6,2,"#101216");
+    px(g,3,7,12,6,"#191d22"); px(g,4,7,10,5,"#7a4a35"); px(g,6,8,6,4,"#4a3628"); px(g,7,9,4,1,"#c9a227");
+    px(g,1,8,3,4,"#6b4030"); px(g,14,8,3,4,"#6b4030");
+    px(g,5,2,8,4,"#d0a07c"); px(g,5,5,8,1,"#8a5a3a"); px(g,4,0,10,3,"#5d3423"); px(g,3,2,12,1,"#3f2517");
+  });
+  const foeSBody=(g,leg)=>{ // ラッシャー：細身・速そう・フード＋スカーフ、脚は大きく開く
+    if(leg===0){ px(g,3,14,3,6,"#22262e"); px(g,11,14,3,4,"#1c2026"); px(g,2,19,5,2,"#e8e6e1"); px(g,11,17,5,2,"#cfd2d6"); }
+    else if(leg===1){ px(g,5,14,3,6,"#22262e"); px(g,9,14,3,6,"#1f232a"); px(g,4,19,4,2,"#e8e6e1"); px(g,9,19,4,2,"#cfd2d6"); }
+    else if(leg===2){ px(g,11,14,3,6,"#22262e"); px(g,3,14,3,4,"#1c2026"); px(g,10,19,5,2,"#e8e6e1"); px(g,2,17,5,2,"#cfd2d6"); }
+    else { px(g,4,14,3,6,"#22262e"); px(g,10,14,3,6,"#1f232a"); px(g,3,19,4,2,"#e8e6e1"); px(g,10,19,4,2,"#cfd2d6"); }
+    px(g,4,7,10,7,"#15181d"); px(g,5,7,8,6,"#8c2f2a"); px(g,5,7,8,2,"#b04038"); px(g,11,9,2,4,"#6e2420");
+    px(g,6,10,6,3,"#2e3138"); px(g,7,11,4,1,"#9aa0a8"); // 軽いチェストリグ
+    px(g,2,8,3,5,"#7d2a26"); px(g,13,8,3,5,"#7d2a26"); px(g,2,12,3,2,"#b98a6e"); px(g,13,12,3,2,"#b98a6e");
+    px(g,5,3,8,4,"#c49a78"); px(g,6,5,1,1,"#1a1a1a"); px(g,11,5,1,1,"#1a1a1a");
+    px(g,4,0,10,4,"#8c2f2a"); px(g,4,0,10,1,"#b04038"); px(g,5,3,8,1,"#6e2420"); // フード
+    px(g,5,7,8,2,"#ffd23e"); // 黄スカーフ（遠目でもラッシャーと分かる）
+  };
+  SPR.foeSWalk=[0,1,2,1].map(leg=>makeSpr(18,22,g=>foeSBody(g,leg)));
+  SPR.foeS = makeSpr(18,22,g=>foeSBody(g,3));
+  SPR.foeSCover = makeSpr(18,18,g=>{
+    px(g,4,11,11,4,"#22262e"); px(g,3,14,6,2,"#e8e6e1"); px(g,11,14,6,2,"#cfd2d6");
+    px(g,4,6,10,6,"#15181d"); px(g,5,6,8,5,"#8c2f2a"); px(g,5,6,8,1,"#b04038"); px(g,6,9,6,3,"#2e3138");
+    px(g,2,7,3,4,"#7d2a26"); px(g,13,7,3,4,"#7d2a26");
+    px(g,5,2,8,4,"#c49a78"); px(g,4,0,10,3,"#8c2f2a"); px(g,5,6,8,2,"#ffd23e");
+  });
+  const foeHBody=(g,leg)=>{ // 重装：24x28、肩パッドと胸甲で横幅を出す
+    if(leg===0){ px(g,5,21,5,6,"#33302a"); px(g,14,21,5,5,"#28251f"); px(g,4,26,6,2,"#101216"); px(g,14,25,6,2,"#101216"); }
+    else if(leg===1){ px(g,6,21,4,6,"#33302a"); px(g,13,21,4,6,"#2b2822"); px(g,5,26,5,2,"#101216"); px(g,13,26,5,2,"#101216"); }
+    else if(leg===2){ px(g,14,21,5,6,"#33302a"); px(g,5,21,5,5,"#28251f"); px(g,13,26,6,2,"#101216"); px(g,4,25,6,2,"#101216"); }
+    else { px(g,5,21,5,6,"#33302a"); px(g,14,21,5,6,"#2b2822"); px(g,4,26,6,2,"#101216"); px(g,14,26,6,2,"#101216"); }
+    px(g,5,20,14,2,"#1c1a16"); px(g,11,20,2,2,"#c9a227");
+    px(g,2,9,20,12,"#14161a"); px(g,3,9,18,11,"#4a4238"); px(g,3,9,18,3,"#5f5545");
+    px(g,7,11,10,8,"#6b5f4c"); px(g,7,11,10,2,"#7d705a"); px(g,11,13,2,6,"#ff4d42"); // 胸甲＋赤ライン
+    px(g,8,15,3,3,"#3a352c"); px(g,13,15,3,3,"#3a352c"); // ポーチ
+    px(g,0,9,4,9,"#3f382e"); px(g,0,9,4,3,"#6b5f4c"); px(g,20,9,4,9,"#3f382e"); px(g,20,9,4,3,"#6b5f4c"); // 肩パッド＋腕
+    px(g,0,17,4,3,"#a87e5f"); px(g,20,17,4,3,"#a87e5f");
+    px(g,7,5,10,5,"#a87e5f"); px(g,7,5,10,1,"#c49a78");
+    px(g,6,1,12,5,"#3a3f46"); px(g,6,1,12,2,"#59616a"); px(g,5,5,14,2,"#22262c"); px(g,7,5,10,1,"#ff4d42"); // ヘルメット＋バイザー
+  };
+  SPR.foeHWalk=[0,1,2,1].map(leg=>makeSpr(24,28,g=>foeHBody(g,leg)));
+  SPR.foeH = makeSpr(24,28,g=>foeHBody(g,3));
+  SPR.foeHCover = makeSpr(24,22,g=>{
+    px(g,5,16,14,4,"#33302a"); px(g,4,19,6,2,"#101216"); px(g,14,19,6,2,"#101216");
+    px(g,2,8,20,9,"#14161a"); px(g,3,8,18,8,"#4a4238"); px(g,7,10,10,6,"#6b5f4c"); px(g,11,11,2,5,"#ff4d42");
+    px(g,0,8,4,7,"#3f382e"); px(g,0,8,4,2,"#6b5f4c"); px(g,20,8,4,7,"#3f382e"); px(g,20,8,4,2,"#6b5f4c");
+    px(g,7,3,10,5,"#a87e5f"); px(g,6,0,12,4,"#3a3f46"); px(g,5,4,14,2,"#22262c"); px(g,7,4,10,1,"#ff4d42");
+  });
+  SPR.turret = makeSpr(16,16,g=>{
+    px(g,6,3,4,3,"#596066"); px(g,2,5,12,4,"#3c4148"); px(g,2,5,12,1,"#59616a"); px(g,13,6,3,2,"#ff8c1a");
+    px(g,5,5,6,1,"#ffb35c"); px(g,7,9,2,4,"#2b2f36"); px(g,3,12,3,4,"#2b2f36"); px(g,10,12,3,4,"#2b2f36");
+    px(g,6,6,1,1,"#57d977");
+  });
+  SPR.gun = makeSpr(14,6,g=>{ px(g,1,2,10,2,"#20242a"); px(g,4,4,3,2,"#20242a"); px(g,11,2,3,1,"#20242a"); px(g,0,2,1,1,"#ffb35c"); });
+}
+buildSprites();
+
+/* ---------- 入力 ---------- */
+const keys = {};
+let mouseX = VW/2, mouseY = VH/2, mouseDown = false, mouseRDown = false;
+let usingPad = false, padConnected = false;
+/* e.code が取れない環境（IME・仮想キーボード等）向けに e.key からもコードを引く */
+function eventCode(e){
+  if(e.code) return e.code;
+  const k = (e.key||"").toLowerCase();
+  const map = { "w":"KeyW","a":"KeyA","s":"KeyS","d":"KeyD","q":"KeyQ","e":"KeyE","r":"KeyR","f":"KeyF","m":"KeyM",
+    " ":"Space","spacebar":"Space","shift":"ShiftLeft","escape":"Escape","esc":"Escape",
+    "arrowup":"ArrowUp","arrowdown":"ArrowDown","arrowleft":"ArrowLeft","arrowright":"ArrowRight",
+    "1":"Digit1","2":"Digit2" };
+  return map[k] || "";
+}
+addEventListener('keydown', e=>{
+  const code = eventCode(e); if(!code) return;
+  if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Tab"].includes(code)) e.preventDefault();
+  keys[code]=true;                                   // 登録を先に行い、後段の例外で入力が落ちないようにする
+  if(!e.repeat){ try{ onKeyPress(code); }catch(err){} }
+  try{ audio(); startAmbient(); }catch(err){}
+});
+addEventListener('keyup', e=>{ const code=eventCode(e); if(code) keys[code]=false; });
+addEventListener('blur', ()=>{ for(const k in keys) keys[k]=false; mouseDown=false; mouseRDown=false; });
+cv.addEventListener('mousemove', e=>{
+  const r=cv.getBoundingClientRect();
+  mouseX=(e.clientX-r.left)/r.width*VW; mouseY=(e.clientY-r.top)/r.height*VH;
+});
+cv.addEventListener('mousedown', e=>{ audio(); try{ startAmbient(); }catch(err){} if(e.button===0) mouseDown=true; if(e.button===2) mouseRDown=true; });
+addEventListener('mouseup', e=>{ if(e.button===0) mouseDown=false; if(e.button===2) mouseRDown=false; });
+cv.addEventListener('contextmenu', e=>e.preventDefault());
+/* ゲームパッド検出：環境差と社外パッド（HORI等）の個体差を吸収する
+   - getGamepads() の戻り値（GamepadList）は Safari / WebView 系で iterable でない
+     ことがあり、for...of だと例外→常時「未接続」になるため、必ず添字で回す。
+   - webkit 前置の旧APIにもフォールバックする。
+   - connected フラグは信用しない：HORI等の社外パッドや WebView 実装では
+     connected が false のまま／イベントが飛ばないことがあるため、
+     「ボタンか軸を持つ実体がスロットに居る」こと自体を接続とみなす。
+   - 実際にボタン／スティック入力があったパッドを最優先で採用する
+     （複数デバイス列挙時に別デバイスを掴み続ける事故を防ぐ）。
+   - mapping が "standard" でないパッドは機種系統ごとにボタン配置を読み替える：
+     Switch系（A/B・X/Y 入替）、PlayStation系 DirectInput（□×○△）、汎用。
+   - 右スティックの軸番号も機種で違うため、候補ペアを順に探す。
+   - 十字キー：ボタン 12–15、標準ハット軸(axes[9])、軸4/5のハット形式に対応。
+     ファイティングコマンダー等の十字キー中心パッドでも移動できる。
+   - フォーカス喪失時などにリストが一時的に空を返す環境があるため、
+     最後に見えてから 2.5 秒は「未接続」に落とさない。 */
+let padEventIndex = -1, padEventId = "", padLastSeenAt = 0, padEverEvent = false;
+const padApiAvailable = !!((navigator.getGamepads) || (navigator.webkitGetGamepads));
+/* 表示環境（埋め込み iframe 等）の Permissions Policy が "gamepad" を禁止していると、
+   getGamepads() は例外を投げて常に失敗する。これはパッド側の問題ではないため、
+   「未接続」とは分けて "blocked" 状態として検出・表示する。ゲーム側からは
+   この禁止を解除できないので、検出は間引いて再試行し、対処法を案内する。 */
+let padBlocked = false, padPolicyState = "", padRetryAt = 0;
+function checkPadPolicy(){
+  try{
+    const pp = document.permissionsPolicy || document.featurePolicy;
+    if(pp && typeof pp.allowsFeature === "function"){
+      if(pp.allowsFeature("gamepad") === false){ padPolicyState = "denied"; return false; }
+      padPolicyState = "allowed"; return true;
+    }
+  }catch(err){}
+  padPolicyState = "unknown";
+  return null;
+}
+checkPadPolicy();
+/* ポリシー判定だけではブロック扱いにしない（判定と実際の可否が食い違う環境があるため、
+   blocked へ入るのは getGamepads() が実際にポリシーエラーで失敗したときだけにする） */
+function isPolicyError(msg){
+  return /permissions policy|disallowed|not allowed/i.test(msg || "");
+}
+addEventListener('gamepadconnected', e=>{
+  padEverEvent = true;
+  padBlocked = false; padRetryAt = 0;   // 接続イベントが届いたならブロックは解けている
+  try{
+    if(e && e.gamepad){ padEventIndex = e.gamepad.index; padEventId = e.gamepad.id || ""; }
+  }catch(err){}
+  padLastSeenAt = performance.now();
+  padConnected = true;
+  /* パッド操作をこの画面で受けられるよう、ステージへフォーカスを寄せる */
+  try{ document.getElementById('stage').focus({ preventScroll:true }); }catch(err){}
+});
+addEventListener('gamepaddisconnected', e=>{
+  try{ if(e && e.gamepad && padEventIndex===e.gamepad.index){ padEventIndex=-1; padEventId=""; } }catch(err){}
+  padLastSeenAt = 0; padConnected = false;
+});
+
+const padPrev = new Array(32).fill(false);
+let pad = null;
+/* 論理ボタン → 物理インデックス表（機種系統で読み替える） */
+let BM = { A:0, B:1, X:2, Y:3, LB:4, RB:5, LT:6, RT:7, BACK:8, START:9, UP:12, DOWN:13, LEFT:14, RIGHT:15 };
+let padProfileName = "";
+function computeBM(g){
+  const std = { A:0, B:1, X:2, Y:3, LB:4, RB:5, LT:6, RT:7, BACK:8, START:9, UP:12, DOWN:13, LEFT:14, RIGHT:15 };
+  let mapping = "";
+  try{ mapping = (g && g.mapping) || ""; }catch(err){}
+  if(mapping === "standard"){ BM = std; padProfileName = "標準マッピング"; return; }
+  const low = (((g && g.id) || "") + " " + padEventId).toLowerCase();
+  if(/nintendo|switch|joy-con|pro controller|horipad/.test(low) || low.indexOf("vendor: 057e") >= 0){
+    /* Nintendo配列：A/B と X/Y が Xbox と左右入れ替わる（HORIPAD等のSwitch用を含む） */
+    BM = { A:1, B:0, X:3, Y:2, LB:4, RB:5, LT:6, RT:7, BACK:8, START:9, UP:12, DOWN:13, LEFT:14, RIGHT:15 };
+    padProfileName = "Switch配列";
+    return;
+  }
+  if(/playstation|sony|dualshock|dualsense|fighting commander|wireless controller/.test(low)){
+    /* PlayStation系 DirectInput：□=0 ×=1 ○=2 △=3（ファイティングコマンダー等） */
+    BM = { A:1, B:2, X:0, Y:3, LB:4, RB:5, LT:6, RT:7, BACK:8, START:9, UP:12, DOWN:13, LEFT:14, RIGHT:15 };
+    padProfileName = "PS配列";
+    return;
+  }
+  BM = std; padProfileName = "汎用マッピング";
+}
+function padActivity(g){
+  try{
+    if(g.buttons){ for(let i=0;i<g.buttons.length;i++){ const b=g.buttons[i]; if(b && (b.pressed || (b.value||0)>0.4)) return true; } }
+    if(g.axes){ for(let i=0;i<g.axes.length;i++){ if(Math.abs(g.axes[i]||0)>0.55) return true; } }
+  }catch(err){}
+  return false;
+}
+/* 診断用スナップショット：getGamepads の各スロットをそのまま記録する。
+   「ブラウザにパッドが見えているか／id・mapping が何か／生入力が届いているか」を
+   画面の診断表示で切り分けられるようにするためのもの。 */
+let padDiagSlots = [], padDiagErr = "";
+function snapshotSlot(i, g){
+  const s = { idx:i, present:!!g, id:"", mapping:"", connected:false, nb:0, na:0, pressed:[], axesTxt:"" };
+  if(!g) return s;
+  try{
+    s.id = g.id || ""; s.mapping = g.mapping || ""; s.connected = !!g.connected;
+    s.nb = g.buttons ? g.buttons.length : 0;
+    s.na = g.axes ? g.axes.length : 0;
+    if(g.buttons){ for(let b=0;b<g.buttons.length;b++){ const btn=g.buttons[b]; if(btn && (btn.pressed || (btn.value||0)>0.4)) s.pressed.push(b); } }
+    if(g.axes){ const vs=[]; for(let a=0;a<g.axes.length;a++){ vs.push(((g.axes[a]||0)).toFixed(2)); } s.axesTxt = vs.join(", "); }
+  }catch(err){}
+  return s;
+}
+function pollPad(){
+  pad = null;
+  /* ポリシーでブロックされている間は毎フレーム叩かず、間隔を空けて再試行する */
+  if(padBlocked && performance.now() < padRetryAt) return null;
+  let list = null;
+  padDiagErr = "";
+  try{
+    if(navigator.getGamepads) list = navigator.getGamepads();
+    else if(navigator.webkitGetGamepads) list = navigator.webkitGetGamepads();
+  }catch(err){
+    list = null;
+    padDiagErr = String((err && err.message) || err);   // 埋め込み環境でゲームパッド取得が例外を投げてもゲームを止めない
+    if(isPolicyError(padDiagErr) || checkPadPolicy() === false){
+      padBlocked = true;
+      padRetryAt = performance.now() + 3000;
+    }
+  }
+  if(list) padBlocked = false;   // 一度でも取得できたらブロック解除とみなす
+  padDiagSlots = [];
+  if(list){
+    let first = null, eventPad = null, active = null;
+    for(let i=0; i<list.length; i++){           // iterable 前提にしない（添字アクセスのみ）
+      let g = null;
+      try{ g = list[i]; }catch(err){ padDiagSlots.push(snapshotSlot(i, null)); continue; }
+      padDiagSlots.push(snapshotSlot(i, g));
+      if(!g) continue;
+      let usable = false;
+      try{ usable = !!((g.buttons && g.buttons.length) || (g.axes && g.axes.length>=2)); }catch(err){}
+      if(!usable) continue;                    // connected フラグは見ない（社外パッドで false のままの実装がある）
+      if(!first) first = g;
+      if(i===padEventIndex) eventPad = g;
+      if(!active && padActivity(g)) active = g;
+    }
+    pad = active || eventPad || first;
+  }
+  if(pad){
+    padLastSeenAt = performance.now(); padConnected = true;
+    computeBM(pad);
+    if(padActivity(pad)) usingPad = true;
+  }
+  else if(padEverEvent && padLastSeenAt>0 && (performance.now()-padLastSeenAt) < 2500){
+    padConnected = true;   // 一時的な空応答では接続表示を落とさない
+  } else padConnected = false;
+  return pad;
+}
+/* ブロック状態からの手動再試行（ボタン押下＝ユーザー操作のタイミングで再チェックする） */
+function retryPadDetection(){
+  checkPadPolicy();
+  if(padPolicyState === "denied"){
+    padBlocked = true; padRetryAt = 0;
+    padDiagErr = padDiagErr || "Access to the feature \"gamepad\" is disallowed by permissions policy.";
+  } else {
+    padBlocked = false; padRetryAt = 0; padDiagErr = "";
+  }
+  lastDiagTxt = "";   // 診断表示を強制更新
+  pollPad();
+}
+document.querySelectorAll('.btnPadRetry').forEach(b=>{
+  b.addEventListener('click', ()=>{ try{ retryPadDetection(); }catch(err){} });
+});
+function padRawBtn(i){
+  if(!pad || !pad.buttons) return 0;
+  let b = null;
+  try{ b = pad.buttons[i]; }catch(err){ return 0; }
+  if(!b) return 0;
+  if(b.pressed) return 1;
+  return b.value || 0;      // アナログトリガ等は pressed が立たない実装があるため value も見る
+}
+function padBtn(i){ return padRawBtn(i) > 0.4; }
+function padBtnEdge(i){ const now=padBtn(i); const was=padPrev[i]; padPrev[i]=now; return now && !was; }
+function padAxis(i){ if(!pad || !pad.axes) return 0; const v=pad.axes[i]||0; return Math.abs(v)<0.16 ? 0 : v; }
+/* 生フォールバック：非標準パッドではトリガーがボタンでなく軸で届く機種がある
+   （軸4以降の大きな変化を LT/RT とみなす。ハット軸として使われている場合は除く） */
+function padTrigAxis(){
+  let lt = 0, rt = 0;
+  if(!pad || !pad.axes) return { lt, rt };
+  let mapping = "";
+  try{ mapping = pad.mapping || ""; }catch(err){}
+  if(mapping === "standard") return { lt, rt };
+  const hat = padHat45();
+  for(let i=4; i<pad.axes.length && i<9; i++){
+    if(hat && (i===4 || i===5)) continue;
+    const v = pad.axes[i] || 0;
+    if(v > 0.4) rt = Math.max(rt, v);
+    else if(v < -0.4) lt = Math.max(lt, -v);
+  }
+  return { lt, rt };
+}
+function padRT(){ const b = padRawBtn(BM.RT); return b > 0 ? b : padTrigAxis().rt; }
+function padLT(){ const b = padRawBtn(BM.LT); return b > 0 ? b : padTrigAxis().lt; }
+/* 右スティック：軸ペアが機種で違う（2,3 / 4,5 / 3,4）ため、倒れているペアを採用する。
+   ただし非標準パッドで軸4/5が十字キーのハット値（-1/0/1ちょうど）ならスティック扱いしない。 */
+function padHat45(){
+  if(!pad || !pad.axes || pad.axes.length < 6) return null;
+  let mapping = "";
+  try{ mapping = pad.mapping || ""; }catch(err){}
+  if(mapping === "standard") return null;
+  const snap = v => (Math.abs(v) < 0.02 || Math.abs(Math.abs(v)-1) < 0.02);
+  const x = pad.axes[4]||0, y = pad.axes[5]||0;
+  if(snap(x) && snap(y) && (x!==0 || y!==0)) return { x, y };
+  return null;
+}
+function padAimAxes(){
+  if(!pad || !pad.axes) return { x:0, y:0 };
+  const hat = padHat45();
+  const pairs = [[2,3],[4,5],[3,4]];
+  for(const pr of pairs){
+    if(hat && pr[0]===4) continue;
+    const x = pad.axes[pr[0]]||0, y = pad.axes[pr[1]]||0;
+    if(Math.hypot(x,y) > 0.30) return { x: Math.abs(x)<0.16?0:x, y: Math.abs(y)<0.16?0:y };
+  }
+  return { x:0, y:0 };
+}
+/* 十字キー：ボタン／標準ハット軸(axes[9])／軸4/5ハット の3形式をまとめて読む */
+function padDpad(){
+  let x = 0, y = 0;
+  if(padBtn(BM.LEFT)) x -= 1;
+  if(padBtn(BM.RIGHT)) x += 1;
+  if(padBtn(BM.UP)) y -= 1;
+  if(padBtn(BM.DOWN)) y += 1;
+  if(pad && pad.axes){
+    const h = pad.axes[9];
+    if(typeof h === "number" && isFinite(h)){
+      const table = [[-1,0,-1],[-0.714,1,-1],[-0.428,1,0],[-0.142,1,1],[0.143,0,1],[0.428,-1,1],[0.714,-1,0],[1,-1,-1]];
+      for(const t of table){ if(Math.abs(h - t[0]) < 0.1){ x += t[1]; y += t[2]; break; } }
+    }
+    const hat = padHat45();
+    if(hat){ x += hat.x; y += hat.y; }
+  }
+  return { x: clamp(x,-1,1), y: clamp(y,-1,1) };
+}
+
+/* ゲーム内キー押下イベント（ポーズ等） */
+function onKeyPress(code){
+  if(code==="KeyM"){ toggleAmbMute(); return; }
+  if(code==="Escape") togglePause();
+  if(game.state==="playing"){
+    if(code==="Space") cmd.coverToggle=true;
+    if(code==="ShiftLeft"||code==="ShiftRight") cmd.roll=true;
+    if(code==="KeyR") cmd.reload=true;
+    if(code==="KeyQ") cmd.turret=true;
+    if(code==="KeyF") cmd.kit=true;
+    if(code==="Digit1") cmd.swapTo=0;
+    if(code==="Digit2") cmd.swapTo=1;
+    if(code==="KeyE") cmd.pickupHold=true;
+  }
+}
+const cmd = {}; // 1フレーム分のコマンド（エッジ入力）
+/* pickupHold も必ず毎フレーム消す。消し忘れると「長押し中」が残り続け、pickupLatch が
+   二度と解除されず、最初の1個を拾ったあと武器もキットも二度と拾えなくなる（地面に残り続ける） */
+function resetCmd(){ cmd.coverToggle=false; cmd.roll=false; cmd.reload=false; cmd.turret=false; cmd.kit=false; cmd.swapTo=-1; cmd.pickupHold=false; }
+resetCmd();
+
+/* ---------- タッチ操作（仮想ツインスティック＋ボタン） ---------- */
+const touch = {
+  seen: ('ontouchstart' in window) || !!(window.matchMedia && matchMedia('(pointer: coarse)').matches),
+  move:{ id:null, ox:0, oy:0, dx:0, dy:0 },
+  aim:{ id:null, ox:0, oy:0, dx:0, dy:0 },
+  lean:false, pickup:false
+};
+function stickVec(s){
+  const m = Math.hypot(s.dx, s.dy);
+  if(m < 5) return { x:0, y:0, mag:0 };
+  return { x:s.dx/44, y:s.dy/44, mag:Math.min(1, m/44) };
+}
+(function initTouch(){
+  const stageEl = document.getElementById('stage');
+  /* クリック／タップでステージにフォーカスを戻し、キーボード入力が届くようにする */
+  stageEl.addEventListener('pointerdown', ()=>{
+    try{ stageEl.focus({ preventScroll:true }); }catch(err){}
+  });
+  const bases = { move:document.getElementById('baseL'), aim:document.getElementById('baseR') };
+  function slotOf(id){
+    if(touch.move.id===id) return { s:touch.move, base:bases.move };
+    if(touch.aim.id===id) return { s:touch.aim, base:bases.aim };
+    return null;
+  }
+  stageEl.addEventListener('pointerdown', e=>{
+    if(e.pointerType==='mouse' || game.state!=='playing') return;
+    touch.seen = true;
+    const r = stageEl.getBoundingClientRect();
+    const x = e.clientX - r.left, y = e.clientY - r.top;
+    const s = (x < r.width*0.5) ? touch.move : touch.aim;
+    if(s.id!==null) return;
+    s.id = e.pointerId; s.ox = x; s.oy = y; s.dx = 0; s.dy = 0;
+    const base = (s===touch.move) ? bases.move : bases.aim;
+    base.style.display = 'block';
+    base.style.left = (x-48)+'px'; base.style.top = (y-48)+'px';
+    base.firstElementChild.style.transform = 'translate(0px,0px)';
+    try{ stageEl.setPointerCapture(e.pointerId); }catch(err){}
+    e.preventDefault();
+  });
+  stageEl.addEventListener('pointermove', e=>{
+    const hit = slotOf(e.pointerId); if(!hit) return;
+    const r = stageEl.getBoundingClientRect();
+    let dx = (e.clientX - r.left) - hit.s.ox, dy = (e.clientY - r.top) - hit.s.oy;
+    const m = Math.hypot(dx, dy);
+    if(m > 44){ dx = dx/m*44; dy = dy/m*44; }
+    hit.s.dx = dx; hit.s.dy = dy;
+    hit.base.firstElementChild.style.transform = 'translate('+dx+'px,'+dy+'px)';
+  });
+  const end = e=>{
+    const hit = slotOf(e.pointerId); if(!hit) return;
+    hit.s.id = null; hit.s.dx = 0; hit.s.dy = 0;
+    hit.base.style.display = 'none';
+  };
+  stageEl.addEventListener('pointerup', end);
+  stageEl.addEventListener('pointercancel', end);
+  function bindBtn(id, down, up){
+    const b = document.getElementById(id);
+    b.addEventListener('pointerdown', e=>{
+      if(e.pointerType==='mouse') return;
+      touch.seen = true;
+      e.preventDefault(); e.stopPropagation();
+      down();
+    });
+    if(up){
+      b.addEventListener('pointerup', ()=>up());
+      b.addEventListener('pointercancel', ()=>up());
+      b.addEventListener('pointerleave', ()=>up());
+    }
+  }
+  bindBtn('tbCover', ()=>{ if(game.state==='playing') cmd.coverToggle=true; });
+  bindBtn('tbRoll', ()=>{ if(game.state==='playing') cmd.roll=true; });
+  bindBtn('tbTurret', ()=>{ if(game.state==='playing') cmd.turret=true; });
+  bindBtn('tbKit', ()=>{ if(game.state==='playing') cmd.kit=true; });
+  bindBtn('tbReload', ()=>{ if(game.state==='playing') cmd.reload=true; });
+  bindBtn('tbSwap', ()=>{ if(game.state==='playing' && game.player) cmd.swapTo = (game.player.wi===0?1:0); });
+  bindBtn('tbLean', ()=>{ touch.lean=true; }, ()=>{ touch.lean=false; });
+  bindBtn('tbPickup', ()=>{ touch.pickup=true; }, ()=>{ touch.pickup=false; });
+  bindBtn('tbPause', ()=>{ togglePause(); });
+})();
+
+/* ---------- ゲーム状態 ---------- */
+const game = {
+  state:"title",           // title / playing / paused / result / over
+  mission:null, missionIdx:0, unlocked:0, cleared:{},
+  walls:[], covers:[], groundCv:null,
+  player:null, enemies:[], bullets:[], pickups:[], parts:[], dmgNums:[], turrets:[], foeMuzzles:[],
+  zoneIdx:0, zoneActive:false, zoneDone:false, zoneAnnounced:false, phase:"zones", // zones / extract
+  kills:0, lootTaken:[], time:0, shake:0, camX:0, camY:0,
+  boss:null, msgT:0
+};
+
+/* ---------- マップ生成 ---------- */
+let coverSeq = 1;
+function addCover(x,y,w,h,type){ game.covers.push({ id:coverSeq++, x,y,w,h,type }); }
+function addWall(x,y,w,h,sign,roof){ game.walls.push({ x,y,w,h,sign:sign||"", roof:roof||"#3d434c" }); }
+
+function genMap(m){
+  game.walls=[]; game.covers=[]; coverSeq=1;
+  const rng = mulberry32(m.seed);
+  // 外周（建物扱い）
+  addWall(0,0,WORLD_W,24,"","#262b33"); addWall(0,WORLD_H-24,WORLD_W,24,"","#262b33");
+  addWall(0,0,24,WORLD_H,"","#262b33"); addWall(WORLD_W-24,0,24,WORLD_H,"","#262b33");
+  // 建物ブロック（交差点＝ゾーン周辺は開ける）
+  const B = [
+    [56,52,168,116,"HOTEL","#4a4238"],[268,60,150,104,"DINER","#5a3b34"],[64,214,150,96,"STORE","#39424e"],[262,208,158,102,"BAR","#453a52"],
+    [1030,52,160,110,"BANK","#3c4a42"],[1236,60,148,104,"PIZZA","#5a4632"],[1024,214,156,96,"GYM","#414a56"],[1228,208,150,102,"HOTEL","#4a4238"],
+    [56,806,168,110,"DEPOT","#41403a"],[268,812,150,100,"CAFE","#54423a"],[64,962,150,88,"SHOP","#39424e"],
+    [1030,806,160,108,"GARAGE","#3f464f"],[1236,812,148,100,"MART","#46523c"],[1032,962,150,86,"DELI","#5a3b34"],
+    [580,120,130,96,"OFFICE","#3c4450"],[742,124,120,92,"CLINIC","#475048"],
+    [584,856,126,92,"POST","#4c4438"],[744,860,118,88,"NEWS","#3c4450"]
+  ];
+  for(const b of B) addWall(b[0],b[1],b[2],b[3],b[4],b[5]);
+  // 中央プラザの縁（低めの建物＝壁）
+  addWall(566,428,66,240,"","#333a42"); addWall(808,428,66,240,"","#333a42");
+  // 道路上の車（カバー）
+  const carSpots = [
+    [486,120],[486,560],[486,900],[932,180],[932,600],[932,920],
+    [180,368],[700,368],[1160,368],[220,728],[760,728],[1180,728],
+    [640,368],[640,728],[300,560],[1060,540]
+  ];
+  for(const s of carSpots){
+    if(rng()<0.25) continue;
+    const vert = rng()<0.4;
+    if(vert) addCover(s[0],s[1],20,46,"car"); else addCover(s[0],s[1],46,20,"car");
+  }
+  // ゾーン周辺に戦闘用カバーを guaranteed 配置
+  for(const z of m.zones){
+    addCover(z.x-88, z.y-14, 46,20,"car");
+    addCover(z.x+56, z.y+34, 38,11,"barricade");
+    addCover(z.x-40, z.y+66, 34,11,"sandbag");
+    addCover(z.x+64, z.y-64, 20,44,"car");
+    addCover(z.x-70, z.y-72, 34,11,"barricade");
+    addCover(z.x+6,  z.y-6,  18,18,"crate");
+  }
+  // 散布カバー
+  for(let i=0;i<26;i++){
+    const x=60+rng()*(WORLD_W-140), y=60+rng()*(WORLD_H-140);
+    const r={x,y,w:30,h:12};
+    if(game.walls.some(w=>pointInRect(x+15,y+6,w,10))) continue;
+    if(Math.hypot(x-SPAWN.x,y-SPAWN.y)<80) continue;
+    const t=["barricade","sandbag","crate"][Math.floor(rng()*3)];
+    if(t==="crate") addCover(x,y,17,17,"crate"); else addCover(x,y,34,11,t);
+  }
+  buildGround();
+}
+
+/* 地面（アスファルト＋歩道＋道路標示＋街の小物）を事前に描く。
+   街並みの描き込みはほぼここに集約する：歩道タイル、ひび割れ・補修跡、
+   マンホール、排水口、水たまり、街灯、街路樹、プラザの植栽までを
+   1枚の地面キャンバスに焼き込む（毎フレームの描画コストは増えない） */
+function buildGround(){
+  const c=document.createElement('canvas'); c.width=WORLD_W; c.height=WORLD_H;
+  const g=c.getContext('2d'); const rng=mulberry32(777);
+  /* --- 歩道ベース：コンクリートタイルの目地と色むら（曇りの昼：全体を明るいグレーへ） --- */
+  g.fillStyle="#7a7f86"; g.fillRect(0,0,WORLD_W,WORLD_H);
+  for(let ty=0;ty<WORLD_H;ty+=26){
+    for(let tx=0;tx<WORLD_W;tx+=26){
+      if(((tx/26)+(ty/26))%2===0){ g.fillStyle="rgba(255,255,255,.05)"; g.fillRect(tx,ty,26,26); }
+    }
+  }
+  g.fillStyle="rgba(30,34,40,.12)";
+  for(let x=0;x<WORLD_W;x+=26) g.fillRect(x,0,1,WORLD_H);
+  for(let y=0;y<WORLD_H;y+=26) g.fillRect(0,y,WORLD_W,1);
+  for(let i=0;i<2600;i++){ g.fillStyle=rng()<0.5?"#82878e":"#71767d"; g.fillRect((rng()*WORLD_W)|0,(rng()*WORLD_H)|0,3,3); }
+  /* --- 道路：アスファルトの質感、補修パッチ、ひび割れ --- */
+  const road=(x,y,w,h)=>{
+    g.fillStyle="#5b6067"; g.fillRect(x,y,w,h);
+    for(let i=0;i<(w*h)/90;i++){ g.fillStyle=rng()<0.5?"#62676e":"#51565d"; g.fillRect(x+(rng()*w)|0, y+(rng()*h)|0, 2, 2); }
+    // 補修パッチ（色の違う四角）
+    const np=2+((rng()*3)|0);
+    for(let i=0;i<np;i++){
+      g.fillStyle="rgba(30,33,38,.20)";
+      g.fillRect(x+4+rng()*(w-40), y+4+rng()*(h-30), 18+rng()*30, 12+rng()*22);
+    }
+  };
+  road(460,0,80,WORLD_H); road(900,0,80,WORLD_H);
+  road(0,340,WORLD_W,80); road(0,700,WORLD_W,80);
+  const crack=(x,y,len)=>{
+    g.strokeStyle="rgba(20,22,26,.32)"; g.lineWidth=1; g.beginPath(); g.moveTo(x,y);
+    let cx=x, cy=y;
+    for(let s=0;s<len;s++){ cx+=(rng()*10-5); cy+=(rng()*8-2); g.lineTo(cx,cy); }
+    g.stroke();
+  };
+  crack(486,150,5); crack(930,300,6); crack(200,376,5); crack(700,742,6); crack(505,830,4);
+  crack(950,980,5); crack(1120,386,4); crack(480,560,5); crack(120,730,4); crack(1330,360,5);
+  // タイヤ痕（交差点付近の黒い弧）
+  g.strokeStyle="rgba(20,22,26,.16)"; g.lineWidth=3;
+  for(const t of [[430,330,520,420],[880,700,990,790],[470,430,560,340]]){
+    g.beginPath(); g.moveTo(t[0],t[1]); g.quadraticCurveTo(t[0]+40,t[1]+60,t[2],t[3]); g.stroke();
+    g.beginPath(); g.moveTo(t[0]+9,t[1]+4); g.quadraticCurveTo(t[0]+49,t[1]+62,t[2],t[3]+9); g.stroke();
+  }
+  /* --- 中央プラザ：石畳タイル＋植栽＋ベンチ --- */
+  g.fillStyle="#7d828a"; g.fillRect(566,428,308,240);
+  g.strokeStyle="rgba(0,0,0,.12)"; g.lineWidth=1;
+  for(let x=566;x<=874;x+=24){ g.beginPath(); g.moveTo(x,428); g.lineTo(x,668); g.stroke(); }
+  for(let y=428;y<=668;y+=24){ g.beginPath(); g.moveTo(566,y); g.lineTo(874,y); g.stroke(); }
+  g.strokeStyle="#8d939b"; g.lineWidth=2; g.strokeRect(568,430,304,236);
+  g.strokeStyle="rgba(255,255,255,.12)"; g.lineWidth=1;
+  g.beginPath(); g.arc(720,548,44,0,Math.PI*2); g.stroke();
+  g.beginPath(); g.arc(720,548,30,0,Math.PI*2); g.stroke();
+  g.fillStyle="rgba(232,230,225,.22)"; g.font="bold 13px monospace"; g.textAlign="center";
+  g.fillText("NEW HOPE", 720, 552);
+  const planter=(x,y)=>{
+    g.fillStyle="#4c4438"; g.fillRect(x,y,26,11);
+    g.fillStyle="#2e4a2f";
+    for(let i=0;i<4;i++){ g.beginPath(); g.arc(x+4+i*6, y+5, 4.5, 0, Math.PI*2); g.fill(); }
+    g.fillStyle="#42683f";
+    for(let i=0;i<3;i++){ g.beginPath(); g.arc(x+6+i*7, y+4, 2.6, 0, Math.PI*2); g.fill(); }
+  };
+  planter(646,444); planter(768,444); planter(646,644); planter(768,644);
+  const bench=(x,y)=>{
+    g.fillStyle="#5d4630"; g.fillRect(x,y,26,2); g.fillRect(x,y+3,26,2);
+    g.fillStyle="#20242a"; g.fillRect(x+2,y+5,3,2); g.fillRect(x+21,y+5,3,2);
+  };
+  bench(664,470); bench(750,622); bench(700,452);
+  /* --- 道路標示：センターライン、車線端線、停止線、駐車枠 --- */
+  g.fillStyle="#c9a227";
+  for(let y=8;y<WORLD_H;y+=36){ if((y>330&&y<430)||(y>690&&y<790)) continue; g.fillRect(497,y,4,18); g.fillRect(937,y,4,18); }
+  for(let x=8;x<WORLD_W;x+=36){ if((x>450&&x<550)||(x>890&&x<990)) continue; g.fillRect(x,377,18,4); g.fillRect(x,737,18,4); }
+  g.fillStyle="rgba(226,226,218,.30)";
+  const vSeg=[[0,330],[430,690],[790,1080]];
+  for(const s of vSeg){ g.fillRect(466,s[0],2,s[1]-s[0]); g.fillRect(532,s[0],2,s[1]-s[0]); g.fillRect(906,s[0],2,s[1]-s[0]); g.fillRect(972,s[0],2,s[1]-s[0]); }
+  const hSeg=[[0,450],[550,890],[990,1440]];
+  for(const s of hSeg){ g.fillRect(s[0],346, s[1]-s[0],2); g.fillRect(s[0],412, s[1]-s[0],2); g.fillRect(s[0],706, s[1]-s[0],2); g.fillRect(s[0],772, s[1]-s[0],2); }
+  // 停止線
+  g.fillStyle="rgba(226,226,218,.5)";
+  g.fillRect(466,324,68,4); g.fillRect(906,432,68,4); g.fillRect(436,706,4,68); g.fillRect(996,346,4,68);
+  // 駐車枠（縦道路の西側・横道路の北側に等間隔の仕切り）
+  g.fillStyle="rgba(226,226,218,.22)";
+  for(let y=44;y<320;y+=38) g.fillRect(460,y,13,2);
+  for(let y=800;y<1060;y+=38) g.fillRect(900,y,13,2);
+  for(let x=60;x<430;x+=38) g.fillRect(x,700,2,13);
+  for(let x=1020;x<1400;x+=38) g.fillRect(x,340,2,13);
+  /* --- 横断歩道（すり減れ表現つき） --- */
+  g.fillStyle="#d3d6d8";
+  const cross=(cx,cy,horiz)=>{ for(let i=0;i<5;i++){ if(horiz) g.fillRect(cx, cy+i*16, 76, 7); else g.fillRect(cx+i*16, cy, 7, 76); } };
+  cross(462,262,false); cross(462,424,false); cross(902,262,false); cross(902,424,false);
+  cross(382,342,true); cross(544,342,true); cross(382,702,true); cross(984,702,true);
+  g.fillStyle="rgba(90,95,102,.28)";
+  for(let i=0;i<130;i++){ g.fillRect((rng()*WORLD_W)|0, (rng()*WORLD_H)|0, 3, 2); }
+  /* --- 歩道の縁（縁石） --- */
+  g.fillStyle="#8c9096";
+  g.fillRect(452,0,6,WORLD_H); g.fillRect(542,0,6,WORLD_H); g.fillRect(892,0,6,WORLD_H); g.fillRect(982,0,6,WORLD_H);
+  g.fillRect(0,332,WORLD_W,6); g.fillRect(0,422,WORLD_W,6); g.fillRect(0,692,WORLD_W,6); g.fillRect(0,782,WORLD_W,6);
+  g.fillStyle="rgba(255,255,255,.12)";
+  g.fillRect(452,0,1,WORLD_H); g.fillRect(892,0,1,WORLD_H); g.fillRect(0,332,WORLD_W,1); g.fillRect(0,692,WORLD_W,1);
+  /* --- マンホールと排水口 --- */
+  for(const mh of [[500,240],[940,470],[300,380],[1150,740],[500,880],[720,380],[940,120],[80,740],[1240,380]]){
+    g.fillStyle="#4a4f56"; g.beginPath(); g.arc(mh[0],mh[1],6,0,Math.PI*2); g.fill();
+    g.strokeStyle="#6d737b"; g.lineWidth=1; g.beginPath(); g.arc(mh[0],mh[1],5,0,Math.PI*2); g.stroke();
+    g.beginPath(); g.arc(mh[0],mh[1],2.4,0,Math.PI*2); g.stroke();
+  }
+  g.fillStyle="#43484f";
+  for(let y=70;y<WORLD_H;y+=170){ if((y>320&&y<440)||(y>680&&y<800)) continue; g.fillRect(454,y,7,3); g.fillRect(979,y,7,3); }
+  for(let x=90;x<WORLD_W;x+=190){ if((x>440&&x<560)||(x>880&&x<1000)) continue; g.fillRect(x,334,3,7); g.fillRect(x,779,3,7); }
+  /* --- 水たまり：曇り空を映して明るく光る --- */
+  for(const pd of [[505,205,16,5],[945,640,20,6],[250,382,22,5],[1180,742,18,5],[505,940,15,5],[690,486,20,6]]){
+    g.fillStyle="rgba(196,213,227,.36)"; g.beginPath(); g.ellipse(pd[0],pd[1],pd[2],pd[3],0,0,Math.PI*2); g.fill();
+    g.strokeStyle="rgba(255,255,255,.38)"; g.beginPath(); g.ellipse(pd[0],pd[1],pd[2]-3,pd[3]-1.5,0,Math.PI*1.15,Math.PI*1.7); g.stroke();
+    g.strokeStyle="rgba(120,135,150,.30)"; g.beginPath(); g.ellipse(pd[0],pd[1],pd[2],pd[3],0,0,Math.PI*2); g.stroke();
+  }
+  /* --- 街灯：昼なので消灯。ポールと消えた灯具だけを描く（光だまりは置かない） --- */
+  for(const lp of [[452,120],[548,300],[452,660],[548,840],[892,200],[988,520],[892,900],[988,760],[240,332],[700,428],[1100,332],[420,788],[1240,692],[180,692]]){
+    g.fillStyle="rgba(35,40,48,.16)"; g.beginPath(); g.ellipse(lp[0]+1,lp[1]+2,5,2.2,0,0,Math.PI*2); g.fill();
+    g.fillStyle="#3a4046"; g.beginPath(); g.arc(lp[0],lp[1],2.4,0,Math.PI*2); g.fill();
+    g.fillStyle="#aeb6bd"; g.fillRect(lp[0]-1.5,lp[1]-1.5,3,3);
+  }
+  /* --- 街路樹（歩道の開けた場所にだけ植える） --- */
+  const drawTree=(x,y)=>{
+    g.fillStyle="rgba(35,40,48,.08)"; g.beginPath(); g.ellipse(x+2,y+4,17,10,0,0,Math.PI*2); g.fill();
+    g.fillStyle="rgba(35,40,48,.10)"; g.beginPath(); g.ellipse(x+2,y+3,13,8,0,0,Math.PI*2); g.fill();
+    g.fillStyle="#5d4630"; g.fillRect(x-1,y-1,3,4);
+    g.fillStyle="#2e4a2f"; g.beginPath(); g.arc(x,y,12,0,Math.PI*2); g.fill();
+    g.fillStyle="#385c39"; g.beginPath(); g.arc(x-4,y-3,8,0,Math.PI*2); g.fill();
+    g.beginPath(); g.arc(x+5,y+2,7,0,Math.PI*2); g.fill();
+    g.fillStyle="#47704a";
+    for(let i=0;i<5;i++){ g.beginPath(); g.arc(x-7+rng()*14, y-6+rng()*11, 2.2, 0, Math.PI*2); g.fill(); }
+  };
+  for(const tp of [[438,196],[556,268],[884,150],[996,300],[438,880],[180,470],[1140,520],[1300,430],[556,600],[250,980]]) drawTree(tp[0],tp[1]);
+  /* --- 路上の散らかり（紙くず・落ち葉） --- */
+  for(let i=0;i<130;i++){
+    g.fillStyle = rng()<0.5 ? "rgba(210,205,190,.20)" : "rgba(120,110,70,.25)";
+    g.fillRect((rng()*WORLD_W)|0, (rng()*WORLD_H)|0, 2, 1);
+  }
+  /* --- 建物の土台：周囲の舗装縁＋落影 --- */
+  for(const w of game.walls){
+    if(w.w>=60 && w.h>=40){
+      g.fillStyle="#8b9096"; g.fillRect(w.x-5,w.y-5,w.w+10,w.h+10);
+      g.fillStyle="#7a7f86"; g.fillRect(w.x-5,w.y-5,w.w+10,2); g.fillRect(w.x-5,w.y-5,2,w.h+10);
+    }
+    /* 建物の落影：曇天では方向性が弱く、輪郭のぼけた薄い影が足元に広がるだけ */
+    g.fillStyle="rgba(35,42,52,.07)"; g.fillRect(w.x-7,w.y+2,w.w+16,w.h+12);
+    g.fillStyle="rgba(35,42,52,.09)"; g.fillRect(w.x-4,w.y+1,w.w+10,w.h+8);
+    g.fillStyle="rgba(35,42,52,.13)"; g.fillRect(w.x-2,w.y,w.w+5,w.h+4);
+  }
+  /* --- 雲の影：街全体にゆっくり広がる、大きな柔らかい暗部（境界は多重重ねでぼかす） --- */
+  const cloudShadow=(cx,cy,rx,ry)=>{
+    const layers=[[1.0,0.028],[0.82,0.032],[0.62,0.036],[0.42,0.04]];
+    for(const L of layers){
+      g.fillStyle="rgba(38,48,62,"+L[1]+")";
+      g.beginPath(); g.ellipse(cx,cy,rx*L[0],ry*L[0],0,0,Math.PI*2); g.fill();
+    }
+  };
+  cloudShadow(300,220,330,190); cloudShadow(1050,300,380,210); cloudShadow(720,600,420,240);
+  cloudShadow(240,880,340,200); cloudShadow(1120,900,360,210); cloudShadow(760,120,300,150);
+  game.groundCv=c;
+}
+
+/* ---------- 移動・衝突 ---------- */
+function collideMove(e, nx, ny){
+  // X方向
+  e.x = nx;
+  for(const r of game.walls.concat(game.covers)){
+    if(e.x-e.hw < r.x+r.w && e.x+e.hw > r.x && e.y-e.hh < r.y+r.h && e.y+e.hh > r.y){
+      if(nx > e.x) {} // 押し戻し
+      if(e.x > r.x+r.w/1e9) {}
+      const left = r.x - e.hw, right = r.x + r.w + e.hw;
+      e.x = (Math.abs(e.x-left) < Math.abs(e.x-right)) ? left : right;
+      // 中心に近い側へ寄せる（移動方向ベースの簡易解決）
+      if(nx - (e.px??nx) > 0) e.x = left; else if(nx - (e.px??nx) < 0) e.x = right;
+    }
+  }
+  e.y = ny;
+  for(const r of game.walls.concat(game.covers)){
+    if(e.x-e.hw < r.x+r.w && e.x+e.hw > r.x && e.y-e.hh < r.y+r.h && e.y+e.hh > r.y){
+      const top = r.y - e.hh, bot = r.y + r.h + e.hh;
+      e.y = (ny - (e.py??ny) > 0) ? top : bot;
+    }
+  }
+  e.x = clamp(e.x, 30, WORLD_W-30); e.y = clamp(e.y, 30, WORLD_H-30);
+}
+function moveEntity(e, vx, vy, dt){
+  e.px = e.x; e.py = e.y;
+  collideMove(e, e.x + vx*dt, e.y + vy*dt);
+}
+
+/* ---------- カバー吸着 ---------- */
+function nearestCoverSide(e, maxD){
+  let best=null, bd=maxD;
+  for(const c of game.covers){
+    // 4辺それぞれの吸着点
+    const sides=[
+      { nx:0, ny:1,  px:clamp(e.x,c.x+4,c.x+c.w-4), py:c.y+c.h },   // カバーの南側（下）に立つ
+      { nx:0, ny:-1, px:clamp(e.x,c.x+4,c.x+c.w-4), py:c.y },
+      { nx:1, ny:0,  px:c.x+c.w, py:clamp(e.y,c.y+4,c.y+c.h-4) },
+      { nx:-1, ny:0, px:c.x,     py:clamp(e.y,c.y+4,c.y+c.h-4) }
+    ];
+    for(const s of sides){
+      const tx = s.px + s.nx*(e.hw+3), ty = s.py + s.ny*(e.hh+3);
+      const d = Math.hypot(e.x-tx, e.y-ty);
+      if(d<bd){ bd=d; best={ cover:c, nx:s.nx, ny:s.ny, tx, ty }; }
+    }
+  }
+  return best;
+}
+function attachToCover(e, spot){
+  e.cover = spot.cover; e.coverNx = spot.nx; e.coverNy = spot.ny;
+  e.x = spot.tx; e.y = spot.ty;
+}
+function detachCover(e){ e.cover=null; }
+function coverSlide(e, axisAmount, dt){
+  // カバー沿いに移動（軸は法線の垂直方向）
+  const c = e.cover; if(!c) return;
+  const ax = e.coverNy!==0 ? 1 : 0;   // 法線が縦なら横軸に動く
+  const sp = e.speed*0.82;
+  if(ax){
+    const nx = clamp(e.x + axisAmount*sp*dt, c.x-2, c.x+c.w+2);
+    // 端を超えたら外れる
+    if((axisAmount>0 && e.x>=c.x+c.w+1 && nx>=c.x+c.w+2) || (axisAmount<0 && e.x<=c.x-1 && nx<=c.x-2)) { detachCover(e); e.x=nx; return; }
+    e.x = nx;
+  } else {
+    const ny = clamp(e.y + axisAmount*sp*dt, c.y-2, c.y+c.h+2);
+    if((axisAmount>0 && e.y>=c.y+c.h+1 && ny>=c.y+c.h+2) || (axisAmount<0 && e.y<=c.y-1 && ny<=c.y-2)) { detachCover(e); e.y=ny; return; }
+    e.y = ny;
+  }
+}
+function leanOffset(e){
+  if(!e.cover || !e.leaning) return {x:e.x, y:e.y};
+  return { x: e.x - e.coverNx*11, y: e.y - e.coverNy*11 };
+}
+
+/* ---------- エンティティ生成 ---------- */
+function newPlayer(){
+  return {
+    x:SPAWN.x, y:SPAWN.y, hw:6, hh:7, px:SPAWN.x, py:SPAWN.y,
+    hp:100, maxhp:100, speed:102, aim:0, face:1,
+    weapons:[ makeWeapon("AR",0), makeWeapon("SMG",0) ], wi:0,
+    ammo:[ WTYPES.AR.mag, WTYPES.SMG.mag ], reloadT:0, fireT:0,
+    cover:null, coverNx:0, coverNy:1, leaning:false,
+    rollT:0, rollCd:0, rollVx:0, rollVy:0, kits:3, hurtT:0, walkT:0, moving:false, recoilT:0, recoilX:0, recoilY:0, muzzleT:0
+  };
+}
+const FOE_STATS = {
+  R: { hp:55, speed:56, dmg:7,  spr:"foeR", range:235, burst:[3,5], burstInt:0.13, rest:[0.9,1.7], score:"ライフル兵" },
+  S: { hp:42, speed:88, dmg:5,  spr:"foeS", range:170, burst:[4,6], burstInt:0.09, rest:[0.6,1.1], score:"ラッシャー" },
+  H: { hp:340, speed:34, dmg:10, spr:"foeH", range:260, burst:[6,10], burstInt:0.11, rest:[0.7,1.2], score:"重装兵" }
+};
+function newEnemy(type, x, y, m){
+  const st = FOE_STATS[type];
+  return {
+    type, x, y, hw: type==="H"?8:6, hh: type==="H"?9:7, px:x, py:y,
+    hp: Math.round(st.hp*m.hpMul), maxhp: Math.round(st.hp*m.hpMul),
+    speed: st.speed, dmg: Math.round(st.dmg*m.dmgMul), aim:0, face:-1,
+    state:"seek", stateT: 0.4+Math.random()*0.8, cover:null, coverNx:0, coverNy:-1, leaning:false,
+    burstLeft:0, fireT:0, walkT:Math.random()*6, dead:false, flashT:0, targetCover:null, stuck:0, lastX:x, lastY:y,
+    recoilT:0, recoilX:0, recoilY:0, muzzleT:0, moveAmt:0
+  };
+}
+function spawnZone(zi, silent){
+  const m = game.mission, z = m.zones[zi];
+  const rng = mulberry32(m.seed + zi*97);
+  z.foes.forEach((t,i)=>{
+    const a = (i/z.foes.length)*Math.PI*2 + rng()*0.7;
+    const d = 95 + rng()*45;
+    let x = clamp(z.x + Math.cos(a)*d, 50, WORLD_W-50);
+    let y = clamp(z.y + Math.sin(a)*d, 50, WORLD_H-50);
+    // 建物内なら押し出す
+    for(const w of game.walls){ if(pointInRect(x,y,w,8)){ y = w.y + w.h + 16; } }
+    const e = newEnemy(t, x, y, m);
+    game.enemies.push(e);
+    spawnParts(x, y, "#ff8c1a", 6);
+    if(t==="H"){ game.boss = e; document.getElementById('bossWrap').classList.remove('hidden'); if(!silent) toast("⚠ 重装ターゲット出現", "高耐久 ― カバーとタレットで削れ"); }
+  });
+  game.zoneActive = true;
+  game.zoneAnnounced = false;
+  if(!silent) toast("エリア "+(zi+1)+" ― 敵勢力と交戦", "カバーに張り付いて戦え");
+}
+
+/* ---------- パーティクル / ダメージ数字 ---------- */
+function spawnParts(x,y,col,n){
+  for(let i=0;i<n;i++){
+    const a=Math.random()*Math.PI*2, s=18+Math.random()*46;
+    game.parts.push({ x,y, vx:Math.cos(a)*s, vy:Math.sin(a)*s-8, t:0, life:0.3+Math.random()*0.3, col, sz:1+((Math.random()*2)|0) });
+  }
+}
+function dmgNum(x,y,val,crit,playerHurt){
+  game.dmgNums.push({ x:x+(Math.random()*8-4), y:y-14, val, crit, t:0, life:0.8, playerHurt:!!playerHurt });
+}
+/* 拾った瞬間にアイテムのあった場所へ出すラベル（拾えたことが目で分かるように） */
+function pickupLabel(x,y,text,col){
+  game.dmgNums.push({ x, y:y-16, val:text, label:true, col, t:0, life:1.15, playerHurt:false });
+}
+
+/* ---------- 射撃 ---------- */
+function fireBullet(owner, x, y, ang, w, isPlayer){
+  const spread = (Math.random()*2-1) * w.spread;
+  const a = ang + spread;
+  game.bullets.push({
+    x, y, vx:Math.cos(a)*w.bspeed, vy:Math.sin(a)*w.bspeed,
+    dmg: isPlayer ? w.dmg : owner.dmg, isPlayer, owner,
+    range: w.range, traveled:0, ignoreCover: owner.cover || null
+  });
+}
+function bulletStep(b, dt){
+  const steps = 3;
+  const sx = b.vx*dt/steps, sy = b.vy*dt/steps;
+  for(let s=0;s<steps;s++){
+    b.x += sx; b.y += sy; b.traveled += Math.hypot(sx,sy);
+    if(b.traveled > b.range) return false;
+    // 対エンティティ
+    if(b.isPlayer){
+      for(const e of game.enemies){
+        if(e.dead) continue;
+        const p = leanOffset(e);
+        if(Math.abs(b.x-p.x) < e.hw+2 && Math.abs(b.y-p.y) < e.hh+2){
+          hitEnemy(e, b.dmg); return false;
+        }
+      }
+      for(const t of game.turrets){ if(!t.dead && Math.abs(b.x-t.x)<7 && Math.abs(b.y-t.y)<7){ /* 自分の弾は味方に当たらない */ } }
+    } else {
+      const p = game.player;
+      const pp = leanOffset(p);
+      if(p.rollT<=0 && Math.abs(b.x-pp.x) < p.hw+2 && Math.abs(b.y-pp.y) < p.hh+2){
+        hitPlayer(b.dmg); return false;
+      }
+      for(const t of game.turrets){
+        if(!t.dead && Math.abs(b.x-t.x)<7 && Math.abs(b.y-t.y)<7){ hitTurret(t, b.dmg); return false; }
+      }
+    }
+    // 壁
+    for(const w of game.walls){ if(pointInRect(b.x,b.y,w,0)){ spawnParts(b.x,b.y,"#9aa0a8",2); return false; } }
+    // カバー（自分の吸着先は無視）
+    for(const c of game.covers){
+      if(c===b.ignoreCover) continue;
+      if(pointInRect(b.x,b.y,c,0)){ spawnParts(b.x,b.y,"#c8cdd4",2); return false; }
+    }
+    if(b.x<4||b.y<4||b.x>WORLD_W-4||b.y>WORLD_H-4) return false;
+  }
+  return true;
+}
+function hitEnemy(e, dmg){
+  const crit = Math.random()<0.12;
+  const d = crit ? Math.round(dmg*1.6) : dmg;
+  e.hp -= d; e.flashT = 0.14;
+  // のけぞり：撃った側（プレイヤー／タレット）と反対へ小さく跳ねる
+  const src = game.player;
+  if(src){ const dx=e.x-src.x, dy=e.y-src.y, m=Math.hypot(dx,dy)||1; e.recoilX=dx/m*(crit?3.2:2.0); e.recoilY=dy/m*(crit?3.2:2.0); e.recoilT=0.16; }
+  dmgNum(e.x, e.y, d, crit, false);
+  spawnParts(e.x, e.y-4, "#d8483c", crit?6:3);
+  spawnParts(e.x, e.y-6, "#ffb35c", 2);
+  hitSound();
+  if(e.hp<=0 && !e.dead) killEnemy(e);
+}
+function killEnemy(e){
+  e.dead = true; game.kills++;
+  spawnParts(e.x, e.y, "#d8483c", 12); spawnParts(e.x, e.y, "#59524a", 6);
+  beep(140,0.18,"sawtooth",0.05,-80);
+  if(e===game.boss){ game.boss=null; document.getElementById('bossWrap').classList.add('hidden'); toast("重装ターゲット排除", ""); }
+  // ドロップ（武器だけ）：大漁を防ぐため雑魚は低確率、重装兵（ボス級）だけ確定。
+  // 1ミッションの敵総数は9〜20体なので、期待値は雑魚から1〜3本＋重装の確定分程度に収まる。
+  // 地面に残る武器も最大5丁まで：古いものから消えて溜まり続けない
+  const dropChance = e.type==="H" ? 1 : e.type==="S" ? 0.10 : 0.15;
+  if(Math.random()<dropChance){
+    const w = rollWeapon(mulberry32((Math.random()*1e9)|0));
+    const groundWeapons = game.pickups.filter(pk=>!pk.kit && !pk.fromPlayer);
+    if(groundWeapons.length>=5) game.pickups.splice(game.pickups.indexOf(groundWeapons[0]),1);
+    game.pickups.push({ x:e.x, y:e.y, weapon:w, t:0, fromPlayer:false, pickupBlockT:0 });
+  }
+  if(Math.random()<0.16){ game.pickups.push({ x:e.x+10, y:e.y+6, kit:true, t:0 }); }
+}
+function hitPlayer(dmg){
+  const p = game.player;
+  p.hp -= dmg; p.hurtT = 0.32; p.recoilT = 0.18; game.shake = Math.min(3, game.shake+1.2);
+  document.getElementById('dmgflash').style.opacity = 0.85;
+  dmgNum(p.x, p.y, dmg, false, true);
+  beep(220,0.08,"square",0.04,-100);
+  if(p.hp<=0){ p.hp=0; gameOver(); }
+}
+function hitTurret(t, dmg){
+  t.hp -= dmg; t.flashT = 0.08;
+  if(t.hp<=0 && !t.dead){ t.dead=true; spawnParts(t.x,t.y,"#ffb35c",10); beep(120,0.2,"sawtooth",0.05,-60); }
+}
+
+/* ---------- タレット ---------- */
+const turretState = { cd:0, CD:26, LIFE:26 };
+function placeTurret(){
+  const p = game.player;
+  if(turretState.cd>0 || game.turrets.some(t=>!t.dead)) return;
+  const tx = p.x + Math.cos(p.aim)*16, ty = p.y + Math.sin(p.aim)*16;
+  game.turrets.push({ x:tx, y:ty, hp:60, maxhp:60, life:turretState.LIFE, fireT:0, aim:0, dead:false, flashT:0 });
+  turretState.cd = turretState.CD;
+  beep(440,0.1,"triangle",0.06,220);
+  toast("タレット展開", "");
+  game.msgT = 1.1;
+}
+function updateTurret(t, dt){
+  if(t.dead) return;
+  t.life -= dt; if(t.life<=0){ t.dead=true; spawnParts(t.x,t.y,"#9aa0a8",6); return; }
+  if(t.flashT>0) t.flashT-=dt;
+  t.fireT -= dt;
+  // 最も近い視線の通る敵
+  let best=null, bd=235*235;
+  const blockers = game.walls;
+  for(const e of game.enemies){
+    if(e.dead) continue;
+    const d = dist2(t.x,t.y,e.x,e.y);
+    if(d<bd && !losBlocked(t.x,t.y-4,e.x,e.y-4,blockers)){ best=e; bd=d; }
+  }
+  if(best){
+    t.aim = angLerp(t.aim, Math.atan2(best.y-4-(t.y-4), best.x-t.x), 0.4);
+    if(t.fireT<=0){
+      t.fireT = 0.17;
+      const fakeW = { dmg:6, spread:0.03, bspeed:380, range:240 };
+      fireBullet(t, t.x, t.y-6, t.aim, fakeW, true);
+      game.foeMuzzles.push({ x:t.x+Math.cos(t.aim)*9, y:t.y-6+Math.sin(t.aim)*9, ang:t.aim, t:0.05, col:"#ffb35c" });
+      shotSound(true);
+    }
+  }
+}
+
+/* ---------- 敵AI ---------- */
+function foeTarget(e){
+  // タレットが近くで活動中ならそちらを狙うことがある
+  const p = game.player;
+  let tp = { x:p.x, y:p.y, ent:p, isTurret:false };
+  for(const t of game.turrets){
+    if(t.dead) continue;
+    if(Math.hypot(t.x-e.x,t.y-e.y) < Math.hypot(p.x-e.x,p.y-e.y)*0.8 && Math.random()<0.6){
+      tp = { x:t.x, y:t.y, ent:t, isTurret:true };
+    }
+  }
+  return tp;
+}
+function updateEnemy(e, dt){
+  if(e.dead) return;
+  if(e.flashT>0) e.flashT-=dt;
+  if(e.recoilT>0) e.recoilT-=dt;
+  if(e.muzzleT>0) e.muzzleT-=dt;
+  e.moving=false;
+  const p = game.player;
+  const st = FOE_STATS[e.type];
+  const tgt = foeTarget(e);
+  const dP = Math.hypot(p.x-e.x, p.y-e.y);
+  e.aim = Math.atan2(tgt.y-e.y, tgt.x-e.x);
+  e.face = Math.cos(e.aim)>=0 ? 1 : -1;
+  const canSee = !losBlocked(e.x,e.y-4, tgt.x,tgt.y-4, game.walls);
+  e.stateT -= dt;
+
+  // スタック検出
+  if(Math.hypot(e.x-e.lastX, e.y-e.lastY) < 0.4 && e.state==="seek") e.stuck += dt; else e.stuck = 0;
+  e.lastX = e.x; e.lastY = e.y;
+  if(e.stuck > 0.7){ e.stuck = 0; e.targetCover = null; e.stateT = 0; if(e.cover) detachCover(e); }
+
+  if(e.type==="S" && dP > 46){
+    // ラッシャー：カバーを使わず接近、近距離で撃つ
+    if(e.cover) detachCover(e);
+    moveEntity(e, Math.cos(e.aim)*e.speed, Math.sin(e.aim)*e.speed, dt);
+    e.moving=true; e.walkT += dt*10;
+    foeShoot(e, st, tgt, canSee && dP < st.range, dt);
+    return;
+  }
+
+  switch(e.state){
+    case "seek": {
+      e.leaning = false;
+      if(!e.targetCover){
+        // プレイヤーと反対側に吸着できるカバーを探す
+        let best=null, bd=1e9;
+        for(const c of game.covers){
+          const cx=c.x+c.w/2, cy=c.y+c.h/2;
+          const dC = Math.hypot(cx-e.x, cy-e.y);
+          if(dC<bd){ bd=dC; best=c; }
+        }
+        e.targetCover = best;
+      }
+      if(!e.targetCover){ e.state="peek"; break; }
+      // 吸着点：プレイヤーから見て遠い側
+      const probe = { x:e.x, y:e.y, hw:e.hw, hh:e.hh };
+      let spot = null;
+      {
+        let bd=1e9;
+        for(const c of [e.targetCover]){
+          const sides=[
+            { nx:0, ny:1,  px:clamp(e.x,c.x+4,c.x+c.w-4), py:c.y+c.h },
+            { nx:0, ny:-1, px:clamp(e.x,c.x+4,c.x+c.w-4), py:c.y },
+            { nx:1, ny:0,  px:c.x+c.w, py:clamp(e.y,c.y+4,c.y+c.h-4) },
+            { nx:-1, ny:0, px:c.x,     py:clamp(e.y,c.y+4,c.y+c.h-4) }
+          ];
+          for(const s of sides){
+            const tx=s.px+s.nx*(e.hw+3), ty=s.py+s.ny*(e.hh+3);
+            // プレイヤーが法線の反対側にいる側を選ぶ（カバーを挟む）
+            const toP = (p.x-tx)*s.nx + (p.y-ty)*s.ny;
+            if(toP > -6) continue;
+            const d=Math.hypot(e.x-tx, e.y-ty);
+            if(d<bd){ bd=d; spot={ cover:c, nx:s.nx, ny:s.ny, tx, ty }; }
+          }
+        }
+      }
+      if(!spot){
+        // 挟める側がない → プレイヤー方向へ前進
+        moveEntity(e, Math.cos(e.aim)*e.speed*0.8, Math.sin(e.aim)*e.speed*0.8, dt);
+        e.moving=true; e.walkT += dt*8;
+        if(e.stateT<=0){ e.state="peek"; e.stateT=0.6; }
+        break;
+      }
+      const d = Math.hypot(spot.tx-e.x, spot.ty-e.y);
+      if(d < 5){ attachToCover(e, spot); e.state="hide"; e.stateT = 0.5+Math.random()*1.1; }
+      else {
+        const a = Math.atan2(spot.ty-e.y, spot.tx-e.x);
+        moveEntity(e, Math.cos(a)*e.speed, Math.sin(a)*e.speed, dt);
+        e.moving=true; e.walkT += dt*9;
+      }
+      break;
+    }
+    case "hide": {
+      e.leaning = false;
+      /* カバーに付けていないのに hide/peek を往復すると、その場に固まって永遠に前進しない。
+         カバーが無ければ seek に戻して取り直させる。 */
+      if(!e.cover){ e.state="seek"; e.stateT=0.2; e.targetCover=null; break; }
+      foeSlide(e, dt);
+      if(e.stateT<=0){
+        e.state="peek";
+        e.stateT = 1.1+Math.random()*0.9;
+        e.burstLeft = st.burst[0] + ((Math.random()*(st.burst[1]-st.burst[0]))|0);
+        e.fireT = 0.25;
+      }
+      // プレイヤーに回り込まれたら離脱
+      if(e.cover && dP < 52) { detachCover(e); e.state="seek"; e.targetCover=null; e.stateT=0.3; }
+      break;
+    }
+    case "peek": {
+      e.leaning = true;
+      if(!e.cover && dP > st.range){ e.state="seek"; e.stateT=0.3; e.targetCover=null; break; }
+      foeShoot(e, st, tgt, canSee && dP < st.range+40, dt);
+      foeSlide(e, dt);
+      if(e.stateT<=0){ e.state="hide"; e.stateT = st.rest[0]+Math.random()*(st.rest[1]-st.rest[0]); e.leaning=false; }
+      if(e.cover && dP < 46) { detachCover(e); e.leaning=false; e.state="seek"; e.targetCover=null; e.stateT=0.3; }
+      break;
+    }
+  }
+}
+function foeSlide(e, dt){
+  // たまにカバー沿いに少し動く
+  if(!e.cover) return;
+  if(Math.random()<dt*0.5) e.slideDir = (Math.random()<0.5?-1:1);
+  if(e.slideDir) coverSlide(e, e.slideDir*0.4, dt);
+}
+function foeShoot(e, st, tgt, allowed, dt){
+  if(e.restT===undefined) e.restT=0;
+  if(e.restT>0){ e.restT-=dt; return; }
+  if(e.burstLeft<=0) e.burstLeft = st.burst[0] + ((Math.random()*(st.burst[1]-st.burst[0]))|0);
+  if(!allowed) return;
+  e.fireT -= dt;
+  if(e.fireT<=0){
+    e.fireT = st.burstInt;
+    e.burstLeft--;
+    const from = leanOffset(e);
+    const fakeW = { spread: e.type==="H"?0.05:0.075, bspeed:350, range:st.range+60 };
+    const b = { dmg:e.dmg };
+    game.bullets.push({
+      x:from.x, y:from.y-6, vx:Math.cos(e.aim+(Math.random()*2-1)*fakeW.spread)*fakeW.bspeed,
+      vy:Math.sin(e.aim+(Math.random()*2-1)*fakeW.spread)*fakeW.bspeed,
+      dmg:e.dmg, isPlayer:false, owner:e, range:fakeW.range, traveled:0, ignoreCover:e.cover||null
+    });
+    e.muzzleT = 0.06;
+    game.foeMuzzles.push({ x:from.x+Math.cos(e.aim)*12, y:from.y-6+Math.sin(e.aim)*12, ang:e.aim, t:0.055, col:"#ff6a5e" });
+    if(Math.abs(from.x-game.camX-VW/2)<VW && Math.abs(from.y-game.camY-VH/2)<VH) shotSound(true);
+    if(e.burstLeft<=0) e.restT = st.rest[0] + Math.random()*(st.rest[1]-st.rest[0]);
+  }
+}
+
+/* ---------- プレイヤー更新 ---------- */
+let pickupNear = null, holdT = 0, pickupLatch = false;
+function updatePlayer(dt){
+  const p = game.player;
+  pollPad();
+  if(p.fireT>0) p.fireT-=dt;
+  if(p.reloadT>0){ p.reloadT-=dt; if(p.reloadT<=0){ p.ammo[p.wi]=p.weapons[p.wi].mag; } }
+  if(p.rollCd>0) p.rollCd-=dt;
+  if(p.hurtT>0) p.hurtT-=dt;
+  if(p.recoilT>0) p.recoilT-=dt;
+  if(p.muzzleT>0) p.muzzleT-=dt;
+  const df = document.getElementById('dmgflash');
+  if(df.style.opacity>0) df.style.opacity = Math.max(0, parseFloat(df.style.opacity||0) - dt*3);
+
+  /* --- 入力ベクトル --- */
+  let mx=0, my=0;
+  if(keys["KeyA"]||keys["ArrowLeft"]) mx-=1;
+  if(keys["KeyD"]||keys["ArrowRight"]) mx+=1;
+  if(keys["KeyW"]||keys["ArrowUp"]) my-=1;
+  if(keys["KeyS"]||keys["ArrowDown"]) my+=1;
+  const lax=padAxis(0), lay=padAxis(1);
+  if(Math.abs(lax)>0||Math.abs(lay)>0){ mx=lax; my=lay; usingPad=true; }
+  const dp=padDpad();
+  if(dp.x!==0||dp.y!==0){ mx=dp.x; my=dp.y; usingPad=true; }   // 十字キーだけのパッドでも移動できる
+  const tmv = stickVec(touch.move);
+  if(touch.move.id!==null && tmv.mag>0){ mx=tmv.x; my=tmv.y; }
+  const ml=Math.hypot(mx,my); if(ml>1){ mx/=ml; my/=ml; }
+
+  /* --- 照準 --- */
+  const aimAx=padAimAxes(); const rax=aimAx.x, ray=aimAx.y;
+  const tai = stickVec(touch.aim);
+  if(Math.hypot(rax,ray)>0.3){
+    usingPad=true;
+    p.aim = Math.atan2(ray,rax);
+  } else if(touch.aim.id!==null && tai.mag>0.22){
+    usingPad=true;
+    p.aim = Math.atan2(touch.aim.dy, touch.aim.dx);
+  } else if(touch.seen){
+    /* タッチ操作中はマウス座標で照準が飛ばないよう現在の向きを維持 */
+  } else if(!usingPad || !pad){
+    const wx = game.camX + mouseX, wy = game.camY + mouseY;
+    p.aim = Math.atan2(wy-p.y, wx-p.x);
+  }
+  if(usingPad && (pad || touch.aim.id!==null)){
+    // 照準アシスト：近くの敵へ少し吸着
+    let best=null, bd=0.30;
+    for(const e of game.enemies){
+      if(e.dead) continue;
+      const a = Math.atan2(e.y-p.y, e.x-p.x);
+      let d = Math.abs(a-p.aim); if(d>Math.PI) d=Math.PI*2-d;
+      if(d<bd && Math.hypot(e.x-p.x,e.y-p.y)<270){ bd=d; best=a; }
+    }
+    if(best!==null) p.aim = angLerp(p.aim, best, 0.55);
+  }
+  p.face = Math.cos(p.aim)>=0 ? 1 : -1;
+
+  /* --- パッドのエッジ入力 --- */
+  if(pad){
+    if(padBtnEdge(BM.A)) cmd.coverToggle=true;         // A（機種系統で読み替え済み）
+    if(padBtnEdge(BM.B)) cmd.roll=true;                // B
+    if(padBtnEdge(BM.Y)) cmd.swapTo = (p.wi===0?1:0);  // Y
+    if(padBtnEdge(BM.LB)) cmd.turret=true;             // LB
+    if(padBtnEdge(BM.RB)) cmd.kit=true;                // RB
+    if(padBtn(BM.X)){                                  // X長押し＝拾う / 短押し＝リロード
+      if(pickupNear) cmd.pickupHold=true; else if(!padPrevReload){ cmd.reload=true; padPrevReload=true; }
+    } else padPrevReload=false;
+  }
+  if(keys["KeyE"]) cmd.pickupHold=true;
+  if(touch.pickup) cmd.pickupHold=true;
+
+  /* --- カバー吸着/解除 --- */
+  if(cmd.coverToggle){
+    if(p.cover){ detachCover(p); }
+    else {
+      const spot = nearestCoverSide(p, 20);
+      if(spot){ attachToCover(p, spot); beep(300,0.05,"square",0.03,60); }
+    }
+  }
+  /* --- ロール --- */
+  if(cmd.roll && p.rollCd<=0 && p.rollT<=0){
+    detachCover(p);
+    const a = (ml>0.1) ? Math.atan2(my,mx) : p.aim;
+    p.rollVx = Math.cos(a)*265; p.rollVy = Math.sin(a)*265;
+    p.rollT = 0.30; p.rollCd = 0.95;
+    beep(180,0.09,"square",0.03,-60);
+  }
+  /* --- 身を乗り出す --- */
+  p.leaning = !!(p.cover && (mouseRDown || padLT()>0.35 || keys["KeyL"] || touch.lean));
+
+  /* --- 移動 --- */
+  p.moving = ml>0.1;
+  if(p.rollT>0){
+    p.rollT-=dt;
+    moveEntity(p, p.rollVx, p.rollVy, dt);
+  } else if(p.cover){
+    // カバー沿い移動：法線に垂直な成分だけ使う
+    const axisAmt = p.coverNy!==0 ? mx : my;
+    coverSlide(p, axisAmt, dt);
+    // カバーから離れる方向へ強く倒したら解除
+    const away = mx*p.coverNx + my*p.coverNy;
+    if(away>0.75 && ml>0.9){ detachCover(p); moveEntity(p, mx*p.speed, my*p.speed, dt); }
+  } else if(ml>0.05){
+    moveEntity(p, mx*p.speed, my*p.speed, dt);
+    p.walkT += dt*9;
+  }
+
+  /* --- 武器切り替え --- */
+  if(cmd.swapTo===0||cmd.swapTo===1){
+    if(cmd.swapTo!==p.wi && p.reloadT<=0){ p.wi=cmd.swapTo; p.fireT=Math.max(p.fireT,0.18); beep(500,0.05,"square",0.03,120); }
+  }
+  /* --- リロード --- */
+  const w = p.weapons[p.wi];
+  if(cmd.reload && p.reloadT<=0 && p.ammo[p.wi]<w.mag){ p.reloadT=w.reload; beep(340,0.06,"square",0.03,-80); }
+  /* --- タレット --- */
+  if(cmd.turret) placeTurret();
+  if(turretState.cd>0) turretState.cd-=dt;
+  /* --- アーマーキット --- */
+  if(cmd.kit && p.kits>0 && p.hp<p.maxhp){
+    p.kits--; p.hp=Math.min(p.maxhp, p.hp+55);
+    spawnParts(p.x,p.y,"#4db2ff",8); beep(660,0.12,"triangle",0.05,180);
+  }
+
+  /* --- 射撃 --- */
+  const firing = mouseDown || padRT()>0.35 || (touch.aim.id!==null && tai.mag>0.55);
+  const canShoot = !p.cover || p.leaning;
+  if(firing && canShoot && p.reloadT<=0 && p.rollT<=0){
+    if(p.ammo[p.wi]<=0){ p.reloadT=w.reload; beep(200,0.05,"square",0.03,0); }
+    else if(p.fireT<=0){
+      p.fireT = w.interval;
+      p.ammo[p.wi]--;
+      const from = leanOffset(p);
+      for(let i=0;i<w.pellets;i++) fireBullet(p, from.x, from.y-6, p.aim, w, true);
+      game.shake = Math.min(2.2, game.shake + (w.type==="SG"||w.type==="MR"?1.4:0.35));
+      p.muzzleT = 0.06; p.recoilT = Math.max(p.recoilT||0, w.type==="SG"||w.type==="MR"?0.12:0.05);
+      p.recoilX = -Math.cos(p.aim)*1.6; p.recoilY = -Math.sin(p.aim)*1.2;
+      shotSound(false);
+      game.muzzle = { x:from.x+Math.cos(p.aim)*14, y:from.y-6+Math.sin(p.aim)*14, ang:p.aim, type:w.type, t:0.06 };
+    }
+  }
+  if(firing && p.cover && !p.leaning) showHint("カバー中は 右クリック / LT で身を乗り出してから撃つ");
+  else if(!firing) hideHintSoon();
+
+  /* --- 拾う（所持枠は2つだけ：拾う＝今の枠と入れ替え、増え続けることはない） --- */
+  if(!cmd.pickupHold) pickupLatch = false;   // ボタンを離すまで次の拾いは始まらない（長押し連続入れ替え防止）
+  pickupNear = null;
+  let bd = 30*30;
+  for(const pk of game.pickups){
+    if(pk.pickupBlockT && pk.pickupBlockT>0) continue;   // 入れ替えで自分が落とした直後の武器は少し拾えない
+    const d = dist2(p.x,p.y,pk.x,pk.y);
+    if(d<bd){ bd=d; pickupNear=pk; }
+  }
+  const prompt = document.getElementById('pickupPrompt');
+  if(pickupNear){
+    prompt.classList.remove('hidden');
+    const pk = pickupNear;
+    if(pk.kit){
+      document.getElementById('pkName').textContent = "アーマーキット";
+      document.getElementById('pkName').style.color = "#4db2ff";
+      document.getElementById('pkDesc').textContent = "拾うとキット+1（最大5）";
+    } else {
+      const nw = pk.weapon, cw = p.weapons[p.wi];
+      const nd = weaponDPS(nw), cd = weaponDPS(cw);
+      const arrow = nd>cd ? '<span class="up">▲ DPS '+nd+'（今より強い）</span>' : nd<cd ? '<span class="down">▼ DPS '+nd+'（今より弱い）</span>' : 'DPS '+nd+'（同等）';
+      document.getElementById('pkName').textContent = nw.name;
+      document.getElementById('pkName').style.color = RARITIES[nw.rar].color;
+      document.getElementById('pkDesc').innerHTML = WTYPES[nw.type].label+" ／ ダメージ "+nw.dmg+(nw.pellets>1?"×"+nw.pellets:"")+" ／ "+arrow;
+    }
+    const kitFull = pk.kit && p.kits>=5;   // 満杯のときは拾わず、理由をプロンプトに出す（消えたのに増えない、を防ぐ）
+    if(kitFull){
+      document.getElementById('pkDesc').textContent = "キットは満杯です（5個所持）― 今は拾えません";
+      document.getElementById('pkKey').textContent = "キットを使って減らすと、触れるだけで拾える（F / RB）";
+    } else if(pk.kit){
+      document.getElementById('pkKey').textContent = "触れれば自動で拾う";
+    } else {
+      document.getElementById('pkKey').textContent = usingPad ? "X長押しで拾う" : "E長押しで拾う";
+    }
+    if(pk.kit && !kitFull){
+      /* アーマーキットだけ接触式：触れた瞬間に自動回収する（長押し不要） */
+      holdT=0; document.getElementById('holdFill').style.width="0%";
+      const pkx = pk.x, pky = pk.y;
+      p.kits=Math.min(5,p.kits+1);
+      spawnParts(pkx,pky-4,"#4db2ff",10);
+      pickupLabel(pkx,pky,"アーマーキット +1","#4db2ff");
+      game.pickups.splice(game.pickups.indexOf(pk),1);   // 拾った物はその場で必ず地面から消す
+      pickupNear=null;
+      prompt.classList.add('hidden');
+      pickupSound();
+    } else if(!pk.kit && cmd.pickupHold && !pickupLatch){
+      /* 武器は従来どおり長押しで拾う（接触式にはしない） */
+      holdT += dt;
+      document.getElementById('holdFill').style.width = clamp(holdT/0.45*100,0,100)+"%";
+      if(holdT>=0.45){
+        holdT=0;
+        pickupLatch=true;   // 拾えたら一旦ボタンを離すまで次は拾わない
+        const pkx = pk.x, pky = pk.y;
+        const old = p.weapons[p.wi];
+        game.pickups.push({ x:p.x+8, y:p.y+10, weapon:old, t:0, fromPlayer:true, pickupBlockT:1.4 });
+        p.weapons[p.wi]=pk.weapon; p.ammo[p.wi]=pk.weapon.mag; p.reloadT=0;
+        if(!pk.fromPlayer) game.lootTaken.push(pk.weapon);   // 自分が落とした武器の拾い直しは回収数に数えない
+        spawnParts(pkx,pky-4,RARITIES[pk.weapon.rar].color,10);
+        pickupLabel(pkx,pky,pk.weapon.name,RARITIES[pk.weapon.rar].color);
+        game.pickups.splice(game.pickups.indexOf(pk),1);   // 拾った物はその場で必ず地面から消す
+        pickupNear=null;
+        pickupSound();
+      }
+    } else { holdT=0; document.getElementById('holdFill').style.width="0%"; }
+  } else {
+    prompt.classList.add('hidden'); holdT=0;
+  }
+  resetCmd();
+}
+let padPrevReload=false;
+let hintT=0;
+function showHint(t){
+  const h=document.getElementById('hint'); h.textContent=t; h.classList.remove('hidden'); hintT=0.4;
+}
+function hideHintSoon(){ if(hintT>0){ hintT-=1/60; if(hintT<=0) document.getElementById('hint').classList.add('hidden'); } }
+
+/* ---------- ミッション進行 ---------- */
+function updateMission(dt){
+  const p = game.player;
+  if(game.phase==="zones"){
+    const z = game.mission.zones[game.zoneIdx];
+    if(!z) return;
+    if(!game.zoneActive && !game.zoneDone){
+      /* 保険：何らかの理由で未配置なら近づいた時点で配置（通常は開始時／制圧時に先行配置済み） */
+      if(Math.hypot(p.x-z.x, p.y-z.y) < 320) spawnZone(game.zoneIdx);
+    }
+    /* 先行配置したエリアに近づいたら、ここで初めて交戦を知らせる */
+    if(game.zoneActive && !game.zoneAnnounced && Math.hypot(p.x-z.x, p.y-z.y) < 280){
+      game.zoneAnnounced = true;
+      toast("エリア "+(game.zoneIdx+1)+" ― 敵勢力と交戦", "カバーに張り付いて戦え");
+    }
+    if(game.zoneActive && game.enemies.length>0 && game.enemies.every(e=>e.dead)){
+      game.zoneActive=false; game.zoneDone=true;
+      p.kits = Math.min(5, p.kits+1);
+      toast("エリア "+(game.zoneIdx+1)+" 制圧完了", "アーマーキット +1");
+      beep(523,0.12,"triangle",0.06,0); setTimeout(()=>beep(784,0.16,"triangle",0.06,0),110);
+      game.zoneIdx++;
+      game.zoneDone=false;
+      if(game.zoneIdx>=game.mission.zones.length){ game.phase="extract"; toast("全エリア制圧", "帰還ポイントへ向かえ"); }
+      else {
+        /* 次エリアの敵も制圧した時点で先行配置しておく（湧くまで不在、にしない） */
+        game.enemies = game.enemies.filter(e=>!e.dead);
+        spawnZone(game.zoneIdx, true);
+      }
+    }
+  } else if(game.phase==="extract"){
+    if(Math.hypot(p.x-EXTRACT.x, p.y-EXTRACT.y) < 30) missionComplete();
+  }
+}
+function missionComplete(){
+  game.state="result";
+  document.getElementById('stage').classList.add('menu');
+  game.cleared[game.missionIdx]=true;
+  game.unlocked = Math.max(game.unlocked, Math.min(MISSIONS.length-1, game.missionIdx+1));
+  document.getElementById('hud').classList.add('hidden');
+  document.getElementById('scr-result').classList.remove('hidden');
+  document.getElementById('resMission').textContent = game.mission.name+" ― 制圧完了。街区が少しだけ静かになった。";
+  document.getElementById('resKills').textContent = game.kills;
+  document.getElementById('resTime').textContent = fmtTime(game.time);
+  document.getElementById('resLoot').textContent = game.player.weapons.length + " / 2";
+  const ll = document.getElementById('lootList');
+  ll.innerHTML = game.player.weapons.map((w,i)=>'<span style="color:'+RARITIES[w.rar].color+'">◆ '+w.name+'</span> <span style="color:var(--dim)">DPS '+weaponDPS(w)+(i===game.player.wi?' ／ 使用中':'')+'</span>').join("<br>")
+    + '<br><span class="none">所持枠は2つだけ。拾うと今の枠と入れ替わり、前の武器はその場に落ちます（途中で入れ替えた回数：'+game.lootTaken.length+'回）。</span>';
+  document.getElementById('btnNext').style.display = game.missionIdx < MISSIONS.length-1 ? "" : "none";
+  pickupSound();
+}
+function gameOver(){
+  if(game.state!=="playing") return;
+  game.state="over";
+  document.getElementById('stage').classList.add('menu');
+  document.getElementById('overKills').textContent = game.kills;
+  document.getElementById('overZone').textContent = (game.zoneIdx+1)+" / "+game.mission.zones.length;
+  document.getElementById('hud').classList.add('hidden');
+  document.getElementById('scr-over').classList.remove('hidden');
+  beep(110,0.5,"sawtooth",0.06,-40);
+}
+function startMission(idx){
+  try{ startAmbient(); updateAmbGain(); }catch(err){}
+  game.missionIdx = idx;
+  game.mission = MISSIONS[idx];
+  genMap(game.mission);
+  game.player = newPlayer();
+  game.enemies=[]; game.bullets=[]; game.pickups=[]; game.parts=[]; game.dmgNums=[]; game.turrets=[]; game.foeMuzzles=[]; game.muzzle=null;
+  pickupNear=null; holdT=0; pickupLatch=false;
+  game.zoneIdx=0; game.zoneActive=false; game.zoneDone=false; game.zoneAnnounced=false; game.phase="zones";
+  game.kills=0; game.lootTaken=[]; game.time=0; game.boss=null; game.shake=0;
+  turretState.cd=0;
+  document.getElementById('bossWrap').classList.add('hidden');
+  document.getElementById('stage').classList.remove('menu');
+  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+  document.getElementById('hud').classList.remove('hidden');
+  game.state="playing";
+  try{ updateAmbGain(); }catch(err){}
+  /* 最初のエリアの敵は開始直後から配置する（近づくまで湧かない、では「敵がいない」になるため）。
+     ミニマップの赤点と目標表示で存在が分かる。交戦トーストは近づいたときに updateMission が出す。 */
+  spawnZone(0, true);
+  /* キーボード入力がこの画面に届くよう、ステージへフォーカスを移す */
+  try{ document.getElementById('stage').focus({ preventScroll:true }); }
+  catch(err){ try{ document.getElementById('stage').focus(); }catch(e2){} }
+  toast(game.mission.name, game.mission.brief);
+}
+function toSelect(){
+  game.state="title";
+  try{ updateAmbGain(); }catch(err){}
+  document.getElementById('stage').classList.add('menu');
+  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+  document.getElementById('scr-title').classList.remove('hidden');
+  document.getElementById('hud').classList.add('hidden');
+  renderMissionList();
+}
+function togglePause(){
+  if(game.state==="playing"){
+    game.state="paused";
+    document.getElementById('scr-pause').classList.remove('hidden');
+  } else if(game.state==="paused"){
+    game.state="playing";
+    document.getElementById('scr-pause').classList.add('hidden');
+  }
+  try{ updateAmbGain(); }catch(err){}
+}
+let toastTimer=null;
+function toast(main, sub){
+  const t=document.getElementById('toast');
+  t.innerHTML = main + (sub ? "<small>"+sub+"</small>" : "");
+  t.style.opacity=1;
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>{ t.style.opacity=0; }, 2600);
+}
+
+/* ---------- コントローラー診断表示 ---------- */
+let lastDiagTxt = "";
+function buildPadDiag(){
+  const lines = [];
+  lines.push("【コントローラー診断】");
+  lines.push("Gamepad API: " + (padApiAvailable ? "利用可" : "利用不可（この画面では検出できません）"));
+  if(padPolicyState) lines.push("Permissions Policy (gamepad): " + (padPolicyState === "denied" ? "禁止" : padPolicyState === "allowed" ? "許可" : "判定不可"));
+  lines.push("接続イベント: " + (padEverEvent ? "受信済み" : "未受信"));
+  if(padDiagErr) lines.push("取得エラー: " + padDiagErr);
+  if(padBlocked){
+    lines.push("→ 結論：この表示環境がコントローラー機能をブロックしています。パッド本体・USB接続の問題ではなく、ゲーム側から解除はできません。対処法は上の案内をご覧ください");
+    if(!padDiagSlots.length) lines.push("スロット: 取得自体が禁止されているため確認不可");
+    return lines.join("\n");
+  }
+  if(!padDiagSlots.length) lines.push("スロット: 取得結果なし（空）");
+  let any = false;
+  for(const s of padDiagSlots){
+    if(!s.present){ lines.push("スロット" + s.idx + ": なし"); continue; }
+    any = true;
+    lines.push("スロット" + s.idx + ": " + (s.id ? s.id.slice(0,48) : "(id不明)"));
+    lines.push("  mapping=" + (s.mapping || "(空＝非標準)") + " / connected=" + s.connected + " / ボタン" + s.nb + " / 軸" + s.na);
+    if(s.pressed.length) lines.push("  押下中ボタン番号: " + s.pressed.join(", "));
+    if(s.axesTxt) lines.push("  軸の値: " + s.axesTxt);
+  }
+  if(padDiagSlots.length && !any) lines.push("→ 全スロット空：この画面（ブラウザ）にはパッドが見えていません");
+  if(pad) lines.push("採用中: " + (padProfileName || "標準") + " として解釈");
+  return lines.join("\n");
+}
+
+/* ---------- メインループ ---------- */
+let lastT=0, lastFrameAt=0;
+function loop(ts){
+  const now = (typeof ts==="number" && ts>0) ? ts : performance.now();
+  if(now - lastFrameAt < 8) return;          // rAFと予備タイマーの二重駆動を防ぐ
+  lastFrameAt = now;
+  try{ stepFrame(now); }catch(err){}         // 1フレームの例外でゲーム全体を止めない
+}
+function stepFrame(ts){
+  const dt = Math.min(0.033, (ts-lastT)/1000 || 0.016);
+  lastT = ts;
+  pollPad();
+  if((game.state==="playing"||game.state==="paused") && pad && (padBtnEdge(BM.START) || padBtnEdge(BM.BACK))) togglePause();
+  const ps = document.getElementById('padstatus');
+  const pst = document.getElementById('padstatusTitle');
+  if(ps || pst){
+    let txt, on = false;
+    if(pad){
+      let nm = "";
+      try{ nm = (pad.id || padEventId || "").replace(/\s*\(.*?\)\s*/g,"").trim(); }catch(err){}
+      txt = "🎮 コントローラー接続中" + (nm ? "："+nm.slice(0,22) : "") + (padProfileName && padProfileName!=="標準マッピング" ? "（"+padProfileName+"）" : "");
+      on = true;
+    }
+    else if(padConnected){ txt="🎮 コントローラー接続中（再検出中…）"; on=true; }
+    else if(padBlocked){ txt="🎮 コントローラー：この表示環境では利用不可（キーボード/マウス可）"; }
+    else if(!padApiAvailable){ txt="🎮 この画面ではコントローラー検出不可（キーボード/マウス可）"; }
+    else { txt="🎮 コントローラー未接続（キーボード/マウス可）"; }
+    for(const el of [ps, pst]){ if(el){ el.textContent = txt; el.classList.toggle('on', on); el.classList.toggle('blocked', !pad && padBlocked); } }
+  }
+  document.querySelectorAll('.padBlockHelp').forEach(el=>{ el.classList.toggle('hidden', !(!pad && padBlocked)); });
+  /* コントローラー診断：スロットごとの生の検出状況（変わったときだけ書き換える） */
+  const diagTxt = buildPadDiag();
+  if(diagTxt !== lastDiagTxt){
+    lastDiagTxt = diagTxt;
+    document.querySelectorAll('.padDiag').forEach(el=>{ el.textContent = diagTxt; });
+  }
+  const tui = document.getElementById('touchUI');
+  if(tui) tui.classList.toggle('hidden', !(touch.seen && game.state==="playing"));
+  if(game.state==="playing"){
+    game.time += dt;
+    updatePlayer(dt);
+    for(const e of game.enemies) updateEnemy(e, dt);
+    game.enemies = game.enemies.filter(e=>!e.dead || e.deadT===undefined ? true : true);
+    for(const t of game.turrets) updateTurret(t, dt);
+    game.turrets = game.turrets.filter(t=>!t.dead);
+    game.bullets = game.bullets.filter(b=>bulletStep(b, dt));
+    for(const pk of game.pickups){ pk.t += dt; if(pk.pickupBlockT>0) pk.pickupBlockT -= dt; }
+    game.pickups = game.pickups.filter(pk=> pk.kit || pk.t < 90);   // 武器ドロップは90秒で消える（溜まり続けない）
+    for(const pt of game.parts){ pt.t+=dt; pt.x+=pt.vx*dt; pt.y+=pt.vy*dt; pt.vy+=60*dt; }
+    game.parts = game.parts.filter(pt=>pt.t<pt.life);
+    for(const d of game.dmgNums){ d.t+=dt; d.y-=22*dt; }
+    game.dmgNums = game.dmgNums.filter(d=>d.t<(d.life||0.8));
+    if(game.muzzle){ game.muzzle.t-=dt; if(game.muzzle.t<=0) game.muzzle=null; }
+    for(const fm of game.foeMuzzles) fm.t-=dt;
+    game.foeMuzzles = game.foeMuzzles.filter(fm=>fm.t>0);
+    updateMission(dt);
+    // カメラ
+    const p=game.player;
+    game.shake = Math.max(0, game.shake - dt*7);
+    game.camX = clamp(p.x - VW/2, 0, WORLD_W-VW);
+    game.camY = clamp(p.y - VH/2, 0, WORLD_H-VH);
+  }
+  render();
+  updateHUD();
+}
+requestAnimationFrame(function raf(ts){ requestAnimationFrame(raf); loop(ts); });
+/* 埋め込みWebView等で rAF が止まる環境でもゲームが進むよう、予備タイマーでも駆動する */
+setInterval(()=>loop(performance.now()), 50);
+
+/* ---------- 描画 ---------- */
+function drawCoverShape(c){
+  const g=ctx;
+  if(c.type==="car"){
+    const vert = c.h>c.w;
+    const crng = mulberry32(c.id*77+5);
+    g.fillStyle="rgba(35,42,52,.09)"; g.fillRect(c.x-3,c.y+c.h-2,c.w+6,6);   // 影（曇天：薄く広くぼける）
+    g.fillStyle="rgba(35,42,52,.17)"; g.fillRect(c.x-1,c.y+c.h-1,c.w+3,4);
+    const body = ["#7d3b34","#3d5a73","#6e6a55","#54486b","#39584a","#8a6d3b"][c.id%6];
+    g.fillStyle=body; g.fillRect(c.x,c.y,c.w,c.h);
+    g.strokeStyle="rgba(10,11,13,.55)"; g.lineWidth=1; g.strokeRect(c.x+0.5,c.y+0.5,c.w-1,c.h-1);
+    // ボンネット／トランクの陰影
+    g.fillStyle="rgba(0,0,0,.16)";
+    if(vert){ g.fillRect(c.x,c.y,c.w,7); g.fillRect(c.x,c.y+c.h-7,c.w,7); }
+    else { g.fillRect(c.x,c.y,9,c.h); g.fillRect(c.x+c.w-9,c.y,9,c.h); }
+    // キャビン（窓ガラス＋ピラー＋ルーフの反射：曇り空の青灰色）
+    g.fillStyle="#a9c4d2";
+    if(vert){ g.fillRect(c.x+3,c.y+8,c.w-6,8); g.fillRect(c.x+3,c.y+c.h-16,c.w-6,7); }
+    else { g.fillRect(c.x+9,c.y+3,9,c.h-6); g.fillRect(c.x+c.w-17,c.y+3,8,c.h-6); }
+    g.fillStyle="rgba(255,255,255,.35)";
+    if(vert) g.fillRect(c.x+4,c.y+9,c.w-9,2); else g.fillRect(c.x+10,c.y+4,2,c.h-9);
+    g.fillStyle=body;
+    if(vert) g.fillRect(c.x+3,c.y+20,c.w-6,3); else g.fillRect(c.x+21,c.y+3,3,c.h-6);
+    // ドアの継ぎ目と取っ手
+    g.strokeStyle="rgba(0,0,0,.3)";
+    if(vert){ g.strokeRect(c.x+2.5,c.y+17.5,c.w-5,11); }
+    else { g.strokeRect(c.x+17.5,c.y+2.5,11,c.h-5); }
+    g.fillStyle="rgba(0,0,0,.45)";
+    if(vert){ g.fillRect(c.x+c.w-6,c.y+20,3,1.6); } else { g.fillRect(c.x+20,c.y+4,1.6,3); }
+    g.fillStyle="rgba(255,255,255,.14)"; g.fillRect(c.x,c.y,c.w,2);
+    // キズ・汚れ（個体差）
+    g.strokeStyle="rgba(255,255,255,.18)";
+    g.beginPath();
+    const sx=c.x+3+crng()*(c.w-8), sy=c.y+3+crng()*(c.h-6);
+    g.moveTo(sx,sy); g.lineTo(sx+(vert?3:6), sy+(vert?6:2)); g.stroke();
+    // タイヤ＋ホイールキャップ
+    const wheel=(wx,wy,ww,wh)=>{ g.fillStyle="#14161a"; g.fillRect(wx,wy,ww,wh); g.fillStyle="#9aa0a8"; g.fillRect(wx+ww/2-1,wy+wh/2-1,2,2); };
+    if(vert){ wheel(c.x-1,c.y+4,3,6); wheel(c.x+c.w-2,c.y+4,3,6); wheel(c.x-1,c.y+c.h-10,3,6); wheel(c.x+c.w-2,c.y+c.h-10,3,6); }
+    else { wheel(c.x+4,c.y-1,6,3); wheel(c.x+4,c.y+c.h-2,6,3); wheel(c.x+c.w-10,c.y-1,6,3); wheel(c.x+c.w-10,c.y+c.h-2,6,3); }
+    // ヘッドライト／テールランプ（前後は個体ごとに反転）
+    const flip = c.id%2===0;
+    const lamp=(lx,ly,col)=>{ g.fillStyle=col; g.fillRect(lx,ly,vert?3:2,vert?2:3); };
+    if(vert){
+      lamp(c.x+2, flip?c.y:c.y+c.h-2, "#dde3e6"); lamp(c.x+c.w-5, flip?c.y:c.y+c.h-2, "#dde3e6");
+      lamp(c.x+2, flip?c.y+c.h-2:c.y, "#9c4a44"); lamp(c.x+c.w-5, flip?c.y+c.h-2:c.y, "#9c4a44");
+    } else {
+      lamp(flip?c.x+c.w-2:c.x, c.y+2, "#dde3e6"); lamp(flip?c.x+c.w-2:c.x, c.y+c.h-5, "#dde3e6");
+      lamp(flip?c.x:c.x+c.w-2, c.y+2, "#9c4a44"); lamp(flip?c.x:c.x+c.w-2, c.y+c.h-5, "#9c4a44");
+    }
+    // サイドミラー
+    g.fillStyle="#14161a";
+    if(vert){ g.fillRect(c.x-2,c.y+15,2,2); g.fillRect(c.x+c.w,c.y+15,2,2); }
+    else { g.fillRect(c.x+16,c.y-2,2,2); g.fillRect(c.x+16,c.y+c.h,2,2); }
+  } else if(c.type==="barricade"){
+    ctx.fillStyle="rgba(35,42,52,.10)"; ctx.fillRect(c.x-3,c.y+c.h-1,c.w+6,4);
+    ctx.fillStyle="rgba(35,42,52,.18)"; ctx.fillRect(c.x-1,c.y+c.h-1,c.w+2,3);
+    ctx.fillStyle="#6e4520"; ctx.fillRect(c.x,c.y,c.w,c.h);
+    // 斜めの警戒ストライプ（板の範囲でクリップしてはみ出さない）
+    ctx.save(); ctx.beginPath(); ctx.rect(c.x,c.y+1,c.w,c.h-3); ctx.clip();
+    ctx.fillStyle="#ff8c1a";
+    for(let x=c.x-c.h;x<c.x+c.w;x+=11){ ctx.beginPath(); ctx.moveTo(x,c.y+c.h); ctx.lineTo(x+5,c.y+c.h); ctx.lineTo(x+5+c.h,c.y); ctx.lineTo(x+c.h,c.y); ctx.closePath(); ctx.fill(); }
+    ctx.restore();
+    ctx.fillStyle="rgba(255,255,255,.18)"; ctx.fillRect(c.x,c.y,c.w,1.6);
+    ctx.fillStyle="#3a3f46"; ctx.fillRect(c.x,c.y+c.h-3,c.w,3);
+    ctx.fillStyle="#22262c";
+    ctx.fillRect(c.x+2,c.y+2,1.8,1.8); ctx.fillRect(c.x+c.w-4,c.y+2,1.8,1.8);
+    ctx.fillRect(c.x+2,c.y+c.h-5,1.8,1.8); ctx.fillRect(c.x+c.w-4,c.y+c.h-5,1.8,1.8);
+  } else if(c.type==="sandbag"){
+    ctx.fillStyle="rgba(35,42,52,.10)"; ctx.fillRect(c.x-3,c.y+c.h-1,c.w+6,4);
+    ctx.fillStyle="rgba(35,42,52,.18)"; ctx.fillRect(c.x-1,c.y+c.h-1,c.w+2,3);
+    ctx.fillStyle="#5c5138"; ctx.fillRect(c.x,c.y,c.w,c.h);
+    // 土嚢を1袋ずつ（段ごとに半袋ずらして積む）
+    for(let row=0;row<2;row++){
+      const by=c.y+1+row*5, off=(row%2)*4;
+      for(let x=c.x+1-off;x<c.x+c.w-5;x+=8){
+        if(x<c.x) continue;
+        ctx.fillStyle=(x+row)%3===0?"#77694a":"#6d6248";
+        ctx.fillRect(x,by,7,4);
+        ctx.strokeStyle="rgba(0,0,0,.28)"; ctx.lineWidth=1; ctx.strokeRect(x+0.5,by+0.5,6,3);
+        ctx.fillStyle="rgba(255,255,255,.10)"; ctx.fillRect(x+1,by+1,3,1);
+      }
+    }
+  } else { // crate
+    ctx.fillStyle="rgba(35,42,52,.10)"; ctx.fillRect(c.x-3,c.y+c.h-1,c.w+6,4);
+    ctx.fillStyle="rgba(35,42,52,.18)"; ctx.fillRect(c.x-1,c.y+c.h-1,c.w+2,3);
+    ctx.fillStyle="#5d5340"; ctx.fillRect(c.x,c.y,c.w,c.h);
+    ctx.strokeStyle="#453d2d"; ctx.lineWidth=1; ctx.strokeRect(c.x+1.5,c.y+1.5,c.w-3,c.h-3);
+    // 板目と斜めの補強材、釘
+    ctx.strokeStyle="rgba(0,0,0,.22)";
+    ctx.beginPath(); ctx.moveTo(c.x+2,c.y+c.h/2); ctx.lineTo(c.x+c.w-2,c.y+c.h/2); ctx.stroke();
+    ctx.strokeStyle="#4c4330";
+    ctx.beginPath(); ctx.moveTo(c.x+2,c.y+c.h-2); ctx.lineTo(c.x+c.w-2,c.y+2); ctx.stroke();
+    ctx.fillStyle="rgba(255,255,255,.10)"; ctx.fillRect(c.x,c.y,c.w,1.6);
+    ctx.fillStyle="#2e2820";
+    ctx.fillRect(c.x+2,c.y+2,1.4,1.4); ctx.fillRect(c.x+c.w-4,c.y+2,1.4,1.4);
+    ctx.fillRect(c.x+2,c.y+c.h-4,1.4,1.4); ctx.fillRect(c.x+c.w-4,c.y+c.h-4,1.4,1.4);
+    ctx.fillStyle="#77694e"; ctx.fillRect(c.x+3,c.y+3,3,3);
+  }
+}
+function drawBuilding(w){
+  const g=ctx;
+  const rng=mulberry32((w.x*31+w.y*17)|0);
+  const big = w.w>=90 && w.h>=60;
+  // 落影と屋根本体：曇天の落影は薄く大きくぼける（地面側にも同じ影を焼いてある）
+  g.fillStyle="rgba(35,42,52,.10)"; g.fillRect(w.x-3,w.y+1,w.w+8,w.h+7);
+  g.fillStyle="rgba(35,42,52,.16)"; g.fillRect(w.x-1,w.y,w.w+4,w.h+3);
+  g.fillStyle=w.roof; g.fillRect(w.x,w.y,w.w,w.h);
+  g.fillStyle="rgba(235,240,245,.24)"; g.fillRect(w.x,w.y,w.w,w.h); // 曇り空の拡散光で屋根全体を持ち上げる
+  // パラペット（屋上の縁取り）と内側の質感
+  g.strokeStyle="rgba(0,0,0,.4)"; g.lineWidth=2; g.strokeRect(w.x+2,w.y+2,w.w-4,w.h-4);
+  g.strokeStyle="rgba(255,255,255,.09)"; g.lineWidth=1; g.strokeRect(w.x+4.5,w.y+4.5,w.w-9,w.h-9);
+  g.fillStyle="rgba(255,255,255,.08)"; g.fillRect(w.x,w.y,w.w,3);
+  g.fillStyle="rgba(0,0,0,.25)"; g.fillRect(w.x,w.y+w.h-4,w.w,4);
+  for(let i=0;i<(w.w*w.h)/260;i++){ g.fillStyle=rng()<0.5?"rgba(0,0,0,.13)":"rgba(255,255,255,.05)"; g.fillRect(w.x+3+rng()*(w.w-6), w.y+3+rng()*(w.h-6), 2, 2); }
+  /* 屋上設備：空調室外機・換気ダクト・給水タンク・アンテナ（建物ごとに種で変える） */
+  if(big){
+    const nAC = 1+((rng()*3)|0);
+    for(let i=0;i<nAC;i++){
+      const ax=w.x+10+rng()*(w.w-44), ay=w.y+9+rng()*(w.h-52);
+      g.fillStyle="#20242a"; g.fillRect(ax+1,ay+1,15,11);
+      g.fillStyle="#6a7076"; g.fillRect(ax,ay,15,11);
+      g.fillStyle="#565c63"; g.fillRect(ax,ay,15,2);
+      g.strokeStyle="#3a3f46"; g.lineWidth=1; g.beginPath(); g.arc(ax+7.5,ay+6,3.6,0,Math.PI*2); g.stroke();
+      g.beginPath(); g.moveTo(ax+7.5,ay+2.6); g.lineTo(ax+7.5,ay+9.4); g.moveTo(ax+4.1,ay+6); g.lineTo(ax+10.9,ay+6); g.stroke();
+    }
+    if(rng()<0.6){ // 換気ダクト
+      const vx=w.x+12+rng()*(w.w-30), vy=w.y+10+rng()*(w.h-50);
+      g.fillStyle="#4a5058"; g.fillRect(vx,vy,6,14);
+      g.fillStyle="#394048"; g.fillRect(vx-1,vy,8,3);
+      g.fillStyle="rgba(255,255,255,.12)"; g.fillRect(vx,vy,2,14);
+    }
+    if(rng()<0.4){ // 給水タンク
+      const tx=w.x+w.w-34, ty=w.y+10;
+      g.fillStyle="#20242a"; g.fillRect(tx+2,ty+15,16,3);
+      g.fillStyle="#6e5638"; g.fillRect(tx,ty+4,20,12);
+      g.fillStyle="#7d6540"; g.fillRect(tx,ty+4,20,3); g.fillRect(tx,ty+10,20,2);
+      g.fillStyle="#54432a"; g.beginPath(); g.moveTo(tx-1,ty+4); g.lineTo(tx+10,ty-2); g.lineTo(tx+21,ty+4); g.closePath(); g.fill();
+    }
+    if(rng()<0.5){ // アンテナ
+      const ax=w.x+14+rng()*(w.w-28), ay=w.y+8;
+      g.strokeStyle="#22262c"; g.lineWidth=1;
+      g.beginPath(); g.moveTo(ax,ay+12); g.lineTo(ax,ay); g.moveTo(ax-4,ay+3); g.lineTo(ax+4,ay+3); g.moveTo(ax-3,ay+6); g.lineTo(ax+3,ay+6); g.stroke();
+      g.fillStyle="#ff4d42"; g.fillRect(ax-0.5,ay-1,1.6,1.6);
+    }
+    if(rng()<0.55){ // 天窓
+      const sx=w.x+16+rng()*(w.w-52), sy=w.y+14+rng()*(w.h-56);
+      g.fillStyle="#2c3844"; g.fillRect(sx,sy,16,10);
+      g.strokeStyle="#59616a"; g.strokeRect(sx+0.5,sy+0.5,15,9);
+      g.fillStyle="rgba(159,198,216,.35)"; g.fillRect(sx+2,sy+2,5,3);
+    }
+  }
+  /* 窓：枠つき。昼は点灯しない――ガラスは曇り空を映す青灰色で、明るさの差だけを混ぜる */
+  if(w.h>=40){
+    for(let wy=w.y+10; wy<w.y+w.h-20; wy+=13){
+      for(let wx=w.x+8; wx<w.x+w.w-8; wx+=15){
+        const r=rng();
+        if(r<0.45){
+          g.fillStyle="#454d55"; g.fillRect(wx-1,wy-1,8,9);
+          g.fillStyle = r<0.30 ? "#bccdd8" : r<0.38 ? "#a2b5c2" : "#8296a4";
+          g.fillRect(wx,wy,6,7);
+          g.fillStyle="rgba(255,255,255,.35)"; g.fillRect(wx,wy,2,3); // 空の映り込み
+          if(r<0.30){ g.fillStyle="rgba(90,100,110,.45)"; g.fillRect(wx,wy+3,6,1); }  // カーテンの線
+        } else if(r<0.55){
+          g.fillStyle="rgba(40,48,56,.22)"; g.fillRect(wx,wy,6,7);
+        }
+      }
+    }
+  }
+  /* 1階：店構え（庇＋入口）とネオン看板 */
+  if(w.sign && big){
+    const awnCols=["#7d3b34","#3d5a73","#5d6e46","#6b4a7a","#8a5a20"];
+    const awn = awnCols[((w.x+w.y)/7|0)%awnCols.length];
+    g.fillStyle="rgba(0,0,0,.35)"; g.fillRect(w.x+4,w.y+w.h-13,w.w-8,13);
+    g.fillStyle=awn; g.fillRect(w.x+4,w.y+w.h-15,w.w-8,4);
+    g.fillStyle="rgba(255,255,255,.16)";
+    for(let sx=w.x+8; sx<w.x+w.w-10; sx+=10) g.fillRect(sx,w.y+w.h-15,4,4);
+    // ショーウィンドウと入口（昼：ガラスは空を映し、店内灯は目立たない）
+    g.fillStyle="#33404c"; g.fillRect(w.x+10,w.y+w.h-10,w.w-44,8);
+    g.fillStyle="rgba(200,220,235,.38)"; g.fillRect(w.x+12,w.y+w.h-9,10,3);
+    g.fillStyle="#23282e"; g.fillRect(w.x+w.w-26,w.y+w.h-11,12,11);
+    g.fillStyle="#c8cdd2"; g.fillRect(w.x+w.w-15,w.y+w.h-6,1.6,1.6);
+    // 看板（昼はネオン消灯：光のにじみは置かず、くすんだ文字だけにする）
+    const sw=w.sign.length*6+10;
+    g.fillStyle="#23262b"; g.fillRect(w.x+w.w/2-sw/2, w.y+w.h-28, sw, 11);
+    g.strokeStyle="rgba(255,179,92,.28)"; g.lineWidth=1; g.strokeRect(w.x+w.w/2-sw/2+0.5, w.y+w.h-27.5, sw-1, 10);
+    g.fillStyle="#d99a58"; g.font="7px monospace"; g.textAlign="center";
+    g.fillText(w.sign, w.x+w.w/2, w.y+w.h-20);
+  } else if(w.sign){
+    g.fillStyle="#23262b"; const sw=w.sign.length*6+8;
+    g.fillRect(w.x+w.w/2-sw/2, w.y+w.h-15, sw, 11);
+    g.fillStyle="#d99a58"; g.font="7px monospace"; g.textAlign="center";
+    g.fillText(w.sign, w.x+w.w/2, w.y+w.h-7);
+  }
+}
+function pickWalkSprite(frames, idleSpr, walkT, moving){
+  if(!frames || !moving) return idleSpr;
+  const idx = Math.abs(Math.floor(walkT*1.6)) % frames.length;
+  return frames[idx];
+}
+function drawChar(x, y, spr, face, inCover, walkT, flash, isPlayer, ent){
+  const g=ctx;
+  const moving = ent ? !!ent.moving : (walkT!==null && walkT!==undefined);
+  const bob = (!inCover && moving) ? Math.round(Math.sin((walkT||0)*2)*0.7) : 0;
+  let rx=0, ry=0;
+  if(ent && ent.recoilT>0){ const k=ent.recoilT/0.16; rx=(ent.recoilX||0)*k; ry=(ent.recoilY||0)*k*0.5; }
+  if(ent && isPlayer && ent.hurtT>0.18){ rx += (Math.random()*2-1)*0.8; } // 被弾時の小さな震え
+  const dx=Math.round(x+rx), dy=Math.round(y+ry)+bob;
+  g.save();
+  g.translate(dx, dy);
+  g.scale(face,1);
+  g.drawImage(spr, -spr.width/2, -spr.height+5);
+  g.restore();
+  if(flash>0){
+    // 被弾フラッシュ：赤く光らせて輪郭が一瞬浮く
+    g.save(); g.translate(dx, dy); g.scale(face,1);
+    g.globalAlpha=Math.min(0.9,flash*6); g.globalCompositeOperation="lighter";
+    g.drawImage(spr, -spr.width/2, -spr.height+5);
+    g.restore(); g.globalAlpha=1; g.globalCompositeOperation="source-over";
+    g.fillStyle="rgba(255,70,50,"+Math.min(0.35,flash*2)+")";
+    g.fillRect(dx-2, dy-spr.height+8, 4, 2);
+  }
+}
+/* 銃を照準方向へ向けて描く：種類で長さ・太さが変わる */
+function drawAimGun(x, y, aim, wtype, isHeavy){
+  const g=ctx;
+  g.save(); g.translate(Math.round(x), Math.round(y-7)); g.rotate(aim);
+  const len = wtype==="MR"?15 : wtype==="SG"?12 : wtype==="SMG"?9 : 13;
+  const th = wtype==="SG"?3 : isHeavy?3 : 2;
+  g.fillStyle="#101216"; g.fillRect(2,-th/2,len,th);
+  g.fillStyle="#2b3038"; g.fillRect(2,-th/2,len-3,1);
+  g.fillStyle="#596066"; g.fillRect(2+len-3,-th/2,3,1); // マズル
+  g.fillStyle="#15181d"; g.fillRect(5,1,3,3); // グリップ
+  if(wtype==="SG") { g.fillStyle="#6e4520"; g.fillRect(7,-2,4,4); }
+  if(wtype==="MR") { g.fillStyle="#101216"; g.fillRect(6,-3,3,2); } // スコープ
+  g.restore();
+}
+function drawMuzzleFlash(x, y, ang, col, big){
+  const g=ctx;
+  g.save(); g.translate(x,y); g.rotate(ang||0);
+  const s = big?1.5:1;
+  g.fillStyle=col||"#ffd98a";
+  g.beginPath(); g.moveTo(0,0); g.lineTo(7*s,-2.5*s); g.lineTo(4.5*s,0); g.lineTo(7*s,2.5*s); g.closePath(); g.fill();
+  g.fillStyle="#fff3c4"; g.fillRect(-1.5*s,-1.5*s,3.5*s,3*s);
+  g.fillStyle="rgba(255,180,60,.30)"; g.beginPath(); g.arc(0,0,4.5*s,0,Math.PI*2); g.fill();
+  g.restore();
+}
+function render(){
+  const g=ctx;
+  g.fillStyle="#101216"; g.fillRect(0,0,VW,VH);
+  if(!game.groundCv){ return; }
+  const shx = (Math.random()*2-1)*game.shake, shy=(Math.random()*2-1)*game.shake;
+  const camX = Math.round(game.camX+shx), camY = Math.round(game.camY+shy);
+  g.save();
+  g.translate(-camX,-camY);
+  // 地面
+  g.drawImage(game.groundCv,0,0);
+  // ゾーン表示
+  if(game.state==="playing"||game.state==="paused"){
+    if(game.phase==="zones"){
+      const z=game.mission.zones[game.zoneIdx];
+      if(z){
+        g.strokeStyle = game.zoneActive ? "rgba(255,77,66,.75)" : "rgba(255,140,26,.75)";
+        g.lineWidth=1; g.setLineDash([5,4]);
+        g.beginPath(); g.arc(z.x,z.y,game.zoneActive?150:26,0,Math.PI*2); g.stroke(); g.setLineDash([]);
+        if(!game.zoneActive){
+          g.fillStyle="#ff8c1a"; g.font="bold 9px monospace"; g.textAlign="center";
+          g.fillText("▼ OBJECTIVE", z.x, z.y-32);
+        }
+      }
+    } else {
+      g.strokeStyle="rgba(87,217,119,.85)"; g.lineWidth=1; g.setLineDash([5,4]);
+      g.beginPath(); g.arc(EXTRACT.x,EXTRACT.y,26,0,Math.PI*2); g.stroke(); g.setLineDash([]);
+      g.fillStyle="#57d977"; g.font="bold 9px monospace"; g.textAlign="center";
+      g.fillText("▼ EXTRACT", EXTRACT.x, EXTRACT.y-32);
+    }
+    // セーフハウス
+    g.fillStyle="rgba(77,178,255,.16)"; g.fillRect(SPAWN.x-24,SPAWN.y-24,48,48);
+    g.strokeStyle="rgba(77,178,255,.6)"; g.strokeRect(SPAWN.x-24.5,SPAWN.y-24.5,48,48);
+    g.fillStyle="#4db2ff"; g.font="7px monospace"; g.textAlign="center"; g.fillText("SAFEHOUSE", SPAWN.x, SPAWN.y-28);
+  }
+  // ドロップ（ビーム）
+  for(const pk of game.pickups){
+    const bobY = Math.sin(pk.t*4)*1.5;
+    if(pk.kit){
+      g.fillStyle="rgba(77,178,255,.25)"; g.fillRect(pk.x-1,pk.y-26,2,24);
+      g.fillStyle="#4db2ff"; g.fillRect(pk.x-4,pk.y-6+bobY,8,8);
+      g.fillStyle="#fff"; g.fillRect(pk.x-1,pk.y-4+bobY,2,4); g.fillRect(pk.x-2,pk.y-3+bobY,4,2);
+    } else {
+      const col = RARITIES[pk.weapon.rar].color;
+      g.fillStyle=col;
+      /* 入れ替えで自分が置いた旧武器は細く弱いビームにし、拾った武器が消えたあとに残っても別物だと分かるようにする */
+      if(pk.fromPlayer){ g.globalAlpha=0.13; g.fillRect(pk.x-1,pk.y-18,3,16); }
+      else { g.globalAlpha=0.28+Math.sin(pk.t*5)*0.08; g.fillRect(pk.x-1,pk.y-30,3,28); }
+      g.globalAlpha=1;
+      g.save(); g.translate(pk.x, pk.y-4+bobY); g.drawImage(SPR.gun,-7,-3); g.restore();
+      g.fillStyle=col; g.fillRect(pk.x-6,pk.y+3,12,1);
+    }
+  }
+  // Yソート描画リスト（カバー・タレット・キャラ・建物下部）
+  const items=[];
+  for(const c of game.covers) items.push({ y:c.y+c.h, kind:"cover", o:c });
+  for(const t of game.turrets) if(!t.dead) items.push({ y:t.y+6, kind:"turret", o:t });
+  if(game.player) items.push({ y:game.player.y+7, kind:"player", o:game.player });
+  for(const e of game.enemies) if(!e.dead) items.push({ y:e.y+7, kind:"enemy", o:e });
+  items.sort((a,b)=>a.y-b.y);
+  for(const it of items){
+    if(it.kind==="cover") drawCoverShape(it.o);
+    else if(it.kind==="turret"){
+      const t=it.o;
+      g.fillStyle="rgba(30,36,44,.08)"; g.beginPath(); g.ellipse(t.x,t.y+6,12,4,0,0,Math.PI*2); g.fill();
+      g.fillStyle="rgba(30,36,44,.14)"; g.beginPath(); g.ellipse(t.x,t.y+5,8,2.6,0,0,Math.PI*2); g.fill();
+      g.save(); g.translate(t.x,t.y);
+      if(t.flashT>0){ g.globalAlpha=0.7; }
+      g.drawImage(SPR.turret,-8,-13);
+      g.restore();
+      // 残り時間バー
+      g.fillStyle="rgba(0,0,0,.6)"; g.fillRect(t.x-8,t.y-17,16,2);
+      g.fillStyle="#ff8c1a"; g.fillRect(t.x-8,t.y-17,16*clamp(t.life/turretState.LIFE,0,1),2);
+    }
+    else if(it.kind==="player"){
+      const p=it.o, pos=leanOffset(p);
+      // 足元の影（曇天：方向のない拡散影。大きく薄く、中心だけ少し濃い3層でぼかす）
+      g.fillStyle="rgba(30,36,44,.07)"; g.beginPath(); g.ellipse(p.x,p.y+8,14,5,0,0,Math.PI*2); g.fill();
+      g.fillStyle="rgba(30,36,44,.10)"; g.beginPath(); g.ellipse(p.x,p.y+7.5,11,4,0,0,Math.PI*2); g.fill();
+      g.fillStyle="rgba(30,36,44,.15)"; g.beginPath(); g.ellipse(p.x,p.y+7,7.5,2.6,0,0,Math.PI*2); g.fill();
+      // カバー吸着マーカー
+      if(p.cover){
+        g.strokeStyle= p.leaning ? "rgba(255,209,62,.95)" : "rgba(255,140,26,.9)"; g.lineWidth=1;
+        g.strokeRect(pos.x-9.5, pos.y-15.5, 19, 24);
+      }
+      let spr;
+      if(p.cover && p.leaning) spr = SPR.playerLean;
+      else if(p.cover) spr = SPR.playerCover;
+      else spr = pickWalkSprite(SPR.playerWalk, SPR.player, p.walkT, p.moving);
+      if(p.rollT>0){
+        g.save(); g.translate(p.x,p.y); g.rotate((0.30-p.rollT)/0.30*Math.PI*2*(p.face));
+        g.drawImage(SPR.player,-9,-15); g.restore();
+      } else {
+        drawChar(pos.x, pos.y, spr, p.face, !!p.cover, p.walkT, p.hurtT>0.15?0.12:0, true, p);
+      }
+      // 銃：武器種で形が変わる。カバーで隠れている間は出さない
+      if(!p.cover || p.leaning){
+        drawAimGun(pos.x, pos.y, p.aim, p.weapons[p.wi].type, false);
+      }
+      if(p.reloadT>0){
+        g.fillStyle="#ffb35c"; g.font="7px monospace"; g.textAlign="center";
+        g.fillText("RELOADING", pos.x, pos.y-22);
+      }
+    }
+    else if(it.kind==="enemy"){
+      const e=it.o, pos=leanOffset(e);
+      const isH = e.type==="H";
+      g.fillStyle="rgba(30,36,44,.07)"; g.beginPath(); g.ellipse(e.x,e.y+8,(isH?17:14),5,0,0,Math.PI*2); g.fill();
+      g.fillStyle="rgba(30,36,44,.10)"; g.beginPath(); g.ellipse(e.x,e.y+7.5,(isH?14:11),4,0,0,Math.PI*2); g.fill();
+      g.fillStyle="rgba(30,36,44,.15)"; g.beginPath(); g.ellipse(e.x,e.y+7,e.hw+2,2.6,0,0,Math.PI*2); g.fill();
+      // 種類バッジの色味：ラッシャーは到達前に足元リングで僅かに判別できる
+      let spr, coverSpr, walkFrames;
+      if(e.type==="R"){ spr=SPR.foeR; coverSpr=SPR.foeRCover; walkFrames=SPR.foeRWalk; }
+      else if(e.type==="S"){ spr=SPR.foeS; coverSpr=SPR.foeSCover; walkFrames=SPR.foeSWalk; }
+      else { spr=SPR.foeH; coverSpr=SPR.foeHCover; walkFrames=SPR.foeHWalk; }
+      let useSpr;
+      if(e.cover && !e.leaning) useSpr = coverSpr;
+      else useSpr = pickWalkSprite(walkFrames, spr, e.walkT, e.moving);
+      drawChar(pos.x, pos.y, useSpr, e.face, !!e.cover&&!e.leaning, e.walkT, e.flashT, false, e);
+      if(!e.cover || e.leaning){
+        drawAimGun(pos.x, pos.y, e.aim, e.type==="S"?"SMG": e.type==="H"?"SG":"AR", isH);
+      }
+      // HPバー
+      if(e.hp<e.maxhp){
+        const bw = isH?26:18, by = pos.y-(isH?34:26);
+        g.fillStyle="rgba(0,0,0,.65)"; g.fillRect(pos.x-bw/2, by, bw, 3);
+        g.fillStyle= isH ? "#ff4d42" : e.type==="S" ? "#ff8a5e" : "#e86a5e";
+        g.fillRect(pos.x-bw/2, by, bw*clamp(e.hp/e.maxhp,0,1), 3);
+      }
+    }
+  }
+  // 建物（壁）はキャラより手前に屋根を描く＝斜め見下ろし感
+  for(const w of game.walls) drawBuilding(w);
+  // 弾（トレーサー）
+  for(const b of game.bullets){
+    g.strokeStyle = b.isPlayer ? "rgba(255,179,92,.95)" : "rgba(255,96,80,.95)";
+    g.lineWidth=1;
+    g.beginPath(); g.moveTo(b.x-b.vx*0.016, b.y-b.vy*0.016); g.lineTo(b.x,b.y); g.stroke();
+  }
+  // マズルフラッシュ（プレイヤーは武器種で大きさ、敵／タレットは色違い）
+  for(const fm of (game.foeMuzzles||[])) drawMuzzleFlash(fm.x, fm.y, fm.ang, fm.col, false);
+  if(game.muzzle){
+    drawMuzzleFlash(game.muzzle.x, game.muzzle.y, game.muzzle.ang, "#ffd98a", game.muzzle.type==="SG"||game.muzzle.type==="MR");
+  }
+  // パーティクル
+  for(const pt of game.parts){ g.fillStyle=pt.col; g.globalAlpha=1-pt.t/pt.life; g.fillRect(pt.x,pt.y,pt.sz,pt.sz); }
+  g.globalAlpha=1;
+  // ダメージ数字
+  g.font="bold 8px monospace"; g.textAlign="center";
+  for(const d of game.dmgNums){
+    g.globalAlpha = 1 - d.t/(d.life||0.8);
+    if(d.label){ g.fillStyle=d.col||"#fff"; g.font="bold 9px monospace"; }
+    else if(d.playerHurt){ g.fillStyle="#ff6a5e"; g.font="bold 8px monospace"; }
+    else if(d.crit){ g.fillStyle="#ffd23e"; g.font="bold 11px monospace"; }
+    else { g.fillStyle="#fff"; g.font="bold 8px monospace"; }
+    g.fillText(d.val, d.x, d.y);
+  }
+  g.globalAlpha=1;
+  // 照準レティクル
+  if(game.player && (game.state==="playing")){
+    const p=game.player;
+    let rx, ry;
+    if(usingPad && (pad || touch.aim.id!==null)){ rx=p.x+Math.cos(p.aim)*46; ry=p.y-4+Math.sin(p.aim)*46; }
+    else { rx=game.camX+mouseX; ry=game.camY+mouseY; }
+    g.strokeStyle = p.cover && !p.leaning ? "rgba(255,140,26,.55)" : "rgba(255,255,255,.9)";
+    g.lineWidth=1;
+    g.beginPath(); g.arc(rx,ry,4,0,Math.PI*2); g.stroke();
+    g.fillStyle="#ff8c1a"; g.fillRect(rx-0.5,ry-0.5,1,1);
+  }
+  g.restore();
+  // 曇りの昼の空気：画面全体にごく薄い青灰色の拡散光を載せ、彩度とコントラストを落とす
+  g.fillStyle="rgba(178,196,212,.06)"; g.fillRect(0,0,VW,VH);
+  // 画面端のビネット（曇天らしく弱く、色も冷たいグレーに。HUDはDOM側なので影響しない）
+  const vg = g.createRadialGradient(VW/2,VH/2,VH*0.42, VW/2,VH/2, VW*0.62);
+  vg.addColorStop(0,"rgba(0,0,0,0)"); vg.addColorStop(1,"rgba(28,38,50,.14)");
+  g.fillStyle=vg; g.fillRect(0,0,VW,VH);
+  // 目標方向アロー（画面外）―― ワールド変換の外で、画面座標として描く。
+  // 変換の中で描くと camX/camY 分ずれて画面外に飛び、目標が見えない間ずっと矢印が出なかった。
+  // 対象は「今のエリア（交戦中も含む）」と帰還ポイントの両方。
+  if(game.player && game.state==="playing"){
+    const p=game.player;
+    let tx=null, ty=null, col="#ff8c1a", label="";
+    if(game.phase==="zones"){ const z=game.mission.zones[game.zoneIdx]; if(z){ tx=z.x; ty=z.y; label="エリア"+(game.zoneIdx+1); } }
+    else if(game.phase==="extract"){ tx=EXTRACT.x; ty=EXTRACT.y; col="#57d977"; label="帰還"; }
+    if(tx!==null){
+      const sx=tx-game.camX, sy=ty-game.camY;
+      if(sx<-10||sy<-10||sx>VW+10||sy>VH+10){
+        const cx=VW/2, cy=VH/2, a=Math.atan2(sy-cy,sx-cx);
+        const ex=clamp(cx+Math.cos(a)*196, 16, VW-16), ey=clamp(cy+Math.sin(a)*106, 16, VH-16);
+        g.fillStyle=col; g.save(); g.translate(ex,ey); g.rotate(a);
+        g.beginPath(); g.moveTo(7,0); g.lineTo(-5,-5); g.lineTo(-5,5); g.closePath(); g.fill(); g.restore();
+        const dm = Math.max(1, Math.round(Math.hypot(tx-p.x, ty-p.y)/10));
+        g.fillStyle=col; g.font="bold 8px monospace"; g.textAlign="center";
+        g.fillText(label+" "+dm+"m", clamp(ex,30,VW-30), clamp(ey + (ey<VH/2?16:-10), 12, VH-4));
+      }
+    }
+  }
+}
+
+/* ---------- HUD ---------- */
+let lastHud = "";
+function updateHUD(){
+  if(game.state!=="playing" && game.state!=="paused") return;
+  const p = game.player; if(!p) return;
+  const w = p.weapons[p.wi];
+  document.getElementById('hpBar').style.width = clamp(p.hp/p.maxhp*100,0,100)+"%";
+  document.getElementById('hpBar').style.background = p.hp<30 ? "#ff4d42" : "#e8483f";
+  document.getElementById('lowhp').style.opacity = p.hp<30 ? (0.5+Math.sin(performance.now()/280)*0.3) : 0;
+  document.getElementById('kitCount').textContent = p.kits;
+  const wn = document.getElementById('weapName');
+  wn.innerHTML = '<span class="rar" style="color:'+RARITIES[w.rar].color+'">◆</span> '+w.name+' <span style="color:var(--faint)">['+(p.wi+1)+'/2]</span>';
+  const altW = p.weapons[1-p.wi], wa = document.getElementById('weapAlt');
+  if(wa && altW) wa.innerHTML = 'サブ枠 ['+(2-p.wi)+'/2] <span style="color:'+RARITIES[altW.rar].color+'">◆</span> '+altW.name;
+  const am = document.getElementById('ammo');
+  if(p.reloadT>0){ am.textContent="RELOADING…"; am.classList.add('reload'); }
+  else { am.innerHTML = p.ammo[p.wi]+' <small>/ ∞</small>'; am.classList.remove('reload'); }
+  // タレット
+  const tActive = game.turrets.some(t=>!t.dead);
+  const ts = document.getElementById('turretState'), tf=document.getElementById('turretFill'), tc=document.getElementById('turretCd');
+  if(tActive){ ts.textContent="展開中"; tf.style.width = "100%"; tc.classList.remove('ready'); }
+  else if(turretState.cd>0){ ts.textContent="あと "+Math.ceil(turretState.cd)+"s"; tf.style.width = (100 - turretState.cd/turretState.CD*100)+"%"; tc.classList.remove('ready'); }
+  else { ts.textContent="READY [Q/LB]"; tf.style.width="100%"; tc.classList.add('ready'); }
+  // 目標
+  const ob = document.getElementById('objective');
+  let txt;
+  if(game.phase==="extract") txt = "目標：<b>帰還ポイント</b>へ向かえ";
+  else if(game.zoneActive){
+    const left = game.enemies.filter(e=>!e.dead).length;
+    const z = game.mission.zones[game.zoneIdx];
+    const zd = z ? Math.hypot(p.x-z.x, p.y-z.y) : 0;
+    txt = zd > 250
+      ? "目標：エリア "+(game.zoneIdx+1)+" の敵 <b>"+left+"</b> 体 ― あと約 <b>"+Math.round(zd/10)+"m</b>（矢印とマップの赤点が目印）"
+      : "目標：エリア "+(game.zoneIdx+1)+" を制圧せよ ― 残り <b>"+left+"</b>";
+  } else if(game.zoneDone || game.zoneIdx>0 && !game.zoneActive && game.zoneIdx<game.mission.zones.length)
+    txt = "目標：エリア "+(game.zoneIdx+1)+" へ移動せよ";
+  else txt = "目標：エリア 1 へ移動せよ ― "+game.mission.name;
+  if(txt!==lastHud){ ob.innerHTML=txt; lastHud=txt; }
+  if(game.boss && !game.boss.dead){
+    document.getElementById('bossBar').style.width = clamp(game.boss.hp/game.boss.maxhp*100,0,100)+"%";
+  }
+  drawMinimap();
+}
+function drawMinimap(){
+  const g=mm, sx=144/WORLD_W, sy=108/WORLD_H;
+  g.fillStyle="#14171c"; g.fillRect(0,0,144,108);
+  g.fillStyle="#3a4048";
+  for(const w of game.walls) g.fillRect(w.x*sx, w.y*sy, Math.max(1,w.w*sx), Math.max(1,w.h*sy));
+  g.fillStyle="#6b5a3e";
+  for(const c of game.covers) g.fillRect(c.x*sx, c.y*sy, Math.max(1,c.w*sx), Math.max(1,c.h*sy));
+  if(game.mission){
+    if(game.phase==="zones"){ const z=game.mission.zones[game.zoneIdx]; if(z){ g.strokeStyle="#ff8c1a"; g.beginPath(); g.arc(z.x*sx,z.y*sy,5,0,Math.PI*2); g.stroke(); } }
+    else { g.fillStyle="#57d977"; g.fillRect(EXTRACT.x*sx-2, EXTRACT.y*sy-2, 4, 4); }
+  }
+  g.fillStyle="#ff4d42";
+  for(const e of game.enemies) if(!e.dead) g.fillRect(e.x*sx-1, e.y*sy-1, 2, 2);
+  g.fillStyle="#ffb35c";
+  for(const pk of game.pickups) g.fillRect(pk.x*sx-1, pk.y*sy-1, 2, 2);
+  const p=game.player;
+  if(p){ g.fillStyle="#fff"; g.fillRect(p.x*sx-1.5, p.y*sy-1.5, 3, 3); }
+}
+
+/* ---------- ミッション選択UI ---------- */
+function renderMissionList(){
+  const el = document.getElementById('missionList');
+  el.innerHTML="";
+  MISSIONS.forEach((m,i)=>{
+    const b=document.createElement('button');
+    b.className="mcard";
+    const locked = i>game.unlocked;
+    b.disabled = locked;
+    b.innerHTML = '<div class="mt">作戦 '+(i+1)+'：'+m.name+'</div><div class="md">'+m.brief+'</div>'+
+      '<div class="diff">'+m.diff+' ／ エリア '+m.zones.length+'</div>'+
+      (locked ? '<div class="lock">🔒 前の作戦をクリアすると解放</div>' : game.cleared[i] ? '<div class="clear">✔ クリア済み（再挑戦可）</div>' : '');
+    b.addEventListener('click', ()=>{ audio(); startMission(i); });
+    el.appendChild(b);
+  });
+}
+document.querySelectorAll('.btnSndToggle').forEach(b=>{ b.addEventListener('click', ()=>{ try{ toggleAmbMute(); }catch(err){} }); });
+(function(){ const s=document.getElementById('sndstatus'); if(s) s.addEventListener('click', ()=>{ try{ toggleAmbMute(); }catch(err){} }); })();
+try{ updateSndUI(); }catch(err){}
+document.getElementById('btnNext').addEventListener('click', ()=>startMission(Math.min(MISSIONS.length-1, game.missionIdx+1)));
+document.getElementById('btnRetry2').addEventListener('click', ()=>startMission(game.missionIdx));
+document.getElementById('btnBackSelect').addEventListener('click', toSelect);
+document.getElementById('btnRetry').addEventListener('click', ()=>startMission(game.missionIdx));
+document.getElementById('btnOverSelect').addEventListener('click', toSelect);
+document.getElementById('btnResume').addEventListener('click', togglePause);
+document.getElementById('btnQuitMission').addEventListener('click', ()=>{ document.getElementById('scr-pause').classList.add('hidden'); toSelect(); });
+renderMissionList();
+</script>
+</body>
+</html>
