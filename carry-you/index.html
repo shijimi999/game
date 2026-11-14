@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="color-scheme" content="light" />
 <link rel="icon" href="data:," />
+<link rel="manifest" href="./manifest.webmanifest" />
+<meta name="theme-color" content="#232b23" />
+<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="CARRY YOU" />
 <title>CARRY YOU</title>
 <style>
   * { box-sizing: border-box; }
@@ -356,5 +362,14 @@
   </div>
 
 </main>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      try {
+        navigator.serviceWorker.register('./sw.js').catch(function () {});
+      } catch (e) {}
+    });
+  }
+</script>
 </body>
 </html>
