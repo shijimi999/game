@@ -1,4 +1,4 @@
-const CACHE = 'carry-you-v1';
+const CACHE = 'carry-you-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -25,6 +25,21 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  const isPage = event.request.mode === 'navigate' || event.request.destination === 'document';
+  if (isPage) {
+    // Pages: network-first so updates are picked up, cache as offline fallback.
+    event.respondWith(
+      fetch(event.request)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE).then((cache) => cache.put(event.request, copy));
+          return res;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+  // Other assets (icons, manifest): cache-first.
   event.respondWith(
     caches.match(event.request).then((hit) => {
       if (hit) return hit;
