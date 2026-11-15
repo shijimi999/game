@@ -150,7 +150,7 @@
             <p class="fullmark hidden" id="fullClearMark">✦ 全章クリア ― 物語完結 ✦</p>
             <p class="story">
               崩壊から数年。感染しない体質の少女<strong>メイ</strong>を、山向こうの医療拠点へ届ける旅が始まる。
-              護衛は元運び屋の<strong>ワイアット</strong>。銃は作り物の単発が一丁きり。基本はステルスと鈍器と、耳を澄ますこと。
+              護衛は元運び屋の<strong>ワイアット</strong>。銃は作り物で、道で拾っても3発まで。基本はステルスと鈍器と、耳を澄ますこと。
               春の光の中、緑に飲まれていく街を、東の出口まで抜けよう。
               第2章「夏」では、目が見えず音に集まる感染者と、拾って投げる瓶やレンガが新しい軸になる。
               第3章「秋」は川沿いのキャンプ場と渓谷の吊り橋。落ち葉の音と川の水音が、ステルスの条件を変える。
@@ -170,9 +170,9 @@
                   <tr><td>K</td><td>火炎瓶を投げる</td></tr>
                   <tr><td>V</td><td>投擲物（空き瓶・レンガ）を投げる ― 着地点の音で敵を釣る</td></tr>
                   <tr><td>H</td><td>包帯で回復</td></tr>
-                  <tr><td>L</td><td>手製銃を撃つ（単発の切り札）</td></tr>
+                  <tr><td>L</td><td>手製銃を撃つ（3発までの切り札）</td></tr>
                   <tr><td>T</td><td>メイ「ついて来る／待つ」切替</td></tr>
-                  <tr><td>1〜4</td><td>クラフト（ナイフ／火炎瓶／包帯／手製銃）</td></tr>
+                  <tr><td>1〜3</td><td>クラフト（ナイフ／火炎瓶／包帯）</td></tr>
                   <tr><td>C</td><td>クラフト画面の開閉（パッドはBack）</td></tr>
                   <tr><td>P / Esc</td><td>ポーズ（パッドはStart）</td></tr>
                   <tr><td>F／ボタン</td><td>フルスクリーン切替（画面右上のボタンでも切替可・Escで解除）</td></tr>
@@ -273,7 +273,6 @@
         <button class="craft" data-craft="knife"><b>1：ナイフを作る <span id="cntKnife"></span></b><span>くず鉄1＋布1 ― 背後で掴んでから使う（Y→X）</span></button>
         <button class="craft" data-craft="molotov"><b>2：火炎瓶を作る <span id="cntMolotov"></span></b><span>布1＋酒1 ― 投げて燃やす（大音量）</span></button>
         <button class="craft" data-craft="bandage"><b>3：包帯を作る <span id="cntBandage"></span></b><span>布2 ― 選択してRT長押しで体力40回復</span></button>
-        <button class="craft" data-craft="gun"><b>4：手製銃を作る <span id="cntGun"></span></b><span>くず鉄2＋布1 ― 単発の切り札（大音量）</span></button>
       </div>
       <div class="row2">
         <button class="mini" id="btnMei">メイ：ついて来る／待つ（T／LB）</button>
@@ -664,6 +663,7 @@ CH1.makePickups = function(){ return [
   {x:3640, y:328, kind:'cloth'}, {x:3980, y:270, kind:'scrap'}, {x:4200, y:GROUND_Y-14, kind:'alcohol'},
   {x:4440, y:330, kind:'cloth'}, {x:4780, y:278, kind:'scrap'}, {x:4960, y:GROUND_Y-14, kind:'cloth'},
   {x:1500, y:GROUND_Y-14, kind:'bat'},
+  {x:2700, y:GROUND_Y-14, kind:'gun'}, {x:3700, y:GROUND_Y-14, kind:'gun'},
 ].map(p=>({...p, taken:false, w:16, h:14})); }
 
 CH1.makeEnemies = function(){ return [
@@ -710,6 +710,7 @@ CH2.makePickups = function(){ return [
   {x:2560, y:GROUND_Y-14, kind:'bottle'}, {x:3120, y:GROUND_Y-14, kind:'cloth'}, {x:3420, y:312, kind:'scrap'},
   {x:3580, y:GROUND_Y-14, kind:'alcohol'}, {x:3760, y:312, kind:'brick'}, {x:4150, y:GROUND_Y-14, kind:'bat'},
   {x:4480, y:GROUND_Y-14, kind:'cloth'}, {x:4820, y:354, kind:'scrap'}, {x:4980, y:GROUND_Y-14, kind:'alcohol'},
+  {x:1900, y:GROUND_Y-14, kind:'gun'}, {x:3200, y:312, kind:'gun'},
 ].map(p=>({...p, taken:false, w:16, h:14})); };
 CH2.makeEnemies = function(){ return [
   {type:'guard',    x:820,  y:GROUND_Y, min:640,  max:1080, dir:1,  hp:2},
@@ -763,6 +764,7 @@ CH3.makePickups = function(){ return [
   {x:2830, y:354, kind:'scrap'}, {x:3180, y:GROUND_Y-14, kind:'alcohol'}, {x:3480, y:GROUND_Y-14, kind:'cloth'},
   {x:4200, y:326, kind:'brick'}, {x:4420, y:GROUND_Y-14, kind:'bat'}, {x:4700, y:GROUND_Y-14, kind:'cloth'},
   {x:4880, y:354, kind:'scrap'}, {x:5000, y:GROUND_Y-14, kind:'alcohol'},
+  {x:1450, y:GROUND_Y-14, kind:'gun'}, {x:3900, y:326, kind:'gun'},
 ].map(p=>({...p, taken:false, w:16, h:14})); };
 CH3.makeEnemies = function(){ return [
   {type:'guard',    x:820,  y:GROUND_Y, min:620,  max:1180, dir:1,  hp:2},
@@ -816,6 +818,7 @@ CH4.makePickups = function(){ return [
   {x:2980, y:346, kind:'alcohol'}, {x:3400, y:354, kind:'cloth'}, {x:3660, y:GROUND_Y-14, kind:'bottle'},
   {x:3820, y:354, kind:'scrap'}, {x:4200, y:GROUND_Y-14, kind:'cloth'}, {x:4560, y:GROUND_Y-14, kind:'brick'},
   {x:4920, y:GROUND_Y-14, kind:'alcohol'}, {x:5060, y:GROUND_Y-14, kind:'cloth'},
+  {x:1900, y:GROUND_Y-14, kind:'gun'}, {x:4750, y:GROUND_Y-14, kind:'gun'},
 ].map(p=>({...p, taken:false, w:16, h:14})); };
 CH4.makeEnemies = function(){ return [
   {type:'guard',    x:900,  y:GROUND_Y, min:680,  max:1180, dir:1,  hp:2},
@@ -842,8 +845,11 @@ const RECIPES = {
   knife:   { scrap:1, cloth:1, alcohol:0, label:'ナイフ' },
   molotov: { scrap:0, cloth:1, alcohol:1, label:'火炎瓶' },
   bandage: { scrap:0, cloth:2, alcohol:0, label:'包帯' },
-  gun:     { scrap:2, cloth:1, alcohol:0, label:'手製銃' },
 };
+/* the handmade gun is NOT craftable — like the bat it is pickup-only, found
+   lying in the field. inv.gun holds its remaining shots (0 = not carried),
+   never a stock of guns: one gun, GUN_SHOTS shots, then it breaks. */
+const GUN_SHOTS = 3;
 let state;
 function freshState(ch){
   const DEF = chapterDef(ch);
@@ -1045,10 +1051,12 @@ function cycleItem(d){
   let i = ITEM_ORDER.indexOf(state.selItem);
   i = (i + d + ITEM_ORDER.length) % ITEM_ORDER.length;
   state.selItem = ITEM_ORDER[i];
-  setMsg('選択中アイテム：' + ITEM_LABEL[state.selItem] + ' ×' + state.inv[state.selItem] + '（RTで使う）', 1.4);
+  setMsg('選択中アイテム：' + (state.selItem === 'gun'
+    ? '手製銃（残り' + state.inv.gun + '発）'
+    : ITEM_LABEL[state.selItem] + ' ×' + state.inv[state.selItem]) + '（RTで使う）', 1.4);
 }
 /* craft menu (Back) */
-const CRAFT_ORDER = ['knife','molotov','bandage','gun'];
+const CRAFT_ORDER = ['knife','molotov','bandage'];
 function renderCraftMenu(){
   const list = document.getElementById('craftList');
   if(!list) return;
@@ -1144,8 +1152,9 @@ function fireGun(){
   }
   state.parts.push({x:p.x + p.w/2 + p.dir*20, y, vx:p.dir*3, vy:0, life:.15, c:'#ffd76e'});
   state.flashes.push({x:p.x + p.w/2 + p.dir*24, y, dir:p.dir, t:.09});
-  if(best){ best.alive = false; state.kills++; setMsg('手製銃が命中 ― 倒した（大音量で敵が寄ってくる）', 2.4); }
-  else setMsg('手製銃を撃った ― 外れた（大音量！）', 2.2);
+  const tail = state.inv.gun > 0 ? ' ― 残り' + state.inv.gun + '発' : ' ― 手製銃は壊れて消えた';
+  if(best){ best.alive = false; state.kills++; setMsg('手製銃が命中 ― 倒した（大音量で敵が寄ってくる）' + tail, 2.6); }
+  else setMsg('手製銃を撃った ― 外れた（大音量！）' + tail, 2.4);
 }
 
 /* ---------- update ---------- */
@@ -1195,7 +1204,6 @@ function update(dt){
   if(pressedOnce['Digit1']) doCraft('knife');
   if(pressedOnce['Digit2']) doCraft('molotov');
   if(pressedOnce['Digit3']) doCraft('bandage');
-  if(pressedOnce['Digit4']) doCraft('gun');
   if(pressedOnce['KeyT'] || padOnce(4)) toggleMei();                            // LB：メイ指示
   /* 十字キー：使うアイテムの切替（はしご昇降中は上下を昇降に譲る） */
   if(!state.climb){
@@ -1247,15 +1255,27 @@ function update(dt){
     p.y += cvy;
     if(p.y <= F.topY + 2){
       p.y = F.topY + 2;
-      if(cvy < 0){ // over the top: cross to the other face of the fence
+      if(cvy < 0 && !state.climb.noRecross){ // over the top: cross to the other face of the fence
         state.climb.side = state.climb.side === 0 ? 1 : 0;
         p.x = state.climb.side === 0 ? F.x - p.w - 4 : F.x + F.w + 4;
         p.y = F.topY + 8;
+        /* latch the crossing: holding ↑ used to re-trigger this every few
+           frames (top+8 → top+2 → cross back → …), so Wyatt ping-ponged
+           between the two faces and shook finely left-right, camera and
+           Mei's follow target along with him. The latch only clears once
+           he has climbed well down the new face, so one ascent crosses
+           exactly once; to cross back he must first descend, then climb. */
+        state.climb.noRecross = true;
       }
     }
+    if(state.climb.noRecross && p.y > F.topY + 30) state.climb.noRecross = false;
     if(p.y < GROUND_Y - 30) state.climb.left = true;   // actually left the ground
     if(p.y >= GROUND_Y){ p.y = GROUND_Y; if(state.climb.left){ state.climb = null; p.onGround = true; } }
-    if(jumpP && state.climb){ state.climb = null; p.vy = -5; p.onGround = false; }
+    /* leaving the ladder is Space / pad A only (as the prompt says):
+       W / ArrowUp are climb inputs, so letting them count as jumpP here
+       made every fresh ↑ press tear Wyatt off the ladder mid-climb */
+    const detachP = pressedOnce['Space'] || padOnce(0) || pressedOnce['touch_jump'];
+    if(detachP && state.climb){ state.climb = null; p.vy = -5; p.onGround = false; }
     if(p.swingT > 0) p.swingT -= dt;
     if(p.hurtT > 0) p.hurtT -= dt;
   } else {
@@ -1359,6 +1379,8 @@ function update(dt){
       if(Math.abs((pk.x) - (p.x + 4)) < 34 && Math.abs(pk.y - (p.y - 14)) < 46){
         if(pk.kind === 'bat'){
           if(actP && p.bat <= 0){ pk.taken = true; p.bat = 3; sfx.pickup(); setMsg('鈍器（木のバット）を拾った ― 耐久3', 2.2); }
+        } else if(pk.kind === 'gun'){
+          if(actP && state.inv.gun <= 0){ pk.taken = true; state.inv.gun = GUN_SHOTS; sfx.pickup(); setMsg('手製銃を拾った ― ' + GUN_SHOTS + '発まで使える（大音量の切り札）', 2.4); }
         } else if(pk.kind === 'bottle' || pk.kind === 'brick'){
           if(!state.throwable){
             pk.taken = true; state.throwable = pk.kind; sfx.pickup();
@@ -1407,7 +1429,23 @@ function update(dt){
   for(const bo of state.bottles){
     bo.vy += 0.4; bo.x += bo.vx; bo.y += bo.vy;
     bo.trail = bo.trail || []; bo.trail.push({x:bo.x, y:bo.y}); if(bo.trail.length > 14) bo.trail.shift();
-    if(bo.y >= GROUND_Y - 6){
+    // direct hit on an infected (fast type / listener): the bottle bursts on
+    // its body and it burns to death on the spot. Human guards are exempt —
+    // bottles fly past them and break on the ground exactly as before.
+    if(!bo.dead){
+      for(const e of state.enemies){
+        if(!e.alive || e.type === 'guard') continue;
+        if(bo.x > e.x - 2 && bo.x < e.x + e.w + 2 && bo.y > e.y - e.h - 2 && bo.y < e.y + 2){
+          bo.dead = true; e.burned = true; e.alive = false; state.kills++;
+          sfx.shot(); noise(bo.x, bo.y, 300, 'loud');
+          state.fires.push({ x: e.x + e.w/2 - 44, y: GROUND_Y - 34, w: 88, h: 34, t: 3.2 });
+          for(let i = 0; i < 10; i++) state.parts.push({ x: e.x + e.w/2, y: e.y - 26, vx:(Math.random()-.5)*4, vy:-1 - Math.random()*3.4, life:.4 + Math.random()*.3, c: i % 3 === 0 ? '#ffd76e' : (i % 2 ? '#f28c2e' : '#e0451e') });
+          setMsg('火炎瓶が直撃 ― 感染者は燃え尽きた', 2.2);
+          break;
+        }
+      }
+    }
+    if(!bo.dead && bo.y >= GROUND_Y - 6){
       bo.dead = true; sfx.shot(); noise(bo.x, GROUND_Y - 10, 300, 'loud');
       state.fires.push({ x: bo.x - 44, y: GROUND_Y - 34, w: 88, h: 34, t: 3.2 });
     }
@@ -1649,6 +1687,11 @@ function updateMei(dt){
     }
     return;
   }
+  /* while Wyatt is on a ladder, Mei waits at the base instead of chasing
+     his follow target: the target sits on (or beyond) the fence/cliff he
+     is climbing, so she would press into the obstacle, hop against it and
+     shuffle left-right under him until the stuck-warp fired */
+  if(state.climb){ m.vx = 0; m.stuckT = 0; m.stuckX = m.x; m.vy += .55; if(m.vy > 14) m.vy = 14; collide(m, 0, m.vy); return; }
   if(m.mode === 'wait'){ m.vx = 0; m.stuckT = 0; collide(m, 0, (m.vy += .5)); return; }
   const dx = (p.x - 44 * p.dir) - m.x;
   const dist = Math.abs(dx);
@@ -1817,13 +1860,12 @@ function updateHUD(){
   liFill.style.width = state.listen + '%';
   invBox.innerHTML =
     'くず鉄 <b>' + state.inv.scrap + '</b>　布 <b>' + state.inv.cloth + '</b>　酒 <b>' + state.inv.alcohol + '</b><br>' +
-    'ナイフ <b>' + state.inv.knife + '</b>　火炎瓶 <b>' + state.inv.molotov + '</b>　包帯 <b>' + state.inv.bandage + '</b>　手製銃 <b>' + state.inv.gun + '</b><br>' +
+    'ナイフ <b>' + state.inv.knife + '</b>　火炎瓶 <b>' + state.inv.molotov + '</b>　包帯 <b>' + state.inv.bandage + '</b>　手製銃 <b>' + (state.inv.gun > 0 ? '×残り' + state.inv.gun : 'なし') + '</b><br>' +
     '鈍器の耐久 <b>' + (p.bat > 0 ? p.bat : 'なし') + '</b>　投擲物 <b>' + (state.throwable ? THROW_LABEL[state.throwable] : 'なし') + '</b><br>' +
-    '▶ 選択中：<b>' + ITEM_LABEL[state.selItem] + ' ×' + state.inv[state.selItem] + '</b>（十字キーで切替／RTで使う）';
+    '▶ 選択中：<b>' + (state.selItem === 'gun' ? '手製銃 ×残り' + state.inv.gun : ITEM_LABEL[state.selItem] + ' ×' + state.inv[state.selItem]) + '</b>（十字キーで切替／RTで使う）';
   document.getElementById('cntKnife').textContent = '×' + state.inv.knife;
   document.getElementById('cntMolotov').textContent = '×' + state.inv.molotov;
   document.getElementById('cntBandage').textContent = '×' + state.inv.bandage;
-  document.getElementById('cntGun').textContent = '×' + state.inv.gun;
   document.querySelectorAll('[data-craft]').forEach(b=>{ b.disabled = !canCraft(b.dataset.craft); });
   document.getElementById('meiTag').textContent = state.mei.task === 'gap' ? 'メイ：隙間をくぐり中…'
     : state.mei.task === 'fence' ? 'メイ：フェンスを越えている…'
@@ -1872,6 +1914,7 @@ function updateHUD(){
     if(!prompt && state.chapter === 3 && state.ladderDown && Math.abs((p.x + p.w/2) - CH3.cliff.x) < 60) prompt = 'Y／E：脚立を登る';
     if(!prompt && state.chapter === 4 && !state.ventOpen && Math.abs(p.x - CH4.vent.x) < 110) prompt = 'Y／E：メイに換気口を抜けてもらう';
     if(!prompt && state.throwable){ for(const pk of state.pickups){ if(!pk.taken && (pk.kind === 'bottle' || pk.kind === 'brick') && Math.abs(pk.x - p.x) < 36 && Math.abs(pk.y - (p.y-14)) < 46){ prompt = '投擲物は1つまで（今は' + THROW_LABEL[state.throwable] + 'を持っている）'; break; } } }
+    if(!prompt){ for(const pk of state.pickups){ if(!pk.taken && pk.kind === 'gun' && Math.abs(pk.x - p.x) < 36 && Math.abs(pk.y - (p.y-14)) < 46){ prompt = state.inv.gun > 0 ? '手製銃はすでに持っている（残り' + state.inv.gun + '発）' : 'Y／E：手製銃を拾う（' + GUN_SHOTS + '発まで）'; break; } } }
     if(!prompt){ for(const pk of state.pickups){ if(!pk.taken && pk.kind === 'bat' && p.bat <= 0 && Math.abs(pk.x - p.x) < 36 && Math.abs(pk.y - (p.y-14)) < 46){ prompt = 'Y／E：鈍器を拾う'; break; } } }
     if(!prompt && p.bat > 0 && state.enemies.some(e=>e.alive && Math.abs(e.x-p.x)<44 && Math.abs(e.y-p.y)<50)) prompt = 'X／J：鈍器で殴る';
   }
@@ -2123,7 +2166,7 @@ function watchEntities(){
       alivePrev.set(e, { hp:e.hp, x:e.x, y:e.y, dir:e.dir, type:e.type });
     } else if(prev){
       const knife = p.killAt !== undefined && Math.abs(state.time - p.killAt) < .12;
-      ghosts.push({ x:prev.x, y:prev.y, dir:prev.dir, type:prev.type, t:0,
+      ghosts.push({ x:prev.x, y:prev.y, dir:prev.dir, type:prev.type, t:0, burn: !!e.burned,
         kbDir: (prev.x + 13) < (p.x + p.w/2) ? -1 : 1, slide: knife ? 6 : 22, crumple: knife });
       for(let i = 0; i < 5; i++) state.parts.push({ x:prev.x + 13, y:prev.y - 30, vx:(Math.random()-.5)*3, vy:-1 - Math.random()*2, life:.35, c:'#c9452c' });
       alivePrev.delete(e);
@@ -2142,6 +2185,15 @@ function drawGhosts(){
       ? { body:'#6a705f', legs:'#4c5044', skin:'#c9d1a3', hair:'#8a9470', patch:'#59614c', shoe:'#3c4034' }
       : { body:'#7d8471', legs:'#5c6152', skin:'#b9c49a', hair:'#3c4433', patch:'#5f6650', shoe:'#454a3c' },
       g.dir, prog > (g.crumple ? .25 : .45), 0, { flinch:1, hunch: g.type !== 'guard' });
+    if(g.burn){ // molotov direct hit: the falling body is wreathed in flames
+      for(let i = 0; i < 5; i++){
+        const fx2 = g.x + ox + 1 + hash1(g.x * .7 + i * 13.3) * 19;
+        const fh = (9 + hash1(i * 7.1 + g.x) * 13) * (1 - prog * .5) + Math.sin(state.time * 30 + i * 2.4) * 3;
+        ctx.fillStyle = 'rgba(224,84,28,.85)'; ctx.fillRect(fx2, g.y - 4 - fh, 5, fh);
+        ctx.fillStyle = '#f28c2e'; ctx.fillRect(fx2 + 1, g.y - 4 - fh * .72, 3, fh * .72);
+        ctx.fillStyle = '#ffd76e'; ctx.fillRect(fx2 + 1.5, g.y - 4 - fh * .45, 2, fh * .45);
+      }
+    }
     ctx.restore();
   }
   ghosts = ghosts.filter(g => g.t < .55);
@@ -2154,6 +2206,7 @@ function drawPickupSil(pk){
   else if(pk.kind === 'cloth'){ ctx.fillRect(pk.x, pk.y + bob, 14, 10); ctx.fillRect(pk.x, pk.y + 4 + bob, 14, 3); }
   else if(pk.kind === 'alcohol'){ ctx.fillRect(pk.x + 3, pk.y + bob, 8, 13); ctx.fillRect(pk.x + 5, pk.y - 3 + bob, 4, 4); }
   else if(pk.kind === 'bat'){ ctx.save(); ctx.translate(pk.x + 8, pk.y + 6 + bob); ctx.rotate(-.6); ctx.fillRect(-3, -12, 6, 24); ctx.restore(); }
+  else if(pk.kind === 'gun'){ ctx.fillRect(pk.x, pk.y + 4 + bob, 16, 5); ctx.fillRect(pk.x + 13, pk.y + 2 + bob, 3, 3); ctx.fillRect(pk.x + 2, pk.y + 8 + bob, 5, 6); }
   else if(pk.kind === 'bottle'){ ctx.fillRect(pk.x + 3, pk.y + bob, 8, 13); ctx.fillRect(pk.x + 5, pk.y - 3 + bob, 4, 4); }
   else if(pk.kind === 'brick'){ ctx.fillRect(pk.x, pk.y + 3 + bob, 15, 9); ctx.fillRect(pk.x + 7, pk.y + 3 + bob, 2, 4); }
 }
@@ -2721,6 +2774,7 @@ function draw(){
     if(pk.kind === 'cloth'){ ctx.fillStyle = '#e8e2d2'; ctx.fillRect(pk.x, pk.y + bob, 14, 10); ctx.fillStyle = '#c9bfa5'; ctx.fillRect(pk.x, pk.y + 4 + bob, 14, 3); }
     if(pk.kind === 'alcohol'){ ctx.fillStyle = '#5d8a4c'; ctx.fillRect(pk.x + 3, pk.y + bob, 8, 13); ctx.fillStyle = '#3f6633'; ctx.fillRect(pk.x + 5, pk.y - 3 + bob, 4, 4); }
     if(pk.kind === 'bat'){ ctx.fillStyle = '#a9804f'; ctx.save(); ctx.translate(pk.x + 8, pk.y + 6 + bob); ctx.rotate(-.6); ctx.fillRect(-3, -12, 6, 24); ctx.restore(); }
+    if(pk.kind === 'gun'){ ctx.fillStyle = '#3c4147'; ctx.fillRect(pk.x, pk.y + 4 + bob, 16, 5); ctx.fillStyle = '#23272b'; ctx.fillRect(pk.x + 13, pk.y + 2 + bob, 3, 3); ctx.fillStyle = '#8a6b45'; ctx.fillRect(pk.x + 2, pk.y + 8 + bob, 5, 6); }
     if(pk.kind === 'bottle'){ ctx.fillStyle = '#9fd4e0'; ctx.fillRect(pk.x + 3, pk.y + bob, 8, 13); ctx.fillStyle = '#6fa8ba'; ctx.fillRect(pk.x + 5, pk.y - 3 + bob, 4, 4); ctx.fillStyle = 'rgba(255,255,255,.65)'; ctx.fillRect(pk.x + 4, pk.y + 2 + bob, 2, 8); }
     if(pk.kind === 'brick'){ ctx.fillStyle = '#9c4a38'; ctx.fillRect(pk.x, pk.y + 3 + bob, 15, 9); ctx.fillStyle = '#7c3828'; ctx.fillRect(pk.x, pk.y + 7 + bob, 15, 2); ctx.fillRect(pk.x + 7, pk.y + 3 + bob, 2, 4); }
   }
@@ -3080,6 +3134,20 @@ function drawMei(){
     { moving, run: moving && Math.abs(m.vx) > 2,
       air: (!crawling && !m.onGround) ? (m.vy < -2 ? 'rise' : 'fall') : null,
       land: !crawling && rs.landT > 0 && m.onGround });
+  // small pink backpack — on her back (opposite the facing side) when
+  // upright; while crawling it rides flat on top of the torso. Drawn in the
+  // silhouette colour too, so listen mode keeps the pack's bump.
+  if(crawling){
+    const px = m.x + (m.dir > 0 ? 0 : m.w - 9);
+    ctx.fillStyle = SILHOUETTE || '#e87fa8'; ctx.fillRect(px, m.y - 19, 9, 6);
+    ctx.fillStyle = SILHOUETTE || '#f6b8d0'; ctx.fillRect(px, m.y - 19, 9, 2.5);
+    ctx.fillStyle = SILHOUETTE || '#c95d88'; ctx.fillRect(px + 3, m.y - 13.5, 3, 1.8);
+  } else {
+    const bx = m.x + (m.dir > 0 ? -3 : m.w - 4);
+    ctx.fillStyle = SILHOUETTE || '#e87fa8'; ctx.fillRect(bx, m.y - 33, 7, 15);
+    ctx.fillStyle = SILHOUETTE || '#f6b8d0'; ctx.fillRect(bx, m.y - 33, 7, 5);
+    ctx.fillStyle = SILHOUETTE || '#c95d88'; ctx.fillRect(bx + (m.dir > 0 ? 0 : 5), m.y - 24, 2, 6);
+  }
   ctx.fillStyle = SILHOUETTE || '#d84f6e'; ctx.fillRect(m.x + 7, m.y - (crawling?30:42) - 3, 8, 5); // ribbon
   if(!SILHOUETTE){
     ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.font = '10px sans-serif';
