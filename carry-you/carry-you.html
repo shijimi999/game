@@ -194,7 +194,7 @@
                   <tr><td>LT(6)長押し</td><td>狙う（火炎瓶・投擲物は軌道、手製銃は射線を表示）</td></tr>
                   <tr><td>RT(7)</td><td>選択中アイテムを使う（包帯は長押しで回復）。投擲物を持っているときはそちらを投げる</td></tr>
                   <tr><td>投擲物</td><td>空き瓶・レンガは拾うと1つまで保持。着地点で大きな音が鳴り、音特化型や見張りを釣れる</td></tr>
-                  <tr><td>十字キー</td><td>使うアイテムの切替（火炎瓶／手製銃／包帯）</td></tr>
+                  <tr><td>十字キー</td><td>使うアイテムの切替（ナイフ／火炎瓶／手製銃／包帯）</td></tr>
                   <tr><td>Back(8)</td><td>クラフト画面の開閉（中はスティック／十字で選択、A長押しで作成）</td></tr>
                   <tr><td>Start(9)</td><td>ポーズ（チェックポイントからやり直し含む）</td></tr>
                 </table>
@@ -1003,12 +1003,21 @@ function swingBat(){
     }
   }
 }
+/* true when Wyatt is on the guard's blind side. e.dir is the facing /
+   vision direction (seePlayer returns 0 for a player behind the guard),
+   so "behind" is the side OPPOSITE to where e.dir points. This test used
+   to be inverted — grabs only registered from the front, inside the
+   vision cone where detect races past the limit — so the knife stealth
+   kill could never be set up from behind at all. */
+function isBehind(p, e){
+  return (p.x < e.x && e.dir > 0) || (p.x > e.x && e.dir < 0) || Math.abs(p.x - e.x) < 20;
+}
 /* grab an unaware guard from behind (Y), then finish with the knife (X) */
 function tryGrab(){
   const p = state.player;
   for(const e of state.enemies){
     if(!e.alive || e.type !== 'guard') continue;
-    const behind = (p.x < e.x && e.dir < 0) || (p.x > e.x && e.dir > 0) || Math.abs(p.x - e.x) < 20;
+    const behind = isBehind(p, e);
     if(Math.abs(p.x - e.x) < 42 && Math.abs(p.y - e.y) < 40 && e.detect < 55 && behind){
       p.grabbing = e; p.grabT = 4; e.state = 'grabbed';
       setMsg('掴んだ！ X／Jでナイフキル（放っておくと振りほどかれる）', 2.4);
@@ -1033,8 +1042,8 @@ function releaseGrab(alert){
   if(e.alive){ e.state = alert ? 'suspicious' : 'patrol'; if(alert) e.detect = Math.max(e.detect, 80); }
 }
 /* item selection (d-pad) */
-const ITEM_ORDER = ['molotov','gun','bandage'];
-const ITEM_LABEL = { molotov:'火炎瓶', gun:'手製銃', bandage:'包帯' };
+const ITEM_ORDER = ['knife','molotov','gun','bandage'];
+const ITEM_LABEL = { knife:'ナイフ', molotov:'火炎瓶', gun:'手製銃', bandage:'包帯' };
 /* throwable (bottle / brick): carried separately from craft items, max 1.
    LT aims, RT throws; it lands with a loud noise that draws the sound-type
    infected and makes human guards turn and grow suspicious. */
@@ -1053,7 +1062,8 @@ function cycleItem(d){
   state.selItem = ITEM_ORDER[i];
   setMsg('選択中アイテム：' + (state.selItem === 'gun'
     ? '手製銃（残り' + state.inv.gun + '発）'
-    : ITEM_LABEL[state.selItem] + ' ×' + state.inv[state.selItem]) + '（RTで使う）', 1.4);
+    : ITEM_LABEL[state.selItem] + ' ×' + state.inv[state.selItem])
+    + (state.selItem === 'knife' ? '（背後で掴んで X／J で使う）' : '（RTで使う）'), 1.4);
 }
 /* craft menu (Back) */
 const CRAFT_ORDER = ['knife','molotov','bandage'];
@@ -1219,6 +1229,7 @@ function update(dt){
     if(state.throwable) throwThrowable();   // a carried throwable takes priority over the selected item
     else if(state.selItem === 'molotov') throwMolotov();
     else if(state.selItem === 'gun') fireGun();
+    else if(state.selItem === 'knife') setMsg(state.inv.knife > 0 ? 'ナイフは単体では使えない ― 敵の背後で Y／E で掴んでから X／J' : 'ナイフがない ― クラフト（1キー／Back）で作れる', 1.6);
   }
   if(state.selItem === 'bandage' && padBtn(7)){
     state.healT += dt;
@@ -1862,7 +1873,7 @@ function updateHUD(){
     'くず鉄 <b>' + state.inv.scrap + '</b>　布 <b>' + state.inv.cloth + '</b>　酒 <b>' + state.inv.alcohol + '</b><br>' +
     'ナイフ <b>' + state.inv.knife + '</b>　火炎瓶 <b>' + state.inv.molotov + '</b>　包帯 <b>' + state.inv.bandage + '</b>　手製銃 <b>' + (state.inv.gun > 0 ? '×残り' + state.inv.gun : 'なし') + '</b><br>' +
     '鈍器の耐久 <b>' + (p.bat > 0 ? p.bat : 'なし') + '</b>　投擲物 <b>' + (state.throwable ? THROW_LABEL[state.throwable] : 'なし') + '</b><br>' +
-    '▶ 選択中：<b>' + (state.selItem === 'gun' ? '手製銃 ×残り' + state.inv.gun : ITEM_LABEL[state.selItem] + ' ×' + state.inv[state.selItem]) + '</b>（十字キーで切替／RTで使う）';
+    '▶ 選択中：<b>' + (state.selItem === 'gun' ? '手製銃 ×残り' + state.inv.gun : ITEM_LABEL[state.selItem] + ' ×' + state.inv[state.selItem]) + '</b>' + (state.selItem === 'knife' ? '（十字キーで切替／背後で掴んで X で使う）' : '（十字キーで切替／RTで使う）');
   document.getElementById('cntKnife').textContent = '×' + state.inv.knife;
   document.getElementById('cntMolotov').textContent = '×' + state.inv.molotov;
   document.getElementById('cntBandage').textContent = '×' + state.inv.bandage;
@@ -1902,10 +1913,11 @@ function updateHUD(){
   else if(state.climb) prompt = 'はしごを登っている ― ↑↓：登る／降りる　A／Space：離れる';
   else if(state.aiming && state.throwable) prompt = '狙っている ― RTで' + THROW_LABEL[state.throwable] + 'を投げる（着地点の音で敵を釣れる）';
   else if(state.selItem === 'bandage' && state.healT > 0) prompt = '包帯で手当て中… RTを押し続ける';
-  else if(state.aiming && state.selItem !== 'bandage' && state.inv[state.selItem] > 0) prompt = '狙っている ― RTで' + (state.selItem === 'molotov' ? '投げる' : '撃つ');
+  else if(state.aiming && state.selItem === 'knife' && state.inv.knife > 0) prompt = 'ナイフは狙って使う物じゃない ― 背後で掴んでから X で仕留める';
+  else if(state.aiming && (state.selItem === 'molotov' || state.selItem === 'gun') && state.inv[state.selItem] > 0) prompt = '狙っている ― RTで' + (state.selItem === 'molotov' ? '投げる' : '撃つ');
   else {
     for(const e of state.enemies){
-      if(e.alive && e.type === 'guard' && Math.abs(e.x - p.x) < 42 && e.detect < 55){ prompt = 'Y／E：背後から掴む → X／Jでナイフキル'; break; }
+      if(e.alive && e.type === 'guard' && Math.abs(e.x - p.x) < 42 && e.detect < 55 && isBehind(p, e)){ prompt = 'Y／E：背後から掴む → X／Jでナイフキル'; break; }
     }
     if(!prompt && state.chapter === 1 && !state.gateOpen && Math.abs(p.x - GAP.gateX) < 110) prompt = 'Y／E：メイに隙間を通ってもらう';
     if(!prompt && state.chapter === 2 && !state.ladderDown && Math.abs(p.x - CH2.fence.x) < 110) prompt = 'Y／E：メイにフェンスを越えてもらう';
