@@ -23,6 +23,27 @@
         box-shadow:0 10px 34px rgba(0,0,0,.55); outline:none; }
       /* プレイ中はタッチのスクロール／ズームを無効化（メニューのスクロールは妨げない） */
       #stage:not(.menu){ touch-action:none; }
+      /* ---------- フルスクリーン（CARRY YOUと同仕様：表示のみ・内部解像度とゲームロジックは不変） ---------- */
+      .fs-btn{ position:absolute; top:136px; right:10px; z-index:20; min-height:2rem;
+        background:rgba(10,12,14,.78); color:var(--ink); border:1px solid var(--line);
+        border-radius:6px; padding:5px 11px; font-size:12.5px; font-weight:700; letter-spacing:.04em; }
+      .fs-btn:hover{ border-color:var(--accent); background:rgba(10,12,14,.92); }
+      /* メニュー表示中はステージがパネルの高さに伸びるため、ボタンは右下隅へ逃がす（パネル本文に重ならない位置） */
+      #stage.menu .fs-btn{ top:auto; bottom:10px; }
+      @media (max-width:700px){ .fs-btn{ font-size:11px; padding:4px 8px; } }
+      #stage:fullscreen{ width:100%; height:100%; border:none; border-radius:0; background:#000; box-shadow:none; }
+      #stage:-webkit-full-screen{ width:100%; height:100%; border:none; border-radius:0; background:#000; box-shadow:none; }
+      /* フルスクリーン時はキャンバス＋HUD＋画面レイヤーを16:9のまま黒帯の中央に収める */
+      #stage:fullscreen canvas#game, #stage:fullscreen #hud, #stage:fullscreen #dmgflash, #stage:fullscreen #lowhp,
+      #stage:fullscreen #touchUI, #stage:fullscreen .screen{
+        position:absolute; width:min(100vw,177.78vh); height:min(56.25vw,100vh);
+        left:50%; top:50%; right:auto; bottom:auto; transform:translate(-50%,-50%); }
+      #stage:-webkit-full-screen canvas#game, #stage:-webkit-full-screen #hud, #stage:-webkit-full-screen #dmgflash, #stage:-webkit-full-screen #lowhp,
+      #stage:-webkit-full-screen #touchUI, #stage:-webkit-full-screen .screen{
+        position:absolute; width:min(100vw,177.78vh); height:min(56.25vw,100vh);
+        left:50%; top:50%; right:auto; bottom:auto; transform:translate(-50%,-50%); }
+      /* メニュー表示中（.menu）の .screen は通常 position:relative だが、フルスクリーン時はレターボックス側を優先する */
+      #stage.menu:fullscreen .screen, #stage.menu:-webkit-full-screen .screen{ position:absolute; }
       /* ---------- タッチ操作 ---------- */
       #touchUI{ position:absolute; inset:0; z-index:6; pointer-events:none; }
       .stickBase{ position:absolute; width:96px; height:96px; border:2px solid rgba(255,255,255,.35);
@@ -194,6 +215,8 @@
           <div id="hint" class="hidden"></div>
         </div>
 
+        <button class="fs-btn btnFsToggle" id="fsBtn" type="button" aria-label="フルスクリーン切替">⛶ フルスクリーン</button>
+
         <div class="screen" id="scr-title">
           <div class="panel">
             <h1>COVER<span class="en">LINE</span> ― 奪還作戦 ―</h1>
@@ -217,6 +240,7 @@
                 <tr><td class="k">Q</td><td>タレット設置</td></tr>
                 <tr><td class="k">F</td><td>アーマーキット（回復）</td></tr>
                 <tr><td class="k">M</td><td>環境音 ON／OFF（風・遠くの銃声・地響き）</td></tr>
+                <tr><td class="k">Alt + Enter</td><td>フルスクリーン切替（画面右のボタンでも切替可・Escで解除）</td></tr>
                 <tr><td class="k">Esc</td><td>ポーズ</td></tr>
               </table>
               <table class="ctrl">
@@ -236,6 +260,7 @@
             </div>
             <div id="padstatusTitle">🎮 コントローラー未接続（キーボード/マウス可）</div>
             <div style="margin-top:8px;"><button type="button" class="ghostbtn btnSndToggle" style="padding:7px 14px; font-size:13px;">🔊 環境音：ON（風・遠くの銃声・地響き）</button></div>
+            <div style="margin-top:8px;"><button type="button" class="ghostbtn btnFsToggle" style="padding:7px 14px; font-size:13px;">⛶ フルスクリーン</button></div>
             <div class="padDiag">【コントローラー診断】</div>
             <div class="padBlockHelp hidden">
               <b>この表示環境では、コントローラー機能がブロックされています。</b><br>
@@ -301,6 +326,7 @@
             <div class="btnrow">
               <button class="bigbtn" id="btnResume">再開する</button>
               <button class="ghostbtn btnSndToggle">🔊 環境音：ON</button>
+              <button class="ghostbtn btnFsToggle">⛶ フルスクリーン</button>
               <button class="ghostbtn" id="btnQuitMission">ミッションを中断して選択に戻る</button>
             </div>
           </div>
@@ -329,6 +355,7 @@
         <b>タレット：</b><kbd>Q</kbd> / <span class="pad">LB</span>。 <b>拾う：</b>武器の近くで <kbd>E</kbd> / <span class="pad">X</span> 長押し。今の武器との強さ比較が出る。アーマーキットは触れれば自動で拾う。
         <b>タッチ：</b>左半分ドラッグ＝移動、右半分ドラッグ＝照準・射撃、ボタンでカバー／ロール／タレット等。
         <b>環境音：</b><kbd>M</kbd> で ON／OFF。風と街の低い残響に混じって、遠くの銃声や地響きが時々聞こえる（戦闘の気配は音だけの演出で、実際の敵とは連動しない）。
+        <b>フルスクリーン：</b>画面右の ⛶ ボタン / <kbd>Alt</kbd>+<kbd>Enter</kbd> で切替、<kbd>Esc</kbd> で解除。
       </div>
     </div>
 
@@ -2698,6 +2725,40 @@ function renderMissionList(){
   });
 }
 document.querySelectorAll('.btnSndToggle').forEach(b=>{ b.addEventListener('click', ()=>{ try{ toggleAmbMute(); }catch(err){} }); });
+/* ---------- フルスクリーン（CARRY YOUと同仕様：表示のみ。内部解像度・当たり判定・ゲームロジックは触らない） ----------
+   ステージ（キャンバス＋HUD＋画面レイヤー）ごとフルスクリーンにし、CSS側で16:9のまま黒帯中央に収める。
+   切替：画面右のボタン／タイトル・ポーズ内のボタン／Alt+Enter（Fはアーマーキットで使用中のため、
+   CARRY YOUのFキーの代わりにこちらを使う）。Escでの解除はブラウザ標準。 */
+function fsActive(){ return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+function updateFsBtns(){
+  const label = fsActive() ? '⛶ フルスクリーン解除' : '⛶ フルスクリーン';
+  document.querySelectorAll('.btnFsToggle').forEach(b=>{ b.textContent = label; });
+}
+function toggleFullscreen(){
+  try{
+    if(fsActive()){
+      const ex = document.exitFullscreen || document.webkitExitFullscreen;
+      if(ex) ex.call(document);
+    } else {
+      const el = document.getElementById('stage');
+      const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+      if(req){ const r = req.call(el); if(r && r.catch) r.catch(()=>{}); }
+    }
+  }catch(e){}
+  setTimeout(()=>{ updateFsBtns(); try{ document.getElementById('stage').focus({ preventScroll:true }); }catch(e){} }, 60);
+}
+document.addEventListener('fullscreenchange', updateFsBtns);
+document.addEventListener('webkitfullscreenchange', updateFsBtns);
+document.querySelectorAll('.btnFsToggle').forEach(b=>{ b.addEventListener('click', ()=>{ try{ toggleFullscreen(); }catch(err){} }); });
+addEventListener('keydown', e=>{
+  if(e.altKey && (e.code === 'Enter' || e.key === 'Enter') && !e.repeat){
+    e.preventDefault();
+    e.stopPropagation();
+    try{ audio(); startAmbient(); }catch(err){}
+    toggleFullscreen();
+  }
+}, true);
+try{ updateFsBtns(); }catch(err){}
 (function(){ const s=document.getElementById('sndstatus'); if(s) s.addEventListener('click', ()=>{ try{ toggleAmbMute(); }catch(err){} }); })();
 try{ updateSndUI(); }catch(err){}
 document.getElementById('btnNext').addEventListener('click', ()=>startMission(Math.min(MISSIONS.length-1, game.missionIdx+1)));
