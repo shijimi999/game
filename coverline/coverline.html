@@ -83,6 +83,10 @@
         background:rgba(10,12,14,.7); border:1px solid var(--line); padding:5px 9px; pointer-events:auto; cursor:pointer; }
       #sndstatus.on{ color:var(--ink); }
       #sndstatus.off{ color:var(--faint); }
+      #bgmstatus{ position:absolute; top:70px; left:10px; font-size:11px; color:var(--dim);
+        background:rgba(10,12,14,.7); border:1px solid var(--line); padding:5px 9px; pointer-events:auto; cursor:pointer; }
+      #bgmstatus.on{ color:var(--ink); }
+      #bgmstatus.off{ color:var(--faint); }
       #padstatusTitle{ font-size:12px; color:var(--dim); background:var(--panel2); border:1px solid var(--line);
         padding:6px 10px; margin-top:12px; font-family:ui-monospace,Menlo,Consolas,monospace; }
       #padstatusTitle.on{ color:var(--ok); border-color:#2c4a34; }
@@ -191,6 +195,7 @@
         <div id="hud" class="hidden">
           <div id="padstatus">🎮 コントローラー未接続</div>
           <div id="sndstatus" class="on" title="クリック／Mキーで環境音のON・OFF">🔊 環境音 ON（Mで切替）</div>
+          <div id="bgmstatus" class="on" title="クリック／NキーでBGMのON・OFF">🎵 BGM ON（Nで切替）</div>
           <div id="objective">—</div>
           <div id="mmapWrap"><canvas id="minimap" width="144" height="108"></canvas><div class="cap">TACTICAL MAP</div></div>
           <div id="bossWrap" class="hidden"><div class="bn">⚠ 重装ターゲット</div><div id="bossBarOuter"><div id="bossBar"></div></div></div>
@@ -240,6 +245,7 @@
                 <tr><td class="k">Q</td><td>タレット設置</td></tr>
                 <tr><td class="k">F</td><td>アーマーキット（回復）</td></tr>
                 <tr><td class="k">M</td><td>環境音 ON／OFF（風・遠くの銃声・地響き）</td></tr>
+                <tr><td class="k">N</td><td>BGM ON／OFF（ダークな電子パルス。戦闘が近づくと自動で激しくなる）</td></tr>
                 <tr><td class="k">Alt + Enter</td><td>フルスクリーン切替（画面右のボタンでも切替可・Escで解除）</td></tr>
                 <tr><td class="k">Esc</td><td>ポーズ</td></tr>
               </table>
@@ -260,6 +266,7 @@
             </div>
             <div id="padstatusTitle">🎮 コントローラー未接続（キーボード/マウス可）</div>
             <div style="margin-top:8px;"><button type="button" class="ghostbtn btnSndToggle" style="padding:7px 14px; font-size:13px;">🔊 環境音：ON（風・遠くの銃声・地響き）</button></div>
+            <div style="margin-top:8px;"><button type="button" class="ghostbtn btnBgmToggle" style="padding:7px 14px; font-size:13px;">🎵 BGM：ON（ダークな電子パルス）</button></div>
             <div style="margin-top:8px;"><button type="button" class="ghostbtn btnFsToggle" style="padding:7px 14px; font-size:13px;">⛶ フルスクリーン</button></div>
             <div class="padDiag">【コントローラー診断】</div>
             <div class="padBlockHelp hidden">
@@ -326,6 +333,7 @@
             <div class="btnrow">
               <button class="bigbtn" id="btnResume">再開する</button>
               <button class="ghostbtn btnSndToggle">🔊 環境音：ON</button>
+              <button class="ghostbtn btnBgmToggle">🎵 BGM：ON</button>
               <button class="ghostbtn btnFsToggle">⛶ フルスクリーン</button>
               <button class="ghostbtn" id="btnQuitMission">ミッションを中断して選択に戻る</button>
             </div>
@@ -355,6 +363,7 @@
         <b>タレット：</b><kbd>Q</kbd> / <span class="pad">LB</span>。 <b>拾う：</b>武器の近くで <kbd>E</kbd> / <span class="pad">X</span> 長押し。今の武器との強さ比較が出る。アーマーキットは触れれば自動で拾う。
         <b>タッチ：</b>左半分ドラッグ＝移動、右半分ドラッグ＝照準・射撃、ボタンでカバー／ロール／タレット等。
         <b>環境音：</b><kbd>M</kbd> で ON／OFF。風と街の低い残響に混じって、遠くの銃声や地響きが時々聞こえる（戦闘の気配は音だけの演出で、実際の敵とは連動しない）。
+        <b>BGM：</b><kbd>N</kbd> で ON／OFF。ダークな電子パルスのループで、敵が近づいたり撃ち合いが始まるとリズムと低音が乗って戦闘版に切り替わり、静まると数秒かけて探索版へ戻る。環境音とは別々に切り替えられる。
         <b>フルスクリーン：</b>画面右の ⛶ ボタン / <kbd>Alt</kbd>+<kbd>Enter</kbd> で切替、<kbd>Esc</kbd> で解除。
       </div>
     </div>
@@ -571,6 +580,189 @@ function ambBoom(){
   if(big){ try{ if(game.state==="playing") game.shake=Math.min(1.1,(game.shake||0)+0.55); }catch(e){} }
 }
 
+/* ---------- BGM（ブラウザ内合成・ダークな電子パルス／Division寄り） ----------
+   環境音とは独立した音楽レイヤーで、音声ファイルは使わない。2層構成：
+     ・探索レイヤー：低い電子パルス（8分音符）＋暗いパッドが常時流れる薄いループ
+     ・戦闘レイヤー：キック／16分ベース／ハット／スネアが重なる緊張版
+   戦闘判定（近くの敵・敵の発砲・自分の発砲・被弾）で戦闘レイヤーが自動で
+   クロスフェードインし、気配が消えてから数秒かけてゆっくり探索側へ戻る。
+   音量・ミュートは環境音と別系統（Nキー／画面左上・タイトル・ポーズのボタン）。
+   鳴り始めは環境音と同じく、最初のクリック／キー操作以降（AudioContext の制約）。 */
+const BGM_BPM = 92;
+const BGM_STEP = 60 / BGM_BPM / 4;                 // 16分音符の長さ
+const BGM_CHORDS = [                               // Am → F → Dm → E（暗いマイナーの循環）
+  { root:33, tones:[45,48,52] },
+  { root:29, tones:[45,48,53] },
+  { root:38, tones:[45,50,53] },
+  { root:28, tones:[44,47,52] }
+];
+const BGM_BASS_PAT = [0,0,12,0, 0,0,12,0, 0,0,12,0, 0,7,12,0];   // ルート／オクターブ／5度だけの無骨な反復
+let bgmNodes=null, bgmStarted=false, bgmMuted=false;
+let bgmStepIdx=0, bgmNextT=0, bgmTimer=null, bgmCombat=0, bgmHold=0;
+function midiHz(m){ return 440*Math.pow(2,(m-69)/12); }
+function startBGM(){
+  const ac=audio(); if(!ac) return;
+  if(bgmStarted){ updateBgmGain(); return; }
+  try{
+    const master=ac.createGain(); master.gain.value = bgmMuted?0:0.55;
+    master.connect(ac.destination);
+    const explore=ac.createGain(); explore.gain.value=1; explore.connect(master);
+    const combat=ac.createGain(); combat.gain.value=0; combat.connect(master);
+    bgmNodes={ master, explore, combat };
+    bgmStepIdx=0; bgmNextT=ac.currentTime+0.08;
+    if(bgmTimer) clearInterval(bgmTimer);
+    bgmTimer=setInterval(bgmScheduler, 90);
+    bgmStarted=true;
+    updateBgmGain();
+  }catch(e){ bgmStarted=false; bgmNodes=null; }
+}
+function bgmScheduler(){
+  const ac=AC; if(!ac||!bgmNodes) return;
+  if(ac.state!=="running"){ bgmNextT=Math.max(bgmNextT, ac.currentTime+0.05); return; }
+  if(bgmNextT < ac.currentTime-0.3) bgmNextT = ac.currentTime+0.05;   // タブ復帰時などの遅れは切り捨てて再同期
+  while(bgmNextT < ac.currentTime+0.22){                              // 先読みスケジューリング
+    try{ scheduleBgmStep(bgmStepIdx, bgmNextT); }catch(e){}
+    bgmNextT += BGM_STEP;
+    bgmStepIdx++;
+  }
+}
+function bgmEnvGain(t, vol, peak, dec){
+  const g=AC.createGain();
+  g.gain.setValueAtTime(0.0008,t);
+  g.gain.exponentialRampToValueAtTime(Math.max(0.001,vol), t+peak);
+  g.gain.exponentialRampToValueAtTime(0.0008, t+dec);
+  return g;
+}
+function bgmPulse(t, midi, vol){
+  const ac=AC, dest=bgmNodes.explore;
+  const o=ac.createOscillator(); o.type="sawtooth"; o.frequency.value=midiHz(midi);
+  const f=ac.createBiquadFilter(); f.type="lowpass"; f.Q.value=1.2;
+  f.frequency.setValueAtTime(760,t); f.frequency.exponentialRampToValueAtTime(190,t+BGM_STEP*1.7);
+  const g=bgmEnvGain(t, vol, 0.008, BGM_STEP*1.8);
+  o.connect(f); f.connect(g); g.connect(dest); o.start(t); o.stop(t+BGM_STEP*2);
+  const sub=ac.createOscillator(); sub.type="sine"; sub.frequency.value=midiHz(midi-12);
+  const sg=bgmEnvGain(t, vol*0.8, 0.008, BGM_STEP*1.6);
+  sub.connect(sg); sg.connect(dest); sub.start(t); sub.stop(t+BGM_STEP*2);
+}
+function bgmPad(t, tones, dur){
+  const ac=AC, dest=bgmNodes.explore;
+  const f=ac.createBiquadFilter(); f.type="lowpass"; f.frequency.value=620; f.Q.value=0.4;
+  const g=ac.createGain();
+  g.gain.setValueAtTime(0.0008,t);
+  g.gain.linearRampToValueAtTime(0.030, t+dur*0.3);
+  g.gain.setValueAtTime(0.030, t+dur*0.72);
+  g.gain.linearRampToValueAtTime(0.0008, t+dur+0.06);
+  f.connect(g); g.connect(dest);
+  for(const m of tones){
+    for(const det of [-7,7]){
+      const o=ac.createOscillator(); o.type="sawtooth"; o.frequency.value=midiHz(m); o.detune.value=det;
+      o.connect(f); o.start(t); o.stop(t+dur+0.1);
+    }
+  }
+}
+function bgmKick(t){
+  const ac=AC, dest=bgmNodes.combat;
+  const o=ac.createOscillator(); o.type="sine";
+  o.frequency.setValueAtTime(128,t); o.frequency.exponentialRampToValueAtTime(38,t+0.10);
+  const g=bgmEnvGain(t, 0.40, 0.004, 0.16);
+  o.connect(g); g.connect(dest); o.start(t); o.stop(t+0.2);
+}
+function bgmBass(t, midi){
+  const ac=AC, dest=bgmNodes.combat;
+  const o=ac.createOscillator(); o.type="sawtooth"; o.frequency.value=midiHz(midi);
+  const f=ac.createBiquadFilter(); f.type="lowpass"; f.Q.value=2.0;
+  f.frequency.setValueAtTime(880,t); f.frequency.exponentialRampToValueAtTime(160,t+BGM_STEP*0.9);
+  const g=bgmEnvGain(t, 0.13, 0.006, BGM_STEP*0.95);
+  o.connect(f); f.connect(g); g.connect(dest); o.start(t); o.stop(t+BGM_STEP);
+}
+function bgmHat(t, vol, open){
+  const ac=AC, dest=bgmNodes.combat;
+  const src=ac.createBufferSource(); src.buffer=getNoiseBuf(ac); src.playbackRate.value=1.6;
+  const f=ac.createBiquadFilter(); f.type="highpass"; f.frequency.value=6800;
+  const g=bgmEnvGain(t, vol, 0.003, open?0.09:0.035);
+  src.connect(f); f.connect(g); g.connect(dest);
+  src.start(t, Math.random()*1.4, 0.12); src.stop(t+0.14);
+}
+function bgmSnare(t){
+  const ac=AC, dest=bgmNodes.combat;
+  const src=ac.createBufferSource(); src.buffer=getNoiseBuf(ac); src.playbackRate.value=1.1;
+  const f=ac.createBiquadFilter(); f.type="bandpass"; f.frequency.value=1900; f.Q.value=0.7;
+  const g=bgmEnvGain(t, 0.11, 0.003, 0.10);
+  src.connect(f); f.connect(g); g.connect(dest);
+  src.start(t, Math.random()*1.2, 0.14); src.stop(t+0.16);
+  const o=ac.createOscillator(); o.type="triangle"; o.frequency.value=186;
+  const og=bgmEnvGain(t, 0.05, 0.003, 0.05);
+  o.connect(og); og.connect(dest); o.start(t); o.stop(t+0.07);
+}
+function scheduleBgmStep(step, t){
+  if(!bgmNodes) return;
+  const bar = Math.floor(step/16) % BGM_CHORDS.length;
+  const s16 = step % 16;
+  const ch = BGM_CHORDS[bar];
+  /* --- 探索レイヤー --- */
+  if(s16===0) bgmPad(t, ch.tones, BGM_STEP*16);
+  if(s16%2===0) bgmPulse(t, ch.root+12, s16%8===0?0.11:0.085);
+  if(s16===14 && bar%2===1){   // 2小節に1回だけ、遠くで光るような高い単音
+    const o=AC.createOscillator(); o.type="sine"; o.frequency.value=midiHz(ch.tones[2]+12);
+    const g=bgmEnvGain(t, 0.028, 0.01, BGM_STEP*3.2);
+    o.connect(g); g.connect(bgmNodes.explore); o.start(t); o.stop(t+BGM_STEP*3.4);
+  }
+  /* --- 戦闘レイヤー（実際の音量は tickBgm のクロスフェードが決める） --- */
+  if(s16%4===0) bgmKick(t);
+  bgmBass(t, ch.root+12+BGM_BASS_PAT[s16]);
+  if(s16%4===2) bgmHat(t, 0.055, true);
+  else if(s16%2===1) bgmHat(t, 0.020, false);
+  if(s16===4||s16===12) bgmSnare(t);
+}
+/* 戦闘の気配を毎フレーム見て、戦闘レイヤーの混ざり具合を滑らかに動かす */
+function tickBgm(dt){
+  let target=0;
+  if(game.state==="playing" && game.player){
+    const p=game.player;
+    let hot=false;
+    for(const e of game.enemies){
+      if(e.dead) continue;
+      const d=Math.hypot(e.x-p.x, e.y-p.y);
+      if(d<330 || e.muzzleT>0){ hot=true; break; }
+      if(game.zoneActive && d<460) hot=true;
+    }
+    if(p.muzzleT>0 || p.hurtT>0.12) hot=true;
+    if(hot) bgmHold=4.5;                 // 気配が消えてもしばらく戦闘版を保つ
+  }
+  if(bgmHold>0){ bgmHold-=dt; target=1; }
+  const rate = target>bgmCombat ? 2.4 : 0.5;      // 入りは速く、抜けはゆっくり
+  bgmCombat = clamp(bgmCombat + clamp(target-bgmCombat, -rate*dt, rate*dt), 0, 1);
+  if(bgmNodes && AC){
+    try{
+      bgmNodes.combat.gain.setTargetAtTime(bgmCombat*0.95, AC.currentTime, 0.10);
+      bgmNodes.explore.gain.setTargetAtTime(1-bgmCombat*0.22, AC.currentTime, 0.25);
+    }catch(e){}
+  }
+}
+function updateBgmGain(){
+  if(bgmNodes && AC){
+    let st="title"; try{ st=game.state; }catch(e){}
+    const target = bgmMuted?0 : (st==="paused"?0.38 : st==="playing"?0.85 : 0.55);
+    try{ bgmNodes.master.gain.setTargetAtTime(target, AC.currentTime, 0.4); }catch(e){}
+  }
+  updateBgmUI();
+}
+function updateBgmUI(){
+  const s=document.getElementById('bgmstatus');
+  if(s){
+    s.textContent = bgmMuted ? "🔇 BGM OFF（NでON）" : "🎵 BGM ON（Nで切替）";
+    s.classList.toggle('on', !bgmMuted); s.classList.toggle('off', bgmMuted);
+  }
+  document.querySelectorAll('.btnBgmToggle').forEach(b=>{
+    b.textContent = bgmMuted ? "🔇 BGM：OFF" : "🎵 BGM：ON（ダークな電子パルス）";
+  });
+}
+function toggleBgmMute(){
+  bgmMuted=!bgmMuted;
+  if(!bgmMuted) startBGM();
+  updateBgmGain();
+}
+
 /* ---------- 武器定義 ---------- */
 const WTYPES = {
   AR:  { label:"アサルトライフル", name:"AR-7 リバティ",   dmg:11, interval:0.105, mag:30, reload:1.5, spread:0.045, bspeed:400, pellets:1, range:300, auto:true  },
@@ -773,7 +965,7 @@ let usingPad = false, padConnected = false;
 function eventCode(e){
   if(e.code) return e.code;
   const k = (e.key||"").toLowerCase();
-  const map = { "w":"KeyW","a":"KeyA","s":"KeyS","d":"KeyD","q":"KeyQ","e":"KeyE","r":"KeyR","f":"KeyF","m":"KeyM",
+  const map = { "w":"KeyW","a":"KeyA","s":"KeyS","d":"KeyD","q":"KeyQ","e":"KeyE","r":"KeyR","f":"KeyF","m":"KeyM","n":"KeyN",
     " ":"Space","spacebar":"Space","shift":"ShiftLeft","escape":"Escape","esc":"Escape",
     "arrowup":"ArrowUp","arrowdown":"ArrowDown","arrowleft":"ArrowLeft","arrowright":"ArrowRight",
     "1":"Digit1","2":"Digit2" };
@@ -784,7 +976,7 @@ addEventListener('keydown', e=>{
   if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Tab"].includes(code)) e.preventDefault();
   keys[code]=true;                                   // 登録を先に行い、後段の例外で入力が落ちないようにする
   if(!e.repeat){ try{ onKeyPress(code); }catch(err){} }
-  try{ audio(); startAmbient(); }catch(err){}
+  try{ audio(); startAmbient(); startBGM(); }catch(err){}
 });
 addEventListener('keyup', e=>{ const code=eventCode(e); if(code) keys[code]=false; });
 addEventListener('blur', ()=>{ for(const k in keys) keys[k]=false; mouseDown=false; mouseRDown=false; });
@@ -792,7 +984,7 @@ cv.addEventListener('mousemove', e=>{
   const r=cv.getBoundingClientRect();
   mouseX=(e.clientX-r.left)/r.width*VW; mouseY=(e.clientY-r.top)/r.height*VH;
 });
-cv.addEventListener('mousedown', e=>{ audio(); try{ startAmbient(); }catch(err){} if(e.button===0) mouseDown=true; if(e.button===2) mouseRDown=true; });
+cv.addEventListener('mousedown', e=>{ audio(); try{ startAmbient(); startBGM(); }catch(err){} if(e.button===0) mouseDown=true; if(e.button===2) mouseRDown=true; });
 addEventListener('mouseup', e=>{ if(e.button===0) mouseDown=false; if(e.button===2) mouseRDown=false; });
 cv.addEventListener('contextmenu', e=>e.preventDefault());
 /* ゲームパッド検出：環境差と社外パッド（HORI等）の個体差を吸収する
@@ -1034,6 +1226,7 @@ function padDpad(){
 /* ゲーム内キー押下イベント（ポーズ等） */
 function onKeyPress(code){
   if(code==="KeyM"){ toggleAmbMute(); return; }
+  if(code==="KeyN"){ toggleBgmMute(); return; }
   if(code==="Escape") togglePause();
   if(game.state==="playing"){
     if(code==="Space") cmd.coverToggle=true;
@@ -2026,6 +2219,7 @@ function updateMission(dt){
 }
 function missionComplete(){
   game.state="result";
+  try{ updateBgmGain(); }catch(err){}
   document.getElementById('stage').classList.add('menu');
   game.cleared[game.missionIdx]=true;
   game.unlocked = Math.max(game.unlocked, Math.min(MISSIONS.length-1, game.missionIdx+1));
@@ -2044,6 +2238,7 @@ function missionComplete(){
 function gameOver(){
   if(game.state!=="playing") return;
   game.state="over";
+  try{ updateBgmGain(); }catch(err){}
   document.getElementById('stage').classList.add('menu');
   document.getElementById('overKills').textContent = game.kills;
   document.getElementById('overZone').textContent = (game.zoneIdx+1)+" / "+game.mission.zones.length;
@@ -2052,7 +2247,7 @@ function gameOver(){
   beep(110,0.5,"sawtooth",0.06,-40);
 }
 function startMission(idx){
-  try{ startAmbient(); updateAmbGain(); }catch(err){}
+  try{ startAmbient(); updateAmbGain(); startBGM(); updateBgmGain(); }catch(err){}
   game.missionIdx = idx;
   game.mission = MISSIONS[idx];
   genMap(game.mission);
@@ -2067,7 +2262,7 @@ function startMission(idx){
   document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
   document.getElementById('hud').classList.remove('hidden');
   game.state="playing";
-  try{ updateAmbGain(); }catch(err){}
+  try{ updateAmbGain(); updateBgmGain(); }catch(err){}
   /* 最初のエリアの敵は開始直後から配置する（近づくまで湧かない、では「敵がいない」になるため）。
      ミニマップの赤点と目標表示で存在が分かる。交戦トーストは近づいたときに updateMission が出す。 */
   spawnZone(0, true);
@@ -2078,7 +2273,7 @@ function startMission(idx){
 }
 function toSelect(){
   game.state="title";
-  try{ updateAmbGain(); }catch(err){}
+  try{ updateAmbGain(); updateBgmGain(); }catch(err){}
   document.getElementById('stage').classList.add('menu');
   document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
   document.getElementById('scr-title').classList.remove('hidden');
@@ -2093,7 +2288,7 @@ function togglePause(){
     game.state="playing";
     document.getElementById('scr-pause').classList.add('hidden');
   }
-  try{ updateAmbGain(); }catch(err){}
+  try{ updateAmbGain(); updateBgmGain(); }catch(err){}
 }
 let toastTimer=null;
 function toast(main, sub){
@@ -2195,6 +2390,7 @@ function stepFrame(ts){
     game.camX = clamp(p.x - VW/2, 0, WORLD_W-VW);
     game.camY = clamp(p.y - VH/2, 0, WORLD_H-VH);
   }
+  try{ tickBgm(dt); }catch(err){}
   render();
   updateHUD();
 }
@@ -2725,6 +2921,7 @@ function renderMissionList(){
   });
 }
 document.querySelectorAll('.btnSndToggle').forEach(b=>{ b.addEventListener('click', ()=>{ try{ toggleAmbMute(); }catch(err){} }); });
+document.querySelectorAll('.btnBgmToggle').forEach(b=>{ b.addEventListener('click', ()=>{ try{ toggleBgmMute(); }catch(err){} }); });
 /* ---------- フルスクリーン（CARRY YOUと同仕様：表示のみ。内部解像度・当たり判定・ゲームロジックは触らない） ----------
    ステージ（キャンバス＋HUD＋画面レイヤー）ごとフルスクリーンにし、CSS側で16:9のまま黒帯中央に収める。
    切替：画面右のボタン／タイトル・ポーズ内のボタン／Alt+Enter（Fはアーマーキットで使用中のため、
@@ -2760,7 +2957,9 @@ addEventListener('keydown', e=>{
 }, true);
 try{ updateFsBtns(); }catch(err){}
 (function(){ const s=document.getElementById('sndstatus'); if(s) s.addEventListener('click', ()=>{ try{ toggleAmbMute(); }catch(err){} }); })();
+(function(){ const s=document.getElementById('bgmstatus'); if(s) s.addEventListener('click', ()=>{ try{ toggleBgmMute(); }catch(err){} }); })();
 try{ updateSndUI(); }catch(err){}
+try{ updateBgmUI(); }catch(err){}
 document.getElementById('btnNext').addEventListener('click', ()=>startMission(Math.min(MISSIONS.length-1, game.missionIdx+1)));
 document.getElementById('btnRetry2').addEventListener('click', ()=>startMission(game.missionIdx));
 document.getElementById('btnBackSelect').addEventListener('click', toSelect);
