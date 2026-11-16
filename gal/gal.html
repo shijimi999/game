@@ -1,0 +1,1914 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>きみと、3年分の放課後</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=M+PLUS+Rounded+1c:wght@400;500;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#e9f2f7;
+    --bg2:#dcebf3;
+    --card:#ffffff;
+    --card2:#f4f9fb;
+    --ink:#22314a;
+    --ink-soft:#5a6a82;
+    --line:#c9dbe6;
+    --accent:#f2607c;
+    --accent-deep:#d94363;
+    --accent-soft:#fdeef1;
+    --sun:#f5a83d;
+    --sky:#3d9bd6;
+    --green:#3fae7c;
+    --danger:#e0483e;
+    --shadow:0 10px 30px rgba(34,49,74,.12);
+    --radius:18px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#121a26;
+      --bg2:#0d141f;
+      --card:#1d2939;
+      --card2:#243144;
+      --ink:#e8eef6;
+      --ink-soft:#a5b4c8;
+      --line:#33445c;
+      --accent:#ff8296;
+      --accent-deep:#ff8296;
+      --accent-soft:#3a2430;
+      --sun:#f7b955;
+      --sky:#5cb3e8;
+      --green:#55c48f;
+      --danger:#ff7a6e;
+      --shadow:0 10px 30px rgba(0,0,0,.45);
+    }
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"M PLUS Rounded 1c", system-ui, -apple-system, "Hiragino Maru Gothic ProN", sans-serif;
+    background:linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+    color:var(--ink);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit; cursor:pointer; min-height:44px;}
+  input{font-family:inherit; min-height:44px;}
+  .wrap{max-width:880px; margin:0 auto; padding:16px 14px 40px;}
+
+  /* ---------- Title screen ---------- */
+  .title-screen{
+    min-height:calc(100vh - 60px);
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+    text-align:center; padding:34px 14px 30px; position:relative; overflow:hidden;
+    border-radius:26px; box-shadow:var(--shadow);
+  }
+  .title-bg{position:absolute; inset:0; z-index:0;}
+  .title-bg svg, .svg-slot svg{width:100%; height:100%; display:block;}
+  .title-screen::before{
+    content:""; position:absolute; inset:0; z-index:1; pointer-events:none;
+    background:linear-gradient(180deg, rgba(255,255,255,.16) 0%, rgba(255,255,255,0) 32%, rgba(20,30,48,.16) 100%);
+  }
+  @media (prefers-color-scheme: dark){
+    .title-screen::before{background:linear-gradient(180deg, rgba(10,16,26,.28) 0%, rgba(10,16,26,0) 32%, rgba(5,8,14,.38) 100%);}
+  }
+  .title-card{
+    position:relative; z-index:2; width:100%; max-width:560px;
+    background:rgba(255,255,255,.9); border-radius:22px; padding:30px 26px 24px;
+    box-shadow:0 14px 34px rgba(34,49,74,.25);
+  }
+  @media (prefers-color-scheme: dark){ .title-card{background:rgba(19,28,42,.92);} }
+  .title-gallery{
+    position:relative; z-index:2; width:100%; max-width:720px; margin-top:16px;
+    background:rgba(255,255,255,.92); border-radius:22px; padding:18px;
+    box-shadow:0 14px 34px rgba(34,49,74,.25); text-align:left;
+  }
+  @media (prefers-color-scheme: dark){ .title-gallery{background:rgba(19,28,42,.94);} }
+  .tg-head{font-family:"Zen Maru Gothic", sans-serif; font-weight:700; font-size:.92rem; margin-bottom:10px;}
+  .tg-chars{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
+  .tg-chars figure, .tg-bgs figure{margin:0;}
+  .tg-chars .svg-slot{height:180px; border-radius:12px; overflow:hidden; background:#eaf6fd;}
+  .tg-bgs{display:grid; grid-template-columns:repeat(2,1fr); gap:10px;}
+  @media (min-width:640px){ .tg-bgs{grid-template-columns:repeat(3,1fr);} }
+  @media (min-width:900px){ .tg-bgs{grid-template-columns:repeat(5,1fr);} }
+  .tg-bgs .svg-slot{aspect-ratio:16/10; border-radius:12px; overflow:hidden;}
+  .title-gallery figcaption{font-size:.75rem; color:var(--ink-soft); font-weight:700; margin-top:5px; text-align:center;}
+  @media (max-width:480px){ .tg-chars .svg-slot{height:128px;} }
+  .petals{position:absolute; inset:0; pointer-events:none; overflow:hidden; z-index:1;}
+  .petal{
+    position:absolute; top:-4%; width:14px; height:11px; border-radius:12px 2px 12px 2px;
+    background:var(--accent); opacity:.45;
+    animation:fall linear infinite;
+  }
+  @keyframes fall{
+    0%{transform:translate3d(0,-5vh,0) rotate(0deg);}
+    100%{transform:translate3d(-14vw,108vh,0) rotate(340deg);}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .petal{animation:none; display:none;}
+  }
+  .title-kicker{
+    font-family:"Zen Maru Gothic", sans-serif; font-weight:700; letter-spacing:.35em;
+    color:var(--sky); font-size:.8rem; margin-bottom:14px;
+  }
+  h1.game-title{
+    font-family:"Zen Maru Gothic", sans-serif; font-weight:900;
+    font-size:clamp(2rem, 8.5vw, 3.6rem); line-height:1.25; margin:0 0 10px;
+  }
+  h1.game-title .accent{color:var(--accent-deep);}
+  .title-sub{color:var(--ink-soft); font-size:.95rem; margin:0 0 34px; line-height:1.8;}
+  .title-menu{display:flex; flex-direction:column; gap:12px; width:min(320px, 90vw); margin:0 auto; position:relative; z-index:2;}
+  .btn{
+    border:2px solid var(--line); background:var(--card); color:var(--ink);
+    border-radius:999px; padding:12px 22px; font-size:1rem; font-weight:700;
+    transition:transform .08s ease, border-color .15s, background .15s;
+  }
+  .btn:hover{border-color:var(--accent);}
+  .btn:active{transform:scale(.98);}
+  .btn.primary{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .btn.primary:hover{background:var(--accent-deep);}
+  .btn:disabled{opacity:.45; cursor:not-allowed;}
+  .btn.small{min-height:38px; padding:7px 16px; font-size:.88rem;}
+  .title-note{margin-top:26px; font-size:.78rem; color:var(--ink-soft); position:relative; z-index:2;}
+
+  /* ---------- Name entry ---------- */
+  .panel{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:22px;
+  }
+  .name-box{max-width:440px; margin:8vh auto 0; text-align:center;}
+  .name-box h2{font-family:"Zen Maru Gothic", sans-serif; margin:0 0 8px; font-size:1.35rem;}
+  .name-box p{color:var(--ink-soft); font-size:.9rem; line-height:1.8; margin:0 0 18px;}
+  .name-box input{
+    width:100%; font-size:1.1rem; padding:10px 14px; border-radius:12px;
+    border:2px solid var(--line); background:var(--card2); color:var(--ink);
+    text-align:center; margin-bottom:16px;
+  }
+  .name-box input:focus{outline:none; border-color:var(--accent);}
+
+  /* ---------- Game layout ---------- */
+  .hud{
+    display:flex; flex-wrap:wrap; gap:8px; align-items:stretch; margin-bottom:12px;
+  }
+  .hud .date-chip{
+    background:var(--ink); color:#fff; border-radius:14px; padding:9px 16px;
+    font-family:"Zen Maru Gothic", sans-serif; font-weight:700; font-size:1rem;
+    display:flex; align-items:center; gap:8px;
+  }
+  @media (prefers-color-scheme: dark){ .hud .date-chip{background:var(--card2); color:var(--ink); border:1px solid var(--line);} }
+  .hud .chip{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:8px 14px; font-size:.9rem; font-weight:700; display:flex; align-items:center; gap:7px;
+  }
+  .hud .chip .lbl{color:var(--ink-soft); font-size:.75rem; font-weight:500;}
+  .stress-hot{color:var(--danger) !important;}
+  .layout{display:grid; grid-template-columns:1fr; gap:12px;}
+  @media (min-width:760px){
+    .layout{grid-template-columns: 1fr 300px; align-items:start;}
+  }
+  .scene{min-height:180px;}
+  .scene-head{
+    display:flex; align-items:center; gap:8px; margin-bottom:10px;
+    font-family:"Zen Maru Gothic", sans-serif; font-weight:700; font-size:.95rem; color:var(--sky);
+  }
+  .scene-body{font-size:1rem; line-height:2; white-space:pre-wrap;}
+  .scene-body .who{font-weight:800; color:var(--accent-deep);}
+  .delta-line{margin-top:12px; display:flex; flex-wrap:wrap; gap:6px;}
+  .delta{
+    font-size:.8rem; font-weight:700; border-radius:999px; padding:4px 11px;
+    background:var(--card2); border:1px solid var(--line);
+  }
+  .delta.up{color:var(--green);}
+  .delta.down{color:var(--danger);}
+  .delta.money{color:var(--sun);}
+  .choices{display:flex; flex-direction:column; gap:10px; margin-top:16px;}
+  .choice-btn{
+    text-align:left; border:2px solid var(--line); background:var(--card);
+    border-radius:14px; padding:13px 16px; font-size:.98rem; font-weight:700; color:var(--ink);
+    display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%;
+  }
+  .choice-btn:hover:not(:disabled){border-color:var(--accent); background:var(--accent-soft);}
+  .choice-btn:disabled{opacity:.45; cursor:not-allowed;}
+  .choice-btn .meta{font-size:.78rem; color:var(--ink-soft); font-weight:500; white-space:nowrap;}
+  .choice-btn .tag{
+    font-size:.72rem; font-weight:800; border-radius:999px; padding:3px 9px; white-space:nowrap;
+    background:var(--accent-soft); color:var(--accent-deep);
+  }
+  .next-row{margin-top:18px; display:flex; justify-content:flex-end;}
+
+  /* scene visual stage (background + standing illustration) */
+  .scene-visual{
+    position:relative; border-radius:14px; overflow:hidden; margin-bottom:14px;
+    aspect-ratio:16/8.4; background:var(--card2); border:1px solid var(--line);
+  }
+  @media (max-width:560px){ .scene-visual{aspect-ratio:16/10.5;} }
+  .scene-visual .bg{position:absolute; inset:0;}
+  .scene-visual .bg svg{width:100%; height:100%; display:block;}
+  .scene-visual.chara-only{background:linear-gradient(150deg, var(--accent-soft) 0%, var(--card2) 58%, var(--bg) 100%);}
+  .scene-visual .chara{
+    position:absolute; right:0; top:0; height:100%; width:min(42%, 250px);
+    border-left:3px solid rgba(255,255,255,.65);
+    box-shadow:-8px 0 22px rgba(34,49,74,.18);
+    background:linear-gradient(165deg, rgba(255,255,255,.38) 0%, rgba(255,255,255,0) 70%);
+  }
+  .scene-visual .chara svg{width:100%; height:100%; display:block;}
+  .scene-visual .vlabel{
+    position:absolute; left:10px; bottom:10px; z-index:3;
+    background:rgba(24,34,52,.74); color:#fff; font-size:.75rem; font-weight:700;
+    padding:4px 12px; border-radius:999px; letter-spacing:.04em;
+  }
+  .name-banner{width:100%; height:132px; border-radius:12px; overflow:hidden; margin-bottom:16px;}
+  .end-svg{width:120px; height:156px; border-radius:12px; overflow:hidden; margin:0 auto 14px; border:1px solid var(--line); background:#eaf6fd;}
+
+  /* side status */
+  .side{display:flex; flex-direction:column; gap:12px;}
+  .side h3{
+    margin:0 0 12px; font-family:"Zen Maru Gothic", sans-serif; font-size:.95rem;
+    display:flex; align-items:center; gap:8px;
+  }
+  .param{margin-bottom:11px;}
+  .param:last-child{margin-bottom:0;}
+  .param .prow{display:flex; justify-content:space-between; font-size:.85rem; margin-bottom:4px;}
+  .param .pname{font-weight:700;}
+  .param .pval{font-weight:800; font-variant-numeric:tabular-nums;}
+  .bar{height:9px; border-radius:99px; background:var(--card2); border:1px solid var(--line); overflow:hidden;}
+  .bar > i{display:block; height:100%; border-radius:99px; transition:width .5s ease;}
+  .bar .b-bun{background:var(--sky);}
+  .bar .b-ri{background:#7a6fd0;}
+  @media (prefers-color-scheme: dark){ .bar .b-ri{background:#9a8fe0;} }
+  .bar .b-art{background:var(--accent);}
+  .bar .b-sport{background:var(--green);}
+  .bar .b-zatsu{background:var(--sun);}
+  .bar .b-look{background:#e2703a;}
+  .bar .b-stress{background:var(--danger);}
+  .hearts{font-size:1.15rem; letter-spacing:.15em; color:var(--accent); line-height:1;}
+  .hearts .off{color:var(--line);}
+  .heroine-row{display:flex; gap:12px; align-items:center;}
+  .heroine-svg{
+    width:58px; height:78px; flex:0 0 58px;
+    border-radius:10px; border:1px solid var(--line); overflow:hidden; background:#eaf6fd;
+  }
+  .bomb{
+    margin-top:10px; font-size:.8rem; font-weight:700; border-radius:10px; padding:8px 11px;
+    background:#fdf3e3; color:#9a6206; border:1px solid #f0d9a8; display:none;
+  }
+  @media (prefers-color-scheme: dark){ .bomb{background:#3a2f18; color:#f2c96b; border-color:#6b551f;} }
+  .bomb.show{display:block;}
+  .bomb.hot{background:#fdeceb; color:var(--danger); border-color:#f3b8b3;}
+  @media (prefers-color-scheme: dark){ .bomb.hot{background:#3d1f1c; border-color:#7a352f;} }
+  .not-met{color:var(--ink-soft); font-size:.88rem; line-height:1.8;}
+  .test-badge{
+    display:inline-block; background:var(--sun); color:#fff; font-weight:800; font-size:.75rem;
+    border-radius:999px; padding:3px 10px; margin-left:6px; vertical-align:middle;
+  }
+  .rank-big{
+    font-family:"Zen Maru Gothic", sans-serif; font-weight:900; font-size:2.2rem; text-align:center;
+    margin:10px 0 2px;
+  }
+  .rank-sub{text-align:center; color:var(--ink-soft); font-size:.88rem; margin-bottom:6px;}
+  .footer-btns{display:flex; gap:8px; justify-content:flex-end; margin-top:14px;}
+  .end-stats{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:16px 0;}
+  .end-stats .cell{background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:10px; text-align:center;}
+  .end-stats .cell b{display:block; font-size:1.2rem;}
+  .end-stats .cell span{font-size:.75rem; color:var(--ink-soft);}
+  .hidden{display:none !important;}
+
+  .lover-tag{
+    font-size:.7rem; font-weight:800; border-radius:999px; padding:2px 9px; margin-left:6px;
+    background:var(--accent); color:#fff; vertical-align:middle; white-space:nowrap;
+  }
+  .clear-status{
+    margin-top:16px; padding-top:14px; border-top:1px dashed var(--line);
+    font-size:.8rem; color:var(--ink-soft); line-height:2;
+  }
+  .clear-status b{color:var(--ink); font-family:"Zen Maru Gothic", sans-serif;}
+  .clear-status .got{color:var(--accent-deep); font-weight:800;}
+  .end-badge{
+    display:inline-block; background:var(--accent); color:#fff; font-weight:800; font-size:.78rem;
+    border-radius:999px; padding:4px 14px; margin-bottom:10px;
+  }
+  .cond-note{font-size:.82rem; color:var(--ink-soft); line-height:1.9; margin-top:10px;}
+
+  /* ---------- Sound (mute) button ---------- */
+  .mute-btn{
+    position:fixed; right:14px; bottom:14px; z-index:60;
+    display:flex; align-items:center; gap:7px;
+    background:var(--card); border:2px solid var(--line); color:var(--ink);
+    border-radius:999px; padding:8px 15px; min-height:42px;
+    font-size:.82rem; font-weight:800; box-shadow:var(--shadow);
+  }
+  .mute-btn:hover{border-color:var(--accent);}
+  .mute-btn svg{width:18px; height:18px; flex:0 0 18px; display:block;}
+  .mute-btn .mute-state{font-size:.72rem; color:var(--ink-soft); font-weight:700;}
+  .mute-btn.is-muted{opacity:.75;}
+</style>
+</head>
+<body>
+<button class="mute-btn" id="btn-mute" type="button" aria-label="サウンドのオン・オフを切り替える（Nキー）" aria-pressed="false"></button>
+<div class="wrap">
+
+  <!-- ===== Title ===== -->
+  <section id="screen-title" class="title-screen">
+    <div class="title-bg svg-slot" data-bg="titlebg" role="img" aria-label="桜に囲まれた私立青葉学園高校の校舎（フラットな仮絵テイスト）"></div>
+    <div class="petals" id="petals"></div>
+    <div class="title-card">
+      <div class="title-kicker">私立青葉学園高校</div>
+      <h1 class="game-title">きみと、<span class="accent">3年分</span>の放課後</h1>
+      <p class="title-sub">入学から卒業までの3年間。<br />勉強も、部活も、放課後のあの子も――全部きみ次第。</p>
+      <div class="title-menu">
+        <button class="btn primary" id="btn-new">はじめから</button>
+        <button class="btn" id="btn-continue">つづきから</button>
+        <button class="btn hidden" id="btn-erase">セーブを消す</button>
+      </div>
+      <p class="title-note">本番完成版：ヒロイン3人（ひまり／凛／ゆら）、季節イベント（体育祭・文化祭・クリスマス・バレンタイン＋修学旅行）、誕生日とクリスマスのプレゼント、そして告白システム（3年クリスマスの早期告白→卒業式の最終告白）と全エンディングを実装しました。告白の舞台は、校舎裏の大楠の下です。<br />♪ BGMと効果音が入りました。音は最初のタップから流れます。右下のボタンかNキーでオン・オフできます。</p>
+      <div class="clear-status" id="clear-status"></div>
+    </div>
+    <div class="title-gallery">
+      <div class="tg-head">ヒロイン3人 ― 立ち絵（仮絵テイスト）左から：通常／笑顔／照れ</div>
+      <div class="tg-chars">
+        <figure><div class="svg-slot" data-chara="normal" role="img" aria-label="日向ひまりの立ち絵（通常）"></div><figcaption>通常</figcaption></figure>
+        <figure><div class="svg-slot" data-chara="smile" role="img" aria-label="日向ひまりの立ち絵（笑顔）"></div><figcaption>笑顔</figcaption></figure>
+        <figure><div class="svg-slot" data-chara="shy" role="img" aria-label="日向ひまりの立ち絵（照れ）"></div><figcaption>照れ</figcaption></figure>
+      </div>
+      <div class="tg-head" style="margin-top:14px;">白瀬凛</div>
+      <div class="tg-chars">
+        <figure><div class="svg-slot" data-chara="rin:normal"></div><figcaption>凛・通常</figcaption></figure>
+        <figure><div class="svg-slot" data-chara="rin:smile"></div><figcaption>凛・笑顔</figcaption></figure>
+        <figure><div class="svg-slot" data-chara="rin:shy"></div><figcaption>凛・照れ</figcaption></figure>
+      </div>
+      <div class="tg-head" style="margin-top:14px;">森永ゆら</div>
+      <div class="tg-chars">
+        <figure><div class="svg-slot" data-chara="yura:normal"></div><figcaption>ゆら・通常</figcaption></figure>
+        <figure><div class="svg-slot" data-chara="yura:smile"></div><figcaption>ゆら・笑顔</figcaption></figure>
+        <figure><div class="svg-slot" data-chara="yura:shy"></div><figcaption>ゆら・照れ</figcaption></figure>
+      </div>
+      <div class="tg-head" style="margin-top:16px;">背景（仮絵テイスト）</div>
+      <div class="tg-bgs">
+        <figure><div class="svg-slot" data-bg="title"></div><figcaption>青葉学園・春</figcaption></figure>
+        <figure><div class="svg-slot" data-bg="school"></div><figcaption>校舎の廊下</figcaption></figure>
+        <figure><div class="svg-slot" data-bg="park"></div><figcaption>公園</figcaption></figure>
+        <figure><div class="svg-slot" data-bg="movie"></div><figcaption>映画館</figcaption></figure>
+        <figure><div class="svg-slot" data-bg="aqua"></div><figcaption>水族館</figcaption></figure>
+        <figure><div class="svg-slot" data-bg="museum"></div><figcaption>美術館</figcaption></figure>
+        <figure><div class="svg-slot" data-bg="cafe"></div><figcaption>カフェ</figcaption></figure>
+        <figure><div class="svg-slot" data-bg="bowl"></div><figcaption>ボウリング</figcaption></figure>
+        <figure><div class="svg-slot" data-bg="amuse"></div><figcaption>遊園地</figcaption></figure>
+        <figure><div class="svg-slot" data-bg="sea"></div><figcaption>海</figcaption></figure>
+      </div>
+    </section>
+
+  <!-- ===== Name entry ===== -->
+  <section id="screen-name" class="hidden">
+    <div class="panel name-box">
+      <div class="name-banner svg-slot" data-bg="title" role="img" aria-label="桜と青葉学園の校舎（フラットな仮絵テイスト）"></div>
+      <h2>主人公の名前</h2>
+      <p>私立青葉学園高校に入学する、きみの名前を教えてください。<br />（あとから変更はできません）</p>
+      <input id="name-input" type="text" maxlength="8" placeholder="名前を入力" autocomplete="off" />
+      <button class="btn primary" id="btn-start" style="width:100%;">入学する</button>
+    </div>
+  </section>
+
+  <!-- ===== Game ===== -->
+  <section id="screen-game" class="hidden">
+    <div class="hud">
+      <div class="date-chip" id="hud-date">1年 4月 第1週</div>
+      <div class="chip"><span class="lbl">所持金</span><span id="hud-money">¥3,000</span></div>
+      <div class="chip"><span class="lbl">ストレス</span><span id="hud-stress">0</span></div>
+    </div>
+    <div class="layout">
+      <div class="panel scene">
+        <div class="scene-visual hidden" id="scene-visual">
+          <div class="bg hidden" id="scene-bg"></div>
+          <div class="chara hidden" id="scene-chara" role="img" aria-label="日向ひまりの立ち絵"></div>
+          <span class="vlabel hidden" id="scene-visual-label"></span>
+        </div>
+        <div class="scene-head" id="scene-head">平日</div>
+        <div id="scene-body" class="scene-body"></div>
+        <div id="scene-extra"></div>
+        <div id="choices" class="choices"></div>
+        <div class="next-row hidden" id="next-row">
+          <button class="btn primary" id="btn-next">次へ進む</button>
+        </div>
+      </div>
+      <aside class="side">
+        <div class="panel">
+          <h3>パラメータ</h3>
+          <div id="param-list"></div>
+        </div>
+        <div class="panel">
+          <h3>ヒロイン</h3>
+          <div id="heroine-box"></div>
+        </div>
+      </aside>
+    </div>
+    <div class="footer-btns">
+      <button class="btn small" id="btn-to-title">タイトルへ戻る</button>
+    </div>
+  </section>
+
+  <!-- ===== Prototype end ===== -->
+  <section id="screen-end" class="hidden">
+    <div class="panel name-box" style="max-width:520px;">
+      <div class="end-svg" id="end-chara" role="img" aria-label="エンディングのイラスト（仮絵テイスト）"></div>
+      <div><span class="end-badge" id="end-badge">エンディング</span></div>
+      <h2 id="end-title">卒業式の日</h2>
+      <p id="end-text" style="text-align:left;white-space:pre-wrap;"></p>
+      <div class="end-stats" id="end-stats"></div>
+      <button class="btn primary" id="btn-again" style="width:100%;">タイトルへ戻る</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+var SAVE_KEY = "kimito3-save-v2";
+var SAVE_KEY_OLD = "kimito3-save-v1";
+
+/* ================================================================
+   Sound — all synthesized in-browser with Web Audio API.
+   No audio files. Starts only after the player's first tap/click
+   (browser autoplay policy). BGM: title / daily / date loops with
+   crossfades. Mute state persists in its own localStorage key and
+   never touches the game save.
+   ================================================================ */
+var MUTE_KEY = "kimito3-audio-muted-v1";
+var Sound = (function(){
+  var ctx = null, master = null, bgmBus = null, sfxBus = null;
+  var muted = false;
+  try{ muted = localStorage.getItem(MUTE_KEY) === "1"; }catch(e){}
+  var desiredTrack = "title";   /* track wanted by the current screen */
+  var currentTrack = null;      /* track actually scheduled */
+  var schedTimer = null, nextBarTime = 0, barIdx = 0;
+  var BGM_LEVEL = 0.34;
+
+  function mf(m){ return 440 * Math.pow(2, (m - 69) / 12); }
+
+  /* --- track definitions: soft piano + pad, school-romance feel --- */
+  var TRACKS = {
+    /* Title: calm, a little wistful. Slow Cmaj7 - Am7 - Fmaj7 - G */
+    title: {
+      barDur: 3.8,
+      chords: [[60,64,67,71],[57,60,64,67],[53,57,60,65],[55,59,62,67]],
+      bass: [48,45,41,43],
+      padVol: 0.030, bassVol: 0.055,
+      pattern: [
+        {off:0.0,  i:0, len:1.4, vol:0.13},
+        {off:0.95, i:2, len:1.1, vol:0.105},
+        {off:1.9,  i:1, len:1.1, vol:0.095},
+        {off:2.85, i:3, len:1.4, vol:0.11}
+      ]
+    },
+    /* Daily: light, easy-going. C - G - Am - F */
+    daily: {
+      barDur: 2.8,
+      chords: [[60,64,67,71],[55,59,62,65],[57,60,64,67],[53,57,60,65]],
+      bass: [48,43,45,41],
+      padVol: 0.024, bassVol: 0.05,
+      pattern: [
+        {off:0.0,  i:1, len:0.6, vol:0.115},
+        {off:0.7,  i:2, len:0.6, vol:0.10},
+        {off:1.4,  i:3, len:0.6, vol:0.115},
+        {off:2.1,  i:2, oct:12, len:0.7, vol:0.085}
+      ]
+    },
+    /* Date: brighter and bouncier than daily. C - Am - F - G */
+    date: {
+      barDur: 2.4,
+      chords: [[60,64,67,71],[57,60,64,69],[53,57,60,65],[55,59,62,67]],
+      bass: [48,45,41,43],
+      padVol: 0.024, bassVol: 0.055,
+      pattern: [
+        {off:0.0,  i:0, len:0.45, vol:0.125},
+        {off:0.6,  i:2, len:0.45, vol:0.11},
+        {off:1.2,  i:3, len:0.45, vol:0.125},
+        {off:1.8,  i:1, oct:12, len:0.5, vol:0.10},
+        {off:2.1,  i:2, len:0.3, vol:0.07}
+      ]
+    }
+  };
+
+  function ensureCtx(){
+    if(ctx) { if(ctx.state === "suspended") ctx.resume(); return true; }
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return false;
+    ctx = new AC();
+    master = ctx.createGain();
+    master.gain.value = muted ? 0 : 0.9;
+    master.connect(ctx.destination);
+    bgmBus = ctx.createGain();
+    bgmBus.gain.value = 0;
+    bgmBus.connect(master);
+    sfxBus = ctx.createGain();
+    sfxBus.gain.value = 0.55;
+    sfxBus.connect(master);
+    startTrack(desiredTrack, true);
+    return true;
+  }
+
+  /* --- BGM voices --- */
+  function padNote(freq, t, dur, vol){
+    var o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain();
+    o.type = "triangle"; o.frequency.value = freq;
+    o2.type = "sine"; o2.frequency.value = freq; o2.detune.value = 6;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol, t + Math.min(0.6, dur * 0.3));
+    g.gain.setValueAtTime(vol, t + dur - 0.5);
+    g.gain.linearRampToValueAtTime(0, t + dur + 0.15);
+    o.connect(g); o2.connect(g); g.connect(bgmBus);
+    o.start(t); o2.start(t); o.stop(t + dur + 0.2); o2.stop(t + dur + 0.2);
+  }
+  function bassNote(freq, t, dur, vol){
+    var o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = "sine"; o.frequency.value = freq;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol, t + 0.08);
+    g.gain.setValueAtTime(vol, t + dur - 0.3);
+    g.gain.linearRampToValueAtTime(0, t + dur);
+    o.connect(g); g.connect(bgmBus);
+    o.start(t); o.stop(t + dur + 0.05);
+  }
+  function pianoNote(freq, t, dur, vol){
+    var o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain();
+    o.type = "triangle"; o.frequency.value = freq;
+    o2.type = "sine"; o2.frequency.value = freq * 2;
+    var g2 = ctx.createGain(); g2.gain.value = 0.25;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol, t + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+    o.connect(g); o2.connect(g2); g2.connect(g); g.connect(bgmBus);
+    o.start(t); o2.start(t); o.stop(t + dur + 0.05); o2.stop(t + dur + 0.05);
+  }
+  function scheduleBar(t, name, idx){
+    var cfg = TRACKS[name];
+    var chord = cfg.chords[idx % cfg.chords.length];
+    var i;
+    for(i = 0; i < chord.length; i++) padNote(mf(chord[i]), t, cfg.barDur, cfg.padVol);
+    bassNote(mf(cfg.bass[idx % cfg.bass.length]), t, cfg.barDur, cfg.bassVol);
+    for(i = 0; i < cfg.pattern.length; i++){
+      var p = cfg.pattern[i];
+      pianoNote(mf(chord[p.i % chord.length] + (p.oct || 0)), t + p.off, p.len, p.vol);
+    }
+  }
+  function schedulerTick(){
+    if(!ctx || !currentTrack) return;
+    var cfg = TRACKS[currentTrack];
+    while(nextBarTime < ctx.currentTime + 0.45){
+      if(nextBarTime < ctx.currentTime - 0.1) nextBarTime = ctx.currentTime + 0.05;
+      scheduleBar(nextBarTime, currentTrack, barIdx);
+      nextBarTime += cfg.barDur;
+      barIdx++;
+    }
+  }
+  function startTrack(name, instant){
+    currentTrack = name;
+    barIdx = 0;
+    nextBarTime = ctx.currentTime + 0.06;
+    if(schedTimer) clearInterval(schedTimer);
+    schedTimer = setInterval(schedulerTick, 180);
+    schedulerTick();
+    var t = ctx.currentTime;
+    bgmBus.gain.cancelScheduledValues(t);
+    bgmBus.gain.setValueAtTime(bgmBus.gain.value, t);
+    bgmBus.gain.linearRampToValueAtTime(BGM_LEVEL, t + (instant ? 1.2 : 0.9));
+  }
+  var fadeToken = 0;
+  function setTrack(name){
+    desiredTrack = name;
+    if(!ctx || name === currentTrack) return;
+    /* crossfade: dip the bus, swap the loop, fade back up */
+    var token = ++fadeToken;
+    var t = ctx.currentTime;
+    bgmBus.gain.cancelScheduledValues(t);
+    bgmBus.gain.setValueAtTime(bgmBus.gain.value, t);
+    bgmBus.gain.linearRampToValueAtTime(0, t + 0.55);
+    if(schedTimer){ clearInterval(schedTimer); schedTimer = null; }
+    setTimeout(function(){
+      if(!ctx || token !== fadeToken || desiredTrack !== name) return;
+      startTrack(name, false);
+    }, 580);
+  }
+
+  /* --- SFX voices --- */
+  function tone(freq, t, dur, type, vol, slideTo){
+    var o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type || "sine";
+    o.frequency.setValueAtTime(freq, t);
+    if(slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+    o.connect(g); g.connect(sfxBus);
+    o.start(t); o.stop(t + dur + 0.05);
+  }
+  function ready(){ return !!ctx && !muted; }
+  function now(){ return ctx.currentTime; }
+
+  var sfx = {
+    click: function(){ if(!ready()) return; tone(660, now(), 0.07, "sine", 0.16); },
+    decide: function(){ if(!ready()) return; var t = now(); tone(523.25, t, 0.09, "triangle", 0.18); tone(783.99, t + 0.07, 0.14, "triangle", 0.18); },
+    paramUp: function(){ if(!ready()) return; var t = now(); [523.25, 659.25, 783.99].forEach(function(f, i){ tone(f, t + i * 0.055, 0.16, "triangle", 0.15); }); },
+    rest: function(){ if(!ready()) return; var t = now(); tone(392, t, 0.22, "sine", 0.12); tone(329.63, t + 0.14, 0.3, "sine", 0.10); },
+    heartUp: function(){ if(!ready()) return; var t = now(); [1046.5, 1318.5, 1568, 2093].forEach(function(f, i){ tone(f, t + i * 0.06, 0.22, "sine", 0.13); tone(f * 2, t + i * 0.06, 0.12, "sine", 0.035); }); },
+    heartDown: function(){ if(!ready()) return; var t = now(); tone(392, t, 0.2, "triangle", 0.13); tone(329.63, t + 0.16, 0.24, "triangle", 0.12); tone(261.63, t + 0.32, 0.34, "triangle", 0.11); },
+    moneyUp: function(){ if(!ready()) return; var t = now(); tone(987.77, t, 0.08, "square", 0.06); tone(1318.5, t + 0.07, 0.22, "square", 0.06); },
+    moneyDown: function(){ if(!ready()) return; var t = now(); tone(659.25, t, 0.09, "square", 0.05); tone(523.25, t + 0.08, 0.18, "square", 0.05); },
+    bomb: function(){
+      if(!ready()) return; var t = now();
+      [0, 0.42].forEach(function(off){
+        var o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain();
+        o.type = "sawtooth"; o.frequency.value = 98;
+        o2.type = "sawtooth"; o2.frequency.value = 104;
+        var f = ctx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 320;
+        g.gain.setValueAtTime(0, t + off);
+        g.gain.linearRampToValueAtTime(0.14, t + off + 0.03);
+        g.gain.exponentialRampToValueAtTime(0.001, t + off + 0.34);
+        o.connect(f); o2.connect(f); f.connect(g); g.connect(sfxBus);
+        o.start(t + off); o2.start(t + off); o.stop(t + off + 0.4); o2.stop(t + off + 0.4);
+      });
+    },
+    testGood: function(){ if(!ready()) return; var t = now(); [523.25, 659.25, 783.99, 1046.5].forEach(function(f, i){ tone(f, t + i * 0.09, 0.3, "triangle", 0.17); }); tone(1318.5, t + 0.38, 0.45, "sine", 0.10); },
+    testBad: function(){ if(!ready()) return; var t = now(); [392, 370, 349.23, 311.13].forEach(function(f, i){ tone(f, t + i * 0.13, 0.26, "triangle", 0.13); }); },
+    page: function(){
+      if(!ready()) return; var t = now();
+      var len = Math.floor(ctx.sampleRate * 0.28);
+      var buf = ctx.createBuffer(1, len, ctx.sampleRate);
+      var d = buf.getChannelData(0);
+      for(var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+      var src = ctx.createBufferSource(); src.buffer = buf;
+      var f = ctx.createBiquadFilter(); f.type = "bandpass"; f.Q.value = 1.1;
+      f.frequency.setValueAtTime(420, t);
+      f.frequency.exponentialRampToValueAtTime(2100, t + 0.22);
+      var g = ctx.createGain();
+      g.gain.setValueAtTime(0.20, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+      src.connect(f); f.connect(g); g.connect(sfxBus);
+      src.start(t);
+    }
+  };
+
+  function updateBtn(){
+    var b = document.getElementById("btn-mute");
+    if(!b) return;
+    var iconOn = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor" stroke="none"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.2 6a9 9 0 0 1 0 12"/></svg>';
+    var iconOff = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor" stroke="none"/><line x1="16" y1="9" x2="22" y2="15"/><line x1="22" y1="9" x2="16" y2="15"/></svg>';
+    b.innerHTML = (muted ? iconOff : iconOn) + "<span>サウンド</span>" + '<span class="mute-state">' + (muted ? "OFF" : "ON") + "</span>";
+    b.classList.toggle("is-muted", muted);
+    b.setAttribute("aria-pressed", muted ? "true" : "false");
+  }
+  function setMuted(m){
+    muted = m;
+    try{ localStorage.setItem(MUTE_KEY, m ? "1" : "0"); }catch(e){}
+    if(ctx && master){
+      var t = ctx.currentTime;
+      master.gain.cancelScheduledValues(t);
+      master.gain.setValueAtTime(master.gain.value, t);
+      master.gain.linearRampToValueAtTime(m ? 0 : 0.9, t + 0.15);
+    }
+    updateBtn();
+  }
+  function toggleMute(){ ensureCtx(); setMuted(!muted); if(!muted) sfx.decide(); }
+
+  return {
+    unlock: function(){ ensureCtx(); },
+    setTrack: setTrack,
+    sfx: sfx,
+    toggleMute: toggleMute,
+    isMuted: function(){ return muted; },
+    updateBtn: updateBtn
+  };
+})();
+
+/* ---------------- Data ---------------- */
+var PARAMS = [
+  {key:"bun",   name:"文系", bar:"b-bun"},
+  {key:"ri",    name:"理系", bar:"b-ri"},
+  {key:"art",   name:"芸術", bar:"b-art"},
+  {key:"sport", name:"運動", bar:"b-sport"},
+  {key:"zatsu", name:"雑学", bar:"b-zatsu"},
+  {key:"look",  name:"容姿", bar:"b-look"}
+];
+
+var COMMANDS = [
+  {id:"bun",   label:"文系を勉強",   param:"bun",   gain:[7,12], stress:9,  texts:["国語の教科書と参考書を開いた。漢文の読み下しが少しずつ頭に入ってくる。","放課後の教室で現代文の問題集を進めた。静かな時間が心地いい。","図書室で文学全集を読みふけった。言葉の引き出しが増えた気がする。"]},
+  {id:"ri",    label:"理系を勉強",   param:"ri",    gain:[7,12], stress:9,  texts:["数学の問題集と格闘した。解けたときの爽快感は格別だ。","理科室の前で元素記号をぶつぶつ唱えながら歩いた。","物理の公式をノートに整理した。世界の仕組みが少し見えた気がする。"]},
+  {id:"art",   label:"芸術に触れる", param:"art",   gain:[7,12], stress:7,  texts:["美術室の前で生徒の作品を眺めた。色の使い方に刺激を受ける。","音楽室から漏れるピアノの音に耳を澄ませた。","放課後、画集をめくって過ごした。感性が磨かれた気がする。"]},
+  {id:"sport", label:"運動する",     param:"sport", gain:[7,12], stress:6,  texts:["グラウンドを何周も走った。汗をかくと気分がすっきりする。","放課後に筋トレとストレッチ。体が軽くなってきた。","体育館の隅でシュート練習。フォームが安定してきた。"]},
+  {id:"zatsu", label:"雑学を仕入れる", param:"zatsu", gain:[7,12], stress:7, texts:["雑誌の特集記事を読み込んだ。会話のネタが増えた。","ニュースと豆知識サイトを巡回。世の中の動きに詳しくなった。","友達との雑談で仕入れた小ネタをメモした。"]},
+  {id:"look",  label:"身だしなみを整える", param:"look", gain:[7,12], stress:7, texts:["制服の着こなしと髪型を見直した。鏡の中の自分が少し頼もしい。","靴を磨いて、爪を整えて。清潔感は大事だ。","姿勢を意識して歩く練習をした。背筋が伸びると気分も上がる。"]},
+  {id:"rest",  label:"休む",         param:null,    gain:[0,0],  stress:-35, texts:["今週は思い切ってのんびり過ごした。体も心もリフレッシュ。","家でごろごろ、好きな音楽を聴いて過ごした。","たっぷり寝た。明日からまた頑張れそうだ。"]}
+];
+
+var SPOTS = [
+  {id:"park",   name:"公園",     cost:500,  pref:"like",    scene:"噴水のある公園。ベンチに並んで座ると、ひまりは足をぶらぶらさせている。",
+   line:"ねえ見て、鳩！　……あたし、休みの日にここで自主練することもあるんだ。",
+   q:"ひまりが鳩を追いかけて走り出した。どうする？",
+   choices:[
+     {t:"一緒に追いかける", d:5, r:"「あはは、きみも走るの好きなんだ！」二人で笑いながら走り回った。"},
+     {t:"ベンチで見守る", d:2, r:"「もー、ノリ悪いなあ」なんて言いつつ、戻ってきたひまりは楽しそうだった。"},
+     {t:"鳩に餌を買ってくる", d:3, r:"売店で餌を買って二人でまいた。鳩に囲まれて大騒ぎになった。"}]},
+  {id:"movie",  name:"映画館",   cost:2000, pref:"normal",  scene:"話題の青春映画。暗くなる直前、ひまりがポップコーンを差し出してきた。",
+   line:"はい、あーん……なんて、冗談だよ。半分こしよ。",
+   q:"上映中、感動のシーンで隣から小さく鼻をすする音が。どうする？",
+   choices:[
+     {t:"そっとハンカチを渡す", d:5, r:"「……ありがと」上映後、目を赤くしたひまりが小さく笑った。"},
+     {t:"気づかないふりをする", d:2, r:"そっとしておいた。帰り道、映画の感想で盛り上がった。"},
+     {t:"自分ももらい泣きする", d:4, r:"「きみも泣いてたでしょ」帰り道、二人で笑い合った。"}]},
+  {id:"aqua",   name:"水族館",   cost:2500, pref:"normal",  scene:"大きな水槽の前。クラゲの水槽にひまりが張りついている。",
+   line:"わあ……きれい。あたし、こういうの意外と好きなんだよね。",
+   q:"ペンギンのお散歩タイムが始まった。ひまりが目を輝かせている。",
+   choices:[
+     {t:"最前列を確保してあげる", d:5, r:"「やった、よく見える！」ひまりの笑顔が間近にあった。"},
+     {t:"ペンギンの豆知識を披露する", d:3, r:"「へえ、詳しいんだ」少し見直されたかもしれない。"},
+     {t:"お土産にペンギンのキーホルダーを買う", d:4, r:"「え、いいの！？」大切そうにカバンにつけてくれた。"}]},
+  {id:"museum", name:"美術館",   cost:1500, pref:"dislike", scene:"静まり返った美術館。ひまりは大きな絵の前で腕を組んでいる。",
+   line:"うーん……あたし、じっとしてるの苦手かも。でも、この絵の色は好き。",
+   q:"ひまりがあくびを噛み殺している。どうする？",
+   choices:[
+     {t:"好きな絵を一緒に探すゲームを提案", d:3, r:"「それ面白そう！」競争みたいに探し始めて、意外と盛り上がった。"},
+     {t:"静かに鑑賞を続ける", d:-2, r:"ひまりはだんだん退屈そうに……。場所選びは大事だ。"},
+     {t:"早めに切り上げて外のカフェへ", d:2, r:"「助かった〜」外の空気にひまりが復活した。"}]},
+  {id:"cafe",   name:"カフェ",   cost:1200, pref:"normal",  scene:"駅前の小さなカフェ。ひまりはメニューを真剣に眺めている。",
+   line:"パフェとケーキ、どっちにしよ……。ねえ、半分こして両方食べない？",
+   q:"パフェが届いた。ひまりが一口食べて目を丸くした。",
+   choices:[
+     {t:"「そんなに美味しい？」と聞く", d:3, r:"「食べてみて！」スプーンを差し出されて、ちょっとドキッとした。"},
+     {t:"部活の話を聞く", d:4, r:"陸上の話になると目が輝く。夢中な姿は素敵だ。"},
+     {t:"自分のケーキも分けてあげる", d:5, r:"「きみ優しいね」その一言で、こっちまで嬉しくなった。"}]},
+  {id:"bowl",   name:"ボウリング", cost:1800, pref:"like",  scene:"ボウリング場。ひまりはやる気満々でボールを選んでいる。",
+   line:"よーし、勝負だよ！　負けた方がジュース奢りね！",
+   q:"ひまりがガーターを出してしまった。しょんぼりしている。",
+   choices:[
+     {t:"「次は絶対いける」と励ます", d:5, r:"「……うん！」すぐに立ち直るのがひまりのいいところだ。"},
+     {t:"わざと自分もガーターを出す", d:2, r:"「ぷっ、今のわざとでしょ」見抜かれて笑われた。でも楽しそうだ。"},
+     {t:"フォームを教えてあげる", d:4, r:"素直に聞いてくれて、次の投球はストライク！　二人でハイタッチした。"}]},
+  {id:"amuse",  name:"遊園地",   cost:3500, pref:"like",    scene:"遊園地の入口。ひまりは園内マップを広げて目を輝かせている。",
+   line:"まずジェットコースター！　そのあとお化け屋敷！　ね、行こ行こ！",
+   q:"観覧車に二人で乗ることになった。夕日がきれいだ。",
+   choices:[
+     {t:"「今日は楽しかった」と素直に言う", d:6, r:"「……あたしも」ひまりが少し照れたように笑った。"},
+     {t:"景色の話をする", d:3, r:"「ほんと、きれいだね」静かな時間が流れた。"},
+     {t:"高いのが怖くて手すりを握りしめる", d:1, r:"「だいじょうぶ？」心配されてしまった。……ちょっと情けない。"}]},
+  {id:"sea",    name:"海",       cost:1000, pref:"like", summer:true, scene:"夏の海。波打ち際でひまりがはしゃいでいる。",
+   line:"きゃー、冷たーい！　ねえ、もっとこっち来てよ！",
+   q:"二人で砂のお城を作り始めた。ひまりは本気モードだ。",
+   choices:[
+     {t:"本気で大作に挑む", d:5, r:"「おお〜、すごいのできた！」力作の前で記念撮影した。"},
+     {t:"ひまりの城を手伝う", d:4, r:"共同作業は距離が縮まる。気づけば肩が触れる距離だった。"},
+     {t:"海の家でかき氷を買ってくる", d:4, r:"「気が利く〜！」二人で分け合ったかき氷は格別だった。"}]}
+];
+
+
+var PREFS = {
+  himari:{park:"normal",movie:"normal",aqua:"normal",museum:"dislike",cafe:"normal",bowl:"like",amuse:"like",sea:"like"},
+  rin:{park:"like",movie:"like",aqua:"normal",museum:"normal",cafe:"like",bowl:"normal",amuse:"dislike",sea:"normal"},
+  yura:{park:"like",movie:"normal",aqua:"like",museum:"like",cafe:"normal",bowl:"dislike",amuse:"normal",sea:"normal"}
+};
+function mkSpot(id, base){ var b=null; SPOTS.forEach(function(x){if(x.id===id)b=x;}); return {id:id,name:b.name,cost:b.cost,summer:!!b.summer}; }
+var DATE_EXTRA = {
+rin:{
+ park:{scene:"静かな公園。凛はベンチで文庫本を開きかけていた。",line:"……静かで、いい場所。誘ってくれてありがとう。",q:"凛が読みかけの本の感想を聞かせてくれた。どう返す？",choices:[{t:"自分の感想も話す",d:5,r:"「……あなたの読み方、面白い」凛の目が少し輝いた。"},{t:"静かに隣で過ごす",d:4,r:"無理に話さなくても心地いい。そんな時間が流れた。"},{t:"次のおすすめを聞く",d:3,r:"「じゃあ、これ」鞄から一冊取り出してくれた。"}]},
+ movie:{scene:"映画館。凛は作品のパンフレットを丁寧に眺めている。",line:"この監督の前作、観たことある？ ……語りすぎたら止めて。",q:"上映後、凛が静かに余韻に浸っている。",choices:[{t:"感想をじっくり聞く",d:6,r:"「……話せてよかった」小さく微笑んだ。"},{t:"自分の感想を熱く語る",d:3,r:"凛は頷きながら聞いてくれた。"},{t:"パンフレットを一緒に見る",d:4,r:"細部に気づく凛に感心した。"}]},
+ aqua:{scene:"水族館。凛は水槽の説明文まで丁寧に読んでいる。",line:"クラゲは脳がないのに、ちゃんと生きてる。……不思議。",q:"凛がペンギンの前で足を止めた。",choices:[{t:"静かに一緒に眺める",d:4,r:"静かな時間が心地よかった。"},{t:"豆知識を披露する",d:3,r:"「博識なのね」少し見直された。"},{t:"お土産売り場をのぞく",d:2,r:"凛は栞を選んでいた。"}]},
+ museum:{scene:"美術館。凛は一枚の絵の前で長く立ち止まった。",line:"色より、構図が好き。……この絵、静かだね。",q:"凛が感想を求めるようにこちらを見た。",choices:[{t:"感じたことを素直に言う",d:5,r:"「……うん、私もそう思う」共感が生まれた。"},{t:"解説文を一緒に読む",d:4,r:"二人で読み解くのが楽しかった。"},{t:"好きな絵を探す",d:3,r:"それぞれの好みが分かって面白かった。"}]},
+ cafe:{scene:"落ち着いたカフェ。凛は紅茶を両手で包んでいる。",line:"ここの紅茶、香りがいい。……たまにはこういう休日も、悪くない。",q:"凛が学校の話を少しだけしてくれた。",choices:[{t:"相槌を打ちながら聞く",d:5,r:"凛の表情が少し柔らかくなった。"},{t:"勉強の悩みを相談する",d:5,r:"「……基礎から見直してみたら」的確な助言をもらえた。"},{t:"ケーキを半分こする",d:4,r:"「……ありがとう」照れたように目を逸らした。"}]},
+ bowl:{scene:"ボウリング場。凛はスコア表を真剣に見ている。",line:"……負けるのは、あまり好きじゃない。",q:"凛がストライクを出した。",choices:[{t:"素直にすごいと褒める",d:4,r:"「……当然」なんて言いつつ嬉しそうだ。"},{t:"勝負を挑む",d:3,r:"真剣勝負は盛り上がった。"},{t:"フォームを褒める",d:4,r:"「観察してたの？」少し照れた。"}]},
+ amuse:{scene:"遊園地。人混みに凛は少し疲れた顔だ。",line:"……賑やかなのは、少し苦手。でも、来たからには付き合う。",q:"凛が観覧車を見上げた。",choices:[{t:"静かな観覧車を提案する",d:5,r:"「……それなら」夕日の中で静かに話せた。"},{t:"絶叫系に誘う",d:-2,r:"凛は青ざめてしまった。場所選びは大事だ。"},{t:"早めに切り上げてカフェへ",d:3,r:"「助かった」凛がほっとした顔を見せた。"}]},
+ sea:{scene:"海辺。凛は帽子を押さえながら波を見ている。",line:"海は……本の中だけのものだと思ってた。悪くない。",q:"凛が貝殻を拾った。",choices:[{t:"一緒に貝殻を探す",d:4,r:"静かで穏やかな時間だった。"},{t:"海の話をする",d:3,r:"凛が珍しく自分から話してくれた。"},{t:"かき氷を買ってくる",d:4,r:"「……甘い」小さく笑った。"}]}
+},
+yura:{
+ park:{scene:"公園。ゆらは芝生に座って空を描いている。",line:"ねえ、雲の色って白じゃないんだよ。ほら、少し桃色。",q:"ゆらがスケッチブックを差し出した。",choices:[{t:"感想を言葉にする",d:5,r:"「ほんと？　嬉しい」ゆらがにっこりした。"},{t:"隣で空を眺める",d:4,r:"風の音だけが聞こえる、穏やかな時間。"},{t:"雲の形で遊ぶ",d:4,r:"「あれは鯨！」二人で笑った。"}]},
+ movie:{scene:"映画館。ゆらはポスターの色使いに見入っている。",line:"このポスター、色が夢みたい。映画より先に好きになっちゃった。",q:"上映後、ゆらが余韻に浸っている。",choices:[{t:"色や映像の話をする",d:5,r:"「わかる！」ゆらの目が輝いた。"},{t:"物語の感想を話す",d:3,r:"ゆらはふんふん頷いていた。"},{t:"静かに歩く",d:3,r:"言葉のない時間も心地よかった。"}]},
+ aqua:{scene:"水族館。ゆらはクラゲの前で立ち止まったまま動かない。",line:"……ほら、透けてる。心臓まで見えそう。描きたい。",q:"ゆらがその場で小さなスケッチを始めた。",choices:[{t:"終わるまで待つ",d:6,r:"「待っててくれたの？　……ありがとう」特別な笑顔だった。"},{t:"感想を聞く",d:4,r:"ゆらの言葉は詩のようだった。"},{t:"次の水槽へ誘う",d:2,r:"少し名残惜しそうだった。"}]},
+ museum:{scene:"美術館。ゆらは絵の前に座り込んでしまった。",line:"この青、あたしの知ってる青と違う。……ずっと見ていたい。",q:"ゆらが小さな声で感想を漏らした。",choices:[{t:"一緒に座って眺める",d:6,r:"時間を忘れて二人で絵の中にいた。"},{t:"好きな色を聞く",d:5,r:"「今はね、水色と桃色の間」嬉しそうに答えた。"},{t:"静かに離れる",d:2,r:"ゆらの世界を邪魔しないようにした。"}]},
+ cafe:{scene:"カフェ。ゆらは窓の光で影を描いている。",line:"ここの光、蜂蜜みたい。ケーキも光ってる。",q:"ゆらがパフェを不思議そうに眺めた。",choices:[{t:"味の感想を交換する",d:4,r:"「甘い雲みたい」独特の表現に笑った。"},{t:"絵の話を聞く",d:5,r:"ゆらの世界が少しだけ開けた。"},{t:"静かに過ごす",d:3,r:"穏やかな午後だった。"}]},
+ bowl:{scene:"ボウリング場。大きな音にゆらは少し肩をすくめた。",line:"うう、音が大きい……。あたし、ここは少し苦手かも。",q:"ゆらが重いボールを抱えている。",choices:[{t:"軽いボールを選んであげる",d:3,r:"「ありがとう」少しだけ楽しめた。"},{t:"早めに切り上げて外へ",d:5,r:"「助かったぁ」外の風にほっとしていた。"},{t:"無理に盛り上げる",d:-2,r:"ゆらは疲れてしまった。場所選びは大事だ。"}]},
+ amuse:{scene:"遊園地。ゆらはメリーゴーラウンドに見入っている。",line:"回るお馬さん、夢みたい。……乗ってもいい？",q:"ゆらが観覧車から景色を描こうとしている。",choices:[{t:"一緒にメリーゴーラウンドへ",d:5,r:"「ふふ、夢の中みたい」楽しそうだった。"},{t:"景色を一緒に眺める",d:4,r:"静かで色に満ちた時間だった。"},{t:"絶叫系に誘う",d:1,r:"ゆらは目を回してしまった。"}]},
+ sea:{scene:"海。ゆらは波打ち際で足を浸している。",line:"海の色、今日はエメラルド。昨日と違うんだろうなあ。",q:"ゆらが砂に絵を描き始めた。",choices:[{t:"一緒に砂の絵を描く",d:5,r:"波に消える絵を二人で眺めた。"},{t:"貝殻を集める",d:4,r:"「宝物だね」ゆらが大切そうに握った。"},{t:"海の家で休む",d:3,r:"かき氷を分け合った。"}]}
+}};
+
+var OUTINGS = [
+  {text:"駅前の本屋で立ち読み。気になる一冊に出会えた。", fx:{zatsu:4}},
+  {text:"商店街のくじ引きで、なんと500円分の商品券が当たった！", fx:{money:500}},
+  {text:"河川敷を散歩した。風が気持ちよくて、ストレスがほぐれた。", fx:{stress:-10}},
+  {text:"ゲーセンで友達と対戦。白熱して運動神経が刺激された。", fx:{sport:3}},
+  {text:"路地裏で迷子になっていた子猫を保護した。飼い主が見つかってほっとした。", fx:{look:2, stress:-5}},
+  {text:"古着屋で掘り出し物のシャツを発見。センスが磨かれた気がする。", fx:{look:4}},
+  {text:"駅前で落とし物の財布を交番に届けた。なんだか清々しい気分だ。", fx:{stress:-6}}
+];
+
+/* ---------------- State ---------------- */
+var MONTHS = [4,5,6,7,8,9,10,11,12,1,2,3];
+var TEST_WEEKS = {"5-3":"中間テスト","10-3":"中間テスト","7-2":"期末テスト","12-2":"期末テスト","3-1":"学年末テスト"};
+
+function newState(){
+  return {
+    name:"",
+    year:1, monthIdx:0, week:1,
+    params:{bun:30, ri:30, art:25, sport:25, zatsu:30, look:25},
+    stress:20, money:3000,
+    heroines:{
+      himari:{met:false, aff:0, sinceDate:0},
+      rin:{met:false, aff:0, sinceDate:0},
+      yura:{met:false, aff:0, sinceDate:0}
+    },
+    flags:{done:{}},
+    couple:null,
+    phase:"command",
+    pendingNext:null,
+    dateSpot:null, dateHeroine:"himari",
+    weeksPlayed:0, datesCount:0, bestRank:null
+  };
+}
+function H(id){ return S.heroines[id]; }
+function metIds(){ return ["himari","rin","yura"].filter(function(id){ return S.heroines[id].met; }); }
+function migrate(d){
+  if(!d) return null;
+  if(d.himari && !d.heroines){
+    var n = newState();
+    n.name=d.name; n.year=d.year||1; n.monthIdx=d.monthIdx||0; n.week=d.week||1;
+    n.params=d.params||n.params; n.stress=(d.stress!=null?d.stress:20); n.money=(d.money!=null?d.money:3000);
+    n.heroines.himari={met:!!d.himari.met, aff:d.himari.aff||0, sinceDate:d.himari.sinceDate||0};
+    n.phase=d.phase||"command"; n.weeksPlayed=d.weeksPlayed||0; n.datesCount=d.datesCount||0; n.bestRank=(d.bestRank!=null?d.bestRank:null);
+    return n;
+  }
+  if(!d.heroines) d.heroines=newState().heroines;
+  if(!d.flags) d.flags={done:{}};
+  if(!d.flags.done) d.flags.done={};
+  if(d.couple===undefined) d.couple=null;
+  ["himari","rin","yura"].forEach(function(id){ if(!d.heroines[id]) d.heroines[id]={met:false,aff:0,sinceDate:0}; });
+  return d;
+}
+var HEROINES = {
+  himari:{name:"日向ひまり", desc:"陸上部・同級生", fav:["sport"]},
+  rin:{name:"白瀬凛", desc:"図書委員・同級生", fav:["bun","ri"]},
+  yura:{name:"森永ゆら", desc:"美術部・同級生", fav:["art","zatsu"]}
+};
+var PRESENTS = [
+  {id:"sweets", name:"お菓子の詰め合わせ", cost:1000, pref:{himari:"like", rin:"normal", yura:"like"}},
+  {id:"flowers", name:"小さな花束", cost:1500, pref:{himari:"like", rin:"normal", yura:"normal"}},
+  {id:"book", name:"評判の小説・画集", cost:1200, pref:{himari:"normal", rin:"like", yura:"like"}},
+  {id:"plush", name:"手のひらぬいぐるみ", cost:1800, pref:{himari:"like", rin:"dislike", yura:"like"}},
+  {id:"hairpin", name:"ヘアアクセサリー", cost:2000, pref:{himari:"normal", rin:"like", yura:"normal"}},
+  {id:"artset", name:"画材セット", cost:2500, pref:{himari:"normal", rin:"normal", yura:"like"}},
+  {id:"towel", name:"スポーツタオル", cost:1100, pref:{himari:"like", rin:"dislike", yura:"normal"}},
+  {id:"tea", name:"高級な紅茶セット", cost:2200, pref:{himari:"normal", rin:"like", yura:"normal"}}
+];
+
+var S = newState();
+
+function month(){ return MONTHS[S.monthIdx]; }
+function isSummer(){ var m = month(); return m===7 || m===8; }
+function termLabel(){
+  var m = month();
+  if(m===8) return "夏休み";
+  if(m>=4 && m<=7) return "1学期";
+  if(m>=9 && m<=12) return "2学期";
+  return "3学期";
+}
+function testName(){
+  return TEST_WEEKS[month()+"-"+S.week] || null;
+}
+function totalWeeksElapsed(){
+  return (S.year-1)*48 + S.monthIdx*4 + (S.week-1);
+}
+function heartsOf(aff){
+  return Math.max(0, Math.min(5, Math.floor(aff/25)));
+}
+
+/* ---------------- Save ---------------- */
+function save(){
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }catch(e){}
+}
+function loadSave(){
+  try{
+    var raw = localStorage.getItem(SAVE_KEY) || localStorage.getItem(SAVE_KEY_OLD);
+    if(!raw) return null;
+    var d = JSON.parse(raw);
+    if(!d || !d.name) return null;
+    return migrate(d);
+  }catch(e){ return null; }
+}
+function eraseSave(){
+  try{ localStorage.removeItem(SAVE_KEY); localStorage.removeItem(SAVE_KEY_OLD); }catch(e){}
+}
+
+/* ---------------- Cleared endings (kept apart from the game save) ---------------- */
+var CLEAR_KEY = "kimito3-cleared-v1";
+var ENDING_LABELS = {himari:"ひまりエンド", rin:"凛エンド", yura:"ゆらエンド", fail:"告白失敗エンド", bad:"バッドエンド"};
+function loadCleared(){
+  try{ var d = JSON.parse(localStorage.getItem(CLEAR_KEY) || "{}"); return (d && typeof d==="object") ? d : {}; }catch(e){ return {}; }
+}
+function recordClear(key){
+  var c = loadCleared(); c[key] = 1;
+  try{ localStorage.setItem(CLEAR_KEY, JSON.stringify(c)); }catch(e){}
+}
+function renderClearStatus(){
+  var el = $("clear-status"); if(!el) return;
+  var c = loadCleared();
+  var keys = ["himari","rin","yura","fail","bad"];
+  var got = keys.filter(function(k){ return c[k]; }).length;
+  var parts = keys.map(function(k){
+    return c[k] ? '<span class="got">✓ ' + ENDING_LABELS[k] + "</span>" : "・" + ENDING_LABELS[k];
+  });
+  el.innerHTML = "<b>エンディング到達状況（" + got + " / " + keys.length + "）</b><br />" + parts.join("　");
+}
+
+/* ---------------- Confession conditions ----------------
+   Early confession (Christmas, year 3): affection at max hearts (♥×5 = aff 125+).
+   Final confession (graduation): aff 100+ (♥×4) AND the heroine's favourite
+   parameters. Thresholds were checked against the weekly gains: a focused
+   player reaches aff 125 in roughly 10 good dates, and the parameter values
+   in roughly 10-18 weeks of the matching commands out of 144 — challenging
+   for a spread-out play style, comfortable for a focused one. */
+var EARLY_CONFESS_AFF = 125;
+var CONFESS = {
+  himari:{aff:100, params:[["sport",120]], condText:"親密度 ♥×4以上 ＋ 運動 120以上"},
+  rin:{aff:100, params:[["bun",110],["ri",110]], condText:"親密度 ♥×4以上 ＋ 文系・理系 各110以上"},
+  yura:{aff:100, params:[["art",110],["zatsu",90]], condText:"親密度 ♥×4以上 ＋ 芸術 110以上・雑学 90以上"}
+};
+function paramName(key){ return PARAMS.filter(function(p){ return p.key===key; })[0].name; }
+function confessCheck(hid){
+  var cfg = CONFESS[hid], missing = [];
+  if(H(hid).aff < cfg.aff) missing.push("親密度（あと" + (cfg.aff - H(hid).aff) + "）");
+  cfg.params.forEach(function(pr){
+    if(S.params[pr[0]] < pr[1]) missing.push(paramName(pr[0]) + "（あと" + (pr[1] - S.params[pr[0]]) + "）");
+  });
+  return {ok: missing.length===0, missing: missing};
+}
+
+/* ---------------- Helpers ---------------- */
+function $(id){ return document.getElementById(id); }
+function rnd(a,b){ return a + Math.floor(Math.random()*(b-a+1)); }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function fmtYen(n){ return "¥" + n.toLocaleString("ja-JP"); }
+function esc(t){ return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function show(id){
+  ["screen-title","screen-name","screen-game","screen-end"].forEach(function(s){
+    $(s).classList.toggle("hidden", s!==id);
+  });
+  if(id==="screen-title" || id==="screen-end") Sound.setTrack("title");
+}
+/* ---------------- Illustrations (flat placeholder style) ----------------
+   Himari is the original prototype placeholder, restored as-is:
+   plain round shapes only — no outlines, no jagged paths, no detail.
+   Expressions differ only in the simplest eye / mouth / cheek swaps.
+   Backgrounds are drawn in the same simple flat style. */
+function charaSVG(id, expr){
+  var CFG = {
+    himari:{hair:"#8a5a36", tie:"#f2607c", type:"pony"},
+    rin:{hair:"#2f3542", tie:"#3d9bd6", type:"long"},
+    yura:{hair:"#c98aa6", tie:"#3fae7c", type:"wave"}
+  };
+  var c = CFG[id] || CFG.himari;
+  var HAIR=c.hair, SKIN="#ffe9d2", EYE="#38302a";
+  var eyes, mouth, blush;
+  if(expr==="smile"){
+    eyes='<path d="M74 100 Q84 90 94 100" stroke="'+EYE+'" stroke-width="4.5" fill="none" stroke-linecap="round"/><path d="M106 100 Q116 90 126 100" stroke="'+EYE+'" stroke-width="4.5" fill="none" stroke-linecap="round"/>';
+    mouth='<path d="M89 114 Q100 129 111 114 Z" fill="#b06a4a"/>';
+    blush='<ellipse cx="66" cy="112" rx="9" ry="5.5" fill="#ffb3ab" opacity=".7"/><ellipse cx="134" cy="112" rx="9" ry="5.5" fill="#ffb3ab" opacity=".7"/>';
+  } else if(expr==="shy"){
+    eyes='<circle cx="84" cy="99" r="4.5" fill="'+EYE+'"/><circle cx="116" cy="99" r="4.5" fill="'+EYE+'"/>';
+    mouth='<path d="M94 118 Q100 122 106 118" stroke="#c06a4a" stroke-width="3.5" fill="none" stroke-linecap="round"/>';
+    blush='<ellipse cx="66" cy="112" rx="10" ry="6" fill="#ff9d94" opacity=".9"/><ellipse cx="134" cy="112" rx="10" ry="6" fill="#ff9d94" opacity=".9"/>';
+  } else {
+    eyes='<circle cx="84" cy="99" r="4.5" fill="'+EYE+'"/><circle cx="116" cy="99" r="4.5" fill="'+EYE+'"/>';
+    mouth='<path d="M91 116 Q100 123 109 116" stroke="#c06a4a" stroke-width="3.5" fill="none" stroke-linecap="round"/>';
+    blush='<ellipse cx="66" cy="112" rx="8" ry="5" fill="#ffb3ab" opacity=".55"/><ellipse cx="134" cy="112" rx="8" ry="5" fill="#ffb3ab" opacity=".55"/>';
+  }
+  var backHair="", frontHair="", deco="";
+  if(c.type==="pony"){
+    backHair='<path d="M136 46 C158 52 167 76 164 110 C161 142 151 162 139 168 C147 132 147 82 136 46 Z" fill="'+HAIR+'"/>';
+    frontHair='<path d="M54 96 C50 52 70 30 100 30 C130 30 150 52 146 96 C134 72 120 66 100 66 C80 66 66 72 54 96 Z" fill="'+HAIR+'"/>';
+    deco='<rect x="131" y="32" width="13" height="24" rx="6.5" transform="rotate(16 137 44)" fill="#f2607c"/>';
+  } else if(c.type==="long"){
+    backHair='<rect x="50" y="34" width="100" height="138" rx="28" fill="'+HAIR+'"/>';
+    frontHair='<path d="M54 92 C52 50 72 30 100 30 C128 30 148 50 146 92 C132 70 118 64 100 64 C82 64 68 70 54 92 Z" fill="'+HAIR+'"/>';
+    deco='<rect x="58" y="52" width="10" height="22" rx="5" fill="#3d9bd6"/>';
+  } else {
+    backHair='<circle cx="58" cy="86" r="24" fill="'+HAIR+'"/><circle cx="142" cy="86" r="24" fill="'+HAIR+'"/><circle cx="62" cy="122" r="20" fill="'+HAIR+'"/><circle cx="138" cy="122" r="20" fill="'+HAIR+'"/>';
+    frontHair='<path d="M54 96 C50 52 70 30 100 30 C130 30 150 52 146 96 C136 74 124 68 112 70 C104 60 92 60 86 70 C74 68 64 76 54 96 Z" fill="'+HAIR+'"/>';
+    deco='<circle cx="136" cy="44" r="8" fill="#ffd166"/><circle cx="136" cy="44" r="3.5" fill="#fff3d6"/>';
+  }
+  return '<svg viewBox="0 0 200 250" preserveAspectRatio="xMidYMid meet" aria-hidden="true">'
+    + backHair
+    + '<rect x="52" y="138" width="96" height="112" rx="26" fill="#2e4059"/>'
+    + '<polygon points="84,138 116,138 100,162" fill="#ffffff"/>'
+    + '<rect x="93" y="148" width="14" height="36" rx="7" fill="'+c.tie+'"/>'
+    + '<circle cx="100" cy="94" r="46" fill="'+SKIN+'"/>'
+    + frontHair + deco + blush + eyes + mouth + '</svg>';
+}
+function himariSVG(expr){ return charaSVG("himari", expr); }
+
+var BG_SVG = {
+  title:
+    '<rect width="400" height="210" fill="#bfe6f7"/>'
+    + '<circle cx="52" cy="38" r="17" fill="#ffe9a3"/>'
+    + '<g fill="#ffffff"><ellipse cx="105" cy="36" rx="30" ry="11"/><ellipse cx="128" cy="30" rx="20" ry="9"/><ellipse cx="315" cy="48" rx="34" ry="12"/><ellipse cx="342" cy="41" rx="20" ry="9"/></g>'
+    + '<rect y="158" width="400" height="52" fill="#9ed29a"/>'
+    + '<polygon points="168,210 232,210 214,160 186,160" fill="#f3e2c2"/>'
+    + '<rect x="96" y="104" width="72" height="58" fill="#fff3d6"/><rect x="232" y="104" width="72" height="58" fill="#fff3d6"/>'
+    + '<polygon points="88,106 176,106 132,78" fill="#5a6a82"/><polygon points="224,106 312,106 268,78" fill="#5a6a82"/>'
+    + '<rect x="164" y="82" width="72" height="80" fill="#fff8e2"/>'
+    + '<polygon points="156,84 244,84 200,54" fill="#48607e"/>'
+    + '<rect x="186" y="34" width="28" height="52" fill="#fff8e2"/><polygon points="182,36 218,36 200,14" fill="#48607e"/>'
+    + '<circle cx="200" cy="52" r="9" fill="#ffffff" stroke="#48607e" stroke-width="2.5"/><path d="M200 52 L200 45 M200 52 L205 55" stroke="#48607e" stroke-width="2" stroke-linecap="round"/>'
+    + '<g fill="#8fc7e8"><rect x="182" y="98" width="14" height="18"/><rect x="204" y="98" width="14" height="18"/><rect x="108" y="116" width="12" height="15"/><rect x="140" y="116" width="12" height="15"/><rect x="248" y="116" width="12" height="15"/><rect x="280" y="116" width="12" height="15"/></g>'
+    + '<rect x="190" y="132" width="20" height="30" fill="#8a5a36"/>'
+    + '<g><rect x="36" y="118" width="7" height="44" fill="#8a5a36"/><circle cx="40" cy="100" r="30" fill="#f9b8c9"/><circle cx="18" cy="112" r="19" fill="#f79fb8"/><circle cx="62" cy="112" r="19" fill="#f79fb8"/></g>'
+    + '<g><rect x="356" y="118" width="7" height="44" fill="#8a5a36"/><circle cx="360" cy="100" r="30" fill="#f9b8c9"/><circle cx="338" cy="112" r="19" fill="#f79fb8"/><circle cx="382" cy="112" r="19" fill="#f79fb8"/></g>'
+    + '<g fill="#f79fb8"><ellipse cx="90" cy="60" rx="6" ry="4"/><ellipse cx="300" cy="86" rx="6" ry="4"/><ellipse cx="150" cy="140" rx="6" ry="4"/><ellipse cx="255" cy="146" rx="6" ry="4"/><ellipse cx="60" cy="180" rx="6" ry="4"/><ellipse cx="345" cy="182" rx="6" ry="4"/></g>',
+  school:
+    '<rect width="400" height="210" fill="#ffe8c9"/>'
+    + '<polygon points="0,210 400,210 340,138 60,138" fill="#d9a066"/>'
+    + '<path d="M60 138 L0 210 M340 138 L400 210 M130 138 L110 210 M270 138 L290 210" stroke="#c08b52" stroke-width="3"/>'
+    + '<rect y="128" width="400" height="10" fill="#e8b57e"/>'
+    + '<g><rect x="18" y="26" width="66" height="86" fill="#bfe6f7" stroke="#ffffff" stroke-width="6"/><rect x="102" y="26" width="66" height="86" fill="#bfe6f7" stroke="#ffffff" stroke-width="6"/><path d="M51 26 L51 112 M135 26 L135 112" stroke="#ffffff" stroke-width="4"/></g>'
+    + '<polygon points="18,112 84,112 66,138 30,138" fill="#fff3d0" opacity=".65"/><polygon points="102,112 168,112 150,138 114,138" fill="#fff3d0" opacity=".65"/>'
+    + '<rect x="196" y="34" width="86" height="66" fill="#ffffff" stroke="#e2703a" stroke-width="4"/>'
+    + '<rect x="206" y="46" width="28" height="20" fill="#ffd9a8"/><rect x="240" y="46" width="32" height="12" fill="#bfe6f7"/><rect x="206" y="72" width="20" height="18" fill="#f9b8c9"/><rect x="232" y="72" width="40" height="8" fill="#cfe8c9"/>'
+    + '<rect x="312" y="20" width="58" height="118" fill="#b07a45"/><rect x="322" y="30" width="38" height="40" fill="#bfe6f7"/><circle cx="360" cy="88" r="4" fill="#f5d76e"/>'
+    + '<rect y="0" width="400" height="12" fill="#f7d9ae"/>',
+  park:
+    '<rect width="400" height="210" fill="#bfe6f7"/>'
+    + '<g fill="#ffffff"><ellipse cx="70" cy="34" rx="28" ry="10"/><ellipse cx="330" cy="26" rx="32" ry="11"/></g>'
+    + '<rect y="128" width="400" height="82" fill="#8fd18f"/>'
+    + '<g><rect x="42" y="84" width="8" height="52" fill="#8a5a36"/><circle cx="46" cy="66" r="30" fill="#5cb87a"/><circle cx="24" cy="80" r="19" fill="#3fae7c"/><circle cx="68" cy="80" r="19" fill="#3fae7c"/></g>'
+    + '<g><rect x="350" y="84" width="8" height="52" fill="#8a5a36"/><circle cx="354" cy="66" r="30" fill="#5cb87a"/><circle cx="332" cy="80" r="19" fill="#3fae7c"/><circle cx="376" cy="80" r="19" fill="#3fae7c"/></g>'
+    + '<ellipse cx="200" cy="182" rx="86" ry="14" fill="#a8dcf0"/>'
+    + '<ellipse cx="200" cy="178" rx="66" ry="11" fill="#7fb8d9"/>'
+    + '<rect x="193" y="128" width="14" height="42" fill="#7fb8d9"/>'
+    + '<path d="M200 128 C186 112 172 112 164 122 M200 128 C214 112 228 112 236 122 M200 122 C200 108 194 100 188 96 M200 122 C200 108 206 100 212 96" stroke="#a8dcf0" stroke-width="5" fill="none" stroke-linecap="round"/>'
+    + '<g fill="#a8dcf0"><circle cx="182" cy="140" r="3.5"/><circle cx="218" cy="140" r="3.5"/><circle cx="200" cy="146" r="3"/></g>'
+    + '<g><rect x="96" y="160" width="52" height="8" fill="#a06c3e"/><rect x="102" y="168" width="6" height="16" fill="#8a5a36"/><rect x="136" y="168" width="6" height="16" fill="#8a5a36"/><rect x="98" y="146" width="48" height="7" fill="#a06c3e"/></g>'
+    + '<g><circle cx="80" cy="196" r="4" fill="#f2607c"/><circle cx="98" cy="200" r="4" fill="#ffd166"/><circle cx="310" cy="196" r="4" fill="#f2607c"/><circle cx="326" cy="200" r="4" fill="#ffd166"/><circle cx="160" cy="202" r="4" fill="#ff9fb0"/><circle cx="246" cy="202" r="4" fill="#ff9fb0"/></g>',
+  movie:
+    '<rect width="400" height="210" fill="#2c3550"/>'
+    + '<rect x="104" y="22" width="192" height="106" rx="8" fill="#f4f8ff"/>'
+    + '<circle cx="150" cy="52" r="13" fill="#ffd93d"/><path d="M104 108 C140 78 176 96 208 80 C240 64 268 84 296 70 L296 128 L104 128 Z" fill="#8fd18f"/><path d="M104 118 C150 96 210 112 296 92 L296 128 L104 128 Z" fill="#5cb87a"/>'
+    + '<g fill="#f2607c"><circle cx="70" cy="30" r="3"/><circle cx="330" cy="30" r="3"/><circle cx="46" cy="70" r="3"/><circle cx="354" cy="70" r="3"/></g>'
+    + '<g><rect x="52" y="158" width="42" height="34" rx="9" fill="#565f7d"/><rect x="118" y="158" width="42" height="34" rx="9" fill="#565f7d"/><rect x="184" y="158" width="42" height="34" rx="9" fill="#565f7d"/><rect x="250" y="158" width="42" height="34" rx="9" fill="#565f7d"/><rect x="316" y="158" width="42" height="34" rx="9" fill="#565f7d"/></g>'
+    + '<g fill="#1d2438"><circle cx="86" cy="150" r="11"/><circle cx="218" cy="150" r="11"/><circle cx="338" cy="150" r="11"/></g>'
+    + '<g><rect x="128" y="132" width="20" height="24" fill="#f2607c"/><path d="M128 132 L148 132 L144 142 L132 142 Z" fill="#ffffff"/><ellipse cx="138" cy="130" rx="12" ry="5" fill="#fff3d6"/></g>',
+  aqua:
+    '<rect width="400" height="210" fill="#2a6ea8"/>'
+    + '<polygon points="60,0 110,0 84,210 20,210" fill="#ffffff" opacity=".10"/><polygon points="240,0 282,0 320,210 262,210" fill="#ffffff" opacity=".10"/>'
+    + '<rect y="182" width="400" height="28" fill="#1f5a8c"/>'
+    + '<g stroke="#bfe6f7" fill="none" stroke-width="2.5"><circle cx="70" cy="60" r="6"/><circle cx="88" cy="38" r="4"/><circle cx="330" cy="80" r="7"/><circle cx="312" cy="52" r="4.5"/><circle cx="200" cy="30" r="5"/></g>'
+    + '<g><path d="M96 92 C112 78 132 78 146 92 C132 106 112 106 96 92 Z" fill="#ff9f43"/><polygon points="96,92 78,80 78,104" fill="#ff9f43"/><circle cx="132" cy="89" r="3" fill="#2a4a66"/></g>'
+    + '<g><path d="M262 130 C276 118 294 118 306 130 C294 142 276 142 262 130 Z" fill="#f79fb8"/><polygon points="262,130 246,120 246,140" fill="#f79fb8"/><circle cx="294" cy="127" r="2.6" fill="#2a4a66"/></g>'
+    + '<g><path d="M180 60 C190 51 202 51 210 60 C202 69 190 69 180 60 Z" fill="#ffd166"/><polygon points="180,60 168,52 168,68" fill="#ffd166"/><circle cx="200" cy="58" r="2.2" fill="#2a4a66"/></g>'
+    + '<path d="M40 184 C36 160 48 150 44 132 M58 184 C58 164 66 156 62 140" stroke="#3fae7c" stroke-width="7" fill="none" stroke-linecap="round"/>'
+    + '<path d="M352 184 C348 162 360 152 356 134 M368 184 C368 166 376 158 372 144" stroke="#3fae7c" stroke-width="7" fill="none" stroke-linecap="round"/>'
+    + '<g stroke="#f2607c" stroke-width="5" fill="none" stroke-linecap="round"><path d="M120 184 L120 164 M120 172 L108 162 M120 172 L132 162"/></g>'
+    + '<g fill="#ffd9a8"><circle cx="90" cy="192" r="5"/><circle cx="240" cy="196" r="6"/><circle cx="300" cy="190" r="4"/></g>',
+  museum:
+    '<rect width="400" height="210" fill="#f3e6cf"/>'
+    + '<rect y="164" width="400" height="46" fill="#d9b98c"/><path d="M0 164 L400 164" stroke="#c4a06e" stroke-width="3"/>'
+    + '<polygon points="60,20 130,64 60,108" fill="#ffffff" opacity=".35"/><polygon points="270,20 340,64 270,108" fill="#ffffff" opacity=".35"/>'
+    + '<g><rect x="52" y="36" width="86" height="66" fill="#ffffff" stroke="#d9a441" stroke-width="5"/><circle cx="95" cy="62" r="14" fill="#ffd93d"/><path d="M60 94 C76 76 92 88 108 76 C120 68 128 78 130 94 Z" fill="#8fd18f"/></g>'
+    + '<g><rect x="262" y="36" width="86" height="66" fill="#ffffff" stroke="#d9a441" stroke-width="5"/><path d="M280 88 C292 60 306 84 318 56 C326 68 332 78 334 88 Z" fill="#7fb8d9"/><circle cx="322" cy="52" r="7" fill="#f2607c"/></g>'
+    + '<g><rect x="168" y="44" width="64" height="50" fill="#ffffff" stroke="#8a5a36" stroke-width="4"/><path d="M178 84 C188 64 200 78 210 62 C216 70 220 76 222 84 Z" fill="#f79fb8"/></g>'
+    + '<rect x="182" y="128" width="36" height="38" fill="#e8dcc2"/><path d="M188 128 C186 112 194 104 200 104 C206 104 214 112 212 128 Z" fill="#7fb8d9"/><ellipse cx="200" cy="102" rx="9" ry="4" fill="#5a8ab0"/>'
+    + '<g fill="#d9a441"><circle cx="95" cy="24" r="4"/><circle cx="200" cy="30" r="4"/><circle cx="305" cy="24" r="4"/></g>',
+  cafe:
+    '<rect width="400" height="210" fill="#ffe3c2"/>'
+    + '<rect x="24" y="26" width="130" height="100" fill="#bfe6f7" stroke="#ffffff" stroke-width="6"/>'
+    + '<g><polygon points="18,26 160,26 148,44 30,44" fill="#f2607c"/><polygon points="52,26 74,26 70,44 46,44" fill="#ffffff"/><polygon points="104,26 126,26 130,44 100,44" fill="#ffffff"/></g>'
+    + '<circle cx="118" cy="86" r="15" fill="#5cb87a"/><rect x="112" y="98" width="12" height="20" fill="#b07a45"/>'
+    + '<rect y="150" width="400" height="60" fill="#e8b57e"/>'
+    + '<g stroke="#8a5a36" stroke-width="3"><path d="M238 0 L238 26 M316 0 L316 26"/></g>'
+    + '<circle cx="238" cy="38" r="13" fill="#ffd166"/><circle cx="316" cy="38" r="13" fill="#ffd166"/>'
+    + '<rect x="238" y="118" width="140" height="52" fill="#c98d54"/><rect x="238" y="118" width="140" height="10" fill="#a06c3e"/>'
+    + '<ellipse cx="120" cy="168" rx="78" ry="14" fill="#a06c3e"/><rect x="114" y="168" width="12" height="26" fill="#8a5a36"/>'
+    + '<g><rect x="76" y="140" width="26" height="20" rx="4" fill="#ffffff"/><path d="M102 146 C112 146 112 156 102 156" stroke="#ffffff" stroke-width="4" fill="none"/><path d="M84 132 C82 126 88 124 86 118 M94 132 C92 126 98 124 96 118" stroke="#d9c8b2" stroke-width="3" fill="none" stroke-linecap="round"/></g>'
+    + '<g><path d="M138 160 C136 142 144 134 154 134 C164 134 172 142 170 160 Z" fill="#f2607c"/><ellipse cx="154" cy="133" rx="11" ry="4" fill="#ffd9a8"/><rect x="160" y="118" width="4" height="14" fill="#e0483e" transform="rotate(18 162 125)"/></g>'
+    + '<g><rect x="196" y="146" width="18" height="24" fill="#7fb8d9"/><circle cx="205" cy="140" r="9" fill="#5cb87a"/></g>',
+  bowl:
+    '<rect width="400" height="210" fill="#3a3f66"/>'
+    + '<g fill="#ffd166"><circle cx="40" cy="34" r="4"/><circle cx="360" cy="30" r="4"/><circle cx="200" cy="20" r="4"/></g>'
+    + '<rect x="128" y="26" width="144" height="30" rx="15" fill="#f2607c"/><text x="200" y="47" text-anchor="middle" font-size="15" font-weight="bold" fill="#ffffff" font-family="sans-serif">BOWL</text>'
+    + '<polygon points="158,210 242,210 216,84 184,84" fill="#f2d5a0"/>'
+    + '<polygon points="60,210 158,210 184,84 128,84" fill="#4a5078"/><polygon points="242,210 340,210 272,84 216,84" fill="#4a5078"/>'
+    + '<path d="M200 210 L200 84" stroke="#d9b878" stroke-width="3"/>'
+    + '<g><g fill="#ffffff"><path d="M186 84 C183 74 186 66 192 66 C198 66 201 74 198 84 Z"/><path d="M202 84 C199 74 202 66 208 66 C214 66 217 74 214 84 Z"/></g><rect x="188" y="74" width="8" height="3.4" fill="#e0483e"/><rect x="204" y="74" width="8" height="3.4" fill="#e0483e"/></g>'
+    + '<circle cx="128" cy="168" r="24" fill="#7a6fd0"/><circle cx="120" cy="160" r="4" fill="#5650a0"/><circle cx="132" cy="156" r="4" fill="#5650a0"/><circle cx="126" cy="168" r="4" fill="#5650a0"/>'
+    + '<g fill="#ff9fb0"><polygon points="52,96 60,110 44,110"/><polygon points="348,96 356,110 340,110"/></g>',
+  amuse:
+    '<rect width="400" height="210" fill="#ffc98f"/>'
+    + '<rect y="86" width="400" height="60" fill="#ff9fb0"/>'
+    + '<circle cx="66" cy="42" r="19" fill="#fff3d6"/>'
+    + '<rect y="146" width="400" height="64" fill="#7d6ba8"/>'
+    + '<g stroke="#ffffff" stroke-width="2.5" fill="none"><path d="M0 22 C60 40 120 12 200 26 C280 40 340 14 400 28"/></g>'
+    + '<g><polygon points="26,28 40,28 33,42" fill="#f2607c"/><polygon points="96,20 110,20 103,34" fill="#ffd166"/><polygon points="290,20 304,20 297,34" fill="#3fae7c"/><polygon points="356,26 370,26 363,40" fill="#7fb8d9"/></g>'
+    + '<g><circle cx="292" cy="92" r="56" fill="none" stroke="#7a6fd0" stroke-width="5"/><circle cx="292" cy="92" r="10" fill="#ffd166"/>'
+    + '<path d="M292 36 L292 148 M236 92 L348 92 M252 52 L332 132 M332 52 L252 132" stroke="#7a6fd0" stroke-width="3"/>'
+    + '<g><rect x="282" y="28" width="20" height="15" rx="5" fill="#f2607c"/><rect x="282" y="141" width="20" height="15" rx="5" fill="#3fae7c"/><rect x="226" y="84" width="20" height="15" rx="5" fill="#ffd166"/><rect x="338" y="84" width="20" height="15" rx="5" fill="#7fb8d9"/><rect x="240" y="42" width="20" height="15" rx="5" fill="#ff9fb0"/><rect x="324" y="126" width="20" height="15" rx="5" fill="#f5a83d"/></g>'
+    + '<rect x="288" y="146" width="8" height="26" fill="#5650a0"/></g>'
+    + '<g><polygon points="52,146 148,146 132,104 68,104" fill="#f2607c"/><polygon points="84,146 116,146 108,104 92,104" fill="#ffffff"/><polygon points="100,104 100,74" stroke="#8a5a36" stroke-width="4"/><polygon points="100,74 122,88 78,88" fill="#ffd166"/><rect x="66" y="146" width="68" height="8" fill="#d94363"/><circle cx="100" cy="128" r="9" fill="#ffd166"/></g>',
+  sea:
+    '<rect width="400" height="210" fill="#aee3f7"/>'
+    + '<circle cx="336" cy="36" r="19" fill="#ffd93d"/>'
+    + '<g fill="#ffffff"><ellipse cx="70" cy="32" rx="30" ry="11"/><ellipse cx="180" cy="52" rx="24" ry="9"/></g>'
+    + '<rect y="92" width="400" height="76" fill="#3d9bd6"/>'
+    + '<g stroke="#ffffff" stroke-width="3.5" fill="none" stroke-linecap="round"><path d="M20 116 q12 -10 24 0 q12 10 24 0"/><path d="M140 132 q12 -10 24 0 q12 10 24 0"/><path d="M268 112 q12 -10 24 0 q12 10 24 0"/><path d="M70 148 q12 -10 24 0 q12 10 24 0"/><path d="M320 148 q12 -10 24 0 q12 10 24 0"/></g>'
+    + '<rect y="164" width="400" height="46" fill="#ffe3a3"/>'
+    + '<path d="M0 164 C60 156 120 170 200 164 C280 158 340 170 400 164 L400 176 L0 176 Z" fill="#ffffff" opacity=".55"/>'
+    + '<g><path d="M96 196 L118 158" stroke="#8a5a36" stroke-width="4"/><polygon points="66,164 152,164 118,146 100,146" fill="#f2607c"/><polygon points="92,164 118,164 109,146 100,146" fill="#ffffff"/></g>'
+    + '<g fill="#f5a83d"><circle cx="238" cy="192" r="5"/><circle cx="252" cy="186" r="4"/><circle cx="252" cy="198" r="4"/><circle cx="226" cy="186" r="4"/><circle cx="226" cy="198" r="4"/></g>'
+    + '<g><path d="M306 182 L330 182 L326 202 L310 202 Z" fill="#f2607c"/><rect x="304" y="176" width="28" height="7" rx="3" fill="#d94363"/></g>'
+    + '<ellipse cx="170" cy="196" rx="16" ry="6" fill="#f9b8c9"/><circle cx="164" cy="192" r="2.4" fill="#d9738f"/><circle cx="174" cy="195" r="2.4" fill="#d9738f"/>'
+};
+BG_SVG.titlebg =
+    '<rect width="400" height="560" fill="#bfe6f7"/>'
+    + '<circle cx="52" cy="52" r="20" fill="#ffe9a3"/>'
+    + '<g fill="#ffffff"><ellipse cx="120" cy="60" rx="36" ry="13"/><ellipse cx="150" cy="52" rx="22" ry="10"/><ellipse cx="308" cy="96" rx="38" ry="13"/><ellipse cx="338" cy="88" rx="22" ry="10"/><ellipse cx="84" cy="150" rx="26" ry="10"/></g>'
+    + '<rect y="428" width="400" height="132" fill="#9ed29a"/>'
+    + '<polygon points="176,560 224,560 210,432 190,432" fill="#f3e2c2"/>'
+    + '<rect x="66" y="362" width="92" height="68" fill="#fff3d6"/><rect x="242" y="362" width="92" height="68" fill="#fff3d6"/>'
+    + '<polygon points="58,364 166,364 112,330" fill="#5a6a82"/><polygon points="234,364 342,364 288,330" fill="#5a6a82"/>'
+    + '<rect x="152" y="330" width="96" height="100" fill="#fff8e2"/>'
+    + '<polygon points="142,332 258,332 200,292" fill="#48607e"/>'
+    + '<rect x="185" y="238" width="30" height="96" fill="#fff8e2"/><polygon points="180,240 220,240 200,206" fill="#48607e"/>'
+    + '<circle cx="200" cy="260" r="10" fill="#ffffff" stroke="#48607e" stroke-width="3"/><path d="M200 260 L200 252 M200 260 L206 264" stroke="#48607e" stroke-width="2.2" stroke-linecap="round"/>'
+    + '<g fill="#8fc7e8"><rect x="178" y="352" width="16" height="20"/><rect x="206" y="352" width="16" height="20"/><rect x="86" y="380" width="13" height="16"/><rect x="122" y="380" width="13" height="16"/><rect x="262" y="380" width="13" height="16"/><rect x="298" y="380" width="13" height="16"/></g>'
+    + '<rect x="189" y="398" width="22" height="32" fill="#8a5a36"/>'
+    + '<g><rect x="30" y="392" width="8" height="52" fill="#8a5a36"/><circle cx="34" cy="368" r="34" fill="#f9b8c9"/><circle cx="8" cy="384" r="21" fill="#f79fb8"/><circle cx="60" cy="384" r="21" fill="#f79fb8"/></g>'
+    + '<g><rect x="362" y="392" width="8" height="52" fill="#8a5a36"/><circle cx="366" cy="368" r="34" fill="#f9b8c9"/><circle cx="340" cy="384" r="21" fill="#f79fb8"/><circle cx="392" cy="384" r="21" fill="#f79fb8"/></g>'
+    + '<g fill="#f79fb8"><ellipse cx="110" cy="200" rx="7" ry="4.5"/><ellipse cx="300" cy="180" rx="7" ry="4.5"/><ellipse cx="70" cy="300" rx="7" ry="4.5"/><ellipse cx="330" cy="300" rx="7" ry="4.5"/><ellipse cx="150" cy="470" rx="7" ry="4.5"/><ellipse cx="262" cy="486" rx="7" ry="4.5"/><ellipse cx="52" cy="500" rx="7" ry="4.5"/><ellipse cx="352" cy="510" rx="7" ry="4.5"/></g>';
+BG_SVG.tree =
+    '<rect width="400" height="210" fill="#bfe6f7"/>'
+    + '<g fill="#ffffff"><ellipse cx="70" cy="30" rx="28" ry="10"/><ellipse cx="330" cy="24" rx="30" ry="10"/></g>'
+    + '<rect x="14" y="118" width="86" height="52" fill="#fff3d6"/><polygon points="10,120 104,120 57,98" fill="#5a6a82"/>'
+    + '<g fill="#8fc7e8"><rect x="28" y="130" width="12" height="14"/><rect x="52" y="130" width="12" height="14"/><rect x="76" y="130" width="12" height="14"/></g>'
+    + '<rect y="164" width="400" height="46" fill="#9ed29a"/>'
+    + '<path d="M196 210 C200 176 198 150 192 128 L228 128 C222 150 220 176 224 210 Z" fill="#8a5a36"/>'
+    + '<path d="M210 132 C188 116 168 112 150 118 M210 126 C232 108 254 104 272 112" stroke="#8a5a36" stroke-width="9" fill="none" stroke-linecap="round"/>'
+    + '<g fill="#3fae7c"><circle cx="210" cy="66" r="52"/><circle cx="152" cy="92" r="36"/><circle cx="268" cy="92" r="36"/><circle cx="182" cy="44" r="32"/><circle cx="240" cy="44" r="32"/></g>'
+    + '<g fill="#5cb87a"><circle cx="176" cy="76" r="18"/><circle cx="238" cy="70" r="20"/><circle cx="210" cy="98" r="16"/></g>'
+    + '<ellipse cx="210" cy="196" rx="70" ry="9" fill="#7fb96f"/>'
+    + '<g fill="#f79fb8"><ellipse cx="120" cy="182" rx="6" ry="4"/><ellipse cx="300" cy="188" rx="6" ry="4"/><ellipse cx="160" cy="200" rx="6" ry="4"/><ellipse cx="262" cy="202" rx="6" ry="4"/></g>'
+    + '<g><rect x="118" y="168" width="46" height="7" rx="3" fill="#a06c3e"/><rect x="124" y="175" width="6" height="13" fill="#8a5a36"/><rect x="152" y="175" width="6" height="13" fill="#8a5a36"/></g>';
+function bgSVG(key){
+  var vb = key === "titlebg" ? "0 0 400 560" : "0 0 400 210";
+  return '<svg viewBox="' + vb + '" preserveAspectRatio="xMidYMid slice" aria-hidden="true">' + (BG_SVG[key] || "") + '</svg>';
+}
+var SPOT_BG = { park:"park", movie:"movie", aqua:"aqua", museum:"museum", cafe:"cafe", bowl:"bowl", amuse:"amuse", sea:"sea" };
+function heroineImg(id){ return '<div class="heroine-svg">' + charaSVG(id,"normal") + '</div>'; }
+function himariImg(){ return heroineImg("himari"); }
+function setVisual(bgKey, spec, label){
+  var box = $("scene-visual");
+  var charaId=null, expr=null;
+  if(spec && typeof spec==="object"){ charaId=spec.id; expr=spec.expr; }
+  else if(spec){ charaId="himari"; expr=spec; }
+  if(!bgKey && !expr){ box.classList.add("hidden"); return; }
+  box.classList.remove("hidden");
+  var bg = $("scene-bg"), ch = $("scene-chara"), lb = $("scene-visual-label");
+  if(bgKey){ bg.innerHTML = bgSVG(bgKey); bg.classList.remove("hidden"); } else { bg.classList.add("hidden"); bg.innerHTML=""; }
+  box.classList.toggle("chara-only", !bgKey && !!expr);
+  if(expr){ ch.innerHTML = charaSVG(charaId||"himari", expr); ch.classList.remove("hidden"); } else { ch.classList.add("hidden"); ch.innerHTML=""; }
+  if(label){ lb.textContent = label; lb.classList.remove("hidden"); } else lb.classList.add("hidden");
+}
+function V(id, expr){ return {id:id, expr:expr}; }
+
+/* ---------------- Rendering ---------------- */
+function renderHUD(){
+  var t = testName();
+  $("hud-date").innerHTML = S.year + "年 " + month() + "月 第" + S.week + "週"
+    + ' <span style="font-size:.75rem;opacity:.75;">' + termLabel() + "</span>"
+    + (t ? '<span class="test-badge">' + t + "</span>" : "");
+  $("hud-money").textContent = fmtYen(S.money);
+  var st = $("hud-stress");
+  st.textContent = S.stress;
+  st.classList.toggle("stress-hot", S.stress >= 75);
+}
+function renderParams(){
+  var html = "";
+  PARAMS.forEach(function(p){
+    var v = S.params[p.key];
+    html += '<div class="param"><div class="prow"><span class="pname">' + p.name
+      + '</span><span class="pval">' + v + '</span></div>'
+      + '<div class="bar"><i class="' + p.bar + '" style="width:' + Math.min(100, v/3) + '%"></i></div></div>';
+  });
+  html += '<div class="param"><div class="prow"><span class="pname">ストレス</span><span class="pval"'
+    + (S.stress>=75 ? ' style="color:var(--danger)"' : "") + ">" + S.stress + '</span></div>'
+    + '<div class="bar"><i class="b-stress" style="width:' + S.stress + '%"></i></div></div>';
+  $("param-list").innerHTML = html;
+}
+function renderHeroine(){
+  var box = $("heroine-box");
+  var ids = metIds();
+  if(!ids.length){ box.innerHTML = '<p class="not-met">まだ誰とも出会っていない。<br />新学期、何かが始まる予感がする。</p>'; return; }
+  var html="";
+  ids.forEach(function(id){
+    var h=H(id), meta=HEROINES[id], ht=heartsOf(h.aff), hearts="";
+    for(var i=0;i<5;i++) hearts += i<ht ? "♥" : '<span class="off">♥</span>';
+    var since = totalWeeksElapsed() - h.sinceDate;
+    var bomb="";
+    if(!S.couple && (S.datesCount>0 || h.aff>0)){
+      if(since>=8) bomb='<div class="bomb show hot">💣 爆弾が爆発寸前…！ 早くデートに誘ってあげよう。</div>';
+      else if(since>=5) bomb='<div class="bomb show">最近誘っていない…。不満がたまっている（あと'+(8-since)+'週で爆発）。</div>';
+    }
+    html += '<div style="margin-bottom:14px;"><div class="heroine-row">'+heroineImg(id)+'<div><div style="font-weight:800;">'+meta.name+(S.couple===id?'<span class="lover-tag">恋人</span>':"")+'</div><div style="font-size:.75rem;color:var(--ink-soft);">'+meta.desc+'</div><div class="hearts">'+hearts+'</div></div></div>'+bomb+'</div>';
+  });
+  var notYet=[];
+  if(!S.heroines.rin.met) notYet.push("1年秋に新しい出会いが…");
+  if(!S.heroines.yura.met) notYet.push("2年春に新しい出会いが…");
+  if(notYet.length) html += '<p class="not-met">'+notYet.join("<br />")+'</p>';
+  box.innerHTML = html;
+}
+function renderAll(){ renderHUD(); renderParams(); renderHeroine(); }
+
+function setScene(head, bodyHTML, extraHTML){
+  $("scene-head").textContent = head;
+  $("scene-body").innerHTML = bodyHTML;
+  $("scene-extra").innerHTML = extraHTML || "";
+  $("choices").innerHTML = "";
+  $("next-row").classList.add("hidden");
+}
+function deltaChips(list){
+  if(!list.length) return "";
+  var html = '<div class="delta-line">';
+  list.forEach(function(d){
+    var cls = d.money ? "delta money" : (d.v>=0 ? "delta up" : "delta down");
+    var sign = d.v>0 ? "+" : "";
+    html += '<span class="' + cls + '">' + d.label + " " + (d.money ? fmtYen(d.v) : sign + d.v) + "</span>";
+  });
+  return html + "</div>";
+}
+function addChoices(list){
+  var box = $("choices");
+  box.innerHTML = "";
+  list.forEach(function(c){
+    var b = document.createElement("button");
+    b.className = "choice-btn";
+    b.disabled = !!c.disabled;
+    b.innerHTML = "<span>" + c.label + "</span>" + (c.meta ? '<span class="meta">' + c.meta + "</span>" : "")
+      + (c.tag ? '<span class="tag">' + c.tag + "</span>" : "");
+    b.addEventListener("click", function(){ c.onPick(); });
+    box.appendChild(b);
+  });
+}
+function showNext(label, fn){
+  var row = $("next-row");
+  row.classList.remove("hidden");
+  var btn = $("btn-next");
+  btn.textContent = label || "次へ進む";
+  btn.onclick = fn;
+}
+
+/* ---------------- Week flow ---------------- */
+/* ---------- Special / seasonal events ---------- */
+function doneKey(k){ return !!S.flags.done[k]; }
+function markDone(k){ S.flags.done[k]=1; }
+function presentChoices(hid, onDone){
+  var list = PRESENTS.map(function(pr){
+    return {label: pr.name, meta: fmtYen(pr.cost), disabled: S.money < pr.cost, onPick: function(){
+      S.money -= pr.cost; Sound.sfx.moneyDown();
+      var pref = pr.pref[hid] || "normal";
+      var d = pref==="like" ? 12 : (pref==="dislike" ? 2 : 6);
+      H(hid).aff = Math.max(0, Math.min(999, H(hid).aff + d)); Sound.sfx.heartUp();
+      var react = pref==="like" ? "「……これ、私の好み、よく分かったね」目が輝いた。" : (pref==="dislike" ? "「ありがとう……」少し困ったような笑顔だった。好みは外れたみたいだ。" : "「ありがとう、大切にするね」嬉しそうに受け取ってくれた。");
+      onDone(d, pr, react);
+    }};
+  });
+  list.push({label:"今年は渡さない", onPick:function(){ onDone(0, null, "プレゼントは渡さなかった。少しだけ、相手の表情が曇った気がした。"); }});
+  return list;
+}
+function runPresentEvent(hid, head, body, bg, label){
+  setScene(head, body + "\n\nプレゼントを選ぼう。");
+  setVisual(bg, V(hid,"normal"), label); renderAll();
+  addChoices(presentChoices(hid, function(d, pr, react){
+    setScene(head, react, deltaChips(d?[{label:HEROINES[hid].name+"親密度", v:d}]:[]));
+    setVisual(bg, V(hid, d>=12?"smile":(d>=6?"shy":"normal")), label); renderAll();
+    showNext("今週を始める", beginPhase); save();
+  }));
+}
+var INDIV = [
+ {key:"ind-himari-1", hid:"himari", th:20, head:"放課後 ― グラウンド", body:"練習帰りのひまりと並んで歩いた。\n<span class='who'>ひまり</span>「ねえ、夢ってさ、笑われても言った方がいいと思う？　……あたし、全国大会に行きたい」\n真剣な横顔は、いつもと少し違った。", bg:"park"},
+ {key:"ind-himari-2", hid:"himari", th:50, head:"放課後 ― 河川敷", body:"大会で惜しくも負けた日。ひまりは強がって笑ったあと、静かに俯いた。\n<span class='who'>ひまり</span>「……悔しい。でも、隣にいてくれて助かった」", bg:"park"},
+ {key:"ind-himari-3", hid:"himari", th:80, head:"休日 ― 朝の公園", body:"早朝練習に付き合った。走り終えたひまりが息を整えて言う。\n<span class='who'>ひまり</span>「きみと走ると、不思議と速くなれる気がするんだ」", bg:"park"},
+ {key:"ind-rin-1", hid:"rin", th:20, head:"放課後 ― 図書室", body:"返却棚の前。凛がそっと一冊を差し出した。\n<span class='who'>凛</span>「……あなたなら、きっと好きだと思う。私のおすすめ」", bg:"school"},
+ {key:"ind-rin-2", hid:"rin", th:50, head:"放課後 ― 図書室の窓際", body:"テスト前の図書室。凛が珍しく弱音を漏らした。\n<span class='who'>凛</span>「期待されるのが、たまに重い。……ここだけの話」", bg:"school"},
+ {key:"ind-rin-3", hid:"rin", th:80, head:"休日 ― 静かなカフェ", body:"凛が自分の将来の話をしてくれた。\n<span class='who'>凛</span>「誰かの期待じゃなく、自分の好きで選びたい。……あなたには、そう言える」", bg:"cafe"},
+ {key:"ind-yura-1", hid:"yura", th:20, head:"放課後 ― 美術室", body:"ゆらが描きかけの絵を見せてくれた。\n<span class='who'>ゆら</span>「これはね、昨日の夕焼けの記憶。色は覚えてるうちに閉じ込めるの」", bg:"museum"},
+ {key:"ind-yura-2", hid:"yura", th:50, head:"放課後 ― 屋上への階段", body:"ゆらが空を見上げて言う。\n<span class='who'>ゆら</span>「あたし、人が少し苦手だった。でも、あなたの隣は静かで平気」", bg:"school"},
+ {key:"ind-yura-3", hid:"yura", th:80, head:"休日 ― 美術館", body:"ゆらが小さなスケッチブックを渡してきた。中には、主人公の後ろ姿が何枚も描かれていた。\n<span class='who'>ゆら</span>「……気づいたら、描いてた」", bg:"museum"}
+];
+/* ---------- Early confession (Christmas, year 3) ---------- */
+var CONFESS_LINES = {
+  himari:{ask:"ひまりは走るのをやめて、まっすぐこちらを見た。", yes:"「……うん！　あたしでよければ、ぜひ！」満面の笑顔で、何度も頷いてくれた。"},
+  rin:{ask:"凛は本をそっと閉じて、静かに息を吸った。", yes:"「……私も、ずっと言えなかった。……はい、喜んで」耳を真っ赤にしながら、小さく微笑んだ。"},
+  yura:{ask:"ゆらは大楠の幹に手を当てて、目を閉じた。", yes:"「……うん。あたしの世界に、もうあなたがいるんだもん」柔らかく笑って、手を差し出してくれた。"}
+};
+function runXmasConfessionPrompt(hid){
+  setScene("クリスマス ― " + HEROINES[hid].name,
+    HEROINES[hid].name + "との距離は、もう十分に縮まっている（親密度 ♥×5）。\nこのままプレゼントを渡して過ごすか――それとも、青葉学園の言い伝えの場所、校舎裏の大楠の下で、気持ちを伝えるか。");
+  setVisual("cafe", V(hid,"normal"), "クリスマス");
+  renderAll();
+  addChoices([
+    {label:"大楠の下で告白する", tag:"早期告白", onPick:function(){ doEarlyConfession(hid); }},
+    {label:"プレゼントを渡して過ごす", onPick:function(){ runPresentEvent(hid, "クリスマス ― "+HEROINES[hid].name, "イルミネーションの下、二人で歩いたあと、そっとプレゼントを取り出した。", "cafe", "クリスマス"); }}
+  ]);
+}
+function doEarlyConfession(hid){
+  Sound.sfx.heartUp();
+  setScene("大楠の下 ― 告白",
+    "クリスマスの夕方。二人を校舎裏の大楠の下へ誘った。\n青葉学園のシンボルツリー。――この木の下で告白すると結ばれる、という言い伝えがある。\n\n震える声で、精一杯の気持ちを伝えた。\n" + CONFESS_LINES[hid].ask);
+  setVisual("tree", V(hid,"shy"), "校舎裏の大楠");
+  renderAll();
+  showNext("返事を聞く", function(){
+    S.couple = hid;
+    H(hid).sinceDate = totalWeeksElapsed();
+    Sound.sfx.heartUp();
+    setScene("大楠の下 ― 告白",
+      "<span class='who'>" + HEROINES[hid].name + "</span>" + CONFESS_LINES[hid].yes + "\n\n――こうして二人は恋人同士になった。\n残りの高校生活は、恋人との日々に変わっていく。卒業式の日、二人でまたこの大楠の下に立とう。");
+    setVisual("tree", V(hid,"smile"), "校舎裏の大楠");
+    renderAll();
+    showNext("今週を始める", beginPhase);
+    save();
+  });
+  save();
+}
+function runSpecial(){
+  var y=S.year, m=month(), w=S.week;
+  /* introductions */
+  if(y===1 && m===9 && w===1 && !doneKey("rin-intro")){
+    markDone("rin-intro");
+    setScene("1年 秋 ― 文化祭実行委員",
+      "秋。文化祭の実行委員に選ばれ、準備で図書室へ資料を取りに行った。\nそこで本の山を完璧に仕分けしていたのが、図書委員の白瀬凛だった。\n\n<span class='who'>凛</span>「……実行委員？　資料ならそこの棚。期限は守って。……白瀬凛。よろしく」\nクールだけど、仕事は驚くほど丁寧だった。文化祭まで、一緒に準備をすることになった。");
+    setVisual("school", V("rin","normal"), "図書室");
+    addChoices([
+      {label:"「頼りにしてる」と伝える", onPick:function(){ H("rin").met=true; H("rin").aff=5; H("rin").sinceDate=totalWeeksElapsed(); Sound.sfx.heartUp(); setScene("白瀬凛と出会った","「……期待には、応えるつもり」凛は静かに頷いた。", deltaChips([{label:"凛親密度",v:5}])); setVisual("school",V("rin","shy"),"図書室"); renderAll(); showNext("今週を始める", beginPhase); save(); }},
+      {label:"黙々と資料を受け取る", onPick:function(){ H("rin").met=true; H("rin").aff=2; H("rin").sinceDate=totalWeeksElapsed(); setScene("白瀬凛と出会った","凛は短く頷いて、本の世界に戻っていった。", deltaChips([{label:"凛親密度",v:2}])); setVisual("school",V("rin","normal"),"図書室"); renderAll(); showNext("今週を始める", beginPhase); save(); }}
+    ]);
+    renderAll(); save(); return true;
+  }
+  if(y===2 && m===4 && w===2 && !doneKey("yura-intro")){
+    markDone("yura-intro");
+    setScene("2年 春 ― 美術室",
+      "2年生の春。忘れ物を取りに戻った美術室で、夕日の色を描く少女がいた。\n\n<span class='who'>？？？</span>「あ、見ちゃった？　……森永ゆら。美術部。ねえ、この色、夕日と記憶、どっちだと思う？」\n不思議な問いかけに、なぜか目が離せなかった。");
+    setVisual("museum", V("yura","normal"), "美術室");
+    addChoices([
+      {label:"「どっちも、だと思う」と答える", onPick:function(){ H("yura").met=true; H("yura").aff=6; H("yura").sinceDate=totalWeeksElapsed(); Sound.sfx.heartUp(); setScene("森永ゆらと出会った","「……正解かも」ゆらは嬉しそうに筆を置いた。", deltaChips([{label:"ゆら親密度",v:6}])); setVisual("museum",V("yura","smile"),"美術室"); renderAll(); showNext("今週を始める", beginPhase); save(); }},
+      {label:"「夕日じゃない？」と答える", onPick:function(){ H("yura").met=true; H("yura").aff=3; H("yura").sinceDate=totalWeeksElapsed(); setScene("森永ゆらと出会った","「ふうん」ゆらは少しだけ微笑んだ。", deltaChips([{label:"ゆら親密度",v:3}])); setVisual("museum",V("yura","normal"),"美術室"); renderAll(); showNext("今週を始める", beginPhase); save(); }}
+    ]);
+    renderAll(); save(); return true;
+  }
+  /* birthdays */
+  var bdays=[{hid:"himari",m:7,w:3},{hid:"rin",m:11,w:1},{hid:"yura",m:5,w:2}];
+  for(var bi=0; bi<bdays.length; bi++){
+    var bd=bdays[bi], bk="bday-"+bd.hid+"-"+y;
+    if(m===bd.m && w===bd.w && H(bd.hid).met && !doneKey(bk)){
+      markDone(bk);
+      runPresentEvent(bd.hid, HEROINES[bd.hid].name+"の誕生日", "今日は"+HEROINES[bd.hid].name+"の誕生日。放課後、勇気を出して呼び止めた。", "school", "誕生日");
+      save(); return true;
+    }
+  }
+  /* couple events (after a successful early confession) */
+  if(S.couple){
+    var cp = S.couple;
+    if(y===3 && m===1 && w===2 && !doneKey("couple-newyear")){
+      markDone("couple-newyear");
+      setScene("初詣 ― " + HEROINES[cp].name + "と",
+        "年が明けて、初めての休日。恋人同士になってから最初の初詣に、二人で出かけた。\n人混みの中、自然と手が触れ合う。\n\n<span class='who'>" + HEROINES[cp].name + "</span>「今年も、よろしくね。……卒業しても、ずっと」\nおみくじは二人とも大吉だった。");
+      setVisual("park", V(cp,"smile"), "初詣");
+      showNext("手を繋いで帰る", function(){ H(cp).aff+=6; Sound.sfx.heartUp(); setScene("初詣", "帰り道、どちらからともなく手が繋がれた。新しい一年が、温かく始まった。", deltaChips([{label:HEROINES[cp].name+"親密度",v:6}])); setVisual("park", V(cp,"shy"), "初詣"); renderAll(); showNext("今週を始める", beginPhase); save(); });
+      renderAll(); save(); return true;
+    }
+    if(y===3 && m===2 && w===2 && !doneKey("couple-valentine")){
+      markDone("couple-valentine"); markDone("valentine-3");
+      setScene("バレンタイン ― 恋人同士の",
+        "放課後、" + HEROINES[cp].name + "が小さな箱を差し出した。恋人同士になって、初めてのバレンタイン。\n中には手作りのチョコと、小さなカード。\n\n<span class='who'>" + HEROINES[cp].name + "</span>「……本命、だよ。当たり前でしょ」");
+      setVisual("school", V(cp,"shy"), "バレンタイン");
+      showNext("受け取る", function(){ H(cp).aff+=8; Sound.sfx.heartUp(); setScene("バレンタイン", "甘いチョコと、それ以上に甘い時間だった。ホワイトデーが楽しみだ。", deltaChips([{label:HEROINES[cp].name+"親密度",v:8}])); setVisual("school", V(cp,"smile"), "バレンタイン"); renderAll(); showNext("今週を始める", beginPhase); save(); });
+      renderAll(); save(); return true;
+    }
+    if(y===3 && m===3 && w===1 && !doneKey("couple-lastdate")){
+      markDone("couple-lastdate");
+      setScene("卒業前の放課後 ― 大楠の下",
+        "卒業式まであと少し。放課後、二人で校舎裏の大楠の下に来た。\n告白したあの場所。冬の低い日差しが、枝の間から差し込んでいる。\n\n<span class='who'>" + HEROINES[cp].name + "</span>「ここから始まったんだよね、私たち」\n二人は幹に並んで座り、卒業後の約束をした。");
+      setVisual("tree", V(cp,"smile"), "校舎裏の大楠");
+      showNext("約束をする", function(){ H(cp).aff+=6; Sound.sfx.heartUp(); setScene("卒業前の放課後", "「卒業しても、ここにまた来よう」――大楠が見守る中、二人の約束が結ばれた。", deltaChips([{label:HEROINES[cp].name+"親密度",v:6}])); setVisual("tree", V(cp,"shy"), "校舎裏の大楠"); renderAll(); showNext("今週を始める", beginPhase); save(); });
+      renderAll(); save(); return true;
+    }
+  }
+  /* seasonal */
+  if(m===6 && w===2 && !doneKey("sports-"+y)){
+    markDone("sports-"+y);
+    var sb = y===1 ? "初めての体育祭。クラス対抗リレーにひまりがアンカーで出場する。" : (y===2 ? "2年目の体育祭。今年は応援にも熱が入る。" : "最後の体育祭。3年分の思いがグラウンドに集まった。");
+    setScene("体育祭（"+y+"年）", sb+"\n\n<span class='who'>ひまり</span>「見てて！　あたし、絶対に抜くから！」");
+    setVisual("park", V("himari","smile"), "体育祭");
+    addChoices([
+      {label:"全力で応援する", onPick:function(){ var d=H("himari").met?6:0; if(d)H("himari").aff+=d; Sound.sfx.heartUp(); setScene("体育祭","ひまりは見事に追い抜いてゴール！　こちらへ手を振ってくれた。", deltaChips(d?[{label:"ひまり親密度",v:d}]:[])); setVisual("park",V("himari","smile"),"体育祭"); renderAll(); showNext("今週を始める", beginPhase); save(); }},
+      {label:"自分の競技に集中する", onPick:function(){ S.params.sport+=4; setScene("体育祭","自分の競技でも全力を出せた。充実した一日だった。", deltaChips([{label:"運動",v:4}])); renderAll(); showNext("今週を始める", beginPhase); save(); }}
+    ]);
+    renderAll(); save(); return true;
+  }
+  if(m===11 && w===3 && !doneKey("culture-"+y)){
+    markDone("culture-"+y);
+    setScene("文化祭（"+y+"年）", (y===1?"初めての文化祭。実行委員として凛と準備してきた成果を見せる日だ。":"文化祭当日。校内は熱気と笑顔でいっぱいだ。")+"\n出し物の合間に、誰かと回る時間もありそうだ。");
+    setVisual("school", H("rin").met?V("rin","normal"):null, "文化祭");
+    addChoices([
+      {label:"凛と展示を回る", disabled:!H("rin").met, onPick:function(){ H("rin").aff+=6; Sound.sfx.heartUp(); setScene("文化祭","「……たまには、こういう騒がしさも悪くない」凛が小さく笑った。", deltaChips([{label:"凛親密度",v:6}])); setVisual("school",V("rin","smile"),"文化祭"); renderAll(); showNext("今週を始める", beginPhase); save(); }},
+      {label:"ひまりと屋台を回る", disabled:!H("himari").met, onPick:function(){ H("himari").aff+=6; Sound.sfx.heartUp(); setScene("文化祭","屋台を食べ歩いて、二人で笑いっぱなしだった。", deltaChips([{label:"ひまり親密度",v:6}])); setVisual("school",V("himari","smile"),"文化祭"); renderAll(); showNext("今週を始める", beginPhase); save(); }},
+      {label:"ゆらの展示を観る", disabled:!H("yura").met, onPick:function(){ H("yura").aff+=6; Sound.sfx.heartUp(); setScene("文化祭","ゆらの絵の前に人だかりができていた。「……来てくれたんだ」", deltaChips([{label:"ゆら親密度",v:6}])); setVisual("museum",V("yura","smile"),"文化祭・美術展示"); renderAll(); showNext("今週を始める", beginPhase); save(); }},
+      {label:"裏方に徹する", onPick:function(){ S.params.zatsu+=3; setScene("文化祭","裏方として走り回り、文化祭は無事に成功した。", deltaChips([{label:"雑学",v:3}])); renderAll(); showNext("今週を始める", beginPhase); save(); }}
+    ]);
+    renderAll(); save(); return true;
+  }
+  if(m===12 && w===4 && !doneKey("xmas-"+y)){
+    markDone("xmas-"+y);
+    var ids=metIds();
+    if(!ids.length){ setScene("クリスマス","街はイルミネーションで輝いている。今年は静かに家で過ごした。"); setVisual("cafe",null,"クリスマス"); renderAll(); showNext("今週を始める", beginPhase); save(); return true; }
+    if(S.couple){
+      runPresentEvent(S.couple, "クリスマス ― 恋人と", "恋人同士になって初めてのクリスマス。イルミネーションの下を歩いて、プレゼントを渡した。", "cafe", "クリスマス");
+      save(); return true;
+    }
+    setScene("クリスマス（"+y+"年）","クリスマス。誰を誘って、プレゼントを渡そうか。" + (y===3 ? "\n今年は最後のクリスマス。ハートが満タンのあの子には、校舎裏の大楠の下で「早期告白」もできる。" : ""));
+    setVisual("cafe", null, "クリスマス");
+    addChoices(ids.map(function(hid){
+      var canConfess = (y===3 && H(hid).aff >= EARLY_CONFESS_AFF);
+      return {label:HEROINES[hid].name+"を誘う", tag: canConfess ? "早期告白できる！" : "", onPick:function(){
+        if(canConfess) runXmasConfessionPrompt(hid);
+        else runPresentEvent(hid, "クリスマス ― "+HEROINES[hid].name, "イルミネーションの下、二人で歩いたあと、そっとプレゼントを取り出した。", "cafe", "クリスマス");
+      }};
+    }).concat([{label:"誰も誘わない", onPick:function(){ setScene("クリスマス","家で静かに過ごした。"); renderAll(); showNext("今週を始める", beginPhase); save(); }}]));
+    renderAll(); save(); return true;
+  }
+  if(m===2 && w===2 && !doneKey("valentine-"+y)){
+    markDone("valentine-"+y);
+    var best=null, bv=-1; metIds().forEach(function(id){ if(H(id).aff>bv){bv=H(id).aff; best=id;} });
+    if(!best){ setScene("バレンタイン","教室は少し浮ついた空気。今年はチョコの気配はなかった。"); setVisual("school",null,"バレンタイン"); renderAll(); showNext("今週を始める", beginPhase); save(); return true; }
+    var vd = bv>=75?10:(bv>=40?6:3), vtxt = bv>=75?"手作りの本命チョコだった。カードには短いメッセージが添えられている。":(bv>=40?"丁寧に包まれたチョコ。気持ちが伝わってくる。":"義理寄りのチョコ。でも、くれたことが嬉しい。");
+    H(best).aff+=vd; Sound.sfx.heartUp();
+    setScene("バレンタイン（"+y+"年）", HEROINES[best].name+"からチョコを受け取った。\n"+vtxt, deltaChips([{label:HEROINES[best].name+"親密度", v:vd}]));
+    setVisual("school", V(best,"shy"), "バレンタイン"); renderAll(); showNext("今週を始める", beginPhase); save(); return true;
+  }
+  if(y===2 && m===9 && w===3 && !doneKey("trip-2")){
+    markDone("trip-2");
+    setScene("修学旅行（2年）","修学旅行。班別行動の午後、自由に回れる時間になった。誰と回ろうか。");
+    setVisual("park", null, "修学旅行");
+    addChoices(metIds().map(function(hid){ return {label:HEROINES[hid].name+"と回る", onPick:function(){ H(hid).aff+=7; Sound.sfx.heartUp(); setScene("修学旅行", HEROINES[hid].name+"と名所を回り、写真をたくさん撮った。旅先の思い出が距離を縮めた。", deltaChips([{label:HEROINES[hid].name+"親密度",v:7}])); setVisual("park", V(hid,"smile"), "修学旅行"); renderAll(); showNext("今週を始める", beginPhase); save(); }}; }));
+    renderAll(); save(); return true;
+  }
+  /* individual events */
+  for(var ii=0; ii<INDIV.length; ii++){
+    var ev=INDIV[ii];
+    if(!doneKey(ev.key) && H(ev.hid).met && H(ev.hid).aff>=ev.th){
+      markDone(ev.key);
+      setScene(ev.head, ev.body);
+      setVisual(ev.bg, V(ev.hid,"normal"), ev.head);
+      showNext("そっと見守る", function(){ H(ev.hid).aff+=4; Sound.sfx.heartUp(); setScene(ev.head, "この出来事で、二人の距離は少しだけ縮まった。", deltaChips([{label:HEROINES[ev.hid].name+"親密度",v:4}])); setVisual(ev.bg, V(ev.hid,"shy"), ev.head); renderAll(); showNext("今週を始める", beginPhase); save(); });
+      renderAll(); save(); return true;
+    }
+  }
+  return false;
+}
+function beginPhase(){
+  if(S.phase === "holiday"){ showHoliday(); return; }
+  var t = testName();
+  if(t){ doTest(t); return; }
+  showCommands();
+}
+function startWeek(){
+  Sound.setTrack("daily");
+  renderAll();
+  var ids=metIds();
+  for(var i=0;i<ids.length;i++){ var hh=H(ids[i]); if(!S.couple && hh.aff>0 && (totalWeeksElapsed()-hh.sinceDate)>=5 && (totalWeeksElapsed()-hh.sinceDate)<8) Sound.sfx.bomb(); }
+  for(var j=0;j<ids.length && !S.couple;j++){
+    var id2=ids[j], h2=H(id2);
+    if(h2.aff>0 && (totalWeeksElapsed()-h2.sinceDate)>=8){
+      Sound.sfx.bomb(); Sound.sfx.heartDown();
+      h2.aff=Math.max(0,h2.aff-20); h2.sinceDate=totalWeeksElapsed();
+      setScene("ある日の昼休み", "廊下で"+HEROINES[id2].name+"とすれ違った。声をかけようとしたら、ぷいっとそっぽを向かれてしまった。\nずっと放っておいたツケが回ってきたようだ。", deltaChips([{label:HEROINES[id2].name+"親密度", v:-20}]));
+      setVisual("school", V(id2,"normal"), "昼休みの廊下"); renderAll();
+      showNext("反省して、今週を始める", beginPhase); save(); return;
+    }
+  }
+  if(S.stress>=100){
+    S.stress=45;
+    setScene("体調不良","朝、体が鉛のように重い。熱もある。\nどうやらストレスと疲れが限界を超えてしまったようだ。\n今週は平日も休日も、家で静養することになった。", deltaChips([{label:"ストレス", v:-55}]));
+    setVisual(null,null,""); renderAll(); showNext("来週へ進む", advanceWeek); save(); return;
+  }
+  if(runSpecial()) return;
+  beginPhase();
+}
+
+function showCommands(){
+  Sound.setTrack("daily");
+  setScene("平日 ― 今週の過ごし方は？",
+    "私立青葉学園高校、" + S.year + "年生の" + month() + "月。\n今週は放課後をどう使おうか。");
+  setVisual("school", null, "放課後の校舎");
+  addChoices(COMMANDS.map(function(c){
+    return {
+      label: c.label,
+      meta: c.param ? "パラメータ↑・ストレス" + (c.stress>0?"↑":"↓") : "ストレス大幅↓",
+      onPick: function(){ doCommand(c); }
+    };
+  }));
+}
+
+function doCommand(c){
+  var deltas = [];
+  var gain = 0;
+  if(c.param){
+    gain = rnd(c.gain[0], c.gain[1]);
+    S.params[c.param] = Math.min(999, S.params[c.param] + gain);
+    var pname = PARAMS.filter(function(p){return p.key===c.param;})[0].name;
+    deltas.push({label:pname, v:gain});
+  }
+  S.stress = Math.max(0, Math.min(100, S.stress + c.stress));
+  deltas.push({label:"ストレス", v:c.stress});
+  if(c.param) Sound.sfx.paramUp(); else Sound.sfx.rest();
+  S.phase = "holiday";
+  setScene("平日 ― " + c.label, pick(c.texts), deltaChips(deltas));
+  renderAll();
+  showNext("休日へ進む", beginPhase);
+  save();
+}
+
+function doTest(t){
+  var score = S.params.bun + S.params.ri;
+  var rank = Math.max(1, Math.min(180, Math.round(180 * Math.exp(-score/230)) + rnd(-4,4)));
+  if(rank<1) rank = 1;
+  if(S.bestRank===null || rank < S.bestRank) S.bestRank = rank;
+  var comment;
+  if(rank<=10) comment = "教室がどよめいた。まさかの一桁順位！　勉強の成果がはっきり出た。";
+  else if(rank<=40) comment = "上位に食い込んだ。この調子を維持したい。";
+  else if(rank<=90) comment = "真ん中よりは上。悪くない結果だ。";
+  else if(rank<=140) comment = "平均前後。もうひと頑張りがほしいところ。";
+  else comment = "正直、厳しい結果だった。次は巻き返そう。";
+  var rinDelta = 0, rinNote = "";
+  if(S.heroines.rin.met){
+    if(rank<=10){ rinDelta=6; rinNote="\n\n図書室で凛と目が合った。「……すごいじゃない」尊敬の眼差しだった。"; }
+    else if(rank<=40){ rinDelta=4; rinNote="\n\n凛が小さく頷いた。「努力は、裏切らないね」"; }
+    else if(rank<=90){ rinDelta=1; }
+    else if(rank>140){ rinDelta=-3; rinNote="\n\n凛の視線が少し冷たく感じた。勉強面は彼女にとって大事なのだ。"; }
+    if(rinDelta) S.heroines.rin.aff = Math.max(0, Math.min(999, S.heroines.rin.aff + rinDelta));
+  }
+  S.phase = "holiday";
+  if(rank <= 90) Sound.sfx.testGood(); else Sound.sfx.testBad();
+  setScene(t + "の結果",
+    t + "の順位が張り出された。文系と理系の力がそのまま試される一週間だった。" + rinNote,
+    '<div class="rank-big">' + rank + '位 <span style="font-size:1rem;color:var(--ink-soft);">/ 180人中</span></div>'
+    + '<div class="rank-sub">' + comment + "</div>");
+  setVisual("school", null, t);
+  renderAll();
+  showNext("休日へ進む", beginPhase);
+  save();
+}
+
+/* ---------------- Holiday ---------------- */
+function showHoliday(){
+  if(Sound) Sound.setTrack("daily");
+  setScene("休日 ― 何をしよう？",
+    "待ちに待った休日。今日はどう過ごそうか。");
+  setVisual(null, null, "");
+  var list = [];
+  if(metIds().length){
+    list.push({label:"デートに誘う", meta:"誰を誘う？", tag:"親密度", onPick: showDateHeroine});
+  }
+  list.push({label:"バイト", meta:"所持金↑・ストレス↑", onPick: doJob});
+  list.push({label:"外出する", meta:"何か起こるかも", onPick: doOuting});
+  list.push({label:"家で休む", meta:"ストレス↓", onPick: doHolidayRest});
+  addChoices(list);
+}
+
+function finishHoliday(text, deltas, head){
+  setScene(head || "休日", text, deltaChips(deltas || []));
+  renderAll();
+  showNext("来週へ進む", advanceWeek);
+  save();
+}
+
+function doJob(){
+  var pay = rnd(3600, 4400);
+  S.money += pay;
+  Sound.sfx.moneyUp();
+  S.stress = Math.min(100, S.stress + 12);
+  finishHoliday("駅前のコンビニでバイト。レジ打ちにもだいぶ慣れてきた。\n店長に「助かるよ」と声をかけられた。",
+    [{label:"所持金", v:pay, money:true},{label:"ストレス", v:12}]);
+}
+
+function doOuting(){
+  var ev = pick(OUTINGS);
+  var deltas = [];
+  var fx = ev.fx;
+  if(fx.money){ S.money += fx.money; Sound.sfx.moneyUp(); deltas.push({label:"所持金", v:fx.money, money:true}); }
+  if(fx.stress){ S.stress = Math.max(0, Math.min(100, S.stress + fx.stress)); deltas.push({label:"ストレス", v:fx.stress}); }
+  ["bun","ri","art","sport","zatsu","look"].forEach(function(k){
+    if(fx[k]){ S.params[k] = Math.min(999, S.params[k]+fx[k]); deltas.push({label:PARAMS.filter(function(p){return p.key===k;})[0].name, v:fx[k]}); }
+  });
+  var extra = "";
+  var mids = metIds();
+  if(mids.length && Math.random() < 0.3){
+    var oid = pick(mids);
+    S.heroines[oid].aff = Math.min(999, S.heroines[oid].aff + 3);
+    Sound.sfx.heartUp();
+    deltas.push({label:HEROINES[oid].name+"親密度", v:3});
+    extra = "\n\n帰り道、駅前で"+HEROINES[oid].name+"とばったり。少しだけ立ち話をして別れた。";
+  }
+  finishHoliday(ev.text + extra, deltas);
+}
+
+function doHolidayRest(){
+  var d = -28;
+  Sound.sfx.rest();
+  S.stress = Math.max(0, S.stress + d);
+  finishHoliday("家でゆっくり過ごした。昼まで寝て、午後はのんびり。\n英気を養えた気がする。",
+    [{label:"ストレス", v:d}]);
+}
+
+/* ---------------- Date ---------------- */
+function getSpotData(hid, spotId){
+  if(hid==="himari"){ var b=null; SPOTS.forEach(function(x){if(x.id===spotId)b=x;}); return b; }
+  var ex = DATE_EXTRA[hid][spotId]; var base = mkSpot(spotId);
+  return {id:spotId, name:base.name, cost:base.cost, summer:base.summer, scene:ex.scene, line:ex.line, q:ex.q, choices:ex.choices};
+}
+function showDateHeroine(){
+  if(S.couple){
+    setScene("デート ― 誰を誘う？", "恋人の" + HEROINES[S.couple].name + "をデートに誘おう。");
+    setVisual(null, V(S.couple,"smile"), "デートの行き先");
+    addChoices([{label:HEROINES[S.couple].name, meta:HEROINES[S.couple].desc + "・恋人", onPick:function(){ showDateSpots(S.couple); }},
+      {label:"やっぱりやめる", onPick: showHoliday}]);
+    return;
+  }
+  setScene("デート ― 誰を誘う？", "休日、誰をデートに誘おうか。");
+  setVisual(null, null, "");
+  addChoices(metIds().map(function(hid){
+    return {label:HEROINES[hid].name, meta:HEROINES[hid].desc, onPick:function(){ showDateSpots(hid); }};
+  }).concat([{label:"やっぱりやめる", onPick: showHoliday}]));
+}
+function showDateSpots(hid){
+  if(!hid) hid="himari";
+  S.dateHeroine=hid;
+  setScene("デート ― 行き先は？", HEROINES[hid].name+"をデートに誘おう。どこへ行く？\n（場所によって、相手の反応が変わる）");
+  setVisual(null, V(hid,"normal"), "デートの行き先");
+  addChoices(SPOTS.map(function(sp){
+    var cantSea = sp.summer && !isSummer();
+    var cantMoney = S.money < sp.cost;
+    return {label: sp.name, meta: fmtYen(sp.cost) + (cantSea ? "・夏限定" : "") + (cantMoney ? "・お金が足りない" : ""), disabled: cantSea || cantMoney, onPick: function(){ startDate(hid, sp.id); }};
+  }).concat([{label:"やっぱりやめる", onPick: showHoliday}]));
+}
+function startDate(hid, spotId){
+  var sp = getSpotData(hid, spotId);
+  S.money -= sp.cost; Sound.setTrack("date"); Sound.sfx.moneyDown();
+  S.dateSpot = sp.id; S.dateHeroine=hid;
+  var body = sp.scene + "\n\n<span class='who'>"+HEROINES[hid].name+"</span>「" + sp.line + "」";
+  setScene("デート ― " + sp.name, body);
+  setVisual(SPOT_BG[sp.id] || null, V(hid,"smile"), sp.name);
+  renderAll();
+  showNext("会話をする", function(){ dateTalk(hid, sp); });
+}
+function dateTalk(hid, sp){
+  setScene("デート ― " + sp.name, sp.q);
+  setVisual(SPOT_BG[sp.id] || null, V(hid,"normal"), sp.name);
+  addChoices(sp.choices.map(function(ch){ return { label: ch.t, onPick: function(){ finishDate(hid, sp, ch); } }; }));
+}
+function finishDate(hid, sp, ch){
+  var pref = (PREFS[hid] && PREFS[hid][sp.id]) || "normal";
+  var prefDelta = pref==="like" ? 8 : (pref==="dislike" ? 1 : 5);
+  var total = prefDelta + ch.d;
+  H(hid).aff = Math.max(0, Math.min(999, H(hid).aff + total));
+  Sound.sfx.heartUp();
+  H(hid).sinceDate = totalWeeksElapsed();
+  S.datesCount++; S.stress = Math.max(0, S.stress - 5);
+  var prefNote = pref==="like" ? HEROINES[hid].name+"のお気に入りの場所だったみたいだ。" : (pref==="dislike" ? HEROINES[hid].name+"には少し苦手な場所だったかもしれない。" : "");
+  var body = ch.r + (prefNote ? "\n\n" + prefNote : "");
+  var expr = ch.d >= 5 ? "smile" : (ch.d >= 3 ? "shy" : "normal");
+  setVisual(SPOT_BG[sp.id] || null, V(hid, expr), sp.name);
+  finishHoliday(body, [{label:HEROINES[hid].name+"親密度", v:total},{label:"ストレス", v:-5},{label:"所持金", v:-sp.cost, money:true}], "デート ― " + sp.name);
+}
+
+/* ---------------- Calendar ---------------- */
+function advanceWeek(){
+  Sound.sfx.page();
+  Sound.setTrack("daily");
+  S.phase = "command";
+  S.weeksPlayed++;
+  S.week++;
+  if(S.week > 4){ S.week = 1; S.monthIdx++; }
+  if(S.monthIdx >= MONTHS.length){
+    S.monthIdx = 0; S.year++;
+    if(S.year > 3){ S.year = 3; S.monthIdx = MONTHS.length - 1; S.week = 4; startGraduation(); return; }
+  }
+  save();
+  startWeek();
+}
+
+/* ---------------- Graduation & endings ---------------- */
+function startGraduation(){
+  Sound.setTrack("title");
+  renderAll();
+  if(S.couple){
+    var cp = S.couple;
+    setScene("卒業式 ― 大楠の下",
+      "卒業式が終わった。式のあと、二人で約束通り、校舎裏の大楠の下に来た。\nクリスマスに告白した、あの場所。\n\n<span class='who'>" + HEROINES[cp].name + "</span>「卒業しても、ここは変わらないね。……私たちも、変わらずにいよう」\n大楠の枝が、春の風に揺れていた。");
+    setVisual("tree", V(cp,"smile"), "卒業式・大楠の下");
+    showNext("二人の未来へ", function(){ showEnding(cp); });
+    save(); return;
+  }
+  setScene("卒業式 ― 最後のチャンス",
+    "卒業式が終わった。校舎裏の大楠の下――青葉学園の言い伝えの場所。\n卒業する前に、気持ちを伝えたい相手がいるなら、今が最後のチャンスだ。\n告白には、十分な親密度と、相手が好む分野で努力してきた証が必要だ。");
+  setVisual("tree", null, "卒業式・大楠の下");
+  var list = metIds().map(function(hid){
+    var ht = heartsOf(H(hid).aff), hs = ""; for(var i=0;i<5;i++) hs += i<ht ? "♥" : "♡";
+    return {label:HEROINES[hid].name + "に告白する", meta: hs + "／条件：" + CONFESS[hid].condText, onPick:function(){ runGradConfession(hid); }};
+  });
+  list.push({label:"誰にも告白しない", onPick:function(){
+    setScene("卒業式", "大楠の下を、静かに離れた。\n伝えなかった気持ちは、思い出の中にそっと残る。");
+    setVisual("tree", null, "卒業式・大楠の下");
+    renderAll();
+    showNext("卒業する", function(){ showEnding("bad"); });
+  }});
+  addChoices(list);
+  renderAll();
+  save();
+}
+function runGradConfession(hid){
+  var chk = confessCheck(hid);
+  Sound.sfx.heartUp();
+  setScene("大楠の下 ― 最後の告白",
+    "大楠の下に" + HEROINES[hid].name + "を呼び出した。\n3年分の思いを込めて、精一杯、気持ちを伝えた。\n" + CONFESS_LINES[hid].ask);
+  setVisual("tree", V(hid,"shy"), "卒業式・大楠の下");
+  renderAll();
+  showNext("返事を聞く", function(){
+    if(chk.ok){
+      S.couple = hid;
+      setScene("大楠の下 ― 最後の告白",
+        "<span class='who'>" + HEROINES[hid].name + "</span>" + CONFESS_LINES[hid].yes + "\n\n卒業式の日、二人は結ばれた。");
+      setVisual("tree", V(hid,"smile"), "卒業式・大楠の下");
+      renderAll();
+      showNext("二人の未来へ", function(){ showEnding(hid); });
+    } else {
+      var reason = chk.missing.length ? "\n（足りなかったもの：" + chk.missing.join("、") + "）" : "";
+      setScene("大楠の下 ― 最後の告白",
+        "<span class='who'>" + HEROINES[hid].name + "</span>「……ごめんなさい。今の私たちでは、まだ……」\n静かに首を振られてしまった。" + reason + "\n\n大楠の葉が、風に大きく揺れた。");
+      setVisual("tree", V(hid,"normal"), "卒業式・大楠の下");
+      renderAll();
+      showNext("卒業する", function(){ showEnding("fail", hid); });
+    }
+    save();
+  });
+  save();
+}
+var ENDINGS = {
+  himari:{badge:"ひまりエンド", title:"一緒に走る未来", text:"卒業式のあと、ひまりと並んで校門を出た。\n\n「ねえ、大学でも走るよ、あたし。きみは……隣で見ててくれる？」\n走るのが大好きな彼女と、隣を歩く自分。ペースは違っても、進む方向は同じだ。\n\n春の風の中、二人の新しい季節が始まった。"},
+  rin:{badge:"凛エンド", title:"静かな図書室の約束", text:"卒業式のあと、二人で図書室に立ち寄った。3年間、たくさんの放課後を過ごした場所。\n\n「……ここで交わした約束、覚えてる？　卒業しても、月に一度は一緒に本を読もうって」\n凛が小さく笑う。静かで、確かな未来が、ページをめくるように始まっていく。"},
+  yura:{badge:"ゆらエンド", title:"色づく未来", text:"卒業式のあと、ゆらが一枚の絵を渡してくれた。大楠の下に立つ、二人の後ろ姿。\n\n「これ、卒業制作。あたしの世界の色はね、あなたと出会ってから増えたんだ」\n絵の中の空は、桃色と水色の間。これからも、二人の色は増え続けていく。"},
+  fail:{badge:"告白失敗エンド", title:"大楠の下で", text:"卒業式。校舎裏の大楠の下で伝えた気持ちは、届かなかった。\n\n悔しさはある。でも、伝えずに卒業するより、ずっとよかったと思う。\n3年間で育った力と、たくさんの思い出は本物だ。――いつかまた、この大楠の下に笑って戻ってこよう。"},
+  bad:{badge:"バッドエンド", title:"卒業、それぞれの道", text:"卒業式が終わり、校門を出た。\n誰にも気持ちを伝えないまま、3年間が幕を閉じた。\n\n勉強も、部活も、放課後も、充実していたはずなのに――大楠の下を通り過ぎるとき、少しだけ胸が痛んだ。\n青春は終わる。でも、人生はここからだ。"}
+};
+function showEnding(kind, hid){
+  var e = ENDINGS[kind];
+  recordClear(kind);
+  var partner = (kind==="himari" || kind==="rin" || kind==="yura") ? kind : (kind==="fail" ? hid : null);
+  $("end-badge").textContent = e.badge;
+  $("end-title").textContent = e.title;
+  $("end-chara").innerHTML = partner ? charaSVG(partner, kind==="fail" ? "normal" : "smile") : bgSVG("title");
+  var lines = metIds().map(function(id){
+    var h=heartsOf(H(id).aff), hs=""; for(var i=0;i<5;i++) hs += i<h ? "♥" : "♡";
+    return HEROINES[id].name + "との親密度 " + hs + (S.couple===id ? "（恋人）" : "");
+  }).join("\n");
+  $("end-text").textContent = e.text + "\n\n―― " + S.name + "の3年間 ――\n" + lines;
+  $("end-stats").innerHTML =
+    '<div class="cell"><b>' + S.datesCount + '回</b><span>デート回数</span></div>'
+    + '<div class="cell"><b>' + (S.bestRank===null ? "―" : S.bestRank + "位") + '</b><span>テスト最高順位</span></div>'
+    + '<div class="cell"><b>' + S.params.bun + " / " + S.params.ri + '</b><span>文系 / 理系</span></div>'
+    + '<div class="cell"><b>' + S.params.sport + " / " + S.params.art + '</b><span>運動 / 芸術</span></div>'
+    + '<div class="cell"><b>' + S.params.zatsu + " / " + S.params.look + '</b><span>雑学 / 容姿</span></div>'
+    + '<div class="cell"><b>' + fmtYen(S.money) + '</b><span>卒業時の所持金</span></div>';
+  eraseSave();
+  show("screen-end");
+}
+
+/* ---------------- Intro ---------------- */
+function startIntro(){
+  show("screen-game");
+  Sound.setTrack("daily");
+  renderAll();
+  var body = "4月。私立青葉学園高校の入学式。\n真新しい制服に袖を通した" + esc(S.name) + "は、少し緊張しながら校門をくぐった。\n\n放課後、部活勧誘の人波で廊下は大賑わい。\nすると、勢いよくチラシを差し出してくる子がいた。";
+  setScene("入学 ― 1年 4月", body);
+  setVisual("title", null, "青葉学園・校門");
+  showNext("チラシを受け取る", intro2);
+}
+function intro2(){
+  var body = "<span class='who'>？？？</span>「ねえねえ、陸上部興味ない！？　走るの好きでしょ、顔に書いてあるよ！\nあたし、日向ひまり。1年だよ。きみも1年？　ね、名前は？」\n\n自己紹介をすると、ひまりは嬉しそうに笑った。";
+  setScene("部活勧誘", body);
+  setVisual("school", "smile", "部活勧誘の廊下");
+  addChoices([
+    {label:"「陸上部、見学してみるよ」", onPick: function(){ introEnd(6, 3, "smile", "「ほんと！？　やったぁ！　じゃあ明日、放課後グラウンドね！」\nひまりは満面の笑みで手を振って、人波の中へ走っていった。"); }},
+    {label:"「走るのはちょっと苦手で…」", onPick: function(){ introEnd(2, 0, "normal", "「えー、そうなの？　まあ、気が向いたらでいいよ」\n少し残念そうだったけど、すぐに笑顔に戻った。"); }},
+    {label:"「考えておく」とだけ言う", onPick: function(){ introEnd(1, 0, "normal", "「はーい、待ってるねー！」\nひまりは次の新入生のもとへ元気よく駆けていった。"); }}
+  ]);
+}
+function introEnd(aff, sportGain, expr, text){
+  H('himari').met = true;
+  H('himari').aff = aff;
+  Sound.sfx.heartUp();
+  H('himari').sinceDate = totalWeeksElapsed();
+  var deltas = [{label:"ひまり親密度", v:aff}];
+  if(sportGain){ S.params.sport += sportGain; deltas.push({label:"運動", v:sportGain}); }
+  var body = text + "\n\n――こうして、" + esc(S.name) + "の3年間が始まった。";
+  setScene("部活勧誘", body, deltaChips(deltas));
+  setVisual("school", expr, "部活勧誘の廊下");
+  renderAll();
+  showNext("最初の週を始める", startWeek);
+  save();
+}
+
+/* ---------------- Title wiring ---------------- */
+function refreshTitle(){
+  var has = !!loadSave();
+  $("btn-continue").disabled = !has;
+  $("btn-erase").classList.toggle("hidden", !has);
+  renderClearStatus();
+}
+$("btn-new").addEventListener("click", function(){
+  show("screen-name");
+  $("name-input").value = "";
+  $("name-input").focus();
+});
+$("btn-continue").addEventListener("click", function(){
+  var d = loadSave();
+  if(!d) return;
+  S = d;
+  show("screen-game");
+  startWeek();
+});
+$("btn-erase").addEventListener("click", function(){
+  eraseSave();
+  refreshTitle();
+});
+$("btn-start").addEventListener("click", function(){
+  var v = $("name-input").value.trim();
+  S = newState();
+  S.name = v || "悠太";
+  startIntro();
+});
+$("name-input").addEventListener("keydown", function(e){
+  if(e.key === "Enter") $("btn-start").click();
+});
+$("btn-to-title").addEventListener("click", function(){
+  save();
+  show("screen-title");
+  refreshTitle();
+});
+$("btn-again").addEventListener("click", function(){
+  show("screen-title");
+  refreshTitle();
+});
+
+/* petals */
+(function(){
+  var box = $("petals");
+  var html = "";
+  for(var i=0;i<14;i++){
+    var left = Math.random()*100;
+    var dur = 7 + Math.random()*8;
+    var delay = -Math.random()*12;
+    var size = 8 + Math.random()*8;
+    html += '<span class="petal" style="left:' + left + "%;width:" + size + "px;height:" + (size*0.8)
+      + "px;animation-duration:" + dur + "s;animation-delay:" + delay + 's;"></span>';
+  }
+  box.innerHTML = html;
+})();
+
+/* ---------------- Sound wiring ---------------- */
+/* Audio starts on the player's first tap/click (autoplay policy). */
+document.addEventListener("pointerdown", function(){ Sound.unlock(); }, false);
+document.addEventListener("click", function(e){
+  Sound.unlock();
+  var b = (e.target && e.target.closest) ? e.target.closest("button") : null;
+  if(!b || b.disabled || b.id === "btn-mute") return;
+  if(b.id === "btn-next" || b.id === "btn-start" || b.id === "btn-new" || b.id === "btn-continue") Sound.sfx.decide();
+  else Sound.sfx.click();
+}, false);
+$("btn-mute").addEventListener("click", function(){ Sound.toggleMute(); });
+document.addEventListener("keydown", function(e){
+  if((e.key === "n" || e.key === "N") && !e.metaKey && !e.ctrlKey && !e.altKey){
+    var tag = e.target && e.target.tagName;
+    if(tag === "INPUT" || tag === "TEXTAREA") return;
+    Sound.toggleMute();
+  }
+});
+Sound.updateBtn();
+
+/* fill the static flat-art slots (title, gallery, name, end screens) */
+Array.prototype.forEach.call(document.querySelectorAll(".svg-slot"), function(el){
+  var c = el.getAttribute("data-chara"), b = el.getAttribute("data-bg");
+  if(c){ var parts=c.split(":"); if(parts.length===2) el.innerHTML = charaSVG(parts[0], parts[1]); else el.innerHTML = charaSVG("himari", c); }
+  else if(b) el.innerHTML = bgSVG(b);
+});
+
+refreshTitle();
+})();
+</script>
+</body>
+</html>
