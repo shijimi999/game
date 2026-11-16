@@ -3101,6 +3101,14 @@ function drawPlayer(){
   let lx = p.x;
   if(grabFxT > 0) lx += p.dir * Math.sin((1 - grabFxT / .22) * Math.PI) * 5;
   if(killP) lx += p.dir * Math.sin(Math.min(1, (state.time - p.killAt) / .35) * Math.PI) * 7;
+  // selected-item weapon in hand (visual only): the knife / handmade gun
+  // follow the item selection. Suppressed while the bat is swinging, during
+  // the grab → knife-kill sequence and while climbing, where the existing
+  // motion poses take priority; a count of 0 never draws.
+  const heldWep = (!p.grabbing && !killP && !state.climb && p.swingT <= 0)
+    ? (state.selItem === 'knife' && state.inv.knife > 0 ? 'knife'
+      : state.selItem === 'gun' && state.inv.gun > 0 ? 'gun' : null)
+    : null;
   drawPerson(lx, p.y, 54,
     { body:'#6b4f35', legs:'#3e4a3a', skin:'#e0aa7e', hair:'#4a3826', belt:'#4a3826', shoe:'#33291f' },
     p.dir, p.crouch, rs.acc * (run ? .5 : .4),
@@ -3108,15 +3116,37 @@ function drawPlayer(){
       air: !p.onGround ? (p.vy < -2 ? 'rise' : 'fall') : null,
       land: rs.landT > 0 && p.onGround, hide: playerHidden(),
       shake: p.grabbedBy ? Math.sin(state.time * 42) * 1.6 : 0,
-      arms: (p.grabbing || killP) ? 'hold' : (state.climb ? 'reach' : undefined) });
+      arms: (p.grabbing || killP) ? 'hold' : (state.climb ? 'reach' : (state.aiming && heldWep ? 'hold' : undefined)) });
   // backpack
   ctx.fillStyle = SILHOUETTE || '#54683f'; ctx.fillRect(lx + (p.dir > 0 ? -3 : p.w - 5), p.y - 44 + (p.crouch?12:0), 8, 18);
   ctx.fillStyle = SILHOUETTE || '#6d8452'; ctx.fillRect(lx + (p.dir > 0 ? -3 : p.w - 5), p.y - 44 + (p.crouch?12:0), 8, 5);
-  // bat — bigger back-swing while it connects
-  if(p.bat > 0){
+  // bat — bigger back-swing while it connects; while a selected knife / gun
+  // is in hand instead, the resting bat stays out of the way (the swing
+  // itself still takes over, since heldWep is suppressed during it)
+  if(p.bat > 0 && !heldWep){
     ctx.fillStyle = SILHOUETTE || '#a9804f';
     const bx = lx + p.w/2 + p.dir * 14, by = p.y - 34 + (p.crouch?10:0);
     ctx.save(); ctx.translate(bx, by); ctx.rotate(p.swingT > 0 ? p.dir * -1.9 : p.dir * .5); ctx.fillRect(-2, -16, 5, 22); ctx.restore();
+  }
+  // held knife / handmade gun, mirrored with the facing direction. At rest
+  // the weapon angles down-forward from the front hand; while aiming (LT)
+  // it rises to shoulder height and points forward — the gun's muzzle lands
+  // on the shot line (y-36) where the muzzle flash spawns.
+  if(heldWep === 'knife'){
+    const kx = lx + p.w/2 + p.dir * 12;
+    const ky = p.y - (state.aiming ? 31 : 24) + (p.crouch ? 8 : 0);
+    ctx.save(); ctx.translate(kx, ky); ctx.scale(p.dir, 1); ctx.rotate(state.aiming ? .08 : .55);
+    ctx.fillStyle = SILHOUETTE || '#8a6f4d'; ctx.fillRect(-5, -1.5, 5, 3);
+    ctx.fillStyle = SILHOUETTE || '#dde3e8'; ctx.fillRect(0, -1.5, 11, 3);
+    ctx.restore();
+  } else if(heldWep === 'gun'){
+    const gx = lx + p.w/2 + p.dir * 12;
+    const gy = p.y - (state.aiming ? 33 : 25) + (p.crouch ? 8 : 0);
+    ctx.save(); ctx.translate(gx, gy); ctx.scale(p.dir, 1); ctx.rotate(state.aiming ? 0 : .5);
+    ctx.fillStyle = SILHOUETTE || '#7a5c3e'; ctx.fillRect(-2, 1, 4, 6);
+    ctx.fillStyle = SILHOUETTE || '#4c463f'; ctx.fillRect(-3, -2.5, 15, 4.5);
+    ctx.fillStyle = SILHOUETTE || '#2f2b26'; ctx.fillRect(10, -1.5, 5, 2.5);
+    ctx.restore();
   }
   // knife: held out while grabbing; thrust with a slash arc on the stealth kill
   if(p.grabbing || killP){
