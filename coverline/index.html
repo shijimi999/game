@@ -141,6 +141,92 @@
     flex: none;
   }
 
+  /* ---------- missions ---------- */
+  .missions {
+    background: #232a2f;
+    color: #e8ecea;
+    padding: clamp(3rem, 8vh, 4.5rem) 1.25rem clamp(3.5rem, 9vh, 5rem);
+  }
+  .missions-inner {
+    max-width: 880px;
+    margin: 0 auto;
+  }
+  .missions h2 {
+    margin: 0;
+    font-size: clamp(1.15rem, 3.4vw, 1.5rem);
+    font-weight: 400;
+    letter-spacing: .34em;
+    text-indent: .34em;
+    text-align: center;
+    color: #f2f4f3;
+  }
+  .missions .lead {
+    margin: 1rem auto 0;
+    max-width: 34em;
+    text-align: center;
+    font-size: .88rem;
+    line-height: 1.9;
+    color: rgba(232,236,234,.78);
+  }
+  .mission-list {
+    list-style: none;
+    margin: 2.4rem 0 0;
+    padding: 0;
+    border-top: 1px solid rgba(232,236,234,.18);
+  }
+  .mission-list li {
+    display: flex;
+    gap: 1.1rem;
+    align-items: baseline;
+    padding: 1.15rem .25rem;
+    border-bottom: 1px solid rgba(232,236,234,.18);
+  }
+  .mission-no {
+    flex: none;
+    font-size: .72rem;
+    letter-spacing: .24em;
+    color: rgba(232,236,234,.55);
+    white-space: nowrap;
+  }
+  .mission-body { min-width: 0; }
+  .mission-name {
+    margin: 0;
+    font-size: 1.02rem;
+    font-weight: 600;
+    letter-spacing: .12em;
+    color: #f2f4f3;
+  }
+  .mission-name .tag-new {
+    display: inline-block;
+    margin-left: .7em;
+    padding: .12em .55em;
+    border: 1px solid #e08a2e;
+    color: #f4a950;
+    font-size: .68rem;
+    font-weight: 600;
+    letter-spacing: .18em;
+    vertical-align: .18em;
+  }
+  .mission-desc {
+    margin: .45rem 0 0;
+    font-size: .85rem;
+    line-height: 1.85;
+    color: rgba(232,236,234,.75);
+  }
+  .mission-meta {
+    margin: .5rem 0 0;
+    font-size: .74rem;
+    letter-spacing: .14em;
+    color: rgba(232,236,234,.5);
+  }
+  .missions .foot {
+    margin: 2rem 0 0;
+    text-align: center;
+    font-size: .78rem;
+    letter-spacing: .18em;
+    color: rgba(232,236,234,.55);
+  }
+
   @media (max-width: 480px) {
     h1 { font-size: clamp(2rem, 12vw, 2.6rem); letter-spacing: .22em; text-indent: .22em; }
     .subtitle { letter-spacing: .44em; text-indent: .44em; }
@@ -148,6 +234,8 @@
     .start { width: min(78vw, 300px); padding-left: 1rem; padding-right: 1rem; }
     .notes { font-size: .72rem; letter-spacing: .14em; text-indent: .14em; gap: .65em; flex-wrap: wrap; justify-content: center; }
     .content { padding-bottom: 5.5rem; }
+    .mission-list li { flex-direction: column; gap: .35rem; }
+    .missions h2 { letter-spacing: .22em; text-indent: .22em; }
   }
 </style>
 </head>
@@ -414,9 +502,35 @@
     <h1>COVERLINE</h1>
     <p class="subtitle">奪還作戦</p>
     <a class="start" href="./coverline.html">ミッションをはじめる</a>
-    <p class="notes"><span>ミッション全3本収録</span><span class="sep" aria-hidden="true"></span><span>コントロールパッド対応</span><span class="sep" aria-hidden="true"></span><span>環境音つき</span></p>
+    <p class="notes"><span>ミッション全4本収録</span><span class="sep" aria-hidden="true"></span><span>コントロールパッド対応</span><span class="sep" aria-hidden="true"></span><span>環境音つき</span></p>
   </div>
 
 </main>
+
+<section class="missions" aria-labelledby="missions-title">
+  <div class="missions-inner">
+    <h2 id="missions-title">ミッション</h2>
+    <p class="lead">崩壊した大都市を舞台に、カバーを渡りながら進む奪還作戦。第4ミッションでは戦いの場が屋内へ移る。</p>
+    <ol class="mission-list">
+      <li>
+        <span class="mission-no">MISSION 01–03</span>
+        <div class="mission-body">
+          <p class="mission-name">市街地奪還作戦</p>
+          <p class="mission-desc">曇りの昼の崩壊した大都市を進む、屋外の3ミッション。廃車やコンクリートバリアをカバーに、街そのものを取り戻していく。</p>
+          <p class="mission-meta">屋外 ／ 市街地</p>
+        </div>
+      </li>
+      <li>
+        <span class="mission-no">MISSION 04</span>
+        <div class="mission-body">
+          <p class="mission-name">国家記念堂<span class="tag-new">NEW</span></p>
+          <p class="mission-desc">大理石の記念堂の内部が舞台。列柱が立ち並ぶ大空間の奥に大きな座像が鎮座し、柱・台座・倒れた柱・設置バリケードをカバーに、柱から柱へ移りながらの撃ち合いになる。足音も銃声も硬く反響する室内専用の環境音で、屋外とは空気感が一変する。</p>
+          <p class="mission-meta">室内 ／ 記念堂 ／ ミッション03クリアで解放</p>
+        </div>
+      </li>
+    </ol>
+    <p class="foot">MISSION 04「国家記念堂」は、ミッション03のクリア後に選択できるようになります。</p>
+  </div>
+</section>
 </body>
 </html>
