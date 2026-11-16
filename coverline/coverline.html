@@ -87,6 +87,10 @@
         background:rgba(10,12,14,.7); border:1px solid var(--line); padding:5px 9px; pointer-events:auto; cursor:pointer; }
       #bgmstatus.on{ color:var(--ink); }
       #bgmstatus.off{ color:var(--faint); }
+      #aimstatus{ position:absolute; top:100px; left:10px; font-size:11px; color:var(--dim);
+        background:rgba(10,12,14,.7); border:1px solid var(--line); padding:5px 9px; pointer-events:auto; cursor:pointer; }
+      #aimstatus.on{ color:var(--ink); }
+      #aimstatus.off{ color:var(--faint); }
       #padstatusTitle{ font-size:12px; color:var(--dim); background:var(--panel2); border:1px solid var(--line);
         padding:6px 10px; margin-top:12px; font-family:ui-monospace,Menlo,Consolas,monospace; }
       #padstatusTitle.on{ color:var(--ok); border-color:#2c4a34; }
@@ -196,6 +200,7 @@
           <div id="padstatus">🎮 コントローラー未接続</div>
           <div id="sndstatus" class="on" title="クリック／Mキーで環境音のON・OFF">🔊 環境音 ON（Mで切替）</div>
           <div id="bgmstatus" class="on" title="クリック／NキーでBGMのON・OFF">🎵 BGM ON（Nで切替）</div>
+          <div id="aimstatus" class="on" title="クリックでエイムアシストの強さを切り替え（パッド／タッチ照準のみ。LTを押した瞬間の吸着＋追尾もこの設定で変わる）">🎯 アシスト：標準</div>
           <div id="objective">—</div>
           <div id="mmapWrap"><canvas id="minimap" width="144" height="108"></canvas><div class="cap">TACTICAL MAP</div></div>
           <div id="bossWrap" class="hidden"><div class="bn">⚠ 重装ターゲット</div><div id="bossBarOuter"><div id="bossBar"></div></div></div>
@@ -252,9 +257,9 @@
               <table class="ctrl">
                 <tr><td class="k">左スティック</td><td>移動</td></tr>
                 <tr><td class="k">十字キー</td><td>移動（スティックのないパッド用）</td></tr>
-                <tr><td class="k">右スティック</td><td>照準（近くの敵へ軽くアシスト）</td></tr>
+                <tr><td class="k">右スティック</td><td>照準（エイムアシストは下のボタン／HUD左上で OFF／弱／標準／強 を選択式に切替。パッド・タッチ照準のみ効く）</td></tr>
                 <tr><td class="k">RT</td><td>射撃</td></tr>
-                <tr><td class="k">LT 長押し</td><td>カバーから身を乗り出す</td></tr>
+                <tr><td class="k">LT 長押し</td><td>カバーから身を乗り出す。押した瞬間、いちばん撃ちやすい敵へ照準が吸着し、押している間は軽く追尾する（Division式。アシストOFFでは吸着しない）</td></tr>
                 <tr><td class="k">A</td><td>カバーに吸着 ／ 解除</td></tr>
                 <tr><td class="k">B</td><td>ロール（回避・一瞬無敵）</td></tr>
                 <tr><td class="k">X</td><td>リロード ／ 近くの武器は長押しで拾う</td></tr>
@@ -267,6 +272,7 @@
             <div id="padstatusTitle">🎮 コントローラー未接続（キーボード/マウス可）</div>
             <div style="margin-top:8px;"><button type="button" class="ghostbtn btnSndToggle" style="padding:7px 14px; font-size:13px;">🔊 環境音：ON（風・遠くの銃声・地響き）</button></div>
             <div style="margin-top:8px;"><button type="button" class="ghostbtn btnBgmToggle" style="padding:7px 14px; font-size:13px;">🎵 BGM：ON（ダークな電子パルス）</button></div>
+            <div style="margin-top:8px;"><button type="button" class="ghostbtn btnAimToggle" style="padding:7px 14px; font-size:13px;">🎯 エイムアシスト：標準</button></div>
             <div style="margin-top:8px;"><button type="button" class="ghostbtn btnFsToggle" style="padding:7px 14px; font-size:13px;">⛶ フルスクリーン</button></div>
             <div class="padDiag">【コントローラー診断】</div>
             <div class="padBlockHelp hidden">
@@ -334,6 +340,7 @@
               <button class="bigbtn" id="btnResume">再開する</button>
               <button class="ghostbtn btnSndToggle">🔊 環境音：ON</button>
               <button class="ghostbtn btnBgmToggle">🎵 BGM：ON</button>
+              <button class="ghostbtn btnAimToggle">🎯 エイムアシスト：標準</button>
               <button class="ghostbtn btnFsToggle">⛶ フルスクリーン</button>
               <button class="ghostbtn" id="btnQuitMission">ミッションを中断して選択に戻る</button>
             </div>
@@ -362,8 +369,11 @@
         撃つときは <kbd>右クリック</kbd> / <span class="pad">LT</span> で身を乗り出す（その間は敵の弾も当たる）。
         <b>タレット：</b><kbd>Q</kbd> / <span class="pad">LB</span>。 <b>拾う：</b>武器の近くで <kbd>E</kbd> / <span class="pad">X</span> 長押し。今の武器との強さ比較が出る。アーマーキットは触れれば自動で拾う。
         <b>タッチ：</b>左半分ドラッグ＝移動、右半分ドラッグ＝照準・射撃、ボタンでカバー／ロール／タレット等。
-        <b>環境音：</b><kbd>M</kbd> で ON／OFF。風と街の低い残響に混じって、遠くの銃声や地響きが時々聞こえる（戦闘の気配は音だけの演出で、実際の敵とは連動しない）。
+        <b>環境音：</b><kbd>M</kbd> で ON／OFF。風と街の低い残響に混じって、遠くの銃声や地響きが時々聞こえる（戦闘の気配は音だけの演出で、実際の敵とは連動しない）。室内ミッション（国家記念堂）では風が弱まってこもり、遠くの音も壁越しに反響する室内の空気感に切り替わる。
         <b>BGM：</b><kbd>N</kbd> で ON／OFF。ダークな電子パルスのループで、敵が近づいたり撃ち合いが始まるとリズムと低音が乗って戦闘版に切り替わり、静まると数秒かけて探索版へ戻る。環境音とは別々に切り替えられる。
+        <b>エイムアシスト：</b>タイトル／ポーズのボタンか、プレイ中は左上の「アシスト」表示クリックで OFF／弱／標準／強 を選択式に切替（パッド・タッチ照準のみ。マウス照準には効かない）。
+        <b>スナップ照準（Division式）：</b><span class="pad">LT</span>（タッチでは「構える」ボタン）を押した瞬間、射程内で弾の通る敵のうち、今向いている方向にいちばん近い敵へ照準が吸着し、オレンジのマーカーが付く。押している間はその敵を軽く追尾するが、スティックで大きく外せば手放せる。敵がいない／全員物陰のときは吸着せず自由照準のまま。カバー外でLTを押しても照準ボタンとして働く。アシストをOFFにすると吸着・追尾も切れる。
+        <b>敵の動き：</b>敵は見た瞬間に気づくとは限らず、距離やカバー越しだと気づくまで間がある。見失うと最後に見た場所を探しに来て、見つからなければ警戒を解く。発見は仲間に伝わり、同じカバーに固まらず側面へ回る者や、カバーへ制圧射撃をする者もいる。ライフル兵は距離を保って制圧、ラッシャーは味方の制圧中に詰め、重装は撃たれながら前進する。傷ついた敵は後ろのカバーへ下がる。
         <b>フルスクリーン：</b>画面右の ⛶ ボタン / <kbd>Alt</kbd>+<kbd>Enter</kbd> で切替、<kbd>Esc</kbd> で解除。
       </div>
     </div>
@@ -461,7 +471,9 @@ function startAmbient(){
     const rumFil=ac.createBiquadFilter(); rumFil.type="lowpass"; rumFil.frequency.value=105; rumFil.Q.value=0.3;
     const rumGain=ac.createGain(); rumGain.gain.value=0.078;
     rumSrc.connect(rumFil); rumFil.connect(rumGain); rumGain.connect(master); rumSrc.start();
+    ambNodes.windGain=windGain; ambNodes.windFil=windFil; ambNodes.rumGain=rumGain;   // 室内／屋外の空気感の切替用に保持
     ambStarted=true;
+    try{ applyAmbProfile(); }catch(e){}
     scheduleAmbEvent(1500+Math.random()*2500);   // 最初の気配はわりと早めに
   }catch(e){ ambStarted=false; ambNodes=null; }
 }
@@ -470,8 +482,25 @@ function updateAmbGain(){
     let st="title"; try{ st=game.state; }catch(e){}
     const target = ambMuted?0 : (st==="paused"?0.5 : st==="playing"?1.0 : 0.75);
     try{ ambNodes.master.gain.setTargetAtTime(target, AC.currentTime, 0.45); }catch(e){}
+    applyAmbProfile();
   }
   updateSndUI();
+}
+/* 室内ミッション（国家記念堂）では空気感を切り替える：風は弱くこもり、
+   土台は「街の残響」から「大空間の低い室内の響き」寄りになる。
+   遠くの銃声・地響きも、壁越しにこもって反響する前提で各イベント側が調整する */
+function ambIsIndoor(){
+  try{ return !!(game.mission && game.mission.indoor && (game.state==="playing" || game.state==="paused")); }catch(e){ return false; }
+}
+function applyAmbProfile(){
+  if(!ambNodes || !AC) return;
+  const ind = ambIsIndoor();
+  try{
+    const t = AC.currentTime;
+    if(ambNodes.windGain) ambNodes.windGain.gain.setTargetAtTime(ind?0.016:0.052, t, 0.7);
+    if(ambNodes.windFil) ambNodes.windFil.frequency.setTargetAtTime(ind?165:360, t, 0.7);
+    if(ambNodes.rumGain) ambNodes.rumGain.gain.setTargetAtTime(ind?0.055:0.078, t, 0.7);
+  }catch(e){}
 }
 function updateSndUI(){
   const s=document.getElementById('sndstatus');
@@ -524,13 +553,14 @@ function ambDistantShot(when, vol, pan, cutoff){
   og.gain.setValueAtTime(0.0008,t); og.gain.exponentialRampToValueAtTime(Math.max(0.001,vol*0.55),t+0.012);
   og.gain.exponentialRampToValueAtTime(0.0008,t+0.2);
   o.connect(og); og.connect(out); o.start(t); o.stop(t+0.24);
-  // 街に反響する薄いエコー
-  if(Math.random()<0.65){
-    const t2=t+0.20+Math.random()*0.14;
+  // 反響する薄いエコー（屋外は街の反響、室内は記念堂の大空間の反響で遅く・濃くなる）
+  const indEcho = ambIsIndoor();
+  if(Math.random() < (indEcho?0.92:0.65)){
+    const t2=t+(indEcho?0.30:0.20)+Math.random()*0.14;
     const src2=ac.createBufferSource(); src2.buffer=getNoiseBuf(ac); src2.playbackRate.value=0.6;
     const fil2=ac.createBiquadFilter(); fil2.type="lowpass"; fil2.frequency.value=Math.max(280,cutoff*0.55);
     const g2=ac.createGain();
-    g2.gain.setValueAtTime(0.0008,t2); g2.gain.exponentialRampToValueAtTime(Math.max(0.001,vol*0.32),t2+0.01);
+    g2.gain.setValueAtTime(0.0008,t2); g2.gain.exponentialRampToValueAtTime(Math.max(0.001,vol*(indEcho?0.42:0.32)),t2+0.01);
     g2.gain.exponentialRampToValueAtTime(0.0008,t2+0.18);
     src2.connect(fil2); fil2.connect(g2); g2.connect(out);
     src2.start(t2, Math.random()*1.2, 0.25); src2.stop(t2+0.28);
@@ -539,16 +569,18 @@ function ambDistantShot(when, vol, pan, cutoff){
 function ambSingleShots(){
   const pan=(Math.random()*2-1)*0.8;
   const far=Math.random();                        // 距離感：遠いほど暗く・小さく
-  const cutoff= far>0.6 ? 420+Math.random()*160 : 650+Math.random()*300;
-  const base= far>0.6 ? 0.055+Math.random()*0.036 : 0.085+Math.random()*0.055;
+  let cutoff= far>0.6 ? 420+Math.random()*160 : 650+Math.random()*300;
+  let base= far>0.6 ? 0.055+Math.random()*0.036 : 0.085+Math.random()*0.055;
+  if(ambIsIndoor()){ cutoff*=0.55; base*=0.75; }   // 室内では壁越しにこもる
   const n=1+((Math.random()*2.4)|0);              // 1〜3発、間隔は不揃い
   let t=0;
   for(let i=0;i<n;i++){ ambDistantShot(t, base*(0.8+Math.random()*0.45), pan+(Math.random()*0.14-0.07), cutoff); t+=0.35+Math.random()*0.75; }
 }
 function ambBurst(){
   const pan=(Math.random()*2-1)*0.8;
-  const cutoff=520+Math.random()*320;
-  const base=0.070+Math.random()*0.050;
+  let cutoff=520+Math.random()*320;
+  let base=0.070+Math.random()*0.050;
+  if(ambIsIndoor()){ cutoff*=0.55; base*=0.75; }   // 室内では壁越しにこもる
   const n=3+((Math.random()*5)|0);                // 3〜7連射
   let t=0;
   for(let i=0;i<n;i++){ ambDistantShot(t, base*(0.75+Math.random()*0.5), pan+(Math.random()*0.1-0.05), cutoff); t+=0.085+Math.random()*0.075; }
@@ -559,7 +591,8 @@ function ambBoom(){
   const pan=(Math.random()*2-1)*0.55;
   const out=ambOut(pan); if(!out) return;
   const big=Math.random()<0.35;
-  const vol= big ? 0.25+Math.random()*0.09 : 0.145+Math.random()*0.065;
+  let vol= big ? 0.25+Math.random()*0.09 : 0.145+Math.random()*0.065;
+  if(ambIsIndoor()) vol*=0.8;   // 室内では地響きも壁越しに鈍る
   const dur= big ? 2.3 : 1.5;
   // 低域ノイズのうなり（地響きの本体）
   const src=ac.createBufferSource(); src.buffer=getNoiseBuf(ac); src.loop=true; src.playbackRate.value=0.28;
@@ -763,6 +796,88 @@ function toggleBgmMute(){
   updateBgmGain();
 }
 
+/* ---------- エイムアシスト（選択式：OFF／弱／標準／強） ----------
+   パッドの右スティックとタッチ照準だけに効く（マウス照準は元々正確なので対象外）。
+   角度の吸着範囲・吸着の強さ・届く距離が段階で変わる。既定は従来と同じ「標準」。
+   保持はこのセッション内のみ（保存はしない）。
+   Division式スナップ照準もこの設定に連動する：LT（タッチでは「構える」）を押した瞬間、
+   snapCone（ラジアン）の範囲内で「いちばん撃ちやすい敵」へ照準が吸着し、
+   押している間は track の弱さでその敵を追尾し続ける。OFFでは吸着・追尾とも切れる。 */
+const AIM_LEVELS = [
+  { name:"OFF",  ang:0,    range:0,   pull:0,    snapCone:0,    track:0    },
+  { name:"弱",   ang:0.18, range:220, pull:0.25, snapCone:1.00, track:0.05 },
+  { name:"標準", ang:0.30, range:270, pull:0.55, snapCone:1.35, track:0.10 },
+  { name:"強",   ang:0.50, range:330, pull:0.82, snapCone:1.80, track:0.18 }
+];
+let aimAssistIdx = 2;   // 標準
+function aimCfg(){ return AIM_LEVELS[aimAssistIdx]; }
+function updateAimUI(){
+  const cfg = aimCfg();
+  const s=document.getElementById('aimstatus');
+  if(s){
+    s.textContent = "🎯 アシスト：" + cfg.name + "（クリックで切替）";
+    s.classList.toggle('on', aimAssistIdx>0); s.classList.toggle('off', aimAssistIdx===0);
+  }
+  document.querySelectorAll('.btnAimToggle').forEach(b=>{
+    b.textContent = "🎯 エイムアシスト：" + cfg.name + (aimAssistIdx===0 ? "" : "（パッド／タッチ照準）");
+  });
+}
+function cycleAimAssist(){
+  aimAssistIdx = (aimAssistIdx+1) % AIM_LEVELS.length;
+  updateAimUI();
+  try{ beep(aimAssistIdx===0?300:620, 0.06, "triangle", 0.04, 120); }catch(e){}
+}
+
+/* ---------- Division式スナップ照準（吸着＋軽い追尾） ----------
+   「いちばん撃ちやすい敵」の判定：今の武器の射程内／乗り出し位置から弾が通る
+   （壁・カバーに遮られていない）／今向いている方向に近い、を満たす敵の中で
+   向きの近さを最優先、距離を次点として1体選ぶ。候補がいなければ吸着しない。 */
+let snapTarget = null;                 // 追尾中の敵（LT／「構える」を離すと解除）
+let snapPrevLT = 0, snapPrevTouchLean = false;
+function snapAimAngle(p, e){
+  const from = leanOffset(p), tp = leanOffset(e);
+  return Math.atan2(tp.y - (from.y - 6), tp.x - from.x);
+}
+function snapShotClear(p, e){
+  // 弾の発射位置（乗り出し位置）から敵まで、壁とカバー（自分の吸着先は除く）に遮られていないか
+  const from = leanOffset(p), tp = leanOffset(e);
+  const fx = from.x, fy = from.y - 6, tx = tp.x, ty = tp.y - 4;
+  if(losBlocked(fx, fy, tx, ty, game.walls)) return false;
+  for(const c of game.covers){
+    if(c === p.cover) continue;
+    if(segRect(fx, fy, tx, ty, c)) return false;
+  }
+  return true;
+}
+function findSnapTarget(p){
+  const cfg = aimCfg();
+  if(cfg.snapCone <= 0) return null;
+  const w = p.weapons[p.wi];
+  let best = null, bestScore = 1e18;
+  for(const e of game.enemies){
+    if(e.dead) continue;
+    const tp = leanOffset(e);
+    const d = Math.hypot(tp.x - p.x, tp.y - p.y);
+    if(d > w.range) continue;                                   // 射程外は撃てない
+    const a = snapAimAngle(p, e);
+    let diff = Math.abs(a - p.aim); if(diff > Math.PI) diff = Math.PI*2 - diff;
+    if(diff > cfg.snapCone) continue;                           // 背後など、大きく振り向く先には吸着しない
+    if(!snapShotClear(p, e)) continue;                          // 物陰で弾が通らない敵は対象外
+    let score = diff*100 + d*0.12;
+    if(e.alerted) score -= 6;                                   // 交戦中の敵をわずかに優先
+    if(score < bestScore){ bestScore = score; best = e; }
+  }
+  return best;
+}
+function trySnapAim(p){
+  const t = findSnapTarget(p);
+  snapTarget = t;
+  if(!t) return;
+  p.aim = snapAimAngle(p, t);                                   // 押した瞬間に吸着（即時）
+  p.face = Math.cos(p.aim) >= 0 ? 1 : -1;
+  try{ beep(940, 0.05, "triangle", 0.035, 160); }catch(err){}
+}
+
 /* ---------- 武器定義 ---------- */
 const WTYPES = {
   AR:  { label:"アサルトライフル", name:"AR-7 リバティ",   dmg:11, interval:0.105, mag:30, reload:1.5, spread:0.045, bspeed:400, pellets:1, range:300, auto:true  },
@@ -810,7 +925,12 @@ const MISSIONS = [
     brief:"最終防衛線を突破し、重装ターゲットを排除せよ。",
     zones:[ {x:500,y:380, foes:["R","S","R","R","S","R"]},
             {x:940,y:740, foes:["S","R","R","S","R","R","S"]},
-            {x:720,y:560, foes:["R","S","R","H","S","R"]} ] }
+            {x:720,y:560, foes:["R","S","R","H","S","R"]} ] },
+  { id:3, name:"制圧：国家記念堂", diff:"難易度 ★★★", hpMul:1.6, dmgMul:1.35, seed:4404, indoor:true,
+    brief:"大理石の記念堂に立てこもる敵勢力を制圧せよ。入口の広間から列柱の間を進み、大きな座像の控える奥のエリアを制圧して帰還せよ。室内では音が反響する。",
+    zones:[ {x:500,y:800, foes:["R","R","S","R","S"]},
+            {x:720,y:540, foes:["R","S","R","R","S","R"]},
+            {x:720,y:290, foes:["R","S","R","H","S","R","S"]} ] }
 ];
 const EXTRACT = { x:120, y:950 };
 const SPAWN = { x:120, y:950 };
@@ -1328,7 +1448,7 @@ function stickVec(s){
 /* ---------- ゲーム状態 ---------- */
 const game = {
   state:"title",           // title / playing / paused / result / over
-  mission:null, missionIdx:0, unlocked:0, cleared:{},
+  mission:null, missionIdx:0, unlocked:3, cleared:{},
   walls:[], covers:[], groundCv:null,
   player:null, enemies:[], bullets:[], pickups:[], parts:[], dmgNums:[], turrets:[], foeMuzzles:[],
   zoneIdx:0, zoneActive:false, zoneDone:false, zoneAnnounced:false, phase:"zones", // zones / extract
@@ -1340,8 +1460,10 @@ const game = {
 let coverSeq = 1;
 function addCover(x,y,w,h,type){ game.covers.push({ id:coverSeq++, x,y,w,h,type }); }
 function addWall(x,y,w,h,sign,roof){ game.walls.push({ x,y,w,h,sign:sign||"", roof:roof||"#3d434c" }); }
+function addWallKind(x,y,w,h,kind,roof){ const wl={ x,y,w,h,sign:"", roof:roof||"#3d434c", kind }; game.walls.push(wl); return wl; }
 
 function genMap(m){
+  if(m.indoor){ genMapIndoor(m); return; }
   game.walls=[]; game.covers=[]; coverSeq=1;
   const rng = mulberry32(m.seed);
   // 外周（建物扱い）
@@ -1389,6 +1511,109 @@ function genMap(m){
     if(t==="crate") addCover(x,y,17,17,"crate"); else addCover(x,y,34,11,t);
   }
   buildGround();
+}
+
+/* ---------- 室内マップ：国家記念堂（大理石の記念堂／列柱の大空間／奥に座像） ----------
+   屋外マップとは生成を分ける。外周と座像・側壁は大理石の壁（kind:"marble"/"statue"）、
+   カバーは列柱（pillar）・倒れた柱（fallen）・台座（pedestal）を中心に置く。
+   入口（帰還ポイント）は南西の玄関広間、今までどおり SPAWN / EXTRACT の位置を使う。 */
+function genMapIndoor(m){
+  game.walls=[]; game.covers=[]; coverSeq=1;
+  const rng = mulberry32(m.seed);
+  // 外周：大理石の壁
+  addWallKind(0,0,WORLD_W,30,"marble","#c3c9d1"); addWallKind(0,WORLD_H-30,WORLD_W,30,"marble","#c3c9d1");
+  addWallKind(0,0,30,WORLD_H,"marble","#c3c9d1"); addWallKind(WORLD_W-30,0,30,WORLD_H,"marble","#c3c9d1");
+  // 奥（北）の大座像：台座ごと壁として当たり判定と視線遮断を持つ
+  addWallKind(648,86,144,56,"statue","#ccd2da");
+  addCover(516,100,56,26,"pedestal");
+  addCover(868,100,56,26,"pedestal");
+  // 側壁の張り出し（回廊の区切り）：視線と動線を断つ
+  addWallKind(30,452,150,22,"marble","#c3c9d1"); addWallKind(WORLD_W-180,452,150,22,"marble","#c3c9d1");
+  addWallKind(30,700,150,22,"marble","#c3c9d1"); addWallKind(WORLD_W-180,700,150,22,"marble","#c3c9d1");
+  // 列柱：左右2列の大理石柱（カバーとして吸着できる）
+  for(const cx of [458, 958]){
+    for(const cy of [256, 392, 528, 664, 800, 936]) addCover(cx, cy, 24, 24, "pillar");
+  }
+  // 座像の手前と入口にも柱のペア
+  addCover(548,178,24,24,"pillar"); addCover(868,178,24,24,"pillar");
+  // ゾーン周辺に戦闘用カバーを guaranteed 配置（倒れた柱・台座・バリケード等）
+  for(const z of m.zones){
+    addCover(z.x-92, z.y-12, 46,16,"fallen");
+    addCover(z.x+58, z.y+36, 38,11,"barricade");
+    addCover(z.x-42, z.y+68, 34,12,"pedestal");
+    addCover(z.x+70, z.y-70, 16,46,"fallen");
+    addCover(z.x-74, z.y-76, 34,11,"sandbag");
+    addCover(z.x+8,  z.y-8,  18,18,"crate");
+  }
+  // 散布カバー（石の残骸や台座が点在する）
+  for(let i=0;i<14;i++){
+    const x=70+rng()*(WORLD_W-180), y=190+rng()*(WORLD_H-280);
+    if(game.walls.some(w=>pointInRect(x+15,y+6,w,12))) continue;
+    if(Math.hypot(x-SPAWN.x,y-SPAWN.y)<90) continue;
+    const t=["pedestal","fallen","barricade","crate","sandbag"][Math.floor(rng()*5)];
+    if(t==="crate") addCover(x,y,17,17,"crate");
+    else if(t==="fallen") addCover(x,y,46,16,"fallen");
+    else if(t==="pedestal") addCover(x,y,34,12,"pedestal");
+    else addCover(x,y,34,11,t);
+  }
+  buildGroundIndoor();
+}
+
+/* 室内の地面：大理石の石床（大きな石畳＋石目）、中央の通路カーペット、
+   座像の壇と入口の玄関広間を1枚の地面キャンバスに焼き込む */
+function buildGroundIndoor(){
+  const c=document.createElement('canvas'); c.width=WORLD_W; c.height=WORLD_H;
+  const g=c.getContext('2d'); const rng=mulberry32(778);
+  /* --- 石床ベース：大きな大理石畳と目地、色むら --- */
+  g.fillStyle="#90959b"; g.fillRect(0,0,WORLD_W,WORLD_H);
+  for(let ty=0;ty<WORLD_H;ty+=72){
+    for(let tx=0;tx<WORLD_W;tx+=72){
+      if(((tx/72)+(ty/72))%2===0){ g.fillStyle="rgba(255,255,255,.05)"; g.fillRect(tx,ty,72,72); }
+    }
+  }
+  g.fillStyle="rgba(30,34,40,.16)";
+  for(let x=0;x<WORLD_W;x+=72) g.fillRect(x,0,1,WORLD_H);
+  for(let y=0;y<WORLD_H;y+=72) g.fillRect(0,y,WORLD_W,1);
+  for(let i=0;i<2400;i++){ g.fillStyle=rng()<0.5?"#9aa0a5":"#858a90"; g.fillRect((rng()*WORLD_W)|0,(rng()*WORLD_H)|0,3,3); }
+  /* 大理石の石目（細い曲線を薄く何本も） */
+  for(let i=0;i<42;i++){
+    g.strokeStyle = rng()<0.5 ? "rgba(255,255,255,.10)" : "rgba(60,66,74,.09)";
+    g.lineWidth=1; g.beginPath();
+    let vx=rng()*WORLD_W, vy=rng()*WORLD_H; g.moveTo(vx,vy);
+    for(let s=0;s<5;s++){ vx+=(rng()*46-14); vy+=(rng()*30-15); g.lineTo(vx,vy); }
+    g.stroke();
+  }
+  /* --- 壁際の影：室内は壁の足元に柔らかい影が落ちる --- */
+  g.fillStyle="rgba(20,24,30,.16)";
+  g.fillRect(30,30,WORLD_W-60,10); g.fillRect(30,WORLD_H-40,WORLD_W-60,10);
+  g.fillRect(30,30,10,WORLD_H-60); g.fillRect(WORLD_W-40,30,10,WORLD_H-60);
+  /* --- 座像の壇：一段高い石壇と正面の階段 --- */
+  g.fillStyle="#a3a9b0"; g.fillRect(600,58,240,104);
+  g.strokeStyle="rgba(40,46,54,.4)"; g.lineWidth=2; g.strokeRect(601,59,238,102);
+  g.fillStyle="rgba(255,255,255,.14)"; g.fillRect(600,58,240,3);
+  g.fillStyle="#989ea5"; g.fillRect(616,162,208,7);
+  g.fillStyle="#8d9299"; g.fillRect(628,169,184,7);
+  g.fillStyle="rgba(40,46,54,.35)"; g.font="bold 11px monospace"; g.textAlign="center";
+  g.fillText("NATIONAL MEMORIAL", 720, 190);
+  /* --- 中央通路：くすんだ深紅のカーペット（入口から座像まで） --- */
+  g.fillStyle="#5d2f33"; g.fillRect(648,196,144,830);
+  g.fillStyle="rgba(201,162,39,.45)"; g.fillRect(648,196,3,830); g.fillRect(789,196,3,830);
+  g.fillStyle="rgba(255,255,255,.05)";
+  for(let y=220;y<1010;y+=44){ g.beginPath(); g.moveTo(720,y); g.lineTo(736,y+12); g.lineTo(720,y+24); g.lineTo(704,y+12); g.closePath(); g.fill(); }
+  /* --- 入口の玄関広間（帰還ポイント周辺） --- */
+  g.fillStyle="rgba(255,255,255,.05)"; g.fillRect(36,906,190,140);
+  g.strokeStyle="rgba(201,162,39,.35)"; g.lineWidth=1; g.strokeRect(36.5,906.5,190,140);
+  /* --- 高窓からの柔らかい光だまり（列柱の間に楕円で薄く） --- */
+  for(const lp of [[720,300],[300,480],[1140,480],[720,620],[300,760],[1140,760]]){
+    g.fillStyle="rgba(255,246,220,.045)"; g.beginPath(); g.ellipse(lp[0],lp[1],150,84,0,0,Math.PI*2); g.fill();
+    g.fillStyle="rgba(255,246,220,.04)"; g.beginPath(); g.ellipse(lp[0],lp[1],96,52,0,0,Math.PI*2); g.fill();
+  }
+  /* --- 石の粉と小さな残骸 --- */
+  for(let i=0;i<170;i++){
+    g.fillStyle = rng()<0.5 ? "rgba(230,232,235,.20)" : "rgba(70,76,84,.22)";
+    g.fillRect((rng()*WORLD_W)|0, (rng()*WORLD_H)|0, 2, 1);
+  }
+  game.groundCv=c;
 }
 
 /* 地面（アスファルト＋歩道＋道路標示＋街の小物）を事前に描く。
@@ -1649,8 +1874,14 @@ function newEnemy(type, x, y, m){
     hp: Math.round(st.hp*m.hpMul), maxhp: Math.round(st.hp*m.hpMul),
     speed: st.speed, dmg: Math.round(st.dmg*m.dmgMul), aim:0, face:-1,
     state:"seek", stateT: 0.4+Math.random()*0.8, cover:null, coverNx:0, coverNy:-1, leaning:false,
-    burstLeft:0, fireT:0, walkT:Math.random()*6, dead:false, flashT:0, targetCover:null, stuck:0, lastX:x, lastY:y,
-    recoilT:0, recoilX:0, recoilY:0, muzzleT:0, moveAmt:0
+    burstLeft:0, fireT:0, walkT:Math.random()*6, dead:false, flashT:0, targetCover:null, targetSpot:null, stuck:0, lastX:x, lastY:y,
+    recoilT:0, recoilX:0, recoilY:0, muzzleT:0, moveAmt:0,
+    /* --- 洗練版AI：知覚／連携／役割／後退 --- */
+    alerted:false, perceive:0, alertFlashT:0, pendingAlertT:-1, shareT:0,
+    lastSeenX:x, lastSeenY:y, loseT:0, searchT:0, searchPhase:Math.random()*6,
+    homeX:x, homeY:y, patrolT:Math.random()*3, patrolX:x, patrolY:y,
+    flankSide:1, flankRole:false, suppressT:0, suppressCd:1+Math.random()*2, soloWaitT:0,
+    retreatCd:0, retreating:false, retreatSpot:null, phase:Math.random()*6
   };
 }
 function spawnZone(zi, silent){
@@ -1663,7 +1894,11 @@ function spawnZone(zi, silent){
     let y = clamp(z.y + Math.sin(a)*d, 50, WORLD_H-50);
     // 建物内なら押し出す
     for(const w of game.walls){ if(pointInRect(x,y,w,8)){ y = w.y + w.h + 16; } }
+    // カバー（柱など）と重なっていたら下へ押し出す（室内の列柱対策。屋外でも同じ扱い）
+    for(const c of game.covers){ if(pointInRect(x,y,c,10)){ y = clamp(c.y + c.h + 16, 50, WORLD_H-50); } }
     const e = newEnemy(t, x, y, m);
+    e.flankSide = (i%2===0) ? 1 : -1;                 // 回り込みは左右に散らす
+    e.flankRole = (t==="R" && i%3===1);                // 一部のライフル兵が側面のカバーを狙う
     game.enemies.push(e);
     spawnParts(x, y, "#ff8c1a", 6);
     if(t==="H"){ game.boss = e; document.getElementById('bossWrap').classList.remove('hidden'); if(!silent) toast("⚠ 重装ターゲット出現", "高耐久 ― カバーとタレットで削れ"); }
@@ -1739,6 +1974,9 @@ function hitEnemy(e, dmg){
   const crit = Math.random()<0.12;
   const d = crit ? Math.round(dmg*1.6) : dmg;
   e.hp -= d; e.flashT = 0.14;
+  // 撃たれたら当然気づく（仲間への共有は becomeAlerted 経由で少し遅れる）
+  if(game.player){ e.lastSeenX = game.player.x; e.lastSeenY = game.player.y; }
+  if(!e.alerted) becomeAlerted(e, true); else e.loseT = 0;
   // のけぞり：撃った側（プレイヤー／タレット）と反対へ小さく跳ねる
   const src = game.player;
   if(src){ const dx=e.x-src.x, dy=e.y-src.y, m=Math.hypot(dx,dy)||1; e.recoilX=dx/m*(crit?3.2:2.0); e.recoilY=dy/m*(crit?3.2:2.0); e.recoilT=0.16; }
@@ -1750,6 +1988,16 @@ function hitEnemy(e, dmg){
 }
 function killEnemy(e){
   e.dead = true; game.kills++;
+  // 近くの仲間は銃声と悲鳴で気づく（即全員参戦ではなく、少し遅れて警戒が伝わる）
+  for(const o of game.enemies){
+    if(o===e || o.dead) continue;
+    const d = Math.hypot(o.x-e.x, o.y-e.y);
+    if(d < 180){
+      o.lastSeenX = game.player ? game.player.x : o.lastSeenX;
+      o.lastSeenY = game.player ? game.player.y : o.lastSeenY;
+      if(!o.alerted){ o.perceive = Math.max(o.perceive, 0.72); if(o.pendingAlertT<0) o.pendingAlertT = 0.5 + Math.random()*0.7; }
+    }
+  }
   spawnParts(e.x, e.y, "#d8483c", 12); spawnParts(e.x, e.y, "#59524a", 6);
   beep(140,0.18,"sawtooth",0.05,-80);
   if(e===game.boss){ game.boss=null; document.getElementById('bossWrap').classList.add('hidden'); toast("重装ターゲット排除", ""); }
@@ -1815,7 +2063,83 @@ function updateTurret(t, dt){
   }
 }
 
-/* ---------- 敵AI ---------- */
+/* ---------- 敵AI（洗練版） ----------
+   知覚：視線が通っていても即発見にはならない。距離が近いほど速く気づき、
+   カバーに隠れているプレイヤーは気づかれにくい。銃声（発砲中）は気づかれやすい。
+   連携：発見は少し遅れて周囲へ伝わり、最後に見た位置も共有される。
+   カバーは仲間と重ならないよう選び、一部は側面へ回り込む。
+   見失うと最後に見た位置へ索敵に来て、見つからなければ警戒を解く（逃げ道が残る）。 */
+function becomeAlerted(e, share){
+  if(e.alerted) return;
+  e.alerted = true; e.perceive = 1; e.alertFlashT = 0.9; e.pendingAlertT = -1; e.loseT = 0;
+  if(e.state!=="retreat") { e.state = "seek"; e.stateT = 0.2; e.targetCover = null; e.targetSpot = null; }
+  if(share) shareAlert(e);
+}
+function shareAlert(src){
+  for(const o of game.enemies){
+    if(o===src || o.dead || o.alerted) continue;
+    const d = Math.hypot(o.x-src.x, o.y-src.y);
+    if(d < 210){   // 声や無線が届く範囲だけ。少し遅れて伝わる
+      o.lastSeenX = src.lastSeenX; o.lastSeenY = src.lastSeenY;
+      if(o.pendingAlertT < 0) o.pendingAlertT = 0.45 + Math.random()*0.65 + d/600;
+      o.perceive = Math.max(o.perceive, 0.55);
+    }
+  }
+}
+function shareLastSeen(src){
+  for(const o of game.enemies){
+    if(o===src || o.dead || !o.alerted) continue;
+    if(Math.hypot(o.x-src.x, o.y-src.y) < 260){ o.lastSeenX = src.lastSeenX; o.lastSeenY = src.lastSeenY; if(o.loseT>0.6) o.loseT = 0.6; }
+  }
+}
+function allySuppressing(e){
+  for(const o of game.enemies){ if(o!==e && !o.dead && o.suppressT>0) return true; }
+  return false;
+}
+/* カバーの吸着候補を全カバーから採点して1つ返す。refX/refY＝敵が想定するプレイヤー位置。
+   mode: "normal"（役割と距離感を加味）／"retreat"（プレイヤーから遠く、後方にあるものを優先） */
+function findCoverSpot(e, refX, refY, mode){
+  let best=null, bestScore=1e18;
+  const awayX = e.x-refX, awayY = e.y-refY, awayM = Math.hypot(awayX,awayY)||1;
+  // 回り込み先：想定位置の側面（左右は flankSide で散らす）
+  const apX = (e.x-refX)/(Math.hypot(e.x-refX,e.y-refY)||1), apY = (e.y-refY)/(Math.hypot(e.x-refX,e.y-refY)||1);
+  const flankX = refX + apX*72 - apY*e.flankSide*118;
+  const flankY = refY + apY*72 + apX*e.flankSide*118;
+  for(const c of game.covers){
+    const sides=[
+      { nx:0, ny:1,  px:clamp(e.x,c.x+4,c.x+c.w-4), py:c.y+c.h },
+      { nx:0, ny:-1, px:clamp(e.x,c.x+4,c.x+c.w-4), py:c.y },
+      { nx:1, ny:0,  px:c.x+c.w, py:clamp(e.y,c.y+4,c.y+c.h-4) },
+      { nx:-1, ny:0, px:c.x,     py:clamp(e.y,c.y+4,c.y+c.h-4) }
+    ];
+    for(const s of sides){
+      const tx=s.px+s.nx*(e.hw+3), ty=s.py+s.ny*(e.hh+3);
+      const toP = (refX-tx)*s.nx + (refY-ty)*s.ny;
+      if(mode!=="retreat" && toP > -6) continue;              // カバーを挟める側だけ
+      const dMove = Math.hypot(e.x-tx, e.y-ty);
+      const dRef = Math.hypot(refX-tx, refY-ty);
+      let score = dMove;
+      // 仲間と同じカバーに固まらない
+      for(const o of game.enemies){
+        if(o===e || o.dead) continue;
+        if(o.cover===c || o.targetCover===c) score += 230;
+        if(Math.hypot(o.x-tx, o.y-ty) < 22) score += 120;
+      }
+      if(mode==="retreat"){
+        const back = ((tx-e.x)*awayX + (ty-e.y)*awayY)/awayM;
+        if(back < -14) continue;                              // 前方のカバーへは下がらない
+        score = dMove*0.55 - dRef*0.85 - back*0.4;
+      } else {
+        if(e.flankRole) score += Math.hypot(c.x+c.w/2-flankX, c.y+c.h/2-flankY)*0.65;   // 側面へ回る
+        if(e.type==="R") score += Math.abs(dRef-178)*0.38;    // ライフル兵は中距離を保つ
+        else if(e.type==="H") score += Math.abs(dRef-140)*0.2;
+        else score += Math.abs(dRef-105)*0.25;
+      }
+      if(score<bestScore){ bestScore=score; best={ cover:c, nx:s.nx, ny:s.ny, tx, ty }; }
+    }
+  }
+  return best;
+}
 function foeTarget(e){
   // タレットが近くで活動中ならそちらを狙うことがある
   const p = game.player;
@@ -1833,75 +2157,224 @@ function updateEnemy(e, dt){
   if(e.flashT>0) e.flashT-=dt;
   if(e.recoilT>0) e.recoilT-=dt;
   if(e.muzzleT>0) e.muzzleT-=dt;
+  if(e.alertFlashT>0) e.alertFlashT-=dt;
+  if(e.suppressT>0) e.suppressT-=dt;
+  if(e.suppressCd>0) e.suppressCd-=dt;
+  if(e.retreatCd>0) e.retreatCd-=dt;
+  if(e.shareT>0) e.shareT-=dt;
   e.moving=false;
   const p = game.player;
   const st = FOE_STATS[e.type];
   const tgt = foeTarget(e);
   const dP = Math.hypot(p.x-e.x, p.y-e.y);
-  e.aim = Math.atan2(tgt.y-e.y, tgt.x-e.x);
-  e.face = Math.cos(e.aim)>=0 ? 1 : -1;
+  const canSeePlayer = dP < 345 && !losBlocked(e.x,e.y-4, p.x,p.y-4, game.walls);
   const canSee = !losBlocked(e.x,e.y-4, tgt.x,tgt.y-4, game.walls);
   e.stateT -= dt;
 
   // スタック検出
-  if(Math.hypot(e.x-e.lastX, e.y-e.lastY) < 0.4 && e.state==="seek") e.stuck += dt; else e.stuck = 0;
+  if(Math.hypot(e.x-e.lastX, e.y-e.lastY) < 0.4 && (e.state==="seek"||e.state==="search"||e.state==="retreat")) e.stuck += dt; else e.stuck = 0;
   e.lastX = e.x; e.lastY = e.y;
-  if(e.stuck > 0.7){ e.stuck = 0; e.targetCover = null; e.stateT = 0; if(e.cover) detachCover(e); }
+  if(e.stuck > 0.7){ e.stuck = 0; e.targetCover = null; e.targetSpot = null; e.retreatSpot = null; e.stateT = 0; if(e.cover) detachCover(e); if(e.state==="retreat") e.state="seek"; }
 
-  if(e.type==="S" && dP > 46){
-    // ラッシャー：カバーを使わず接近、近距離で撃つ
-    if(e.cover) detachCover(e);
-    moveEntity(e, Math.cos(e.aim)*e.speed, Math.sin(e.aim)*e.speed, dt);
-    e.moving=true; e.walkT += dt*10;
-    foeShoot(e, st, tgt, canSee && dP < st.range, dt);
+  /* --- 連携で伝わった発見（少し遅れて届く） --- */
+  if(!e.alerted && e.pendingAlertT>0){
+    e.pendingAlertT -= dt;
+    if(e.pendingAlertT<=0) becomeAlerted(e, false);
+  }
+
+  /* --- 知覚：見えていても即発見にはならない --- */
+  if(!e.alerted){
+    if(canSeePlayer){
+      let rate;
+      if(dP < 70) rate = 3.4; else if(dP < 150) rate = 1.7; else if(dP < 235) rate = 0.85; else rate = 0.42;
+      if(p.cover && !p.leaning) rate *= 0.5;          // カバーに隠れていると気づかれにくい
+      if(p.muzzleT>0) rate *= 2.4;                    // 発砲は目立つ
+      if(p.rollT>0) rate *= 0.75;
+      if(Math.hypot(p.x-(e.homeX), p.y-(e.homeY))>0 && p.moving) rate *= 1.15;
+      e.perceive = Math.min(1, e.perceive + rate*dt);
+      e.lastSeenX = p.x; e.lastSeenY = p.y;
+      e.aim = Math.atan2(p.y-e.y, p.x-e.x); e.face = Math.cos(e.aim)>=0?1:-1;
+      if(e.perceive >= 1){ becomeAlerted(e, true); }
+    } else {
+      e.perceive = Math.max(0, e.perceive - dt*0.20);
+    }
+    // タレットの射撃音でも気づく
+    if(!e.alerted){
+      for(const t of game.turrets){ if(!t.dead && t.fireT>0.1 && Math.hypot(t.x-e.x,t.y-e.y)<190){ e.perceive = Math.min(1, e.perceive + dt*1.6); e.lastSeenX=t.x; e.lastSeenY=t.y; if(e.perceive>=1) becomeAlerted(e,true); break; } }
+    }
+  }
+
+  /* --- 未警戒：持ち場付近をゆっくり見回るだけ（撃たない・詰めない） --- */
+  if(!e.alerted){
+    e.leaning = false;
+    if(e.perceive > 0.35){
+      // 怪しい気配：その場で向き直り、少しだけ近づいて確かめる
+      const a = Math.atan2(e.lastSeenY-e.y, e.lastSeenX-e.x);
+      e.aim = a; e.face = Math.cos(a)>=0?1:-1;
+      if(Math.hypot(e.lastSeenX-e.x, e.lastSeenY-e.y) > 60 && e.perceive > 0.65){
+        if(e.cover) detachCover(e);
+        moveEntity(e, Math.cos(a)*e.speed*0.38, Math.sin(a)*e.speed*0.38, dt);
+        e.moving = true; e.walkT += dt*6;
+      }
+      return;
+    }
+    e.patrolT -= dt;
+    if(e.patrolT<=0){
+      e.patrolT = 3 + Math.random()*3.5;
+      e.patrolX = clamp(e.homeX + (Math.random()*56-28), 40, WORLD_W-40);
+      e.patrolY = clamp(e.homeY + (Math.random()*56-28), 40, WORLD_H-40);
+    }
+    const pd = Math.hypot(e.patrolX-e.x, e.patrolY-e.y);
+    if(pd > 8 && !e.cover){
+      const a = Math.atan2(e.patrolY-e.y, e.patrolX-e.x);
+      moveEntity(e, Math.cos(a)*e.speed*0.30, Math.sin(a)*e.speed*0.30, dt);
+      e.moving = true; e.walkT += dt*5;
+      e.aim = a; e.face = Math.cos(a)>=0?1:-1;
+    } else {
+      e.aim += Math.sin(game.time*0.6 + e.searchPhase)*0.0035;   // ゆっくり見回す
+      e.face = Math.cos(e.aim)>=0?1:-1;
+    }
     return;
   }
 
+  /* --- 警戒中：見えている間は最後に見た位置を更新し、仲間へも共有 --- */
+  if(canSeePlayer){
+    e.lastSeenX = p.x; e.lastSeenY = p.y; e.loseT = 0;
+    if(e.state==="search"){ e.state="seek"; e.stateT=0.15; e.targetCover=null; e.targetSpot=null; }
+    if(e.shareT<=0){ e.shareT = 0.8; shareLastSeen(e); }
+    e.aim = Math.atan2(tgt.y-e.y, tgt.x-e.x);
+  } else if(tgt.isTurret && canSee){
+    e.lastSeenX = tgt.x; e.lastSeenY = tgt.y; e.loseT = 0;
+    e.aim = Math.atan2(tgt.y-e.y, tgt.x-e.x);
+  } else {
+    e.loseT += dt;
+    e.aim = Math.atan2(e.lastSeenY-e.y, e.lastSeenX-e.x);
+    if(e.loseT > 1.1 && e.state!=="search" && e.state!=="retreat"){
+      e.state = "search"; e.searchT = 3.4 + Math.random()*1.2; e.targetCover=null; e.targetSpot=null;
+      if(e.cover) detachCover(e);
+    }
+  }
+  e.face = Math.cos(e.aim)>=0 ? 1 : -1;
+
+  /* --- 瀕死で後退：HPが減ったら後方のカバーへ下がる（重装は粘るので遅めに発動） --- */
+  const hpRatio = e.hp / e.maxhp;
+  const retreatThresh = e.type==="H" ? 0.22 : 0.30;
+  if(e.state!=="retreat" && !e.retreating && hpRatio < retreatThresh && e.retreatCd<=0 && dP < 300){
+    const spot = findCoverSpot(e, p.x, p.y, "retreat");
+    e.state = "retreat"; e.retreating = true; e.retreatCd = 7;
+    e.retreatSpot = spot; e.targetCover = spot ? spot.cover : null;
+    if(e.cover) detachCover(e);
+    pickupLabel(e.x, e.y, "後退", "#ffb35c");
+  }
+  if(e.state==="retreat"){
+    e.leaning = false;
+    if(e.retreatSpot){
+      const d = Math.hypot(e.retreatSpot.tx-e.x, e.retreatSpot.ty-e.y);
+      if(d < 5){
+        attachToCover(e, e.retreatSpot); e.retreatSpot = null;
+        e.state = "hide"; e.stateT = 1.6 + Math.random()*1.2;   // 下がった先では長めに隠れる
+      } else {
+        const a = Math.atan2(e.retreatSpot.ty-e.y, e.retreatSpot.tx-e.x);
+        moveEntity(e, Math.cos(a)*e.speed*0.92, Math.sin(a)*e.speed*0.92, dt);
+        e.moving = true; e.walkT += dt*8;
+      }
+    } else {
+      // 下がるカバーが無い：真っ直ぐ後ろへ離れる
+      const a = Math.atan2(e.y-p.y, e.x-p.x);
+      moveEntity(e, Math.cos(a)*e.speed*0.9, Math.sin(a)*e.speed*0.9, dt);
+      e.moving = true; e.walkT += dt*8;
+      if(dP > 235 || e.retreatCd < 5.2){ e.state="seek"; e.targetCover=null; e.targetSpot=null; }
+    }
+    return;
+  }
+
+  /* --- 索敵：最後に見た位置へ来て、見つからなければ警戒解除 --- */
+  if(e.state==="search"){
+    e.leaning = false;
+    const dS = Math.hypot(e.lastSeenX-e.x, e.lastSeenY-e.y);
+    if(dS > 20){
+      const a = Math.atan2(e.lastSeenY-e.y, e.lastSeenX-e.x);
+      moveEntity(e, Math.cos(a)*e.speed*0.72, Math.sin(a)*e.speed*0.72, dt);
+      e.moving = true; e.walkT += dt*7; e.aim = a;
+    } else {
+      e.searchT -= dt;
+      e.aim += Math.sin(game.time*2.2 + e.searchPhase)*0.028;   // 周囲を見回す
+      e.face = Math.cos(e.aim)>=0?1:-1;
+      if(Math.random() < dt*0.7){   // 少しずつ場所を変えて探す
+        moveEntity(e, Math.cos(e.searchPhase+game.time)*e.speed*0.25, Math.sin(e.searchPhase+game.time)*e.speed*0.25, dt);
+      }
+      if(e.searchT<=0){
+        e.alerted = false; e.perceive = 0.25; e.loseT = 0; e.retreating = false;
+        e.state = "seek"; e.stateT = 0.3; e.targetCover=null; e.targetSpot=null;
+        e.homeX = e.x; e.homeY = e.y;   // 索敵地点付近を持ち場として警戒を解く
+        return;
+      }
+    }
+    if(canSeePlayer && dP < st.range) foeShoot(e, st, tgt, true, dt);
+    return;
+  }
+
+  /* --- ラッシャー：味方の制圧射撃に合わせて詰める --- */
+  if(e.type==="S"){
+    if(e.cover) detachCover(e);
+    const suppressing = allySuppressing(e);
+    const noRifleAlive = !game.enemies.some(o=>!o.dead && o.type==="R");
+    if(!suppressing && !noRifleAlive) e.soloWaitT = 0;
+    else e.soloWaitT += dt;
+    const goCharge = suppressing || e.soloWaitT > 1.4 || dP < 78;
+    if(dP > 44){
+      if(goCharge){
+        const a = Math.atan2(e.lastSeenY-e.y, e.lastSeenX-e.x);
+        const zig = Math.sin(game.time*5.2 + e.phase)*0.38;   // 真っ直ぐだけではない詰め方
+        moveEntity(e, (Math.cos(a)-Math.sin(a)*zig)*e.speed*1.10, (Math.sin(a)+Math.cos(a)*zig)*e.speed*1.10, dt);
+        e.moving = true; e.walkT += dt*11;
+        foeShoot(e, st, tgt, canSeePlayer && dP < st.range*0.75, dt);
+      } else if(dP > 118){
+        const a = Math.atan2(e.lastSeenY-e.y, e.lastSeenX-e.x);
+        moveEntity(e, Math.cos(a)*e.speed*0.62, Math.sin(a)*e.speed*0.62, dt);
+        e.moving = true; e.walkT += dt*8;
+      } else {
+        // 制圧待ち：距離を保って撃ちながら横へ揺れる
+        const a = Math.atan2(e.y-p.y, e.x-p.x) + Math.PI/2;
+        const sw = Math.sin(game.time*1.8 + e.phase);
+        moveEntity(e, Math.cos(a)*sw*e.speed*0.30, Math.sin(a)*sw*e.speed*0.30, dt);
+        e.moving = Math.abs(sw)>0.3; e.walkT += dt*6;
+        foeShoot(e, st, tgt, canSeePlayer && dP < st.range, dt);
+      }
+    } else {
+      foeShoot(e, st, tgt, canSeePlayer, dt);
+    }
+    return;
+  }
+
+  /* --- 重装：カバーに籠もらず、被弾しながら前進して撃つ --- */
+  if(e.type==="H"){
+    if(e.cover) detachCover(e);
+    e.leaning = false;
+    if(dP > 132){
+      const a = Math.atan2(e.lastSeenY-e.y, e.lastSeenX-e.x);
+      moveEntity(e, Math.cos(a)*e.speed, Math.sin(a)*e.speed, dt);
+      e.moving = true; e.walkT += dt*6;
+      foeShoot(e, st, tgt, (canSeePlayer||(tgt.isTurret&&canSee)) && dP < st.range, dt);
+    } else {
+      // 近づいたら足を止めて撃ち続ける（休みは短め）
+      foeShoot(e, st, tgt, canSeePlayer||(tgt.isTurret&&canSee), dt);
+    }
+    return;
+  }
+
+  /* --- ライフル兵：カバー戦＋距離維持＋制圧射撃 --- */
   switch(e.state){
     case "seek": {
       e.leaning = false;
-      if(!e.targetCover){
-        // プレイヤーと反対側に吸着できるカバーを探す
-        let best=null, bd=1e9;
-        for(const c of game.covers){
-          const cx=c.x+c.w/2, cy=c.y+c.h/2;
-          const dC = Math.hypot(cx-e.x, cy-e.y);
-          if(dC<bd){ bd=dC; best=c; }
-        }
-        e.targetCover = best;
+      if(!e.targetSpot){
+        e.targetSpot = findCoverSpot(e, e.lastSeenX, e.lastSeenY, "normal");
+        e.targetCover = e.targetSpot ? e.targetSpot.cover : null;
       }
-      if(!e.targetCover){ e.state="peek"; break; }
-      // 吸着点：プレイヤーから見て遠い側
-      const probe = { x:e.x, y:e.y, hw:e.hw, hh:e.hh };
-      let spot = null;
-      {
-        let bd=1e9;
-        for(const c of [e.targetCover]){
-          const sides=[
-            { nx:0, ny:1,  px:clamp(e.x,c.x+4,c.x+c.w-4), py:c.y+c.h },
-            { nx:0, ny:-1, px:clamp(e.x,c.x+4,c.x+c.w-4), py:c.y },
-            { nx:1, ny:0,  px:c.x+c.w, py:clamp(e.y,c.y+4,c.y+c.h-4) },
-            { nx:-1, ny:0, px:c.x,     py:clamp(e.y,c.y+4,c.y+c.h-4) }
-          ];
-          for(const s of sides){
-            const tx=s.px+s.nx*(e.hw+3), ty=s.py+s.ny*(e.hh+3);
-            // プレイヤーが法線の反対側にいる側を選ぶ（カバーを挟む）
-            const toP = (p.x-tx)*s.nx + (p.y-ty)*s.ny;
-            if(toP > -6) continue;
-            const d=Math.hypot(e.x-tx, e.y-ty);
-            if(d<bd){ bd=d; spot={ cover:c, nx:s.nx, ny:s.ny, tx, ty }; }
-          }
-        }
-      }
-      if(!spot){
-        // 挟める側がない → プレイヤー方向へ前進
-        moveEntity(e, Math.cos(e.aim)*e.speed*0.8, Math.sin(e.aim)*e.speed*0.8, dt);
-        e.moving=true; e.walkT += dt*8;
-        if(e.stateT<=0){ e.state="peek"; e.stateT=0.6; }
-        break;
-      }
+      if(!e.targetSpot){ e.state="peek"; e.stateT=0.7; break; }
+      const spot = e.targetSpot;
       const d = Math.hypot(spot.tx-e.x, spot.ty-e.y);
-      if(d < 5){ attachToCover(e, spot); e.state="hide"; e.stateT = 0.5+Math.random()*1.1; }
+      if(d < 5){ attachToCover(e, spot); e.targetSpot=null; e.state="hide"; e.stateT = 0.5+Math.random()*1.1; }
       else {
         const a = Math.atan2(spot.ty-e.y, spot.tx-e.x);
         moveEntity(e, Math.cos(a)*e.speed, Math.sin(a)*e.speed, dt);
@@ -1911,29 +2384,43 @@ function updateEnemy(e, dt){
     }
     case "hide": {
       e.leaning = false;
-      /* カバーに付けていないのに hide/peek を往復すると、その場に固まって永遠に前進しない。
-         カバーが無ければ seek に戻して取り直させる。 */
-      if(!e.cover){ e.state="seek"; e.stateT=0.2; e.targetCover=null; break; }
+      if(!e.cover){ e.state="seek"; e.stateT=0.2; e.targetCover=null; e.targetSpot=null; break; }
       foeSlide(e, dt);
+      // 近づかれすぎたら距離を取り直す／遠すぎたら詰め直す（後退中は籠もる）
+      if(!e.retreating && canSeePlayer && (dP < 100 || dP > 262)){ detachCover(e); e.state="seek"; e.targetCover=null; e.targetSpot=null; e.stateT=0.25; break; }
+      if(e.retreating && hpRatio >= 0.45) e.retreating = false;
       if(e.stateT<=0){
         e.state="peek";
-        e.stateT = 1.1+Math.random()*0.9;
+        e.stateT = e.retreating ? 0.7+Math.random()*0.5 : 1.1+Math.random()*0.9;
         e.burstLeft = st.burst[0] + ((Math.random()*(st.burst[1]-st.burst[0]))|0);
         e.fireT = 0.25;
       }
-      // プレイヤーに回り込まれたら離脱
-      if(e.cover && dP < 52) { detachCover(e); e.state="seek"; e.targetCover=null; e.stateT=0.3; }
+      if(e.cover && dP < 52) { detachCover(e); e.state="seek"; e.targetCover=null; e.targetSpot=null; e.stateT=0.3; }
       break;
     }
     case "peek": {
       e.leaning = true;
-      if(!e.cover && dP > st.range){ e.state="seek"; e.stateT=0.3; e.targetCover=null; break; }
-      foeShoot(e, st, tgt, canSee && dP < st.range+40, dt);
+      if(!e.cover && dP > st.range){ e.state="seek"; e.stateT=0.3; e.targetCover=null; e.targetSpot=null; break; }
+      // 制圧射撃：プレイヤーがカバーに隠れている／見失いかけのとき、カバーへ向けて撃ち込み続ける（当たりはカバーが受ける）
+      const wantSuppress = e.type==="R" && e.suppressCd<=0 && ((p.cover && !p.leaning && canSeePlayer) || (!canSeePlayer && e.loseT<0.8 && e.loseT>0));
+      if(wantSuppress){
+        e.suppressing = true;
+        if(e.burstLeft<=2 && !(e.restT>0)) e.burstLeft += 3;   // 制圧は少し長めのバーストにする
+        const savedAim = e.aim;
+        e.aim = Math.atan2(e.lastSeenY-e.y, e.lastSeenX-e.x);
+        foeShoot(e, st, tgt, dP < st.range+70, dt, true);
+        e.aim = savedAim;
+        if(e.burstLeft<=0 && e.restT>0){ e.suppressCd = 2.2+Math.random()*2.4; e.suppressing=false; }
+      } else {
+        e.suppressing = false;
+        foeShoot(e, st, tgt, (canSee && dP < st.range+40) || (tgt.isTurret && canSee), dt);
+      }
       foeSlide(e, dt);
-      if(e.stateT<=0){ e.state="hide"; e.stateT = st.rest[0]+Math.random()*(st.rest[1]-st.rest[0]); e.leaning=false; }
-      if(e.cover && dP < 46) { detachCover(e); e.leaning=false; e.state="seek"; e.targetCover=null; e.stateT=0.3; }
+      if(e.stateT<=0){ e.state="hide"; e.stateT = (e.retreating? 1.5 : st.rest[0]) + Math.random()*((e.retreating?1.6:st.rest[1]-st.rest[0])); e.leaning=false; e.suppressing=false; }
+      if(e.cover && dP < 46) { detachCover(e); e.leaning=false; e.state="seek"; e.targetCover=null; e.targetSpot=null; e.stateT=0.3; }
       break;
     }
+    default: { e.state="seek"; e.stateT=0.2; break; }
   }
 }
 function foeSlide(e, dt){
@@ -1942,17 +2429,18 @@ function foeSlide(e, dt){
   if(Math.random()<dt*0.5) e.slideDir = (Math.random()<0.5?-1:1);
   if(e.slideDir) coverSlide(e, e.slideDir*0.4, dt);
 }
-function foeShoot(e, st, tgt, allowed, dt){
+function foeShoot(e, st, tgt, allowed, dt, suppress){
   if(e.restT===undefined) e.restT=0;
   if(e.restT>0){ e.restT-=dt; return; }
   if(e.burstLeft<=0) e.burstLeft = st.burst[0] + ((Math.random()*(st.burst[1]-st.burst[0]))|0);
   if(!allowed) return;
   e.fireT -= dt;
   if(e.fireT<=0){
-    e.fireT = st.burstInt;
+    e.fireT = suppress ? st.burstInt*1.35 : st.burstInt;
     e.burstLeft--;
+    if(suppress) e.suppressT = 0.9;   // ラッシャーが「今、制圧中だ」と分かる合図
     const from = leanOffset(e);
-    const fakeW = { spread: e.type==="H"?0.05:0.075, bspeed:350, range:st.range+60 };
+    const fakeW = { spread: suppress?0.14 : e.type==="H"?0.05:0.075, bspeed:350, range:st.range+60 };
     const b = { dmg:e.dmg };
     game.bullets.push({
       x:from.x, y:from.y-6, vx:Math.cos(e.aim+(Math.random()*2-1)*fakeW.spread)*fakeW.bspeed,
@@ -2010,15 +2498,35 @@ function updatePlayer(dt){
     p.aim = Math.atan2(wy-p.y, wx-p.x);
   }
   if(usingPad && (pad || touch.aim.id!==null)){
-    // 照準アシスト：近くの敵へ少し吸着
-    let best=null, bd=0.30;
-    for(const e of game.enemies){
-      if(e.dead) continue;
-      const a = Math.atan2(e.y-p.y, e.x-p.x);
-      let d = Math.abs(a-p.aim); if(d>Math.PI) d=Math.PI*2-d;
-      if(d<bd && Math.hypot(e.x-p.x,e.y-p.y)<270){ bd=d; best=a; }
+    // 照準アシスト（選択式）：設定した段階の範囲・距離・吸着の強さで近くの敵へ寄せる
+    const ac = aimCfg();
+    if(ac.ang>0){
+      let best=null, bd=ac.ang;
+      for(const e of game.enemies){
+        if(e.dead) continue;
+        const a = Math.atan2(e.y-p.y, e.x-p.x);
+        let d = Math.abs(a-p.aim); if(d>Math.PI) d=Math.PI*2-d;
+        if(d<bd && Math.hypot(e.x-p.x,e.y-p.y)<ac.range){ bd=d; best=a; }
+      }
+      if(best!==null) p.aim = angLerp(p.aim, best, ac.pull);
     }
-    if(best!==null) p.aim = angLerp(p.aim, best, 0.55);
+  }
+  /* --- Division式スナップ照準の軽い追尾：LT（タッチは「構える」）を押している間だけ、
+         吸着した敵を弱く追い続ける。対象が死ぬ／射程外／物陰に入ったら手放し、
+         スティックで大きく照準を外しても手放す（プレイヤーの意思が優先） --- */
+  const ltNow = pad ? padLT() : 0;
+  const adsHeld = ltNow>0.35 || touch.lean;
+  if(!adsHeld){ snapTarget = null; }
+  else if(snapTarget){
+    const cfgT = aimCfg();
+    if(snapTarget.dead || Math.hypot(snapTarget.x-p.x, snapTarget.y-p.y) > p.weapons[p.wi].range+36 || !snapShotClear(p, snapTarget)){
+      snapTarget = null;
+    } else {
+      const ta = snapAimAngle(p, snapTarget);
+      let td = Math.abs(ta-p.aim); if(td>Math.PI) td = Math.PI*2-td;
+      if(td > 1.9) snapTarget = null;
+      else if(cfgT.track>0) p.aim = angLerp(p.aim, ta, 1-Math.pow(1-cfgT.track, Math.max(1, dt*60)));
+    }
   }
   p.face = Math.cos(p.aim)>=0 ? 1 : -1;
 
@@ -2053,7 +2561,14 @@ function updatePlayer(dt){
     beep(180,0.09,"square",0.03,-60);
   }
   /* --- 身を乗り出す --- */
-  p.leaning = !!(p.cover && (mouseRDown || padLT()>0.35 || keys["KeyL"] || touch.lean));
+  const ltVal = pad ? padLT() : 0;
+  const ltPressed = snapPrevLT<=0.35 && ltVal>0.35;
+  const touchLeanPressed = !snapPrevTouchLean && touch.lean;
+  snapPrevLT = ltVal; snapPrevTouchLean = touch.lean;
+  p.leaning = !!(p.cover && (mouseRDown || ltVal>0.35 || keys["KeyL"] || touch.lean));
+  /* Division式：LT／「構える」を押した瞬間、いちばん撃ちやすい敵へ照準を吸着させる。
+     カバー外でもLTは照準ボタンとして働く。候補がいない／アシストOFFのときは従来どおり自由照準 */
+  if((ltPressed || touchLeanPressed) && aimCfg().snapCone>0) trySnapAim(p);
 
   /* --- 移動 --- */
   p.moving = ml>0.1;
@@ -2254,6 +2769,7 @@ function startMission(idx){
   game.player = newPlayer();
   game.enemies=[]; game.bullets=[]; game.pickups=[]; game.parts=[]; game.dmgNums=[]; game.turrets=[]; game.foeMuzzles=[]; game.muzzle=null;
   pickupNear=null; holdT=0; pickupLatch=false;
+  snapTarget=null; snapPrevLT=0; snapPrevTouchLean=false;
   game.zoneIdx=0; game.zoneActive=false; game.zoneDone=false; game.zoneAnnounced=false; game.phase="zones";
   game.kills=0; game.lootTaken=[]; game.time=0; game.boss=null; game.shake=0;
   turretState.cd=0;
@@ -2480,6 +2996,50 @@ function drawCoverShape(c){
         ctx.fillStyle="rgba(255,255,255,.10)"; ctx.fillRect(x+1,by+1,3,1);
       }
     }
+  } else if(c.type==="pillar"){
+    // 大理石の列柱：台座＋円柱＋柱頭。カバーとして吸着できる記念堂の柱
+    ctx.fillStyle="rgba(30,36,44,.10)"; ctx.beginPath(); ctx.ellipse(c.x+c.w/2+2,c.y+c.h-1,c.w*0.72,4.5,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle="rgba(30,36,44,.16)"; ctx.beginPath(); ctx.ellipse(c.x+c.w/2+1,c.y+c.h-2,c.w*0.55,3.2,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle="#a9afb7"; ctx.fillRect(c.x-1,c.y+c.h-4,c.w+2,4);            // 台座
+    ctx.fillStyle="#c9ced5"; ctx.fillRect(c.x-2,c.y-2,c.w+4,5);               // 柱頭
+    ctx.fillStyle="#d6dbe1"; ctx.fillRect(c.x-2,c.y-2,c.w+4,2);
+    const cxp=c.x+c.w/2, cyp=c.y+c.h/2+1, rp=c.w/2-1;
+    ctx.fillStyle="#ccd1d9"; ctx.beginPath(); ctx.arc(cxp,cyp,rp,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle="rgba(52,58,66,.45)"; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(cxp,cyp,rp-0.5,0,Math.PI*2); ctx.stroke();
+    ctx.fillStyle="rgba(70,78,88,.28)"; ctx.beginPath(); ctx.arc(cxp+2,cyp,rp-2, -0.5, 1.15); ctx.lineTo(cxp+2,cyp); ctx.closePath(); ctx.fill();  // 右下の陰
+    ctx.fillStyle="rgba(255,255,255,.5)"; ctx.fillRect(cxp-rp+2,cyp-rp+3,2.4,rp*1.1);   // 左のハイライト
+    ctx.strokeStyle="rgba(90,98,108,.35)";
+    ctx.beginPath(); ctx.moveTo(cxp-3,cyp-rp+2); ctx.lineTo(cxp-3,cyp+rp-2); ctx.moveTo(cxp+4,cyp-rp+2); ctx.lineTo(cxp+4,cyp+rp-2); ctx.stroke(); // 溝彫り
+  } else if(c.type==="fallen"){
+    // 倒れた大理石の柱：横倒しの円柱（縦置きにも対応）。節のリングとひびが目印
+    const vert = c.h>c.w;
+    ctx.fillStyle="rgba(30,36,44,.10)"; ctx.fillRect(c.x-3,c.y+c.h-2,c.w+6,5);
+    ctx.fillStyle="rgba(30,36,44,.17)"; ctx.fillRect(c.x-1,c.y+c.h-1,c.w+3,3);
+    ctx.fillStyle="#c6ccd3"; ctx.fillRect(c.x,c.y,c.w,c.h);
+    ctx.fillStyle="rgba(255,255,255,.4)"; if(vert) ctx.fillRect(c.x,c.y,3,c.h); else ctx.fillRect(c.x,c.y,c.w,3);
+    ctx.fillStyle="rgba(70,78,88,.30)"; if(vert) ctx.fillRect(c.x+c.w-4,c.y,4,c.h); else ctx.fillRect(c.x,c.y+c.h-4,c.w,4);
+    ctx.strokeStyle="rgba(52,58,66,.5)"; ctx.lineWidth=1; ctx.strokeRect(c.x+0.5,c.y+0.5,c.w-1,c.h-1);
+    ctx.strokeStyle="rgba(90,98,108,.55)";
+    ctx.beginPath();
+    if(vert){ for(let y=c.y+11;y<c.y+c.h-4;y+=11){ ctx.moveTo(c.x+1,y); ctx.lineTo(c.x+c.w-1,y); } }
+    else { for(let x=c.x+11;x<c.x+c.w-4;x+=11){ ctx.moveTo(x,c.y+1); ctx.lineTo(x,c.y+c.h-1); } }
+    ctx.stroke();
+    ctx.strokeStyle="rgba(60,66,74,.5)";   // ひび
+    ctx.beginPath();
+    if(vert){ ctx.moveTo(c.x+4,c.y+3); ctx.lineTo(c.x+8,c.y+c.h*0.45); ctx.lineTo(c.x+5,c.y+c.h-4); }
+    else { ctx.moveTo(c.x+3,c.y+4); ctx.lineTo(c.x+c.w*0.45,c.y+8); ctx.lineTo(c.x+c.w-4,c.y+5); }
+    ctx.stroke();
+    ctx.fillStyle="#aeb5bd";   // 折れ口
+    if(vert) ctx.fillRect(c.x,c.y,c.w,3); else ctx.fillRect(c.x,c.y,3,c.h);
+  } else if(c.type==="pedestal"){
+    // 石の台座：上面が明るい石のブロック
+    ctx.fillStyle="rgba(30,36,44,.10)"; ctx.fillRect(c.x-3,c.y+c.h-1,c.w+6,4);
+    ctx.fillStyle="rgba(30,36,44,.17)"; ctx.fillRect(c.x-1,c.y+c.h-1,c.w+2,3);
+    ctx.fillStyle="#a9afb7"; ctx.fillRect(c.x,c.y,c.w,c.h);
+    ctx.fillStyle="#ccd1d9"; ctx.fillRect(c.x+2,c.y+2,c.w-4,Math.max(2,c.h-6));
+    ctx.fillStyle="rgba(255,255,255,.35)"; ctx.fillRect(c.x+2,c.y+2,c.w-4,1.6);
+    ctx.strokeStyle="rgba(52,58,66,.45)"; ctx.lineWidth=1; ctx.strokeRect(c.x+0.5,c.y+0.5,c.w-1,c.h-1);
+    ctx.fillStyle="rgba(70,78,88,.4)"; ctx.fillRect(c.x+c.w/2-4,c.y+c.h/2-0.5,8,1);   // 刻まれた線
   } else { // crate
     ctx.fillStyle="rgba(35,42,52,.10)"; ctx.fillRect(c.x-3,c.y+c.h-1,c.w+6,4);
     ctx.fillStyle="rgba(35,42,52,.18)"; ctx.fillRect(c.x-1,c.y+c.h-1,c.w+2,3);
@@ -2497,8 +3057,55 @@ function drawCoverShape(c){
     ctx.fillStyle="#77694e"; ctx.fillRect(c.x+3,c.y+3,3,3);
   }
 }
+/* 大理石の壁（記念堂の外周・側壁）：石のパネル割りと腰壁の陰影だけの、屋根のない壁 */
+function drawMarbleWall(w){
+  const g=ctx;
+  g.fillStyle="rgba(35,42,52,.12)"; g.fillRect(w.x-2,w.y+2,w.w+5,w.h+5);
+  g.fillStyle="#bcc2ca"; g.fillRect(w.x,w.y,w.w,w.h);
+  g.fillStyle="rgba(255,255,255,.32)"; g.fillRect(w.x,w.y,w.w,3);
+  g.fillStyle="rgba(70,78,88,.32)"; g.fillRect(w.x,w.y+w.h-4,w.w,4);
+  g.strokeStyle="rgba(70,78,88,.28)"; g.lineWidth=1;
+  g.beginPath();
+  if(w.w>=w.h){ for(let x=w.x+28;x<w.x+w.w-4;x+=28){ g.moveTo(x+0.5,w.y+3); g.lineTo(x+0.5,w.y+w.h-4); } }
+  else { for(let y=w.y+28;y<w.y+w.h-4;y+=28){ g.moveTo(w.x+3,y+0.5); g.lineTo(w.x+w.w-3,y+0.5); } }
+  g.stroke();
+  g.strokeStyle="rgba(40,46,54,.4)"; g.strokeRect(w.x+0.5,w.y+0.5,w.w-1,w.h-1);
+}
+/* 大座像：台座の上に、椅子に座す大きな石像を描く（像は台座の北側へせり上がる） */
+function drawStatue(w){
+  const g=ctx;
+  const cx=w.x+w.w/2;
+  // 壇の段と台座
+  g.fillStyle="rgba(35,42,52,.14)"; g.fillRect(w.x-12,w.y+w.h-2,w.w+24,8);
+  g.fillStyle="#9aa1a9"; g.fillRect(w.x-10,w.y+w.h,w.w+20,5);
+  g.fillStyle="#c3c9d1"; g.fillRect(w.x,w.y,w.w,w.h);
+  g.fillStyle="rgba(255,255,255,.3)"; g.fillRect(w.x,w.y,w.w,3);
+  g.strokeStyle="rgba(52,58,66,.5)"; g.lineWidth=1; g.strokeRect(w.x+6.5,w.y+10.5,w.w-13,w.h-17);
+  g.fillStyle="rgba(70,78,88,.5)";
+  g.fillRect(cx-16,w.y+22,32,2); g.fillRect(cx-11,w.y+29,22,2); g.fillRect(cx-16,w.y+36,32,2);   // 碑文の行
+  // 椅子の背もたれ
+  g.fillStyle="#aeb4bc"; g.fillRect(cx-31,w.y-56,62,60);
+  g.fillStyle="#c6ccd3"; g.fillRect(cx-26,w.y-51,52,50);
+  g.strokeStyle="rgba(52,58,66,.45)"; g.strokeRect(cx-26.5,w.y-51.5,53,51);
+  // 頭（髭と髪の陰影つき）
+  g.fillStyle="#d8dde3"; g.beginPath(); g.arc(cx,w.y-42,8,0,Math.PI*2); g.fill();
+  g.strokeStyle="rgba(70,78,88,.5)"; g.beginPath(); g.arc(cx,w.y-42,7.5,0,Math.PI*2); g.stroke();
+  g.fillStyle="rgba(120,128,138,.55)"; g.fillRect(cx-6,w.y-38,12,3); g.fillRect(cx-7,w.y-49,14,2.4);
+  // 胴体と腕（肘掛けに手を置く座像の定形）
+  g.fillStyle="#ccd1d8"; g.fillRect(cx-13,w.y-34,26,22);
+  g.fillStyle="rgba(70,78,88,.22)"; g.fillRect(cx+5,w.y-34,8,22);
+  g.fillStyle="#c0c6ce"; g.fillRect(cx-25,w.y-32,9,20); g.fillRect(cx+16,w.y-32,9,20);
+  g.fillStyle="#aeb4bc"; g.fillRect(cx-28,w.y-14,13,5); g.fillRect(cx+15,w.y-14,13,5);
+  g.fillStyle="#d8dde3"; g.fillRect(cx-26,w.y-13,8,3.4); g.fillRect(cx+18,w.y-13,8,3.4);
+  // 脚：膝を前に出し、すねが台座の縁へ垂れる
+  g.fillStyle="#bfc5cd"; g.fillRect(cx-13,w.y-12,26,7);
+  g.fillStyle="#b4bac2"; g.fillRect(cx-12,w.y-5,9,13); g.fillRect(cx+3,w.y-5,9,13);
+  g.fillStyle="#9aa1a9"; g.fillRect(cx-13,w.y+7,11,3.4); g.fillRect(cx+2,w.y+7,11,3.4);
+}
 function drawBuilding(w){
   const g=ctx;
+  if(w.kind==="statue"){ drawStatue(w); return; }
+  if(w.kind==="marble"){ drawMarbleWall(w); return; }
   const rng=mulberry32((w.x*31+w.y*17)|0);
   const big = w.w>=90 && w.h>=60;
   // 落影と屋根本体：曇天の落影は薄く大きくぼける（地面側にも同じ影を焼いてある）
@@ -2772,6 +3379,20 @@ function render(){
         g.fillStyle= isH ? "#ff4d42" : e.type==="S" ? "#ff8a5e" : "#e86a5e";
         g.fillRect(pos.x-bw/2, by, bw*clamp(e.hp/e.maxhp,0,1), 3);
       }
+      // 知覚インジケーター：気づきかけは「？」、発見の瞬間は「！」、索敵中も「？」
+      const iy = pos.y-(isH?40:32);
+      if(e.alertFlashT>0){
+        g.fillStyle="#ffcf3d"; g.font="bold 11px monospace"; g.textAlign="center";
+        g.fillText("!", pos.x, iy);
+      } else if(!e.alerted && e.perceive>0.35){
+        g.globalAlpha = 0.45 + e.perceive*0.55;
+        g.fillStyle="#ffd98a"; g.font="bold 9px monospace"; g.textAlign="center";
+        g.fillText("?", pos.x, iy);
+        g.globalAlpha = 1;
+      } else if(e.alerted && e.state==="search"){
+        g.fillStyle="#ffb35c"; g.font="bold 9px monospace"; g.textAlign="center";
+        g.fillText("?", pos.x, iy);
+      }
     }
   }
   // 建物（壁）はキャラより手前に屋根を描く＝斜め見下ろし感
@@ -2811,6 +3432,15 @@ function render(){
     g.lineWidth=1;
     g.beginPath(); g.arc(rx,ry,4,0,Math.PI*2); g.stroke();
     g.fillStyle="#ff8c1a"; g.fillRect(rx-0.5,ry-0.5,1,1);
+  }
+  // スナップ照準の対象マーカー（LTで吸着・追尾している間だけ、対象の敵に角ブラケットを表示）
+  if(game.player && game.state==="playing" && snapTarget && !snapTarget.dead){
+    const sp = leanOffset(snapTarget);
+    const bw2 = snapTarget.type==="H" ? 15 : 11, bh2 = snapTarget.type==="H" ? 19 : 15, cy2 = sp.y-6;
+    g.strokeStyle="rgba(255,140,26,.95)"; g.lineWidth=1;
+    const corner=(cx2,cy3,sx2,sy2)=>{ g.beginPath(); g.moveTo(cx2+sx2*5, cy3); g.lineTo(cx2, cy3); g.lineTo(cx2, cy3+sy2*5); g.stroke(); };
+    corner(sp.x-bw2, cy2-bh2, 1, 1); corner(sp.x+bw2, cy2-bh2, -1, 1);
+    corner(sp.x-bw2, cy2+bh2, 1, -1); corner(sp.x+bw2, cy2+bh2, -1, -1);
   }
   g.restore();
   // 曇りの昼の空気：画面全体にごく薄い青灰色の拡散光を載せ、彩度とコントラストを落とす
@@ -2911,17 +3541,19 @@ function renderMissionList(){
   MISSIONS.forEach((m,i)=>{
     const b=document.createElement('button');
     b.className="mcard";
-    const locked = i>game.unlocked;
-    b.disabled = locked;
+    b.disabled = false;
     b.innerHTML = '<div class="mt">作戦 '+(i+1)+'：'+m.name+'</div><div class="md">'+m.brief+'</div>'+
       '<div class="diff">'+m.diff+' ／ エリア '+m.zones.length+'</div>'+
-      (locked ? '<div class="lock">🔒 前の作戦をクリアすると解放</div>' : game.cleared[i] ? '<div class="clear">✔ クリア済み（再挑戦可）</div>' : '');
+      (game.cleared[i] ? '<div class="clear">✔ クリア済み（再挑戦可）</div>' : '<div class="clear">▶ 最初から挑戦可</div>');
     b.addEventListener('click', ()=>{ audio(); startMission(i); });
     el.appendChild(b);
   });
 }
 document.querySelectorAll('.btnSndToggle').forEach(b=>{ b.addEventListener('click', ()=>{ try{ toggleAmbMute(); }catch(err){} }); });
 document.querySelectorAll('.btnBgmToggle').forEach(b=>{ b.addEventListener('click', ()=>{ try{ toggleBgmMute(); }catch(err){} }); });
+document.querySelectorAll('.btnAimToggle').forEach(b=>{ b.addEventListener('click', ()=>{ try{ cycleAimAssist(); }catch(err){} }); });
+(function(){ const s=document.getElementById('aimstatus'); if(s) s.addEventListener('click', ()=>{ try{ cycleAimAssist(); }catch(err){} }); })();
+try{ updateAimUI(); }catch(err){}
 /* ---------- フルスクリーン（CARRY YOUと同仕様：表示のみ。内部解像度・当たり判定・ゲームロジックは触らない） ----------
    ステージ（キャンバス＋HUD＋画面レイヤー）ごとフルスクリーンにし、CSS側で16:9のまま黒帯中央に収める。
    切替：画面右のボタン／タイトル・ポーズ内のボタン／Alt+Enter（Fはアーマーキットで使用中のため、
