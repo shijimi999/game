@@ -1,0 +1,1993 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<meta name="color-scheme" content="dark" />
+<link rel="icon" href="data:," />
+<title>HOTWIRE ― ロングショア ―</title>
+<style>
+  html, body { height: 100%; }
+  body { margin: 0; overflow: hidden; background: #23262b; font-family: "Segoe UI", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", Meiryo, sans-serif; color: #eef0f2; -webkit-user-select: none; user-select: none; touch-action: none; }
+  button, select { min-height: 2.25rem; font-family: inherit; }
+  #game { position: fixed; inset: 0; display: block; }
+  /* ---------- HUD ---------- */
+  #hud { position: fixed; inset: 0; pointer-events: none; display: none; }
+  #hud.on { display: block; }
+  .panel { background: rgba(18,20,24,.82); border: 1px solid rgba(255,255,255,.14); border-radius: 10px; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
+  #hudTL { position: absolute; top: max(10px, env(safe-area-inset-top)); left: 10px; padding: 8px 12px; min-width: 168px; }
+  #moneyRow { display: flex; align-items: baseline; gap: 6px; }
+  #money { font-size: 22px; font-weight: 800; color: #ffd35c; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+  #moneyLab { font-size: 11px; color: #b9bec7; }
+  #stars { font-size: 19px; letter-spacing: 3px; line-height: 1.15; min-height: 22px; }
+  #stars .on { color: #ffd35c; text-shadow: 0 0 8px rgba(255,180,0,.55); }
+  #stars .off { color: rgba(255,255,255,.18); }
+  #stars.hide-flash .on { color: rgba(255,211,92,.25); text-shadow: none; }
+  #hpWrap { margin-top: 5px; }
+  .barLab { font-size: 10px; color: #b9bec7; display: flex; justify-content: space-between; }
+  .bar { height: 8px; background: rgba(255,255,255,.13); border-radius: 4px; overflow: hidden; margin-top: 2px; }
+  .bar > div { height: 100%; border-radius: 4px; transition: width .15s; }
+  #hpBar { background: #7ec850; }
+  #carBox { margin-top: 7px; display: none; }
+  #carHpBar { background: #f08c3c; }
+  #speedTxt { font-size: 12px; color: #dfe3e8; font-variant-numeric: tabular-nums; }
+  #arrestWrap { margin-top: 7px; display: none; }
+  #arrestBar { background: #e5484d; }
+  #reportWarn { display: none; margin-top: 6px; font-size: 12px; font-weight: 700; color: #ff9d5c; }
+  #hudObj { position: absolute; top: max(10px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); padding: 8px 16px; text-align: center; max-width: min(92vw, 560px); }
+  #objTitle { font-size: 14px; font-weight: 700; }
+  #objSub { font-size: 12px; color: #c6ccd4; margin-top: 1px; }
+  #objTimer { font-size: 15px; font-weight: 800; color: #ffd35c; font-variant-numeric: tabular-nums; }
+  #objTimer.low { color: #ff6b6b; }
+  #minimapBox { position: absolute; top: max(10px, env(safe-area-inset-top)); right: 10px; padding: 6px; }
+  #minimap { display: block; width: 172px; height: 134px; border-radius: 6px; }
+  #districtLab { text-align: center; font-size: 11px; color: #c6ccd4; margin-top: 4px; letter-spacing: .12em; }
+  #toast { position: absolute; bottom: 118px; left: 50%; transform: translateX(-50%); padding: 9px 18px; font-size: 15px; font-weight: 700; opacity: 0; transition: opacity .25s; white-space: nowrap; max-width: 94vw; }
+  #toast.show { opacity: 1; }
+  #bigMsg { position: absolute; top: 34%; left: 50%; transform: translate(-50%,-50%); text-align: center; opacity: 0; transition: opacity .3s; pointer-events: none; width: 94vw; }
+  #bigMsg.show { opacity: 1; }
+  #bigTitle { font-size: clamp(26px, 6vw, 44px); font-weight: 900; letter-spacing: .06em; text-shadow: 0 3px 14px rgba(0,0,0,.7); }
+  #bigSub { font-size: clamp(14px, 3vw, 19px); color: #ffd35c; font-weight: 700; text-shadow: 0 2px 8px rgba(0,0,0,.8); margin-top: 4px; }
+  #interact { position: absolute; bottom: 108px; left: 50%; transform: translateX(-50%); padding: 7px 14px; font-size: 13px; font-weight: 700; display: none; }
+  /* phone widget */
+  #phone { position: absolute; right: 10px; bottom: max(10px, env(safe-area-inset-bottom)); width: 196px; padding: 10px; pointer-events: auto; }
+  #phoneHead { font-size: 11px; color: #9fd08a; letter-spacing: .1em; display: flex; justify-content: space-between; }
+  #phoneBody { font-size: 12px; color: #dfe3e8; margin: 6px 0 8px; line-height: 1.45; min-height: 34px; }
+  #phoneBtns { display: flex; flex-direction: column; gap: 6px; }
+  .pbtn { pointer-events: auto; cursor: pointer; border: 1px solid rgba(255,255,255,.2); background: #2c313a; color: #fff; border-radius: 8px; padding: 8px 10px; font-size: 13px; font-weight: 700; }
+  .pbtn:hover { background: #3a4150; }
+  .pbtn.gold { background: #8a6420; border-color: #ffd35c66; }
+  .pbtn.gold:hover { background: #a87b28; }
+  .pbtn:disabled { opacity: .4; cursor: default; }
+  #muteHint { position: absolute; left: 10px; bottom: max(10px, env(safe-area-inset-bottom)); font-size: 11px; color: rgba(255,255,255,.55); padding: 5px 9px; }
+  /* ---------- overlays ---------- */
+  .overlay { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(10,12,15,.72); z-index: 30; padding: 14px; }
+  .overlay.on { display: flex; }
+  .card { background: #1d2026; border: 1px solid rgba(255,255,255,.14); border-radius: 14px; padding: 26px 28px; max-width: 620px; width: 100%; max-height: 92vh; overflow-y: auto; box-shadow: 0 18px 50px rgba(0,0,0,.6); }
+  #titleCard { text-align: center; }
+  #gameTitle { font-size: clamp(44px, 11vw, 76px); font-weight: 900; letter-spacing: .1em; line-height: 1; color: #f2f3f5; }
+  #gameTitle span { color: #ffd35c; }
+  #cityName { font-size: clamp(15px, 3.4vw, 20px); letter-spacing: .5em; color: #aeb6c2; margin-top: 6px; text-indent: .5em; }
+  #titleTag { font-size: 13px; color: #8f97a3; margin: 10px 0 20px; }
+  .menuBtns { display: flex; flex-direction: column; gap: 9px; align-items: stretch; max-width: 340px; margin: 0 auto; }
+  .mbtn { cursor: pointer; border-radius: 9px; border: 1px solid rgba(255,255,255,.18); background: #2b3038; color: #fff; font-size: 16px; font-weight: 800; padding: 12px; }
+  .mbtn:hover { background: #39404d; }
+  .mbtn.primary { background: #8a6420; border-color: #ffd35c88; }
+  .mbtn.primary:hover { background: #a87b28; }
+  .mbtn:disabled { opacity: .35; cursor: default; }
+  .setRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 14px auto 0; max-width: 420px; font-size: 14px; }
+  .setRow select { background: #2b3038; color: #fff; border: 1px solid rgba(255,255,255,.25); border-radius: 7px; padding: 6px 8px; font-size: 14px; }
+  #ctrlHelp { text-align: left; font-size: 12.5px; line-height: 1.75; color: #c2c9d2; background: rgba(255,255,255,.05); border-radius: 10px; padding: 12px 16px; margin-top: 18px; }
+  #ctrlHelp b { color: #ffd35c; font-weight: 700; }
+  .note { font-size: 11.5px; color: #8f97a3; margin-top: 12px; line-height: 1.6; }
+  h2.ovTitle { margin: 0 0 6px; font-size: 24px; letter-spacing: .05em; }
+  /* incoming call — smartphone style */
+  #callScr { align-items: flex-end; justify-content: flex-end; background: rgba(8,10,13,.5); padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) 12px; }
+  #callCard { width: min(360px, calc(100vw - 24px)); max-width: 360px; border-radius: 34px; border: 3px solid #454b55; background: linear-gradient(180deg,#23262d 0%,#171a1f 14%,#171a1f 100%); padding: 12px 16px 18px; box-shadow: 0 24px 60px rgba(0,0,0,.75), inset 0 0 0 2px rgba(0,0,0,.55); position: relative; animation: phoneIn .28s ease-out; max-height: 94vh; }
+  @keyframes phoneIn { from { transform: translateY(26px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  #callCard::before { content: ""; display: block; width: 104px; height: 20px; margin: 0 auto 10px; background: #0a0b0d; border-radius: 11px; }
+  .phoneBar { display: flex; justify-content: space-between; font-size: 11px; color: #9aa3ae; padding: 0 4px 10px; letter-spacing: .06em; }
+  .phoneCaller { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .phoneAvatar { flex: 0 0 auto; width: 52px; height: 52px; border-radius: 50%; background: #8a6420; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; border: 2px solid rgba(255,211,92,.6); }
+  #callFrom { font-size: 12px; color: #9fd08a; letter-spacing: .08em; }
+  #callName { font-size: 24px; font-weight: 800; margin: 1px 0 0; }
+  #callText { font-size: 14.5px; line-height: 1.75; background: rgba(255,255,255,.06); border-radius: 14px; padding: 13px 15px; white-space: pre-wrap; }
+  #callMeta { font-size: 12.5px; color: #ffd35c; margin-top: 10px; line-height: 1.6; }
+  .callBtns { display: flex; flex-direction: column; gap: 9px; margin-top: 16px; }
+  .callBtns .mbtn { flex: 1; min-height: 54px; font-size: 17px; border-radius: 999px; }
+  #btnAccept { background: #2e7d46; border-color: #7ed49188; }
+  #btnAccept:hover { background: #379657; }
+  #callFrom { display: inline-block; animation: ring .5s infinite alternate; }
+  @keyframes ring { from { transform: rotate(-1.2deg); } to { transform: rotate(1.2deg); } }
+  @media (max-width: 640px) { #callScr { justify-content: center; align-items: flex-end; } }
+  /* ---------- gamepad / keyboard focus ---------- */
+  .pad-focus { outline: 3px solid #ffd35c !important; outline-offset: 2px; box-shadow: 0 0 0 5px rgba(255,211,92,.28), 0 0 20px rgba(255,211,92,.5) !important; }
+  .mbtn.pad-focus { background: #a87b28 !important; color: #fff; }
+  #btnAccept.pad-focus { background: #379657 !important; }
+  select.pad-focus { background: #4a3d16 !important; }
+  .setRow:has(select.pad-focus) { background: rgba(255,211,92,.13); border-radius: 9px; padding-left: 8px; padding-right: 8px; }
+  .padHint { font-size: 12px; color: #ffd35c; background: rgba(255,211,92,.1); border: 1px solid rgba(255,211,92,.35); border-radius: 9px; padding: 7px 10px; margin-top: 14px; line-height: 1.55; }
+  #callCard .padHint { text-align: center; }
+  /* touch controls */
+  #touch { position: fixed; inset: 0; pointer-events: none; display: none; z-index: 20; }
+  #touch.on { display: block; }
+  #stick { position: absolute; left: 22px; bottom: 86px; width: 118px; height: 118px; border-radius: 50%; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.25); pointer-events: auto; }
+  #stickKnob { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; border-radius: 50%; background: rgba(255,255,255,.28); transform: translate(-50%,-50%); }
+  .tbtn { position: absolute; pointer-events: auto; width: 62px; height: 62px; border-radius: 50%; border: 1px solid rgba(255,255,255,.3); background: rgba(20,22,26,.55); color: #fff; font-size: 12px; font-weight: 800; }
+  .tbtn:active { background: rgba(255,211,92,.5); }
+  #tBrake { right: 96px; bottom: 80px; }
+  #tAct { right: 22px; bottom: 130px; }
+  #tShoot { right: 30px; bottom: 216px; width: 54px; height: 54px; }
+  @media (max-width: 640px) {
+    #minimap { width: 118px; height: 92px; }
+    #hudTL { min-width: 132px; padding: 6px 9px; }
+    #money { font-size: 18px; }
+    #phone { width: 158px; }
+    #hudObj { top: 158px; bottom: auto; }
+    #toast { bottom: auto; top: 216px; }
+    #interact { bottom: auto; top: 262px; }
+  }
+  body.touch #phone { bottom: 296px; }
+  body.touch #muteHint { display: none; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="hud">
+  <div id="hudTL" class="panel">
+    <div id="moneyRow"><span id="money">$0</span><span id="moneyLab">所持金</span></div>
+    <div id="stars"></div>
+    <div id="hpWrap">
+      <div class="barLab"><span>体力</span></div>
+      <div class="bar"><div id="hpBar" style="width:100%"></div></div>
+    </div>
+    <div id="carBox">
+      <div class="barLab"><span id="carName">車両</span><span id="speedTxt">0 km/h</span></div>
+      <div class="bar"><div id="carHpBar" style="width:100%"></div></div>
+    </div>
+    <div id="arrestWrap">
+      <div class="barLab"><span style="color:#ff8f93">逮捕されそう…！</span></div>
+      <div class="bar"><div id="arrestBar" style="width:0%"></div></div>
+    </div>
+    <div id="reportWarn">📱 通報されている…！</div>
+  </div>
+  <div id="hudObj" class="panel" style="display:none">
+    <div id="objTitle"></div>
+    <div id="objSub"></div>
+    <div id="objTimer"></div>
+  </div>
+  <div id="minimapBox" class="panel">
+    <canvas id="minimap" width="344" height="268"></canvas>
+    <div id="districtLab">ロングショア</div>
+  </div>
+  <div id="toast" class="panel"></div>
+  <div id="bigMsg"><div id="bigTitle"></div><div id="bigSub"></div></div>
+  <div id="interact" class="panel"></div>
+  <div id="phone" class="panel">
+    <div id="phoneHead"><span>📱 スマホ</span><span id="phoneClock">--:--</span></div>
+    <div id="phoneBody">着信待ち…</div>
+    <div id="phoneBtns">
+      <button class="pbtn gold" id="btnStory" style="display:none">📞 ヴィンスからの仕事を受ける</button>
+      <button class="pbtn" id="btnSide">🧾 小口仕事を受ける（配達／送迎／回収）</button>
+    </div>
+  </div>
+  <div id="muteHint" class="panel">M：音 ON/OFF　Esc：ポーズ　Alt+Enter：全画面</div>
+</div>
+
+<div id="touch">
+  <div id="stick"><div id="stickKnob"></div></div>
+  <button class="tbtn" id="tBrake">ブレーキ</button>
+  <button class="tbtn" id="tAct">乗る/降りる</button>
+  <button class="tbtn" id="tShoot">撃つ</button>
+</div>
+
+<div class="overlay on" id="titleScr">
+  <div class="card" id="titleCard">
+    <div id="gameTitle">HOT<span>WIRE</span></div>
+    <div id="cityName">ロングショア</div>
+    <div id="titleTag">港町ロングショア。下っ端チンピラの成り上がり ― 完成版（ミッション全12本収録）</div>
+    <div id="clearBadge" style="display:none; margin:-8px auto 14px; max-width:420px; font-size:14px; font-weight:800; color:#ffd35c; background:rgba(255,211,92,.12); border:1px solid rgba(255,211,92,.5); border-radius:9px; padding:8px 12px;">★ 全12ミッション クリア済み ― 幹部候補 ★<br><span style="font-size:12px; font-weight:600; color:#c6ccd4;">つづきからでフリーローム＆小口仕事を続けられます</span></div>
+    <div class="menuBtns">
+      <button class="mbtn primary" id="btnContinue" style="display:none">つづきから</button>
+      <button class="mbtn" id="btnNew">はじめから</button>
+    </div>
+    <div id="overwriteBox" style="display:none; margin-top:12px;">
+      <div style="font-size:13px; color:#ffb3b6;">セーブデータがあります。はじめから始めると上書きされます。よいですか？</div>
+      <div style="display:flex; gap:8px; justify-content:center; margin-top:8px;">
+        <button class="mbtn" id="btnOverwriteYes" style="padding:8px 18px; font-size:14px;">上書きして始める</button>
+        <button class="mbtn" id="btnOverwriteNo" style="padding:8px 18px; font-size:14px;">やめる</button>
+      </div>
+    </div>
+    <div class="setRow"><span>ドライブアシスト</span>
+      <select id="selAssistT"><option value="0">OFF</option><option value="1">弱</option><option value="2">標準</option><option value="3">強</option></select></div>
+    <div class="setRow"><span>運転の操作方式</span>
+      <select id="selSchemeT"><option value="screen">画面基準（おすすめ）</option><option value="car">車基準（GTA式）</option></select></div>
+    <div class="padHint">🎮 パッド対応：十字キー／左スティックで移動、設定は左右で切替、Aボタンで決定（マウス・タッチ・キーボードでも操作できます）</div>
+    <div id="ctrlHelp">
+      <b>徒歩：</b>WASD／矢印キー／左スティックで移動、<b>F</b>または<b>E</b>で乗り降り、<b>J</b>で発砲（銃所持時）<br>
+      <b>運転（画面基準）：</b>押した方向へ車が回って進む。離すと減速。<b>Space</b>でブレーキ→バック<br>
+      <b>運転（車基準）：</b>↑アクセル／↓ブレーキ・バック／←→ハンドル<br>
+      <b>パッド：</b>左スティック、<b>A</b>乗り降り、<b>B／LT</b>ブレーキ、<b>RT</b>アクセル（車基準）、<b>X</b>発砲、<b>Start</b>ポーズ<br>
+      <b>その他：</b>Esc／P ポーズ、M 音ON/OFF、Alt+Enter 全画面
+    </div>
+    <div class="note">※ 埋め込み表示（アプリ内プレビュー等）ではGamepad APIがブロックされ、パッドが効かない場合があります。その場合はこのページをブラウザで直接開いて遊んでください。<br>進行状況はミッション完了時などに自動で保存されます（この端末のブラウザ内）。</div>
+  </div>
+</div>
+
+<div class="overlay" id="pauseScr">
+  <div class="card" style="max-width:440px; text-align:center;">
+    <h2 class="ovTitle">ポーズ</h2>
+    <div class="setRow"><span>ドライブアシスト</span>
+      <select id="selAssistP"><option value="0">OFF</option><option value="1">弱</option><option value="2">標準</option><option value="3">強</option></select></div>
+    <div class="setRow"><span>運転の操作方式</span>
+      <select id="selSchemeP"><option value="screen">画面基準</option><option value="car">車基準</option></select></div>
+    <div class="menuBtns" style="margin-top:20px;">
+      <button class="mbtn primary" id="btnResume">ゲームに戻る</button>
+      <button class="mbtn" id="btnQuitTitle">タイトルへ戻る</button>
+    </div>
+    <div class="padHint">🎮 パッド対応：十字キー／左スティックで移動、設定は左右で切替、Aボタンで決定</div>
+    <div class="note">設定は自動で保存されます。</div>
+  </div>
+</div>
+
+<div class="overlay" id="endingScr">
+  <div class="card" style="max-width:520px; text-align:center;">
+    <div style="font-size:13px; letter-spacing:.3em; color:#ffd35c;">第3章「幹部候補」クリア</div>
+    <h2 class="ovTitle" style="font-size:30px; margin-top:6px;">幹部候補として認められた</h2>
+    <div style="font-size:14.5px; line-height:1.85; color:#dfe3e8; text-align:left; background:rgba(255,255,255,.05); border-radius:10px; padding:14px 16px; margin-top:10px;">
+      ヴィンスからの電話 ――<br>
+      「大仕事、見事だった。港の連中も文句なしだ。下っ端からここまで上がってきた奴は、ロングショアじゃあんたが初めてだよ。<br>
+      今日からあんたは幹部候補。街は全部あんたの庭だ。仕事が恋しくなったら、小口はいつでも回してやる。」
+    </div>
+    <div id="endingStats" style="font-size:13px; color:#c6ccd4; margin-top:12px;"></div>
+    <div class="menuBtns" style="margin-top:18px;">
+      <button class="mbtn primary" id="btnFreeRoam">フリーロームで続ける</button>
+      <button class="mbtn" id="btnEndingTitle">タイトルへ戻る</button>
+    </div>
+    <div class="padHint">🎮 パッド対応：十字キー／左スティックで選んで、Aボタンで決定</div>
+  </div>
+</div>
+
+<div class="overlay" id="callScr">
+  <div class="card" id="callCard" role="dialog" aria-label="仕事の着信">
+    <div class="phoneBar"><span>📶 HOTWIRE</span><span>着信中</span><span>🔋</span></div>
+    <div class="phoneCaller">
+      <div class="phoneAvatar">V</div>
+      <div>
+        <div id="callFrom">📞 着信</div>
+        <div id="callName">ヴィンス</div>
+      </div>
+    </div>
+    <div id="callText"></div>
+    <div id="callMeta"></div>
+    <div class="callBtns">
+      <button class="mbtn primary" id="btnAccept">📞 仕事を受ける</button>
+      <button class="mbtn" id="btnDecline">あとで</button>
+    </div>
+    <div class="padHint">🎮 十字キー／スティックで選んで、Aボタンで決定（タップ・クリック・EnterでもOK）</div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* =========================================================
+   HOTWIRE ― 完成版 ― ロングショア全域 / 章立て全12本 / オートセーブ
+   ========================================================= */
+const cv = document.getElementById('game'), ctx = cv.getContext('2d');
+let VW = 0, VH = 0, DPR = 1;
+function resize(){ DPR = Math.min(2, window.devicePixelRatio||1); VW = window.innerWidth; VH = window.innerHeight; cv.width = VW*DPR; cv.height = VH*DPR; cv.style.width = VW+'px'; cv.style.height = VH+'px'; }
+window.addEventListener('resize', resize); resize();
+
+const TAU = Math.PI*2;
+const clamp=(v,a,b)=>v<a?a:(v>b?b:v);
+const lerp=(a,b,t)=>a+(b-a)*t;
+const dist=(x1,y1,x2,y2)=>Math.hypot(x2-x1,y2-y1);
+const angDiff=(a,b)=>{ let d=(a-b)%TAU; if(d>Math.PI)d-=TAU; if(d<-Math.PI)d+=TAU; return d; };
+const DEG = Math.PI/180;
+let seed = 1234567;
+function srand(s){ seed = s>>>0; }
+function rnd(){ seed = (seed*1664525 + 1013904223)>>>0; return seed/4294967296; }
+function rr(a,b){ return a + rnd()*(b-a); }
+function pick(arr){ return arr[Math.floor(rnd()*arr.length)]; }
+
+/* ---------------- 世界定義 ---------------- */
+const WORLD = { w: 3600, h: 2800 };
+const ROAD_W = 150, LANE = 37;
+const VX = [300, 900, 1500, 2100, 2700, 3300];      // 縦道路の中心x
+const HZ = [300, 850, 1400, 1950, 2450];            // 横道路の中心y
+const WATER_Y = 2620;
+/* 波止場（桟橋）：水に突き出した陸地。描画している桟橋と一致させる。
+   この範囲だけは岸のラインが南へ張り出し、それ以外は WATER_Y が岸。 */
+const PIER = { x:1500, y:WATER_Y-14, w:2100, h:16 };
+function shoreYFor(x){ return (x>=PIER.x && x<=PIER.x+PIER.w)? PIER.y+PIER.h : WATER_Y; }
+function inWaterPoint(x,y){ return y>=shoreYFor(x); }
+function onRoadX(x){ return VX.some(c=>Math.abs(x-c)<=ROAD_W/2); }
+function onRoadY(y){ return HZ.some(c=>Math.abs(y-c)<=ROAD_W/2); }
+function onRoad(x,y){ return onRoadX(x)||onRoadY(y); }
+function nearIntersection(x,y,d){ d=d||125; for(const cx of VX) for(const cy of HZ){ if(Math.abs(x-cx)<d && Math.abs(y-cy)<d) return true; } return false; }
+function nearestRoadPoint(x,y){
+  let best=null,bd=1e9;
+  for(const c of VX){ const d=Math.abs(x-c); if(d<bd){bd=d;best={x:c,y};} }
+  for(const c of HZ){ const d=Math.abs(y-c); if(d<bd){bd=d;best={x,y:c};} }
+  return best;
+}
+function districtAt(x,y){
+  if(y>=1950 && x>=1425) return '港湾地区';
+  if(y>=2450) return '港湾地区';
+  if(x>=2025 && y<1950) return '工業地区';
+  if(x<975 && y>=925) return '住宅地区';
+  if(x<975) return '住宅地区';
+  return 'ダウンタウン';
+}
+
+/* 建物生成（決定的乱数） */
+const buildings = [], obstacles = [];
+const ROOF_COLS = ['#8f9299','#7e858d','#98908a','#868d94','#94867c','#7d8894','#8a8f7e'];
+const WALL_COLS = ['#6f757d','#655f58','#71767f','#5f6a72','#6b6259'];
+function addBuilding(x,y,w,h,o){
+  o=o||{};
+  const b = { x,y,w,h, hgt:o.hgt||rr(14,30), roof:o.roof||pick(ROOF_COLS), wall:o.wall||pick(WALL_COLS),
+    kind:o.kind||'normal', seedv:Math.floor(rnd()*1e9),
+    units:[], vents:[], skylights:[] };
+  const n = Math.floor(rr(1,4));
+  for(let i=0;i<n;i++) b.units.push({dx:rr(.08,.8), dy:rr(.1,.7), s:rr(9,16)});
+  if(rnd()<.7) b.vents.push({dx:rr(.15,.8), dy:rr(.15,.75), s:rr(7,12)});
+  if(rnd()<.45) b.skylights.push({dx:rr(.2,.65), dy:rr(.2,.6), w:rr(16,30), h:rr(10,18)});
+  b.tank = rnd()<.22;
+  buildings.push(b); return b;
+}
+let policeB=null, hospitalB=null, garagePt={x:2250,y:1470};
+(function buildCity(){
+  srand(20261117);
+  const xEdges=[0,225,375,825,975,1425,1575,2025,2175,2625,2775,3225,3375,3600];
+  const yEdges=[0,225,375,775,925,1325,1475,1875,2025,2375,2525,2620];
+  for(let i=0;i<xEdges.length;i+=2) for(let j=0;j<yEdges.length;j+=2){
+    const bx=xEdges[i], by=yEdges[j], bw=xEdges[i+1]-bx, bh=yEdges[j+1]-by;
+    if(bw<40||bh<40) continue;
+    const cx=bx+bw/2, cy=by+bh/2, dist_name=districtAt(cx,cy);
+    if(by>=2525) continue; // 水際
+    // 特殊施設
+    if(bx===975 && by===925){ policeB = addBuilding(bx+18,by+20,300,190,{hgt:34,kind:'police',roof:'#7d8894'}); continue; }
+    if(bx===375 && by===925){ hospitalB = addBuilding(bx+30,by+26,270,180,{hgt:30,kind:'hospital',roof:'#9aa0a4'}); continue; }
+    if(dist_name==='港湾地区'){
+      // 倉庫＋コンテナ置き場
+      if(rnd()<.62){ addBuilding(bx+14,by+16,bw-28,Math.min(bh-32,120),{hgt:16,kind:'warehouse',roof:pick(['#8a7f70','#7e8894','#94867c'])}); }
+      const nc = Math.floor(rr(2,6));
+      for(let k=0;k<nc;k++){ const w=rr(52,66),h=24; obstacles.push({x:bx+rr(8,Math.max(9,bw-w-8)), y:by+rr(8,Math.max(9,bh-h-8)), w, h, kind:'container', col:pick(['#b0563a','#3a6ea5','#4d8a4f','#b08a3a','#7a4d8a'.slice(0,7),'#8a4d3a'])}); }
+      continue;
+    }
+    if(dist_name==='工業地区'){
+      addBuilding(bx+16,by+18,bw-32,bh-40,{hgt:20,kind:'factory',roof:'#7e858d'});
+      for(let k=0;k<3;k++) obstacles.push({x:bx+rr(6,bw-46), y:by+rr(6,bh-26), w:40, h:20, kind:'crate', col:'#8a6f4d'});
+      continue;
+    }
+    if(dist_name==='住宅地区'){
+      const cols=2, rows=bh>260?2:1;
+      for(let a=0;a<cols;a++) for(let c=0;c<rows;c++){
+        const w=(bw-36)/cols, h=(bh-30)/rows;
+        addBuilding(bx+12+a*(w+12), by+12+c*(h+10), w, h*.82, {hgt:rr(9,14), kind:'house'});
+      }
+      continue;
+    }
+    // ダウンタウン
+    if(bw>200 && rnd()<.5){
+      addBuilding(bx+14,by+14,(bw-40)/2,bh-28,{hgt:rr(38,62)});
+      addBuilding(bx+26+(bw-40)/2,by+14,(bw-40)/2,bh-28,{hgt:rr(30,55)});
+    } else addBuilding(bx+14,by+14,bw-28,bh-28,{hgt:rr(30,58)});
+  }
+  // 街路樹（住宅地区）
+  for(let i=0;i<130;i++){
+    const x=rr(30,1400), y=rr(950,2400);
+    if(onRoad(x,y)) continue;
+    if(buildings.some(b=>x>b.x-8&&x<b.x+b.w+8&&y>b.y-8&&y<b.y+b.h+8)) continue;
+    obstacles.push({x:x-7,y:y-7,w:14,h:14,kind:'tree',col:'#5d7d4c'});
+  }
+  // クレーン（港）
+  obstacles.push({x:2360,y:2500,w:16,h:110,kind:'crane',col:'#c7a23a'});
+  obstacles.push({x:2980,y:2500,w:16,h:110,kind:'crane',col:'#c7a23a'});
+})();
+const colliders = buildings.concat(obstacles.filter(o=>o.kind!=='tree'));
+function collideCircle(px,py,r){
+  let x=px,y=py,hit=false;
+  for(const b of colliders){
+    const nx=clamp(x,b.x,b.x+b.w), ny=clamp(y,b.y,b.y+b.h);
+    const d=Math.hypot(x-nx,y-ny);
+    if(d<r){
+      hit=true;
+      if(d<.001){ x = (x<b.x+b.w/2)? b.x-r : b.x+b.w+r; }
+      else { x = nx + (x-nx)/d*r; y = ny + (y-ny)/d*r; }
+    }
+  }
+  /* 水域は solid：岸（桟橋の先端を含む）のラインで建物と同じように止まる。
+     中心がすでにはみ出している場合も陸側（岸の内側）へ押し戻すフェイルセーフ。 */
+  if(y > shoreYFor(x)-r){ y = shoreYFor(x)-r; hit = true; }
+  x=clamp(x,r,WORLD.w-r); y=clamp(y,r,shoreYFor(x)-r);
+  return {x,y,hit};
+}
+/* 水域フェイルセーフ：衝突のはずみ等で collideCircle を経ずに動いた個体も岸へ戻す */
+function keepOnLand(e, r){
+  const maxY = shoreYFor(e.x)-r;
+  if(e.y > maxY) e.y = maxY;
+  e.x = clamp(e.x, r, WORLD.w-r);
+  if(e.y < r) e.y = r;
+}
+function enforceLandAll(){
+  for(const c of cars) keepOnLand(c, 20);
+  for(const c of cops) keepOnLand(c, 20);
+  for(const p of peds){ if(!p.riding) keepOnLand(p, 8); }
+  if(player.car){ keepOnLand(player.car, 21); player.x = player.car.x; player.y = player.car.y; }
+  else keepOnLand(player, 10);
+}
+function rectBlocked(x,y){
+  for(const b of colliders){ if(x>b.x-4&&x<b.x+b.w+4&&y>b.y-4&&y<b.y+b.h+4) return true; }
+  return false;
+}
+/* ---- 目標ポイント到達可能性の検証（建物などの solid 内なら道路際へずらす） ---- */
+function pointBlockedPad(x,y,pad){
+  for(const b of colliders){ if(x>b.x-pad&&x<b.x+b.w+pad&&y>b.y-pad&&y<b.y+b.h+pad) return true; }
+  return false;
+}
+function isOnOrNearRoad(x,y){
+  return VX.some(c=>Math.abs(x-c)<=ROAD_W/2+16) || HZ.some(c=>Math.abs(y-c)<=ROAD_W/2+16);
+}
+function isReachablePoint(x,y,pad){
+  if(x<30||x>WORLD.w-30||y<30||y>WATER_Y-10) return false;
+  return !pointBlockedPad(x,y,pad||22) && isOnOrNearRoad(x,y);
+}
+function resolveMissionPoint(x,y,pad){
+  pad = pad||22;
+  if(isReachablePoint(x,y,pad)) return {x:x,y:y};
+  const candidates=[];
+  // 道路への射影候補（車線中央・路肩・歩道）
+  for(const c of VX){ for(const off of [-LANE,LANE,0,-(ROAD_W/2+8),(ROAD_W/2+8)]) candidates.push({x:c+off,y:y}); }
+  for(const c of HZ){ for(const off of [-LANE,LANE,0,-(ROAD_W/2+8),(ROAD_W/2+8)]) candidates.push({x:x,y:c+off}); }
+  // 周囲を渦巻き状に探索（建物のすぐ外の歩道など）
+  for(let r=20;r<=720;r+=20){ for(let a=0;a<16;a++){ const ang=a/16*TAU; candidates.push({x:x+Math.cos(ang)*r, y:y+Math.sin(ang)*r}); } }
+  candidates.sort((a,b)=>dist(a.x,a.y,x,y)-dist(b.x,b.y,x,y));
+  for(const cand of candidates){
+    const cx=clamp(cand.x,30,WORLD.w-30), cy=clamp(cand.y,30,WATER_Y-20);
+    if(isReachablePoint(cx,cy,pad)) return {x:cx,y:cy};
+  }
+  const rp=nearestRoadPoint(x,y);
+  return {x:rp.x,y:rp.y};
+}
+function roadAxisAngle(x,y){
+  let dv=1e9, dh=1e9;
+  for(const c of VX) dv=Math.min(dv,Math.abs(x-c));
+  for(const c of HZ) dh=Math.min(dh,Math.abs(y-c));
+  return dh<=dv ? 0 : Math.PI/2; // 横道路が近ければ横向き、縦道路が近ければ縦向き
+}
+/* ---------------- 音（WebAudio合成） ---------------- */
+let AC=null, muted=false, sirenOsc=null, sirenGain=null, ambGain=null;
+function initAudio(){
+  if(AC) { if(AC.state==='suspended') AC.resume(); return; }
+  try{
+    AC = new (window.AudioContext||window.webkitAudioContext)();
+    // 環境音：控えめな風ノイズ
+    const len = AC.sampleRate*2, buf = AC.createBuffer(1,len,AC.sampleRate), d = buf.getChannelData(0);
+    let last=0; for(let i=0;i<len;i++){ const w=Math.random()*2-1; last=(last+.02*w)/1.02; d[i]=last*3; }
+    const src=AC.createBufferSource(); src.buffer=buf; src.loop=true;
+    const f=AC.createBiquadFilter(); f.type='lowpass'; f.frequency.value=420;
+    ambGain=AC.createGain(); ambGain.gain.value=.028;
+    src.connect(f); f.connect(ambGain); ambGain.connect(AC.destination); src.start();
+    // サイレン
+    sirenOsc=AC.createOscillator(); sirenOsc.type='triangle';
+    sirenGain=AC.createGain(); sirenGain.gain.value=0;
+    sirenOsc.connect(sirenGain); sirenGain.connect(AC.destination); sirenOsc.start();
+  }catch(e){ AC=null; }
+}
+function beep(freq,dur,type,vol,when,slideTo){
+  if(!AC||muted) return;
+  const t=AC.currentTime+(when||0);
+  const o=AC.createOscillator(), g=AC.createGain();
+  o.type=type||'sine'; o.frequency.setValueAtTime(freq,t);
+  if(slideTo) o.frequency.exponentialRampToValueAtTime(slideTo,t+dur);
+  g.gain.setValueAtTime(vol||.15,t); g.gain.exponentialRampToValueAtTime(.001,t+dur);
+  o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t+dur+.02);
+}
+function noiseBurst(dur,vol,freq){
+  if(!AC||muted) return;
+  const len=AC.sampleRate*dur, buf=AC.createBuffer(1,len,AC.sampleRate), d=buf.getChannelData(0);
+  for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*(1-i/len);
+  const s=AC.createBufferSource(); s.buffer=buf;
+  const f=AC.createBiquadFilter(); f.type='lowpass'; f.frequency.value=freq||800;
+  const g=AC.createGain(); g.gain.value=vol||.3;
+  s.connect(f); f.connect(g); g.connect(AC.destination); s.start();
+}
+const sfx = {
+  ring(){ beep(1180,.16,'sine',.14); beep(1180,.16,'sine',.14,.22); beep(1180,.16,'sine',.14,.44); },
+  crash(hard){ noiseBurst(hard?.28:.15, hard?.4:.22, hard?500:900); },
+  reward(){ [523,659,784,1046].forEach((f,i)=>beep(f,.16,'triangle',.16,i*.09)); },
+  fail(){ beep(320,.3,'sawtooth',.1,0,180); },
+  pickup(){ beep(880,.09,'square',.1); beep(1320,.12,'square',.1,.08); },
+  door(){ beep(190,.08,'square',.12,0,120); },
+  shot(){ noiseBurst(.12,.35,2400); },
+  sirenSet(v){ if(sirenGain&&AC) sirenGain.gain.setTargetAtTime(muted?0:v, AC.currentTime, .2); }
+};
+
+/* ---------------- セーブ ---------------- */
+const SAVE_KEY='hotwire_save_v1';
+let save = null;
+function loadSave(){ try{ const s=localStorage.getItem(SAVE_KEY); if(s) return JSON.parse(s); }catch(e){} return null; }
+function writeSave(){
+  if(!G.started) return;
+  /* A互換：既存項目（money/done/hasGun/assist/scheme）はそのまま維持し、cleared を追加するだけ */
+  const data={ money:G.money, done:G.missionsDone, hasGun:G.hasGun, assist:settings.assist, scheme:settings.scheme, cleared: !!G.cleared || G.missionsDone>=12 };
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify(data)); }catch(e){}
+}
+function saveCleared(s){ if(!s) return false; return !!s.cleared || (s.done||0)>=12; }
+let settings = { assist:2, scheme:'screen' };
+(function(){ const s=loadSave(); if(s){ settings.assist=(s.assist!=null?s.assist:2); settings.scheme=s.scheme||'screen'; } })();
+const SNAP=[[10,16],[18,26],[25,32],[32,42]]; // [吸着角, 保持角] 度
+
+/* ---------------- ゲーム状態 ---------------- */
+const G = {
+  mode:'title', started:false, paused:false,
+  money:0, missionsDone:0, hasGun:true, cleared:false, ending:false,
+  wanted:0, hideTimer:0, starFlash:0,
+  time:0, trafficPhase:0,
+  mission:null, sideJob:null, pendingCall:false, callTimer:4,
+  arrest:0, dead:false,
+};
+const player = { x:640, y:1180, angle:-Math.PI/2, hp:100, car:null, face:-Math.PI/2, walkPh:0, regenT:0 };
+const cam = { x:0, y:0 };
+
+/* ---------------- 車両 ---------------- */
+const CAR_TYPES = {
+  compact:{ name:'小型車', max:300, hp:80,  w:36, h:20, cols:['#b8bcc2','#7fa3c0','#c0a35a','#8a9a7b'] },
+  sport:  { name:'スポーツ', max:430, hp:65,  w:38, h:20, cols:['#b0403c','#3c5a8a','#d8d8dc','#3a3d42'] },
+  van:    { name:'バン',   max:255, hp:130, w:44, h:24, cols:['#c8c8c4','#7b8a99','#a89a7d','#5f7263'] },
+};
+let carId=0;
+function makeCar(type,x,y,angle,o){
+  o=o||{};
+  const t=CAR_TYPES[type];
+  const c={ id:++carId, type, x, y, angle:angle||0, vx:0, vy:0, hp:t.hp, maxHp:t.hp,
+    col:o.col||t.cols[Math.floor(Math.random()*t.cols.length)], parked:!!o.parked,
+    ai:o.ai||null, stolen:false, dead:false, smoke:0, stuckT:0, revT:0, targetCar:o.targetCar||false,
+    leaveMode:false, brakeLight:0 };
+  return c;
+}
+let cars=[], peds=[], cops=[];
+function speedOf(c){ return Math.hypot(c.vx,c.vy); }
+function forwardOf(c){ return {x:Math.cos(c.angle), y:Math.sin(c.angle)}; }
+
+function spawnTraffic(){
+  cars = cars.filter(c=>c.ai==='parked'||c===player.car);
+  for(let i=0;i<15;i++){
+    const vert = Math.random()<.5;
+    let x,y,dir;
+    if(vert){ x=pick(VX); y=rr(200,WATER_Y-200); dir=Math.random()<.5?-1:1; }
+    else { y=pick(HZ); x=rr(200,3400); dir=Math.random()<.5?-1:1; }
+    if(dist(x,y,player.x,player.y)<420) continue;
+    if(rectBlocked(x,y)) continue;
+    const type=pick(['compact','compact','sport','van']);
+    const c=makeCar(type,x,y,0,{ai:'traffic'});
+    // 車線位置と向き
+    if(vert){ c.angle = dir<0? -Math.PI/2 : Math.PI/2; c.x = x + (dir<0? LANE : -LANE); c.dirAxis={x:0,y:dir}; }
+    else { c.angle = dir<0? Math.PI : 0; c.y = y + (dir<0? -LANE : LANE); c.dirAxis={x:dir,y:0}; }
+    c.cruise = rr(120,175);
+    cars.push(c);
+  }
+  // 駐車車両（路肩寄せ：縦道路沿いは縦向き、横道路沿いは横向き）
+  const spots=[[234,1180,'v'],[966,640,'h'],[1534,1180,'v'],[2166,640,'h'],[2734,1180,'v'],[3366,640,'h'],[700,234,'h'],[1300,916,'h'],[2400,1466,'h']];
+  for(const [x,y,o] of spots){
+    if(cars.some(c=>dist(c.x,c.y,x,y)<70)) continue;
+    const ang = o==='v'? (Math.random()<.5? Math.PI/2 : -Math.PI/2) : (Math.random()<.5? 0 : Math.PI);
+    const c=makeCar(pick(['compact','sport','van']), x, y, ang, {ai:'parked', parked:true});
+    cars.push(c);
+  }
+}
+function spawnPeds(){
+  peds=[];
+  for(let i=0;i<42;i++){
+    let x=rr(80,3520), y=rr(80,2560), tries=0;
+    while((onRoad(x,y)||rectBlocked(x,y)) && tries++<20){ x=rr(80,3520); y=rr(80,2560); }
+    peds.push({ x,y, angle:rr(0,TAU), speed:rr(34,58), state:'walk', t:rr(0,4), col:pick(['#c96f4a','#4a7ec9','#6aa84f','#c9b458','#9a6ac9','#c94a6e','#58b0a8']),
+      report:null, down:0, passenger:false, riding:false });
+  }
+}
+/* ---------------- 入力 ---------------- */
+const keys={};
+let padState={ active:false };
+const touchIn={ x:0, y:0, mag:0, brake:false };
+window.addEventListener('keydown', e=>{
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
+  keys[e.code]=true; initAudio();
+  if(e.code==='AltLeft'||e.code==='AltRight'){ /* Alt+Enter handled below */ }
+  if(e.code==='Enter' && e.altKey){ toggleFullscreen(); }
+  if(e.code==='KeyM'){ muted=!muted; toast(muted?'🔇 音 OFF':'🔊 音 ON'); }
+  if((e.code==='Escape'||e.code==='KeyP') && G.mode==='play'){ togglePause(); }
+  if((e.code==='KeyF'||e.code==='KeyE') && G.mode==='play' && !G.paused && !phoneBusy) tryEnterExit();
+  if(e.code==='KeyJ' && G.mode==='play' && !G.paused && !phoneBusy) shoot();
+});
+window.addEventListener('keyup', e=>{ keys[e.code]=false; });
+window.addEventListener('pointerdown', initAudio, { once:false });
+function toggleFullscreen(){ const el=document.documentElement; if(document.fullscreenElement) document.exitFullscreen().catch(()=>{}); else el.requestFullscreen&&el.requestFullscreen().catch(()=>{}); }
+function readPad(){
+  padState={ active:false, x:0, y:0, brake:false, accel:false, act:false, shoot:false, start:false, bBtn:false, dUp:false, dDown:false, dLeft:false, dRight:false };
+  let gp=null;
+  try{ const ps=navigator.getGamepads?navigator.getGamepads():[]; for(const p of ps){ if(p&&p.connected){ gp=p; break; } } }catch(e){}
+  if(!gp) return padState;
+  padState.active=true;
+  let x=gp.axes[0]||0, y=gp.axes[1]||0;
+  const m=Math.hypot(x,y);
+  if(m<0.38){ x=0; y=0; } else { const s=(m-0.38)/(1-0.38)/m; x*=s; y*=s; }
+  padState.x=x; padState.y=y;
+  const b=i=>!!(gp.buttons[i]&&gp.buttons[i].pressed);
+  padState.brake = b(1)||b(6);
+  padState.accel = b(7);
+  padState.act = b(0); padState.shoot = b(2); padState.start = b(9);
+  padState.bBtn = b(1);
+  padState.dUp = b(12); padState.dDown = b(13); padState.dLeft = b(14); padState.dRight = b(15);
+  return padState;
+}
+let prevPad={ act:false, start:false, shoot:false };
+const smooth={ x:0, y:0 };
+function getMoveInput(){
+  let x=0,y=0;
+  if(keys['KeyA']||keys['ArrowLeft']) x-=1;
+  if(keys['KeyD']||keys['ArrowRight']) x+=1;
+  if(keys['KeyW']||keys['ArrowUp']) y-=1;
+  if(keys['KeyS']||keys['ArrowDown']) y+=1;
+  if(x||y){ const m=Math.hypot(x,y); x/=m; y/=m; }
+  const p=readPad();
+  if(p.x||p.y){ x=p.x; y=p.y; }
+  if(touchIn.mag>0.05){ x=touchIn.x; y=touchIn.y; }
+  // 平滑化（指数平滑）
+  const k = 1-Math.exp(-10*(1/60));
+  smooth.x += (x-smooth.x)*k; smooth.y += (y-smooth.y)*k;
+  let sx=smooth.x, sy=smooth.y;
+  // 主軸に小さい直交成分は切り捨て
+  if(Math.abs(sx)>Math.abs(sy)){ if(Math.abs(sy)<Math.abs(sx)*0.28) sy=0; }
+  else { if(Math.abs(sx)<Math.abs(sy)*0.28) sx=0; }
+  return { x:sx, y:sy, mag:Math.min(1,Math.hypot(sx,sy)), brake: !!(keys['Space']||p.brake||touchIn.brake), pad:p };
+}
+
+/* ---------------- 犯行・通報・手配 ---------------- */
+const reports=[]; // {ped, t, dur, type, x, y}
+function copSees(x,y,range,halfDeg){
+  range=range||430;
+  for(const cp of cops){
+    const d=dist(cp.x,cp.y,x,y);
+    if(d<78) return true;
+    if(d<range){
+      const a=Math.atan2(y-cp.y,x-cp.x);
+      if(Math.abs(angDiff(a,cp.angle))<(halfDeg||64)*DEG) return true;
+    }
+  }
+  return false;
+}
+function addStar(n){
+  const before=G.wanted;
+  G.wanted=clamp(G.wanted+n,0,3);
+  if(G.wanted>before){ G.hideTimer=0; toast('★ 手配度が上がった！ ★'+G.wanted); }
+}
+function crime(type,x,y){
+  // type: 'light' 軽い衝突 / 'theft' 盗難 / 'hitrun' ひき逃げ / 'copcrash' パトカー衝突 / 'gun' 発砲・傷害
+  if(type==='copcrash'){ addStar(1); return; }
+  if(copSees(x,y)){ addStar(1); return; }
+  // 近くの歩行者が通報
+  let best=null,bd=300;
+  for(const p of peds){
+    if(p.down>0||p.report||p.riding) continue;
+    const d=dist(p.x,p.y,x,y);
+    if(d<bd){ bd=d; best=p; }
+  }
+  if(!best) return; // 誰にも見られていない
+  if(reports.some(r=>r.ped===best)) return;
+  const rep={ ped:best, t:0, dur:3+Math.random()*2, type, x, y };
+  best.report=rep; best.state='report';
+  reports.push(rep);
+}
+function updateReports(dt){
+  for(let i=reports.length-1;i>=0;i--){
+    const r=reports[i]; r.t+=dt;
+    if(r.ped.down>0){ r.ped.report=null; r.ped.state='walk'; reports.splice(i,1); continue; }
+    if(r.t>=r.dur){
+      r.ped.report=null; r.ped.state='walk';
+      reports.splice(i,1);
+      if(r.type==='light'){
+        if(dist(player.x,player.y,r.x,r.y)>350){ /* 現場から離れた → 星なし */ }
+        else addStar(1);
+      } else addStar(1); // 盗難・ひき逃げ・発砲は確実に星
+    }
+  }
+}
+const COP_CAP=[0,1,3,5];
+function copSpawnPos(){
+  const diag=Math.hypot(VW,VH)/2;
+  const need=Math.max(diag+220, 850);
+  for(let t=0;t<40;t++){
+    const vert=Math.random()<.5; let x,y;
+    if(vert){ x=pick(VX); y=rr(120,WATER_Y-120); } else { y=pick(HZ); x=rr(120,3480); }
+    const d=dist(x,y,player.x,player.y);
+    const onScr = Math.abs(x-cam.x)<VW/2+40 && Math.abs(y-cam.y)<VH/2+40;
+    if(d>=need && !onScr) return {x,y};
+  }
+  return null;
+}
+let copSpawnT=0;
+function updateCops(dt){
+  const cap=COP_CAP[G.wanted];
+  // 離脱処理
+  for(const cp of cops){ cp.leaveMode = cops.length>cap && !cp.near; }
+  cops.sort((a,b)=>dist(b.x,b.y,player.x,player.y)-dist(a.x,a.y,player.x,player.y));
+  for(let i=cops.length-1;i>=0;i--){
+    const cp=cops[i];
+    cp.near = dist(cp.x,cp.y,player.x,player.y)<430;
+    if(cops.length>cap && i< cops.length-cap){ cp.leaveMode=true; }
+    if(cp.leaveMode && dist(cp.x,cp.y,player.x,player.y)>950){ cops.splice(i,1); continue; }
+  }
+  // 新規出現
+  copSpawnT-=dt;
+  if(G.wanted>0 && cops.length<cap && copSpawnT<=0){
+    copSpawnT=2.2;
+    const pos=copSpawnPos();
+    if(pos){ const c=makeCar('compact',pos.x,pos.y,rr(0,TAU),{ai:'cop',col:'#2b3442'}); c.cop=true; cops.push(c); }
+  }
+  if(G.wanted===0 && cops.length){ for(const cp of cops) cp.leaveMode=true; }
+  // 追跡AI
+  for(const cp of cops){
+    const tgt = cp.leaveMode? {x:cp.x+Math.cos(cp.angle)*300, y:cp.y+Math.sin(cp.angle)*300} : {x:player.x, y:player.y};
+    driveAI(cp, tgt, cp.leaveMode?150:265, dt, true);
+  }
+  // サイレン音量
+  let near=0; for(const cp of cops) near=Math.max(near, 1-clamp(dist(cp.x,cp.y,player.x,player.y)/700,0,1));
+  sfx.sirenSet(G.wanted>0? near*.06 : 0);
+  if(sirenOsc&&AC){ const t=AC.currentTime; sirenOsc.frequency.setValueAtTime(720+Math.sin(t*5.2)*180, t); }
+  // 逃げ切り判定
+  const px = player.car? player.car.x : player.x, py = player.car? player.car.y : player.y;
+  if(G.wanted>0){
+    if(!copSees(px,py,430,70) && !cops.some(c=>dist(c.x,c.y,px,py)<110)){
+      G.hideTimer+=dt;
+      const need = 11;
+      if(G.hideTimer>=need){ G.wanted--; G.hideTimer=0; toast(G.wanted>0?'やり過ごした… ★'+G.wanted:'★ 手配解除！ 逃げ切った'); if(G.wanted===0) onWantedCleared(); }
+    } else G.hideTimer=0;
+  }
+}
+function onWantedCleared(){
+  const m=G.mission;
+  if(m && m.def.type==='escape' && m.stage==='flee'){ completeMission(); }
+}
+
+/* 汎用AI運転（交通・パトカー） */
+function driveAI(c, target, maxSpd, dt, isCop){
+  const t=CAR_TYPES[c.type];
+  let desA=Math.atan2(target.y-c.y, target.x-c.x);
+  // 建物回避：正面が塞がれていたら道路軸方向へ寄せる
+  const fx=c.x+Math.cos(c.angle)*70, fy=c.y+Math.sin(c.angle)*70;
+  if(rectBlocked(fx,fy) || inWaterPoint(fx,fy)){
+    const rp=nearestRoadPoint(c.x,c.y);
+    desA=Math.atan2(rp.y-c.y+ (target.y-c.y)*.3, rp.x-c.x + (target.x-c.x)*.3);
+    if(dist(rp.x,rp.y,c.x,c.y)<14) desA=Math.atan2(target.y-c.y,target.x-c.x);
+  }
+  const dA=angDiff(desA,c.angle);
+  const turnRate=isCop?2.6:2.0;
+  c.angle += clamp(dA, -turnRate*dt, turnRate*dt);
+  let sp=speedOf(c);
+  const f=forwardOf(c);
+  let vf=c.vx*f.x+c.vy*f.y;
+  const want = Math.abs(dA)>1.9? maxSpd*.25 : maxSpd;
+  vf = lerp(vf, (c.revT>0? -90 : want), 1-Math.exp(-(c.revT>0?3:1.6)*dt));
+  if(c.revT>0) c.revT-=dt;
+  // 横滑り消去（一般車グリップ）
+  let lx=-f.y, ly=f.x;
+  let vl=c.vx*lx+c.vy*ly;
+  vl*=Math.exp(-5*dt);
+  c.vx=f.x*vf+lx*vl; c.vy=f.y*vf+ly*vl;
+  let nx=c.x+c.vx*dt, ny=c.y+c.vy*dt;
+  const col=collideCircle(nx,ny,20);
+  if(col.hit && isCop){ if(speedOf(c)<26){ c.stuckT+=dt; if(c.stuckT>.55){ c.revT=.7; c.stuckT=0; } } }
+  c.x=col.x; c.y=col.y;
+  if(!isCop){ c.x=clamp(c.x,20,WORLD.w-20); c.y=clamp(c.y,20,shoreYFor(c.x)-20); }
+}
+
+/* 交通AI */
+let signalT=0;
+function signalFor(axis){ // axis 'ns' or 'ew' → true=青
+  const ph=G.time%9;
+  if(axis==='ns') return ph<4;
+  return ph>=4.5&&ph<8.5;
+}
+function updateTraffic(dt){
+  for(const c of cars){
+    if(c.ai!=='traffic'||c===player.car) continue;
+    const f=forwardOf(c);
+    let stop=false;
+    // 信号：交差点手前
+    for(const cx of VX) for(const cy of HZ){
+      const aheadX=c.x+f.x*66, aheadY=c.y+f.y*66;
+      if(Math.abs(aheadX-cx)<40&&Math.abs(aheadY-cy)<40){
+        const axis = Math.abs(c.dirAxis.y)>0? 'ns':'ew';
+        if(!signalFor(axis)) stop=true;
+      }
+    }
+    // 前方車両
+    for(const o of cars.concat(cops)){
+      if(o===c||o.dead) continue;
+      const dx=o.x-c.x, dy=o.y-c.y, dd=dx*f.x+dy*f.y;
+      if(dd>0&&dd<64&&Math.abs(dx*(-f.y)+dy*f.x)<26){ stop=true; break; }
+    }
+    if(player.car&&player.car!==c){
+      const dx=player.car.x-c.x, dy=player.car.y-c.y, dd=dx*f.x+dy*f.y;
+      if(dd>0&&dd<64&&Math.abs(dx*(-f.y)+dy*f.x)<26) stop=true;
+    }
+    const target = stop?0:c.cruise;
+    let vf=c.vx*f.x+c.vy*f.y;
+    vf=lerp(vf,target,1-Math.exp(-(stop?5:1.1)*dt));
+    let lx=-f.y,ly=f.x, vl=(c.vx*lx+c.vy*ly)*Math.exp(-5*dt);
+    c.vx=f.x*vf+lx*vl; c.vy=f.y*vf+ly*vl;
+    // 交差点で進路変更
+    const ix=VX.find(v=>Math.abs(c.x-v)<26), iy=HZ.find(v=>Math.abs(c.y-v)<26);
+    if(ix!==undefined&&iy!==undefined&&!c.turnCd){
+      c.turnCd=1.6;
+      if(c.dirAxis.y>0 && iy===HZ[HZ.length-1]){
+        // 水際の交差点：南は水で行き止まりなので、必ず東西へ曲がる（水域へ進まない）
+        const dirX = ix<=VX[0]? 1 : ix>=VX[VX.length-1]? -1 : (Math.random()<.5?1:-1);
+        c.dirAxis={x:dirX, y:0};
+      } else if(Math.random()<.34){ // 右左折
+        const nd = Math.abs(c.dirAxis.y)>0? {x:(Math.random()<.5?1:-1),y:0} : {x:0,y:(Math.random()<.5?1:-1)};
+        c.dirAxis=nd;
+      }
+    }
+    if(c.turnCd) c.turnCd-=dt;
+    // 向きと車線へ寄せる
+    const desA=Math.atan2(c.dirAxis.y,c.dirAxis.x);
+    c.angle += clamp(angDiff(desA,c.angle), -2.2*dt, 2.2*dt);
+    if(Math.abs(c.dirAxis.y)>0){ const laneX=(VX.reduce((a,v)=>Math.abs(c.x-v)<Math.abs(c.x-a)?v:a,VX[0])) + (c.dirAxis.y<0? LANE : -LANE); c.x=lerp(c.x,laneX,1-Math.exp(-1.4*dt)); }
+    else { const laneY=(HZ.reduce((a,v)=>Math.abs(c.y-v)<Math.abs(c.y-a)?v:a,HZ[0])) + (c.dirAxis.x>0? LANE : -LANE); c.y=lerp(c.y,laneY,1-Math.exp(-1.4*dt)); }
+    const col=collideCircle(c.x+c.vx*dt, c.y+c.vy*dt, 20);
+    c.x=col.x; c.y=col.y;
+    if(c.x<30||c.x>WORLD.w-30||c.y<30||c.y>shoreYFor(c.x)-34){ // 端で反転（南端は水に入る手前で反転）
+      c.dirAxis.x*=-1; c.dirAxis.y*=-1;
+      c.x=clamp(c.x,40,WORLD.w-40); c.y=clamp(c.y,40,shoreYFor(c.x)-24);
+    }
+  }
+  // 遠くの交通車を掃除して補充
+  for(let i=cars.length-1;i>=0;i--){
+    const c=cars[i];
+    if(c.ai==='traffic'&&c!==player.car&&dist(c.x,c.y,player.x,player.y)>1500){ cars.splice(i,1); }
+  }
+  const trafficCount=cars.filter(c=>c.ai==='traffic').length;
+  if(trafficCount<13 && Math.random()<dt*.7){
+    const pos=copSpawnPos();
+    if(pos){
+      const vert=VX.includes(pos.x);
+      const dir=Math.random()<.5?-1:1;
+      const c=makeCar(pick(['compact','compact','sport','van']),pos.x,pos.y,0,{ai:'traffic'});
+      if(vert){ c.dirAxis={x:0,y:dir}; c.x+= dir<0?LANE:-LANE; } else { c.dirAxis={x:dir,y:0}; c.y+= dir<0?-LANE:LANE; }
+      c.cruise=rr(120,175); cars.push(c);
+    }
+  }
+}
+
+/* 歩行者AI */
+function updatePeds(dt){
+  for(const p of peds){
+    if(p.riding) continue;
+    if(p.down>0){ p.down-=dt; continue; }
+    if(p.report){ continue; } // 通報中は静止
+    p.t-=dt;
+    // 車から逃げる
+    let flee=null;
+    for(const c of cars.concat(cops)){
+      if(c.dead) continue;
+      const sp=speedOf(c);
+      if(sp>55 && dist(c.x,c.y,p.x,p.y)<95){ flee=c; break; }
+    }
+    if(player.car&&speedOf(player.car)>55&&dist(player.car.x,player.car.y,p.x,p.y)<95) flee=player.car;
+    if(flee){
+      const a=Math.atan2(p.y-flee.y,p.x-flee.x);
+      p.angle=a; p.x+=Math.cos(a)*150*dt; p.y+=Math.sin(a)*150*dt;
+      const col=collideCircle(p.x,p.y,8); p.x=col.x; p.y=col.y;
+      continue;
+    }
+    if(p.passenger && (G.mission||G.sideJob) && (G.mission||G.sideJob).stage==='pickupWait'){
+      // 車が近くで停まっていたら乗り込む
+      const pc=player.car;
+      if(pc&&speedOf(pc)<14&&dist(pc.x,pc.y,p.x,p.y)<70){
+        p.x=lerp(p.x,pc.x,1-Math.exp(-4*dt)); p.y=lerp(p.y,pc.y,1-Math.exp(-4*dt));
+        if(dist(pc.x,pc.y,p.x,p.y)<24){ p.riding=true; onPassengerAboard(); }
+      }
+      continue;
+    }
+    if(p.t<=0){ p.t=rr(2,6); p.angle=rr(0,TAU); }
+    let nx=p.x+Math.cos(p.angle)*p.speed*dt, ny=p.y+Math.sin(p.angle)*p.speed*dt;
+    if(onRoad(nx,ny)&&!nearIntersection(nx,ny,90)){ p.angle+=Math.PI*.9; nx=p.x; ny=p.y; }
+    const col=collideCircle(nx,ny,8);
+    if(col.hit) p.angle+=rr(2,4);
+    p.x=col.x; p.y=col.y;
+  }
+}
+/* ---------------- プレイヤー運転 ---------------- */
+const driveState={ snapped:false, snapAxis:0 };
+function roadAxisInfo(x,y){
+  // 現在いる道路の軸と中心を返す
+  const vx=VX.find(c=>Math.abs(x-c)<=ROAD_W/2);
+  const hz=HZ.find(c=>Math.abs(y-c)<=ROAD_W/2);
+  if(vx!==undefined&&hz!==undefined) return { intersection:true };
+  if(vx!==undefined) return { axis:'v', center:vx };
+  if(hz!==undefined) return { axis:'h', center:hz };
+  return null;
+}
+function updatePlayerCar(dt){
+  const c=player.car; if(!c) return;
+  const t=CAR_TYPES[c.type];
+  const inp=getMoveInput();
+  const f=forwardOf(c);
+  let vf=c.vx*f.x+c.vy*f.y;
+  let lx=-f.y, ly=f.x;
+  let vl=c.vx*lx+c.vy*ly;
+  vl*=Math.exp(-10*dt); // プレイヤー車グリップ（一般車の約2倍の速さで横滑り消去）
+  const info=roadAxisInfo(c.x,c.y);
+  const assistLv=settings.assist;
+  const assistPow=[0,.55,1,1.5][assistLv];
+  let steeringHard=false;
+
+  if(settings.scheme==='screen'){
+    if(inp.mag>0.04){
+      const wantA=Math.atan2(inp.y,inp.x);
+      const dA=angDiff(wantA,c.angle);
+      steeringHard=Math.abs(dA)>42*DEG;
+      // 直進スナップ
+      const [acq,rel]=SNAP[assistLv];
+      let targetA=wantA;
+      if(info&&!info.intersection){
+        const axes = info.axis==='v'? [-Math.PI/2, Math.PI/2] : [0, Math.PI];
+        let bestAxis=null,bd=1e9;
+        for(const a of axes){ const d=Math.abs(angDiff(a,wantA)); if(d<bd){bd=d;bestAxis=a;} }
+        if(driveState.snapped){
+          if(bd>rel*DEG) driveState.snapped=false;
+          else targetA=driveState.snapAxis;
+        }
+        if(!driveState.snapped && bd<acq*DEG){ driveState.snapped=true; driveState.snapAxis=bestAxis; targetA=bestAxis; }
+        if(driveState.snapped) targetA=driveState.snapAxis;
+      } else driveState.snapped=false;
+      // 回頭：指数接近（行き過ぎなし）＋角度差で減速
+      const dd=angDiff(targetA,c.angle);
+      const k=(1-Math.exp(-5.2*dt));
+      c.angle += dd*k;
+      // ドライブアシスト（車線寄せ：少し舵を切って寄る）
+      if(info&&!info.intersection&&vf>30&&!steeringHard&&assistPow>0){
+        const heading = info.axis==='v'? (Math.sin(c.angle)>0?1:-1) : (Math.cos(c.angle)>0?1:-1);
+        let laneC;
+        if(info.axis==='v') laneC=info.center + (Math.sin(c.angle)<0? LANE : -LANE);
+        else laneC=info.center + (Math.cos(c.angle)>0? LANE : -LANE);
+        const err = info.axis==='v'? laneC-c.x : laneC-c.y;
+        if(Math.abs(err)>3){
+          // 少し舵を切って寄る：直交方向の速度成分を小さく与える（符号は横方向ベクトルに合わせる）
+          const sgn = info.axis==='v'? Math.sign(lx||1) : Math.sign(ly||1);
+          vl += Math.sign(err)*26*assistPow*dt*sgn;
+          vl=clamp(vl,-46,46);
+        }
+      }
+      // 速度：入力方向への加速
+      const targetVf = t.max*inp.mag * (Math.abs(dd)>2.4? .35 : Math.abs(dd)>1.2? .6 : 1);
+      vf = lerp(vf, targetVf, 1-Math.exp(-(vf<targetVf?2.4:3.2)*dt));
+    } else {
+      driveState.snapped=false;
+      vf = lerp(vf, 0, 1-Math.exp(-2.2*dt)); // 離すと減速
+    }
+    if(inp.brake){
+      if(vf>8) vf=lerp(vf,0,1-Math.exp(-7*dt));
+      else vf=lerp(vf,-95,1-Math.exp(-2.6*dt)); // 停止後はバック
+    }
+  } else {
+    /* 車基準（GTA式） */
+    let steer=0;
+    if(keys['ArrowLeft']||keys['KeyA']) steer-=1;
+    if(keys['ArrowRight']||keys['KeyD']) steer+=1;
+    if(inp.pad.x) steer=inp.pad.x;
+    if(touchIn.mag>0.1) steer=clamp(touchIn.x*1.4,-1,1);
+    driveState.steerS = lerp(driveState.steerS||0, steer, 1-Math.exp(-9*dt));
+    const spdF=clamp(Math.abs(vf)/120,0,1);
+    c.angle += driveState.steerS * 2.1 * dt * spdF * (vf<0?-1:1);
+    let throttle=0;
+    if(keys['ArrowUp']||keys['KeyW']||inp.pad.accel) throttle=1;
+    if(throttle) vf=lerp(vf,t.max,1-Math.exp(-1.9*dt));
+    else if(inp.brake||keys['ArrowDown']||keys['KeyS']){
+      if(vf>8) vf=lerp(vf,0,1-Math.exp(-7*dt));
+      else vf=lerp(vf,-95,1-Math.exp(-2.6*dt));
+    } else vf=lerp(vf,0,1-Math.exp(-1.1*dt));
+    steeringHard=Math.abs(driveState.steerS)>.75;
+    // 車基準でもアシスト＆スナップ（弱めに横寄せ）
+    if(info&&!info.intersection&&vf>30&&assistPow>0&&!steeringHard){
+      let laneC;
+      if(info.axis==='v') laneC=info.center + (Math.sin(c.angle)<0? LANE : -LANE);
+      else laneC=info.center + (Math.cos(c.angle)>0? LANE : -LANE);
+      const err = info.axis==='v'? laneC-c.x : laneC-c.y;
+      if(Math.abs(err)>3){ const sgn = info.axis==='v'? Math.sign(lx||1) : Math.sign(ly||1); vl += Math.sign(err)*20*assistPow*dt*sgn; vl=clamp(vl,-40,40); }
+    }
+  }
+  c.vx=f.x*vf+lx*vl; c.vy=f.y*vf+ly*vl;
+  // 移動と衝突
+  const prevSpd=speedOf(c);
+  let nx=c.x+c.vx*dt, ny=c.y+c.vy*dt;
+  const col=collideCircle(nx,ny,21);
+  if(col.hit){
+    const impact=prevSpd;
+    if(impact>120){ damageCar(c, (impact-110)*.09, true); if(impact>200) hurtPlayer(4); }
+    else if(impact>40){ damageCar(c, 1.2, false); }
+    c.vx*=.25; c.vy*=.25;
+  }
+  c.x=col.x; c.y=col.y;
+  // 車同士・歩行者との衝突
+  carCarCollisions(c, dt, true);
+  player.x=c.x; player.y=c.y;
+  // 対象車両ミッションのダメージ監視（本編・小口共通。上限は def.dmgLimit%、未指定は55%）
+  const m=G.mission||G.sideJob;
+  if(m&&(m.def.type==='recover'||m.def.type==='final')&&m.stage==='deliver'&&player.car===m.targetCar){
+    m.dmgPct = 100 - (c.hp/c.maxHp*100);
+    const lim = (m.def.dmgLimit!=null? m.def.dmgLimit : 55);
+    if(m.dmgPct>=lim){ failMission(m.def.type==='final' ? '大仕事の車が傷つきすぎた（上限 '+lim+'%）' : '対象車両の傷が上限を超えた（'+m.dmgPct.toFixed(0)+'% / 上限 '+lim+'%）'); }
+    else if(c.hp<=0){ failMission('対象車両が大破した'); }
+  }
+}
+function damageCar(c, dmg, hard){
+  if(c.dead) return;
+  c.hp-=dmg;
+  if(hard) sfx.crash(true); else if(dmg>0) sfx.crash(false);
+  if(c.hp<=0){ c.hp=0; c.dead=true; c.smoke=1; }
+  else if(c.hp<c.maxHp*.35) c.smoke=.5;
+}
+function carCarCollisions(c, dt, isPlayerCar){
+  const all=cars.concat(cops);
+  for(const o of all){
+    if(o===c||o.dead) continue;
+    const d=dist(c.x,c.y,o.x,o.y);
+    if(d<42&&d>0){
+      const sp=speedOf(c);
+      const push=(42-d)/2;
+      const ux=(c.x-o.x)/d, uy=(c.y-o.y)/d;
+      c.x+=ux*push; c.y+=uy*push;
+      if(isPlayerCar){
+        if(sp>90){
+          damageCar(c,(sp-70)*.06,true);
+          damageCar(o,(sp-70)*.05,false);
+          if(o.cop) crime('copcrash', c.x, c.y);
+          else crime(sp>210?'light':'light', c.x, c.y);
+        } else if(sp>34){ damageCar(o,.6,false); crime('light', c.x, c.y); }
+      }
+    }
+  }
+  // 歩行者ひき逃げ
+  if(isPlayerCar){
+    const sp=speedOf(c);
+    if(sp>40){
+      for(const p of peds){
+        if(p.down>0||p.riding) continue;
+        if(dist(c.x,c.y,p.x,p.y)<24){
+          p.down=6; sfx.crash(true);
+          crime('hitrun', p.x, p.y);
+          hurtPlayer(0);
+        }
+      }
+    }
+  }
+}
+function hurtPlayer(n){ player.hp=clamp(player.hp-n,0,100); if(player.hp<=0) goHospital(); }
+
+/* 徒歩 */
+function updateOnFoot(dt){
+  const inp=getMoveInput();
+  if(inp.mag>0.04){
+    player.x+=inp.x*158*dt; player.y+=inp.y*158*dt;
+    player.face=Math.atan2(inp.y,inp.x); player.walkPh+=dt*10;
+  }
+  const col=collideCircle(player.x,player.y,10);
+  player.x=col.x; player.y=col.y;
+  // 車にひかれる（交通車）
+  for(const c of cars){
+    if(c.ai==='traffic'&&speedOf(c)>120&&dist(c.x,c.y,player.x,player.y)<26){ hurtPlayer(9); player.x+= (player.x-c.x)*.4; }
+  }
+  // 体力自然回復（手配なし時）
+  player.regenT+=dt;
+  if(G.wanted===0&&player.regenT>2){ player.hp=clamp(player.hp+3*dt,0,100); }
+}
+function tryEnterExit(){
+  if(player.car){
+    const c=player.car;
+    player.x=c.x+Math.cos(c.angle+Math.PI/2)*30; player.y=c.y+Math.sin(c.angle+Math.PI/2)*30;
+    const col=collideCircle(player.x,player.y,10); player.x=col.x; player.y=col.y;
+    c.parked=true; c.wasPlayerCar=true; if(c.ai==='traffic') c.ai='parked';
+    player.car=null; sfx.door();
+    return;
+  }
+  let best=null,bd=64;
+  for(const c of cars.concat(cops)){
+    if(c.dead) continue;
+    const d=dist(c.x,c.y,player.x,player.y);
+    if(d<bd){ bd=d; best=c; }
+  }
+  if(best){
+    const wasParked = best.ai==='parked'||best.parked;
+    const isCopCar = !!best.cop;
+    if(best.ai==='traffic'){ // 走行中の車を奪う
+      crime('theft', best.x, best.y);
+    } else if(wasParked && !best.stolen && !best.wasPlayerCar){
+      crime('theft', best.x, best.y);
+    }
+    if(isCopCar) crime('theft', best.x, best.y);
+    best.stolen=true; best.parked=false; best.ai=null;
+    if(best.cop){ cops.splice(cops.indexOf(best),1); best.cop=false; }
+    player.car=best; player.x=best.x; player.y=best.y;
+    driveState.snapped=false;
+    sfx.door();
+    // 回収ミッション：対象車に乗った（本編・小口共通）
+    const m=G.mission||G.sideJob;
+    if(m&&(m.def.type==='recover'||m.def.type==='final')&&m.stage==='steal'&&best===m.targetCar){
+      m.stage='deliver'; m.dmgPct=0;
+      sfx.pickup();
+      if(m.def.type==='final'){
+        G.wanted=Math.max(G.wanted, m.def.wantedOnSteal||3); G.hideTimer=0;
+        toast('大仕事の車を確保！ ★'+G.wanted+' ― 追跡を振り切るか、そのまま港へ届けろ！', 3400);
+      } else if(G.sideJob===m){
+        toast('車を確保！ 傷つけずにガレージへ届けろ');
+      } else {
+        toast('車を確保！ 傷つけずに届け先へ運べ');
+      }
+    }
+  }
+}
+function shoot(){
+  if(player.car||!G.hasGun) return;
+  sfx.shot();
+  const a=player.face, range=280;
+  let hitPed=null;
+  for(const p of peds){
+    if(p.down>0) continue;
+    const d=dist(player.x,player.y,p.x,p.y);
+    if(d<range&&Math.abs(angDiff(Math.atan2(p.y-player.y,p.x-player.x),a))<.16){ hitPed=p; break; }
+  }
+  if(hitPed){ hitPed.down=8; crime('gun', hitPed.x, hitPed.y); }
+  else crime('gun', player.x+Math.cos(a)*60, player.y+Math.sin(a)*60);
+}
+
+/* 逮捕・入院 */
+function updateArrest(dt){
+  let nearCop=false;
+  if(G.wanted>0){
+    const sp = player.car? speedOf(player.car):0;
+    for(const cp of cops){ if(dist(cp.x,cp.y,player.x,player.y)<58){ nearCop=true; break; } }
+    if(nearCop && sp<26){ G.arrest+=dt/2.3; } else G.arrest=Math.max(0,G.arrest-dt*.7);
+  } else G.arrest=0;
+  if(G.arrest>=1) doArrest();
+}
+/* 仕事の中断時の後片付け：対象車の除去と客（歩行者）の解放 */
+function cleanupJob(m){
+  if(!m) return;
+  if(m.targetCar && player.car!==m.targetCar){ const i=cars.indexOf(m.targetCar); if(i>=0) cars.splice(i,1); }
+  for(const p of peds){ if(p.passenger){ p.passenger=false; if(p.riding){ p.riding=false; p.x=player.x+26; p.y=player.y+14; const cc=collideCircle(p.x,p.y,8); p.x=cc.x; p.y=cc.y; } p.state='walk'; } }
+}
+function doArrest(){
+  G.arrest=0; G.wanted=0; cops.length=0; reports.length=0;
+  const fine=Math.min(G.money, 100);
+  G.money-=fine;
+  const lostGun=G.hasGun; G.hasGun=false;
+  if(G.sideJob){ cleanupJob(G.sideJob); G.sideJob=null; }
+  if(G.mission) failMissionSilent('逮捕された');
+  player.car=null;
+  player.x=1500; player.y=985; player.hp=Math.max(player.hp,60);
+  bigMsg('逮捕された', '罰金 $'+fine+(lostGun?' ／ 銃を没収された':'')+' ― 警察署前から再開');
+  writeSave();
+  updatePhoneUI();
+}
+function goHospital(){
+  if(G.dead) return; G.dead=true;
+  const fee=Math.min(G.money,80);
+  G.money-=fee;
+  if(G.sideJob){ cleanupJob(G.sideJob); G.sideJob=null; }
+  if(G.mission) failMissionSilent('病院送りになった');
+  G.wanted=0; cops.length=0; reports.length=0; G.arrest=0;
+  player.car=null; player.hp=100;
+  player.x=620; player.y=985;
+  bigMsg('病院送り', '医療費 $'+fee+' ― 病院前から再開');
+  setTimeout(()=>{ G.dead=false; }, 600);
+  writeSave();
+  updatePhoneUI();
+}
+function failMissionSilent(reason){
+  if(!G.mission) return;
+  const m=G.mission;
+  cleanupJob(m);
+  G.mission=null; G.pendingCall=true; G.callTimer=6;
+  toast('ミッション失敗：'+reason+'（受け直せる）');
+  sfx.fail();
+}
+/* ---------------- ミッション定義（全12本：本番Bで後半6本を追加し完成） ----------------
+   任意フィールド: wanted（逃走の初期星）/ wantedOnSteal（最終：確保時の星）/
+   carType・carCol（回収対象車）/ dmgLimit（許容ダメージ%、未指定55）/ vip（大物の送迎）/
+   stops（連続配達の配達先配列。dest は最終地点として併記） */
+const MISSIONS=[
+ { ch:1, title:'はじめての配達', type:'delivery', reward:120, time:80,
+   phone:'よお、ヴィンスだ。最初の仕事は簡単だ。住宅街の路地に置いた荷物を拾って、ダウンタウンの裏口まで届けろ。時間内に頼む。',
+   pickup:{x:863,y:1560}, dest:{x:1240,y:813}, pickupName:'荷物', destName:'ダウンタウンの裏口' },
+ { ch:1, title:'送迎', type:'taxi', reward:180, time:150,
+   phone:'客を一人、迎えに行ってくれ。ダウンタウンのホテル前にいる。乗せたら住宅街の家まで送ってやれ。',
+   pickup:{x:1830,y:887}, dest:{x:560,y:1913}, pickupName:'客の待つ場所', destName:'送り先の家' },
+ { ch:1, title:'港への配達', type:'delivery', reward:260, time:170,
+   phone:'次は港だ。荷物を拾って、港湾地区の倉庫まで運べ。少し距離があるぞ。',
+   pickup:{x:937,y:1180}, dest:{x:2663,y:2240}, pickupName:'荷物', destName:'港の倉庫' },
+ { ch:1, title:'車両回収', type:'recover', reward:320, time:210,
+   phone:'工業地区に金色のスポーツ車が止まってる。ウチの客の車だ。盗んで…いや「回収」して、ガレージまで傷つけずに届けろ。傷が多すぎると失敗だ。',
+   carPos:{x:2380,y:887}, dest:{x:2250,y:1470}, destName:'ガレージ' },
+ { ch:2, title:'逃走', type:'escape', reward:400, time:0, wanted:2,
+   phone:'中堅の仕事だ。…悪いな、これは罠じゃなく試練だ。いま警察にマークさせた。この電話が切れたら★2が付く。星を全部消せ。消せたら一人前だ。',
+   destName:'星を全部消す' },
+ { ch:2, title:'長距離配達', type:'delivery', reward:520, time:115,
+   phone:'急ぎの荷物だ。ダウンタウンで受け取って、港まで一気に運べ。制限時間は厳しい。信号なんか守ってる場合じゃないぞ。',
+   pickup:{x:1240,y:813}, dest:{x:2737,y:2240}, pickupName:'荷物', destName:'港の倉庫' },
+ { ch:2, title:'遠距離回収', type:'recover', reward:580, time:240, dmgLimit:45, carType:'sport', carCol:'#7fa3c0',
+   phone:'中堅の本領だ。工業地区の東の外れに、水色のスポーツ車が止まってる。距離は長いぞ。回収してガレージまで届けろ。傷は45%までだ、それを超えたら買い取りになると思え。',
+   carPos:{x:3263,y:887}, dest:{x:2250,y:1470}, destName:'ガレージ' },
+ { ch:2, title:'逃走・本番', type:'escape', reward:650, time:0, wanted:3,
+   phone:'中堅卒業試験だ。今度は本気でマークさせた。電話が切れたら★3だ。パトカー総出だぞ。全部消せたら、第3章――幹部候補の仕事を回してやる。',
+   destName:'星を全部消す' },
+ { ch:3, title:'大物の送迎', type:'taxi', reward:750, time:110, vip:true,
+   phone:'幹部候補の仕事は格が違う。ダウンタウンのホテル前に、大物の客が待ってる。港湾の倉庫まで送り届けろ。時間は厳しい。…ただし、乗せてる間は荒い運転はするなよ。ぶつけまくると機嫌を損ねる。丁寧に、速く、だ。',
+   pickup:{x:1537,y:887}, dest:{x:2737,y:2380}, pickupName:'大物の客の待つ場所', destName:'港湾の倉庫' },
+ { ch:3, title:'無傷の回収', type:'recover', reward:900, time:240, dmgLimit:20, carType:'sport', carCol:'#b0403c',
+   phone:'赤いスポーツ車を回収してくれ。場所は北西の住宅街寄りだ。条件は厳しい――ほぼ無傷でガレージまでだ。傷20%を超えたら失敗と思え。ぶつけるな、擦るな、息をするように運転しろ。',
+   carPos:{x:863,y:487}, dest:{x:2250,y:1470}, destName:'ガレージ' },
+ { ch:3, title:'連続配達', type:'multi', reward:950, time:300,
+   phone:'配達を3件、まとめて頼む。荷物はダウンタウンで積め。届け先は3か所――ダウンタウン南、住宅街、最後は港の倉庫だ。順番に回れ。制限時間は全体でひとつだけだぞ。',
+   pickup:{x:1240,y:813}, pickupName:'荷物',
+   stops:[{x:2137,y:1437,name:'配達先 1/3・ダウンタウン南'},{x:863,y:1913,name:'配達先 2/3・住宅街'},{x:2663,y:2240,name:'配達先 3/3・港の倉庫'}],
+   dest:{x:2663,y:2240}, destName:'配達先 3/3・港の倉庫' },
+ { ch:3, title:'大仕事', type:'final', reward:1600, time:300, dmgLimit:55, carType:'sport', carCol:'#2e3138', wantedOnSteal:3,
+   phone:'最後の大仕事だ。北西に止めてある黒いスポーツ車に、例の荷物が積んである。その車を回収して、港湾の納品先まで届けろ。ただし――車に手を付けた瞬間、警察が本気で来る。★3の追跡付きだ。追跡を振り切ってから届けても、そのまま押し切ってもいい。届ければ、あんたは幹部候補として認められる。',
+   carPos:{x:337,y:487}, dest:{x:2737,y:2380}, destName:'港湾の納品先' },
+];
+const CHAPTER_NAMES={1:'第1章「下っ端」',2:'第2章「中堅」',3:'第3章「幹部候補」'};
+let phoneBusy=false;
+
+function currentDest(){
+  const m=G.mission||G.sideJob; if(!m) return null;
+  if(m.def.type==='escape') return null;
+  if(m.stage==='pickupWait') return {x:m.def.pickup.x,y:m.def.pickup.y,name:m.def.pickupName};
+  if(m.stage==='pickup'||m.stage==='steal') return m.stage==='steal'? {x:m.targetCar.x,y:m.targetCar.y,name:'対象車両'} : {x:m.def.pickup.x,y:m.def.pickup.y,name:m.def.pickupName};
+  if(m.def.type==='multi' && m.def.stops){ const s=m.def.stops[clamp(m.stopIdx||0,0,m.def.stops.length-1)]; return {x:s.x,y:s.y,name:s.name}; }
+  return {x:m.def.dest.x,y:m.def.dest.y,name:m.def.destName};
+}
+function spawnTargetCar(def){
+  const c=makeCar(def.carType||'sport', def.carPos.x, def.carPos.y, roadAxisAngle(def.carPos.x, def.carPos.y), {ai:'parked', parked:true, col:def.carCol||'#d8a92c', targetCar:true});
+  cars.push(c); return c;
+}
+function startMission(idx){
+  const orig=MISSIONS[idx];
+  // 開始時に毎回、全ポイントの到達可能性を検証し、solid内なら道路際へずらす（元定義は書き換えない）
+  const def=Object.assign({}, orig);
+  if(def.pickup) def.pickup=resolveMissionPoint(def.pickup.x, def.pickup.y, 24);
+  if(def.dest) def.dest=resolveMissionPoint(def.dest.x, def.dest.y, 24);
+  if(def.carPos) def.carPos=resolveMissionPoint(def.carPos.x, def.carPos.y, 28);
+  if(def.stops) def.stops=def.stops.map(s=>{ const p=resolveMissionPoint(s.x, s.y, 24); return {x:p.x, y:p.y, name:s.name}; });
+  const m={ def, idx, stage:'pickup', timeLeft:def.time||0, targetCar:null, dmgPct:0, stopIdx:0, warnT:0 };
+  if(def.type==='delivery'||def.type==='multi') m.stage='pickup';
+  if(def.type==='taxi') m.stage='pickup';
+  if(def.type==='recover'||def.type==='final'){
+    m.stage='steal';
+    m.targetCar=spawnTargetCar(def);
+  }
+  if(def.type==='escape'){ m.stage='flee'; }
+  G.mission=m; G.sideJob=null;
+  bigMsg(CHAPTER_NAMES[def.ch]+' ― '+def.title,
+    def.type==='escape'? '警察から逃げ切れ！' :
+    def.type==='final'? '大仕事の車を回収し、港湾へ届けろ' :
+    def.type==='multi'? '荷物を積んで、配達先を3か所回れ' : '目的地へ向かえ');
+  if(def.type==='escape'){ const w=def.wanted||2; G.wanted=w; G.hideTimer=0; toast('★'+w+' が付いた！ 逃げ切れ'); }
+}
+function showEnding(){
+  G.cleared=true; G.ending=true;
+  writeSave();
+  el('endingStats').textContent='全12ミッション達成 ／ 所持金 $'+G.money.toLocaleString()+' ― このあともロングショアで自由に走れます';
+  el('endingScr').classList.add('on');
+  uiFocus.index=0; uiFocus.sig=''; syncUIFocus();
+  refreshTitle();
+}
+function completeMission(){
+  const m=G.mission; if(!m) return;
+  const isFinal = (m.idx===MISSIONS.length-1);
+  G.money+=m.def.reward;
+  G.missionsDone=Math.max(G.missionsDone, m.idx+1);
+  if(isFinal) G.cleared=true;
+  // 客を降ろす（乗車中なら現在地の脇に降ろす）
+  for(const p of peds){ if(p.passenger||p.riding){ if(p.riding){ p.x=player.x+24; p.y=player.y+12; const cc=collideCircle(p.x,p.y,8); p.x=cc.x; p.y=cc.y; } p.passenger=false; p.riding=false; p.state='walk'; } }
+  bigMsg(isFinal? '大仕事 完了！' : 'ミッション完了！', m.def.title+' ― 報酬 $'+m.def.reward);
+  sfx.reward();
+  G.mission=null;
+  writeSave();
+  if(isFinal){
+    setTimeout(()=>{ if(G.mode==='play') showEnding(); }, 1600);
+  } else if(G.missionsDone>=MISSIONS.length){
+    setTimeout(()=>toast('全ミッションはクリア済み。フリーロームで遊べます'), 2600);
+  } else { G.pendingCall=true; G.callTimer=7; }
+  updatePhoneUI();
+}
+function completeSideJob(m){
+  G.money+=m.def.reward;
+  for(const p of peds){ if(p.passenger||p.riding){ if(p.riding){ p.x=player.x+24; p.y=player.y+12; const cc=collideCircle(p.x,p.y,8); p.x=cc.x; p.y=cc.y; } p.passenger=false; p.riding=false; p.state='walk'; } }
+  bigMsg('小口仕事 完了', m.def.title+' ― 報酬 $'+m.def.reward);
+  sfx.reward();
+  G.sideJob=null; writeSave(); updatePhoneUI();
+}
+function failMission(reason){
+  if(!G.mission&&!G.sideJob) return;
+  if(G.sideJob){ const sj=G.sideJob; cleanupJob(sj); G.sideJob=null; bigMsg('小口仕事 失敗', reason); sfx.fail(); updatePhoneUI(); return; }
+  bigMsg('ミッション失敗', reason+' ― 電話から受け直せる');
+  sfx.fail();
+  const m=G.mission;
+  if(m) cleanupJob(m);
+  G.mission=null; G.pendingCall=true; G.callTimer=5;
+  updatePhoneUI();
+}
+function onPassengerAboard(){
+  const m=G.mission||G.sideJob; if(!m) return;
+  m.stage='deliver';
+  if(m.def.vip) toast('大物の客が乗った！ 荒い運転は控えめに、港湾へ急げ', 3400);
+  else toast('客が乗った！ 目的地へ送れ');
+  sfx.pickup();
+}
+const SIDE_SPOTS=[[863,1560],[1240,813],[1830,887],[560,1913],[2663,2240],[937,1180],[2737,2240],[2380,1913],[700,813],[3263,1100],[1537,1437],[2137,1913]];
+function startSideJob(){
+  const kind=pick(['delivery','delivery','taxi','recover']); // 配達を少し多めに、送迎・回収も混ざる
+  let a=pick(SIDE_SPOTS), b=pick(SIDE_SPOTS), guard=0;
+  while(dist(a[0],a[1],b[0],b[1])<700&&guard++<12) b=pick(SIDE_SPOTS);
+  let def=null;
+  if(kind==='taxi'){
+    const d=dist(a[0],a[1],b[0],b[1]);
+    def={ ch:0, title:'小口送迎', type:'taxi', reward:Math.round(60+d*.055), time:Math.round(d/15)+45,
+      pickup:{x:a[0],y:a[1]}, dest:{x:b[0],y:b[1]}, pickupName:'客の待つ場所', destName:'送り先' };
+  } else if(kind==='recover'){
+    const gp={x:2250,y:1470};
+    const d=dist(a[0],a[1],gp.x,gp.y);
+    def={ ch:0, title:'小口回収', type:'recover', reward:Math.round(90+d*.06), time:Math.round(d/14)+55, dmgLimit:45,
+      carType:pick(['compact','sport','van']), carCol:null,
+      carPos:{x:a[0],y:a[1]}, dest:{x:gp.x,y:gp.y}, destName:'ガレージ' };
+    if(!def.carCol){ const t=CAR_TYPES[def.carType]; def.carCol=t.cols[Math.floor(Math.random()*t.cols.length)]; }
+  } else {
+    const d=dist(a[0],a[1],b[0],b[1]);
+    def={ ch:0, title:'小口配達', type:'delivery', reward:Math.round(40+d*.045), time:Math.round(d/16)+35,
+      pickup:{x:a[0],y:a[1]}, dest:{x:b[0],y:b[1]}, pickupName:'荷物', destName:'配達先' };
+  }
+  if(def.pickup) def.pickup=resolveMissionPoint(def.pickup.x, def.pickup.y, 24);
+  if(def.dest) def.dest=resolveMissionPoint(def.dest.x, def.dest.y, 24);
+  if(def.carPos) def.carPos=resolveMissionPoint(def.carPos.x, def.carPos.y, 28);
+  const job={ def, idx:-1, stage:(def.type==='recover'?'steal':'pickup'), timeLeft:def.time, targetCar:null, dmgPct:0, stopIdx:0, warnT:0 };
+  if(def.type==='recover') job.targetCar=spawnTargetCar(def);
+  G.sideJob=job;
+  toast(def.title+'：'+(def.type==='recover'?'指定車を回収してガレージへ':def.type==='taxi'?'客を迎えに行って送り届けろ':'荷物を拾って配達先へ')+'（報酬 $'+def.reward+'）', 3200);
+  sfx.pickup();
+  updatePhoneUI();
+}
+function updateMission(dt){
+  const m=G.mission||G.sideJob; if(!m) return;
+  if(m.warnT>0) m.warnT-=dt;
+  if(m.timeLeft>0){
+    m.timeLeft-=dt;
+    if(m.timeLeft<=0){ failMission('時間切れ'); return; }
+  }
+  const px=player.x, py=player.y;
+  if(m.stage==='pickup'){
+    if(dist(px,py,m.def.pickup.x,m.def.pickup.y)<46){
+      if(m.def.type==='taxi'){
+        m.stage='pickupWait';
+        let p=peds.find(p=>!p.riding&&p.down<=0&&!p.report);
+        if(!p) p=peds[0];
+        if(p){ p.passenger=true; p.riding=false; p.x=m.def.pickup.x+16; p.y=m.def.pickup.y+10; p.state='wait'; const cc=collideCircle(p.x,p.y,8); p.x=cc.x; p.y=cc.y; }
+        toast('客が近づいてくる。車を止めて待て');
+      } else {
+        m.stage='deliver'; m.stopIdx=0; toast(m.def.type==='multi'?'荷物を積んだ！ 配達先 1/3 へ急げ':'荷物を積んだ！ 配達先へ急げ'); sfx.pickup();
+      }
+    }
+  } else if(m.stage==='deliver'){
+    const dest=currentDest(); if(!dest) return;
+    const arrived = dist(px,py,dest.x,dest.y)<52;
+    if(arrived){
+      if(m.def.type==='recover'||m.def.type==='final'){
+        if(player.car===m.targetCar){
+          if(G.sideJob===m) completeSideJob(m); else completeMission();
+        } else if(m.warnT<=0){ m.warnT=2.5; toast('対象車両に乗って届けろ'); }
+      } else if(m.def.type==='multi'){
+        if(m.stopIdx < m.def.stops.length-1){
+          m.stopIdx++;
+          toast('配達 '+(m.stopIdx)+'/3 完了！ 次の配達先へ急げ'); sfx.pickup();
+        } else {
+          if(G.sideJob===m) completeSideJob(m); else completeMission();
+        }
+      } else if(G.sideJob===m){
+        completeSideJob(m);
+      } else completeMission();
+    }
+  }
+}
+
+/* ---------------- 電話UI ---------------- */
+const el=id=>document.getElementById(id);
+function toast(msg, dur){
+  const t=el('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'), dur||2600);
+}
+function bigMsg(title, sub){
+  el('bigTitle').textContent=title; el('bigSub').textContent=sub||'';
+  const b=el('bigMsg'); b.classList.add('show');
+  clearTimeout(bigMsg._t); bigMsg._t=setTimeout(()=>b.classList.remove('show'), 3000);
+}
+function updatePhoneUI(){
+  const btn=el('btnStory'), side=el('btnSide'), body=el('phoneBody');
+  if(G.mission){ body.textContent='仕事中：'+G.mission.def.title; btn.style.display='none'; side.disabled=true; return; }
+  if(G.sideJob){ body.textContent='小口仕事中：'+G.sideJob.def.title; btn.style.display='none'; side.disabled=true; return; }
+  side.disabled=false;
+  if(G.missionsDone<MISSIONS.length){
+    btn.style.display='block';
+    body.textContent='ヴィンスから新しい仕事が来ている。';
+  } else {
+    btn.style.display='none';
+    body.textContent=(G.cleared?'全ミッション クリア済み！ ':'新しい仕事はまだない。')+'小口仕事（配達／送迎／回収）で稼ごう。';
+  }
+}
+function showCall(){
+  if(G.missionsDone>=MISSIONS.length||G.mission) return;
+  const def=MISSIONS[G.missionsDone];
+  el('callText').textContent=def.phone;
+  let meta=CHAPTER_NAMES[def.ch]+' ― '+def.title+'（'+(G.missionsDone+1)+'／12）／報酬 $'+def.reward+(def.time?'／制限時間 '+def.time+'秒':'');
+  if(def.type==='recover') meta+='／車両ダメージ上限 '+(def.dmgLimit!=null?def.dmgLimit:55)+'%';
+  if(def.type==='final') meta+='／車両ダメージ上限 '+(def.dmgLimit!=null?def.dmgLimit:55)+'%・確保で★'+(def.wantedOnSteal||3)+'の追跡';
+  if(def.type==='escape') meta+='／開始直後に★'+(def.wanted||2);
+  if(def.type==='multi') meta+='／配達先3か所・全体で制限時間';
+  if(def.vip) meta+='／大物の客：荒い運転に注意';
+  el('callMeta').textContent=meta;
+  el('callCard').classList.add('ringing');
+  el('callScr').classList.add('on');
+  sfx.ring();
+  phoneBusy=true;
+  uiFocus.index=0; uiFocus.sig=''; syncUIFocus();
+}
+function hideCall(){ el('callScr').classList.remove('on'); el('callCard').classList.remove('ringing'); phoneBusy=false; }
+
+/* ---------------- パッド／キーボード UIフォーカス（着信・タイトル・ポーズ共通） ---------------- */
+const uiFocus={ ctx:null, index:0, sig:'' };
+const prevNav={ up:false, down:false, left:false, right:false, a:false, start:false };
+function uiContext(){
+  if(el('endingScr').classList.contains('on')) return 'ending';
+  if(el('callScr').classList.contains('on')) return 'call';
+  if(el('pauseScr').classList.contains('on')) return 'pause';
+  if(el('titleScr').classList.contains('on')) return 'title';
+  return null;
+}
+function uiItems(ctx){
+  let ids=[];
+  if(ctx==='ending') ids=['btnFreeRoam','btnEndingTitle'];
+  else if(ctx==='call') ids=['btnAccept','btnDecline'];
+  else if(ctx==='pause') ids=['selAssistP','selSchemeP','btnResume','btnQuitTitle'];
+  else if(ctx==='title'){
+    if(el('overwriteBox').style.display!=='none') ids=['btnOverwriteYes','btnOverwriteNo'];
+    else ids=['btnContinue','btnNew','selAssistT','selSchemeT'];
+  }
+  return ids.map(id=>el(id)).filter(e=>e && !e.disabled && e.getClientRects().length>0);
+}
+function applyUIFocus(){
+  document.querySelectorAll('.pad-focus').forEach(n=>n.classList.remove('pad-focus'));
+  const ctx=uiContext(); if(!ctx) return;
+  const items=uiItems(ctx); if(!items.length) return;
+  uiFocus.index=clamp(uiFocus.index,0,items.length-1);
+  items[uiFocus.index].classList.add('pad-focus');
+}
+function syncUIFocus(){
+  const ctx=uiContext();
+  const sig=ctx? ctx+':'+uiItems(ctx).map(e=>e.id).join(',') : '';
+  if(sig!==uiFocus.sig){ uiFocus.sig=sig; uiFocus.ctx=ctx; uiFocus.index=0; }
+  applyUIFocus();
+}
+function moveUIFocus(dir){
+  const items=uiItems(uiContext()); if(!items.length) return;
+  uiFocus.index=(uiFocus.index+dir+items.length)%items.length;
+  applyUIFocus();
+}
+function cycleSelect(sel,dir){
+  if(!sel||!sel.options.length) return;
+  sel.selectedIndex=(sel.selectedIndex+dir+sel.options.length)%sel.options.length;
+  sel.dispatchEvent(new Event('change'));
+  applyUIFocus();
+}
+function uiNav(dirName){
+  const ctx=uiContext(); if(!ctx) return;
+  const items=uiItems(ctx); if(!items.length) return;
+  const cur=items[clamp(uiFocus.index,0,items.length-1)];
+  if(cur && cur.tagName==='SELECT' && (dirName==='left'||dirName==='right')){ cycleSelect(cur, dirName==='right'?1:-1); return; }
+  moveUIFocus((dirName==='down'||dirName==='right')?1:-1);
+}
+function uiActivate(){
+  const ctx=uiContext(); if(!ctx) return;
+  const items=uiItems(ctx); if(!items.length) return;
+  const cur=items[clamp(uiFocus.index,0,items.length-1)];
+  if(cur.tagName==='SELECT'){ cycleSelect(cur,1); return; }
+  cur.click();
+}
+function handleUINav(){
+  const ctx=uiContext();
+  if(!ctx){ prevNav.up=prevNav.down=prevNav.left=prevNav.right=prevNav.a=prevNav.start=false; document.querySelectorAll('.pad-focus').forEach(n=>n.classList.remove('pad-focus')); uiFocus.sig=''; uiFocus.ctx=null; return; }
+  syncUIFocus();
+  const p=readPad();
+  /* UI表示中のA／Startをゲーム側（乗り降り・ポーズ切替）へ漏らさない */
+  prevPad={ act:!!p.act, start:!!p.start, shoot:!!p.shoot };
+  if(!p.active) return;
+  const sx=p.x>0.55?1:(p.x<-0.55?-1:0), sy=p.y>0.55?1:(p.y<-0.55?-1:0);
+  const cur={ up:p.dUp||sy<0, down:p.dDown||sy>0, left:p.dLeft||sx<0, right:p.dRight||sx>0 };
+  if(cur.up&&!prevNav.up) uiNav('up');
+  if(cur.down&&!prevNav.down) uiNav('down');
+  if(cur.left&&!prevNav.left) uiNav('left');
+  if(cur.right&&!prevNav.right) uiNav('right');
+  prevNav.up=cur.up; prevNav.down=cur.down; prevNav.left=cur.left; prevNav.right=cur.right;
+  if(p.act&&!prevNav.a) uiActivate();
+  prevNav.a=p.act;
+  if(p.start&&!prevNav.start && ctx==='pause') togglePause();
+  prevNav.start=p.start;
+}
+window.addEventListener('keydown', e=>{
+  const ctx=uiContext(); if(!ctx) return;
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)){
+    e.preventDefault();
+    if(!e.repeat) uiNav(e.code.replace('Arrow','').toLowerCase());
+  } else if((e.code==='Enter'||e.code==='NumpadEnter') && !e.altKey){
+    if(!e.repeat){ e.preventDefault(); uiActivate(); }
+  }
+});
+['btnAccept','btnDecline','btnContinue','btnNew','btnOverwriteYes','btnOverwriteNo','btnResume','btnQuitTitle','btnFreeRoam','btnEndingTitle','selAssistT','selSchemeT','selAssistP','selSchemeP'].forEach(id=>{
+  const n=el(id); if(!n) return;
+  const sync=()=>{ const items=uiItems(uiContext()); const i=items.indexOf(n); if(i>=0){ uiFocus.index=i; applyUIFocus(); } };
+  n.addEventListener('pointerenter', sync);
+  n.addEventListener('focus', sync);
+});
+
+/* ---------------- 描画 ---------------- */
+function drawBuilding(b){
+  const sx=b.x-cam.x, sy=b.y-cam.y;
+  if(sx+b.w<-80||sy+b.h+b.hgt<-80||sx>VW+80||sy>VH+80) return;
+  // 柔らかい影
+  ctx.fillStyle='rgba(30,32,36,.28)';
+  ctx.fillRect(sx+10, sy+14, b.w, b.h);
+  // 南側の壁面
+  ctx.fillStyle=b.wall;
+  ctx.fillRect(sx, sy+b.hgt*.45, b.w, b.h);
+  // 壁面の窓
+  ctx.fillStyle='rgba(220,232,240,.5)';
+  const rows=Math.max(1,Math.floor(b.h/26)), colsW=Math.max(1,Math.floor(b.w/24));
+  for(let r2=0;r2<rows;r2++) for(let c2=0;c2<colsW;c2++){
+    if(((r2*7+c2*13+b.seedv)%5)===0) continue;
+    ctx.fillRect(sx+6+c2*24, sy+b.hgt*.45+8+r2*24, 11, 13);
+  }
+  // 屋根
+  ctx.fillStyle=b.roof;
+  ctx.fillRect(sx, sy, b.w, b.h);
+  // 屋根材の質感（薄いライン）
+  ctx.strokeStyle='rgba(0,0,0,.07)'; ctx.lineWidth=1;
+  ctx.beginPath();
+  for(let ly=sy+9; ly<sy+b.h-4; ly+=11){ ctx.moveTo(sx+3,ly); ctx.lineTo(sx+b.w-3,ly); }
+  ctx.stroke();
+  // パラペット
+  ctx.strokeStyle='rgba(255,255,255,.28)'; ctx.lineWidth=3;
+  ctx.strokeRect(sx+1.5, sy+1.5, b.w-3, b.h-3);
+  ctx.strokeStyle='rgba(0,0,0,.18)';
+  ctx.strokeRect(sx+6.5, sy+6.5, b.w-13, b.h-13);
+  // 屋上設備
+  ctx.fillStyle='rgba(0,0,0,.16)';
+  for(const u of b.units){ ctx.fillRect(sx+u.dx*b.w+2, sy+u.dy*b.h+2, u.s, u.s*.7); }
+  ctx.fillStyle='#a7adb5';
+  for(const u of b.units){ ctx.fillRect(sx+u.dx*b.w, sy+u.dy*b.h, u.s, u.s*.7); }
+  ctx.fillStyle='#8d939b';
+  for(const v of b.vents){ ctx.beginPath(); ctx.arc(sx+v.dx*b.w, sy+v.dy*b.h, v.s/2, 0, TAU); ctx.fill(); }
+  ctx.fillStyle='rgba(180,215,235,.65)';
+  for(const s of b.skylights){ ctx.fillRect(sx+s.dx*b.w, sy+s.dy*b.h, s.w, s.h); }
+  if(b.tank){
+    const tx=sx+b.w*.68, ty=sy+b.h*.16;
+    ctx.fillStyle='rgba(0,0,0,.18)'; ctx.fillRect(tx+3,ty+3,22,22);
+    ctx.fillStyle='#9a7d55'; ctx.beginPath(); ctx.arc(tx+11,ty+11,11,0,TAU); ctx.fill();
+    ctx.strokeStyle='#6e5836'; ctx.stroke();
+  }
+  // 入口：縞ひさし＋ドア（南側中央）
+  const dx=sx+b.w/2-13, dy=sy+b.h-4;
+  ctx.fillStyle='#3c4148'; ctx.fillRect(dx, dy-12, 26, 14);
+  for(let i=0;i<4;i++){ ctx.fillStyle=i%2?'#e8e8e8':'#b0403c'; ctx.fillRect(dx-4+i*8.5, dy-19, 8.5, 6); }
+  // 種別マーク
+  if(b.kind==='police'){
+    ctx.fillStyle='#2c4a7c'; ctx.fillRect(sx, sy+b.h-30, b.w, 16);
+    ctx.fillStyle='#ffd35c';
+    ctx.save(); ctx.translate(sx+b.w/2, sy+b.h/2); ctx.beginPath();
+    for(let i=0;i<10;i++){ const a=i*Math.PI/5-Math.PI/2, r=i%2?7:16; ctx[i?'lineTo':'moveTo'](Math.cos(a)*r, Math.sin(a)*r); }
+    ctx.closePath(); ctx.fill(); ctx.restore();
+    ctx.fillStyle='#fff'; ctx.font='bold 13px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('POLICE', sx+b.w/2, sy+b.h-17);
+  }
+  if(b.kind==='hospital'){
+    ctx.fillStyle='#e8e8e8'; ctx.fillRect(sx+b.w/2-16, sy+b.h/2-16, 32, 32);
+    ctx.fillStyle='#d23b3b';
+    ctx.fillRect(sx+b.w/2-4, sy+b.h/2-13, 8, 26);
+    ctx.fillRect(sx+b.w/2-13, sy+b.h/2-4, 26, 8);
+    ctx.fillStyle='#fff'; ctx.font='bold 13px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('HOSPITAL', sx+b.w/2, sy+b.h-17);
+  }
+  if(b.kind==='warehouse'){
+    ctx.fillStyle='rgba(255,255,255,.55)'; ctx.font='bold 12px sans-serif'; ctx.textAlign='left';
+    ctx.fillText('WAREHOUSE', sx+10, sy+20);
+  }
+  if(b.kind==='factory'){
+    ctx.fillStyle='#6d7278';
+    ctx.fillRect(sx+b.w*.15, sy-14, 14, 18); ctx.fillRect(sx+b.w*.3, sy-10, 11, 14);
+  }
+}
+function drawCar(c){
+  const sx=c.x-cam.x, sy=c.y-cam.y;
+  if(sx<-90||sy<-90||sx>VW+90||sy>VH+90) return;
+  const t=CAR_TYPES[c.type];
+  ctx.save(); ctx.translate(sx,sy);
+  ctx.fillStyle='rgba(30,32,36,.3)';
+  ctx.save(); ctx.translate(5,7); ctx.rotate(c.angle); ctx.fillRect(-t.w/2,-t.h/2,t.w,t.h); ctx.restore();
+  ctx.rotate(c.angle);
+  ctx.fillStyle=c.col;
+  roundRect(-t.w/2,-t.h/2,t.w,t.h,5); ctx.fill();
+  ctx.fillStyle='rgba(20,26,34,.85)';
+  roundRect(-t.w*.18,-t.h*.36,t.w*.34,t.h*.72,3); ctx.fill(); // キャビン
+  ctx.fillStyle='rgba(190,220,240,.75)';
+  roundRect(t.w*.2,-t.h*.33,t.w*.1,t.h*.66,2); ctx.fill(); // フロントガラス
+  ctx.fillStyle='#22242a';
+  ctx.fillRect(-t.w/2+2,-t.h/2-2,8,4); ctx.fillRect(-t.w/2+2,t.h/2-2,8,4);
+  ctx.fillRect(t.w/2-10,-t.h/2-2,8,4); ctx.fillRect(t.w/2-10,t.h/2-2,8,4);
+  ctx.fillStyle='#ffe9a8';
+  ctx.fillRect(t.w/2-3,-t.h/2+2,3,5); ctx.fillRect(t.w/2-3,t.h/2-7,3,5);
+  ctx.fillStyle='#e5484d';
+  ctx.fillRect(-t.w/2,-t.h/2+2,3,5); ctx.fillRect(-t.w/2,t.h/2-7,3,5);
+  if(c.cop){
+    ctx.fillStyle='#e8ecf2'; ctx.fillRect(-t.w*.3,-t.h/2,t.w*.6,t.h);
+    ctx.fillStyle='#2b3442'; ctx.fillRect(-t.w*.05,-t.h/2,t.w*.1,t.h);
+    const ph=Math.sin(G.time*10)>0;
+    ctx.fillStyle=ph?'#ff4444':'#5577ff';
+    ctx.fillRect(-6,-4,12,8);
+    ctx.fillStyle='#fff'; ctx.font='bold 8px sans-serif'; ctx.textAlign='center'; ctx.fillText('POLICE',0,3);
+  }
+  if(c.targetCar){ ctx.strokeStyle='#ffd35c'; ctx.lineWidth=2; roundRect(-t.w/2-3,-t.h/2-3,t.w+6,t.h+6,6); ctx.stroke(); }
+  ctx.restore();
+  if(c.smoke>0){
+    ctx.fillStyle='rgba(60,60,64,'+(0.25+0.2*Math.sin(G.time*7+c.id))+')';
+    ctx.beginPath(); ctx.arc(sx+Math.cos(c.angle)*14, sy+Math.sin(c.angle)*14, 7+c.smoke*6+Math.sin(G.time*5)*2, 0, TAU); ctx.fill();
+  }
+  if(c.hp<c.maxHp*.6&&!c.dead){
+    ctx.fillStyle='rgba(0,0,0,.45)'; ctx.fillRect(sx-16,sy-26,32,4);
+    ctx.fillStyle='#f08c3c'; ctx.fillRect(sx-16,sy-26,32*(c.hp/c.maxHp),4);
+  }
+}
+function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function drawWorld(){
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  // 地面（地区で色分け）
+  ctx.fillStyle='#7c8474'; ctx.fillRect(0,0,VW,VH);
+  const x0=cam.x-VW/2-60, x1=cam.x+VW/2+60, y0=cam.y-VH/2-60, y1=cam.y+VH/2+60;
+  ctx.fillStyle='#79826e'; ctx.fillRect(0,0,VW,VH);
+  // 地区タイル
+  const tile=300;
+  for(let gx=Math.floor(x0/tile)*tile; gx<x1; gx+=tile) for(let gy=Math.floor(y0/tile)*tile; gy<y1; gy+=tile){
+    const d=districtAt(gx+tile/2, gy+tile/2);
+    ctx.fillStyle = d==='住宅地区'?'#7f9a68': d==='ダウンタウン'?'#8b8d89': d==='工業地区'?'#8d8578':'#8d8a7c';
+    ctx.fillRect(gx-cam.x, gy-cam.y, tile, tile);
+  }
+  // 水（南の海）
+  ctx.fillStyle='#5d7f96'; ctx.fillRect(0, WATER_Y-cam.y, VW, VH);
+  ctx.fillStyle='rgba(255,255,255,.18)';
+  for(let i=0;i<8;i++){ const wy=WATER_Y+24+i*22+Math.sin(G.time*.7+i)*3; ctx.fillRect(((i*331)%Math.max(1,VW)), wy-cam.y, 90, 3); }
+  // 波止場
+  ctx.fillStyle='#9a958a'; ctx.fillRect(PIER.x-cam.x, PIER.y-cam.y, PIER.w, PIER.h);
+  // 歩道
+  ctx.fillStyle='#a3a5a0';
+  for(const c of VX) ctx.fillRect(c-ROAD_W/2-12-cam.x, -cam.y, ROAD_W+24, WATER_Y);
+  for(const c of HZ) ctx.fillRect(-cam.x, c-ROAD_W/2-12-cam.y, WORLD.w, ROAD_W+24);
+  // 道路
+  ctx.fillStyle='#5b5f66';
+  for(const c of VX) ctx.fillRect(c-ROAD_W/2-cam.x, -cam.y, ROAD_W, WATER_Y);
+  for(const c of HZ) ctx.fillRect(-cam.x, c-ROAD_W/2-cam.y, WORLD.w, ROAD_W);
+  // センターライン
+  ctx.fillStyle='rgba(240,220,130,.65)';
+  for(const c of VX){ for(let y=0;y<WATER_Y;y+=44) ctx.fillRect(c-2-cam.x, y-cam.y, 4, 24); }
+  for(const c of HZ){ for(let x=0;x<WORLD.w;x+=44) ctx.fillRect(x-cam.x, c-2-cam.y, 24, 4); }
+  // 横断歩道＋信号
+  for(const cx of VX) for(const cy of HZ){
+    ctx.fillStyle='rgba(255,255,255,.4)';
+    for(let i=-2;i<=2;i++){ ctx.fillRect(cx-ROAD_W/2+6-cam.x, cy+i*16-5-cam.y, 20, 9); ctx.fillRect(cx+ROAD_W/2-26-cam.x, cy+i*16-5-cam.y, 20, 9); }
+    const ns=signalFor('ns');
+    ctx.fillStyle=ns?'#57d95e':'#d95757'; ctx.beginPath(); ctx.arc(cx-ROAD_W/2-8-cam.x, cy-ROAD_W/2-8-cam.y, 5,0,TAU); ctx.fill();
+    ctx.fillStyle=!ns?'#57d95e':'#d95757'; ctx.beginPath(); ctx.arc(cx+ROAD_W/2+8-cam.x, cy-ROAD_W/2-8-cam.y, 5,0,TAU); ctx.fill();
+  }
+  // 障害物
+  for(const o of obstacles){
+    const sx=o.x-cam.x, sy=o.y-cam.y;
+    if(sx<-80||sy<-80||sx>VW+80||sy>VH+80) continue;
+    if(o.kind==='container'){
+      ctx.fillStyle='rgba(30,32,36,.25)'; ctx.fillRect(sx+4,sy+5,o.w,o.h);
+      ctx.fillStyle=o.col; ctx.fillRect(sx,sy,o.w,o.h);
+      ctx.strokeStyle='rgba(0,0,0,.25)'; for(let i=1;i<5;i++){ ctx.beginPath(); ctx.moveTo(sx+i*o.w/5,sy+2); ctx.lineTo(sx+i*o.w/5,sy+o.h-2); ctx.stroke(); }
+    } else if(o.kind==='crate'){
+      ctx.fillStyle=o.col; ctx.fillRect(sx,sy,o.w,o.h);
+      ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.strokeRect(sx+1,sy+1,o.w-2,o.h-2);
+    } else if(o.kind==='tree'){
+      ctx.fillStyle='rgba(30,32,36,.25)'; ctx.beginPath(); ctx.arc(sx+9,sy+11,10,0,TAU); ctx.fill();
+      ctx.fillStyle=o.col; ctx.beginPath(); ctx.arc(sx+7,sy+7,11,0,TAU); ctx.fill();
+      ctx.fillStyle='#6d8f57'; ctx.beginPath(); ctx.arc(sx+4,sy+4,6,0,TAU); ctx.fill();
+    } else if(o.kind==='crane'){
+      ctx.strokeStyle=o.col; ctx.lineWidth=7;
+      ctx.beginPath(); ctx.moveTo(sx+8,sy+o.h); ctx.lineTo(sx+8,sy); ctx.lineTo(sx+120,sy); ctx.stroke();
+      ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(sx+100,sy); ctx.lineTo(sx+100,sy+34); ctx.stroke();
+      ctx.fillStyle='#8a4d3a'; ctx.fillRect(sx+86,sy+34,28,18);
+    }
+  }
+  for(const b of buildings) drawBuilding(b);
+  // ミッションマーカー
+  const dest=currentDest();
+  if(dest){
+    const sx=dest.x-cam.x, sy=dest.y-cam.y;
+    const pulse=1+Math.sin(G.time*4)*.12;
+    ctx.strokeStyle='rgba(255,211,92,.9)'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.arc(sx,sy,26*pulse,0,TAU); ctx.stroke();
+    ctx.fillStyle='rgba(255,211,92,.2)'; ctx.beginPath(); ctx.arc(sx,sy,26*pulse,0,TAU); ctx.fill();
+    ctx.fillStyle='rgba(255,211,92,.35)';
+    const grad=ctx.createLinearGradient(0,sy-190,0,sy);
+    grad.addColorStop(0,'rgba(255,211,92,0)'); grad.addColorStop(1,'rgba(255,211,92,.35)');
+    ctx.fillStyle=grad; ctx.fillRect(sx-9,sy-190,18,190);
+    ctx.fillStyle='#ffd35c'; ctx.font='bold 13px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(dest.name||'', sx, sy-36);
+  }
+  // 車両・パトカー
+  for(const c of cars) if(c!==player.car) drawCar(c);
+  for(const c of cops) drawCar(c);
+  if(player.car) drawCar(player.car);
+  // 歩行者
+  for(const p of peds){
+    if(p.riding) continue;
+    const sx=p.x-cam.x, sy=p.y-cam.y;
+    if(sx<-40||sy<-40||sx>VW+40||sy>VH+40) continue;
+    ctx.fillStyle='rgba(30,32,36,.3)'; ctx.beginPath(); ctx.arc(sx+2,sy+4,6,0,TAU); ctx.fill();
+    if(p.down>0){
+      ctx.save(); ctx.translate(sx,sy); ctx.rotate(1.3);
+      ctx.fillStyle=p.col; ctx.fillRect(-8,-3,16,6);
+      ctx.fillStyle='#e8c39a'; ctx.beginPath(); ctx.arc(10,0,3.6,0,TAU); ctx.fill();
+      ctx.restore(); continue;
+    }
+    ctx.fillStyle=p.col; ctx.beginPath(); ctx.arc(sx,sy,6.5,0,TAU); ctx.fill();
+    ctx.fillStyle='#e8c39a'; ctx.beginPath(); ctx.arc(sx,sy-1,3.4,0,TAU); ctx.fill();
+    if(p.passenger){ ctx.fillStyle='#ffd35c'; ctx.font='bold 14px sans-serif'; ctx.textAlign='center'; ctx.fillText('！', sx, sy-14); }
+    if(p.report){
+      const r=p.report;
+      ctx.fillStyle='rgba(15,17,20,.88)'; roundRect(sx-32,sy-40,64,17,4); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.font='11px sans-serif'; ctx.textAlign='center'; ctx.fillText('📱通報中', sx, sy-27);
+      ctx.strokeStyle='#ff9d5c'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.arc(sx,sy-14,7,-Math.PI/2,-Math.PI/2+TAU*(r.t/r.dur)); ctx.stroke();
+    }
+  }
+  // プレイヤー（徒歩）
+  if(!player.car){
+    const sx=player.x-cam.x, sy=player.y-cam.y;
+    ctx.fillStyle='rgba(30,32,36,.32)'; ctx.beginPath(); ctx.arc(sx+2,sy+4,7,0,TAU); ctx.fill();
+    ctx.fillStyle='#2e4a68'; ctx.beginPath(); ctx.arc(sx,sy,7.5,0,TAU); ctx.fill();
+    ctx.fillStyle='#e8c39a'; ctx.beginPath(); ctx.arc(sx,sy-1,3.8,0,TAU); ctx.fill();
+    // 向き（銃）
+    if(G.hasGun){
+      ctx.strokeStyle='#26282e'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(sx+Math.cos(player.face)*13, sy+Math.sin(player.face)*13); ctx.stroke();
+    }
+    ctx.fillStyle='#ffd35c'; ctx.font='bold 12px sans-serif'; ctx.textAlign='center'; ctx.fillText('▼', sx, sy-13);
+  }
+  // 画面端の目的地矢印
+  if(dest){
+    const sx=dest.x-cam.x, sy=dest.y-cam.y;
+    if(sx<-20||sy<-20||sx>VW+20||sy>VH+20){
+      const a=Math.atan2(sy-VH/2, sx-VW/2);
+      const ax=clamp(sx,36,VW-36), ay=clamp(sy,36,VH-36);
+      ctx.save(); ctx.translate(ax,ay); ctx.rotate(a);
+      ctx.fillStyle='#ffd35c'; ctx.beginPath(); ctx.moveTo(14,0); ctx.lineTo(-8,-9); ctx.lineTo(-8,9); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+  }
+  // 曇りトーン
+  ctx.fillStyle='rgba(120,132,148,.08)'; ctx.fillRect(0,0,VW,VH);
+}
+/* ---------------- HUD・ミニマップ ---------------- */
+const mm=el('minimap').getContext('2d');
+function drawMinimap(){
+  const W=344,H=268, sx=W/WORLD.w, sy=H/WORLD.h;
+  mm.fillStyle='#3a3f45'; mm.fillRect(0,0,W,H);
+  mm.fillStyle='#5d7f96'; mm.fillRect(0,WATER_Y*sy,W,(WORLD.h-WATER_Y)*sy);
+  mm.strokeStyle='#9aa0a6'; mm.lineWidth=5;
+  for(const c of VX){ mm.beginPath(); mm.moveTo(c*sx,0); mm.lineTo(c*sx,WATER_Y*sy); mm.stroke(); }
+  for(const c of HZ){ mm.beginPath(); mm.moveTo(0,c*sy); mm.lineTo(W,c*sy); mm.stroke(); }
+  mm.fillStyle='#2c4a7c'; mm.fillRect(policeB.x*sx,policeB.y*sy,8,8);
+  mm.fillStyle='#d23b3b'; mm.fillRect(hospitalB.x*sx,hospitalB.y*sy,8,8);
+  const dest=currentDest();
+  if(dest){ mm.fillStyle='#ffd35c'; mm.beginPath(); mm.arc(dest.x*sx,dest.y*sy,6+Math.sin(G.time*5)*1.6,0,TAU); mm.fill(); }
+  mm.fillStyle='#ff5544';
+  for(const cp of cops){ mm.beginPath(); mm.arc(cp.x*sx,cp.y*sy,3.4,0,TAU); mm.fill(); }
+  mm.fillStyle='#fff';
+  mm.save(); mm.translate(player.x*sx,player.y*sy);
+  const a=player.car? player.car.angle : player.face;
+  mm.rotate(a); mm.beginPath(); mm.moveTo(7,0); mm.lineTo(-5,-4); mm.lineTo(-5,4); mm.closePath(); mm.fill(); mm.restore();
+}
+function updateHUD(){
+  el('money').textContent='$'+G.money.toLocaleString();
+  let sh='';
+  for(let i=0;i<3;i++) sh+= i<G.wanted? '<span class="on">★</span>' : '<span class="off">☆</span>';
+  const st=el('stars'); st.innerHTML=sh;
+  st.className = (G.wanted>0&&G.hideTimer>1.2&&Math.sin(G.time*6)>0)? 'hide-flash':'';
+  el('hpBar').style.width=clamp(player.hp,0,100)+'%';
+  el('hpBar').style.background= player.hp<30? '#e5484d':'#7ec850';
+  el('reportWarn').style.display = reports.length? 'block':'none';
+  const cb=el('carBox');
+  if(player.car){
+    cb.style.display='block';
+    el('carName').textContent=CAR_TYPES[player.car.type].name+(player.car.dead?'（大破）':'');
+    el('carHpBar').style.width=clamp(player.car.hp/player.car.maxHp*100,0,100)+'%';
+    el('speedTxt').textContent=Math.round(speedOf(player.car)*.32)+' km/h';
+  } else cb.style.display='none';
+  const aw=el('arrestWrap');
+  if(G.arrest>0.03){ aw.style.display='block'; el('arrestBar').style.width=(G.arrest*100)+'%'; } else aw.style.display='none';
+  const m=G.mission||G.sideJob, ob=el('hudObj');
+  if(m){
+    ob.style.display='block';
+    const dest=currentDest();
+    el('objTitle').textContent=(G.sideJob? m.def.title : m.def.title)+(m.def.type==='escape'?'':' ― '+(dest?dest.name:''));
+    el('objSub').textContent=
+      m.def.type==='escape'? 'パトカーの視界から消えて星を下げろ（★'+(m.def.wanted||2)+'→0）':
+      (m.def.type==='recover'||m.def.type==='final')&&m.stage==='steal'? '指定車両に乗り込め'+(m.def.type==='final'?' ― 乗り込むと★'+(m.def.wantedOnSteal||3)+'の追跡が付く':''):
+      (m.def.type==='recover'||m.def.type==='final')&&m.stage==='deliver'? '車両ダメージ '+(m.dmgPct||0).toFixed(0)+'% / 上限 '+(m.def.dmgLimit!=null?m.def.dmgLimit:55)+'%'+(m.def.type==='final'?' ― 追跡付き！ 港湾へ届けろ':''):
+      m.def.type==='multi'&&m.stage==='deliver'? '配達 '+((m.stopIdx||0)+1)+'/3 ― あと '+Math.round(dist(player.x,player.y,dest.x,dest.y)/10)+' m':
+      m.def.vip&&m.stage==='deliver'? '大物の客を乗せている ― 荒い運転に注意 ／ あと '+Math.round(dist(player.x,player.y,dest.x,dest.y)/10)+' m':
+      m.stage==='pickupWait'? '車を止めて客を乗せろ':
+      dest? 'あと '+Math.round(dist(player.x,player.y,dest.x,dest.y)/10)+' m':'';
+    const tm=el('objTimer');
+    if(m.timeLeft>0){ tm.textContent='⏱ '+Math.ceil(m.timeLeft)+'秒'; tm.className=m.timeLeft<20?'low':''; tm.id='objTimer'; }
+    else tm.textContent='';
+  } else ob.style.display='none';
+  el('districtLab').textContent=districtAt(player.x,player.y);
+  el('phoneClock').textContent=String(9+Math.floor(G.time/50)%12).padStart(2,'0')+':'+String(Math.floor(G.time*1.2)%60).padStart(2,'0');
+  // インタラクト表示
+  const ia=el('interact');
+  if(!player.car&&G.mode==='play'){
+    let near=null,bd=64;
+    for(const c of cars.concat(cops)){ if(!c.dead){ const d=dist(c.x,c.y,player.x,player.y); if(d<bd){bd=d;near=c;} } }
+    if(near){ ia.style.display='block'; ia.textContent='F / E：'+CAR_TYPES[near.type].name+'に乗る'; }
+    else ia.style.display='none';
+  } else if(player.car){ ia.style.display='block'; ia.textContent='F / E：降りる'; }
+  else ia.style.display='none';
+  drawMinimap();
+}
+
+/* ---------------- メインループ ---------------- */
+let lastT=0, trafficRespawnT=0;
+function loop(ts){
+  requestAnimationFrame(loop);
+  const dt=Math.min(.05,(ts-lastT)/1000||0.016); lastT=ts;
+  handleUINav();
+  if(G.mode!=='play'||G.paused||phoneBusy||G.ending){ if(G.mode==='play'&&cam.lx!==undefined) drawFrame(); return; }
+  G.time+=dt;
+  const pad=readPad();
+  if(pad.start&&!prevPad.start) togglePause();
+  if(pad.act&&!prevPad.act) tryEnterExit();
+  if(pad.shoot&&!prevPad.shoot) shoot();
+  prevPad={ act:pad.act, start:pad.start, shoot:pad.shoot };
+
+  if(player.car) updatePlayerCar(dt); else updateOnFoot(dt);
+  updateTraffic(dt);
+  updatePeds(dt);
+  updateReports(dt);
+  updateCops(dt);
+  updateArrest(dt);
+  updateMission(dt);
+  enforceLandAll(); // 水域フェイルセーフ（描画前に全個体を陸上へ戻す）
+  // 着信スケジュール
+  if(!G.mission&&!G.sideJob&&G.pendingCall){
+    G.callTimer-=dt;
+    if(G.callTimer<=0){ G.pendingCall=false; showCall(); }
+  }
+  // カメラ（中心座標で保持し、描画時に左上へ変換）
+  cam.x = lerp(cam.x, player.x, 1-Math.exp(-7*dt));
+  cam.y = lerp(cam.y, player.y, 1-Math.exp(-7*dt));
+  cam.x=clamp(cam.x, VW/2-200, WORLD.w-VW/2+200); cam.y=clamp(cam.y, VH/2-200, WORLD.h-VH/2+200);
+  if(VW>=WORLD.w) cam.x=WORLD.w/2;
+  if(VH>=WORLD.h) cam.y=WORLD.h/2;
+  // 描画は world 座標系： cam は中心 → 左上へ変換
+  cam.lx=cam.x-VW/2; cam.ly=cam.y-VH/2;
+  drawFrame();
+  updateHUD();
+}
+const _drawWorld=drawWorld;
+function drawFrame(){
+  const ox=cam.x, oy=cam.y;
+  cam.x=cam.lx; cam.y=cam.ly;
+  _drawWorld();
+  cam.x=ox; cam.y=oy;
+}
+requestAnimationFrame(loop);
+
+/* ---------------- 開始・画面遷移 ---------------- */
+function resetWorld(newGame){
+  cars=[]; cops=[]; reports.length=0;
+  player.car=null; player.hp=100; player.x=640; player.y=1180; player.face=-Math.PI/2;
+  G.wanted=0; G.arrest=0; G.hideTimer=0; G.mission=null; G.sideJob=null; G.time=0; G.ending=false;
+  el('endingScr').classList.remove('on');
+  spawnTraffic(); spawnPeds();
+  cam.x=player.x; cam.y=player.y; cam.lx=cam.x-VW/2; cam.ly=cam.y-VH/2;
+}
+function startGame(fromSave){
+  initAudio();
+  const s=fromSave? loadSave():null;
+  if(s&&fromSave){ G.money=s.money||0; G.missionsDone=s.done||0; G.hasGun=s.hasGun!==false; G.cleared=saveCleared(s); }
+  else { G.money=50; G.missionsDone=0; G.hasGun=true; G.cleared=false; if(fromSave===false){ try{localStorage.removeItem(SAVE_KEY);}catch(e){} } }
+  G.started=true;
+  resetWorld(true);
+  el('titleScr').classList.remove('on');
+  el('endingScr').classList.remove('on'); G.ending=false;
+  el('hud').classList.add('on');
+  if('ontouchstart' in window){ el('touch').classList.add('on'); document.body.classList.add('touch'); }
+  G.mode='play'; G.paused=false;
+  G.pendingCall = G.missionsDone<MISSIONS.length;
+  G.callTimer = fromSave? 5:3.5;
+  bigMsg('ロングショア', G.cleared? '全ミッション クリア済み ― フリーローム＆小口仕事でどうぞ' : (fromSave&&G.missionsDone>0? CHAPTER_NAMES[MISSIONS[Math.min(G.missionsDone,MISSIONS.length-1)].ch]+' から再開':'下っ端からの成り上がり、開始'));
+  updatePhoneUI();
+}
+function togglePause(){
+  if(G.mode!=='play') return;
+  G.paused=!G.paused;
+  el('pauseScr').classList.toggle('on', G.paused);
+  syncSettingsUI();
+  if(!G.paused) writeSave();
+}
+function syncSettingsUI(){
+  for(const id of ['selAssistT','selAssistP']) el(id).value=String(settings.assist);
+  for(const id of ['selSchemeT','selSchemeP']) el(id).value=settings.scheme;
+}
+function refreshTitle(){
+  const s=loadSave();
+  el('btnContinue').style.display=s? 'block':'none';
+  el('clearBadge').style.display=saveCleared(s)? 'block':'none';
+  el('overwriteBox').style.display='none';
+  syncSettingsUI();
+}
+el('btnNew').onclick=()=>{ initAudio(); const s=loadSave(); if(s){ el('overwriteBox').style.display='block'; } else startGame(false); };
+el('btnOverwriteYes').onclick=()=>startGame(false);
+el('btnOverwriteNo').onclick=()=>{ el('overwriteBox').style.display='none'; };
+el('btnContinue').onclick=()=>startGame(true);
+el('btnResume').onclick=()=>togglePause();
+el('btnQuitTitle').onclick=()=>{ G.paused=false; el('pauseScr').classList.remove('on'); G.mode='title'; el('hud').classList.remove('on'); el('titleScr').classList.add('on'); refreshTitle(); };
+el('btnAccept').onclick=()=>{ hideCall(); startMission(G.missionsDone); updatePhoneUI(); };
+el('btnDecline').onclick=()=>{ hideCall(); G.pendingCall=true; G.callTimer=25; toast('スマホのボタンからいつでも受けられる'); };
+el('btnStory').onclick=()=>{ if(!G.mission&&!G.sideJob) showCall(); };
+el('btnSide').onclick=()=>{ if(!G.mission&&!G.sideJob) startSideJob(); };
+el('btnFreeRoam').onclick=()=>{ el('endingScr').classList.remove('on'); G.ending=false; toast('フリーローム継続 ― 小口仕事はいつでも受けられる'); updatePhoneUI(); };
+el('btnEndingTitle').onclick=()=>{ el('endingScr').classList.remove('on'); G.ending=false; G.mode='title'; el('hud').classList.remove('on'); el('titleScr').classList.add('on'); refreshTitle(); };
+for(const id of ['selAssistT','selAssistP']) el(id).onchange=e=>{ settings.assist=parseInt(e.target.value,10); syncSettingsUI(); writeSave(); };
+for(const id of ['selSchemeT','selSchemeP']) el(id).onchange=e=>{ settings.scheme=e.target.value; syncSettingsUI(); writeSave(); };
+refreshTitle();
+
+/* ---------------- タッチ操作 ---------------- */
+(function(){
+  const stick=el('stick'), knob=el('stickKnob');
+  let sid=null;
+  function setKnob(dx,dy){ knob.style.transform='translate(calc(-50% + '+dx+'px), calc(-50% + '+dy+'px))'; }
+  stick.addEventListener('pointerdown', e=>{ sid=e.pointerId; stick.setPointerCapture(sid); move(e); });
+  stick.addEventListener('pointermove', e=>{ if(e.pointerId===sid) move(e); });
+  function move(e){
+    const r=stick.getBoundingClientRect();
+    let dx=e.clientX-(r.left+r.width/2), dy=e.clientY-(r.top+r.height/2);
+    const m=Math.hypot(dx,dy), max=42;
+    if(m>max){ dx*=max/m; dy*=max/m; }
+    setKnob(dx,dy);
+    const mm2=Math.hypot(dx,dy)/max;
+    touchIn.x=mm2>0.12? dx/max:0; touchIn.y=mm2>0.12? dy/max:0; touchIn.mag=mm2>0.12? Math.min(1,mm2):0;
+  }
+  function end(e){ if(e.pointerId===sid){ sid=null; touchIn.x=touchIn.y=touchIn.mag=0; setKnob(0,0); } }
+  stick.addEventListener('pointerup', end); stick.addEventListener('pointercancel', end);
+  const hold=(id,fn)=>{ const b=el(id); b.addEventListener('pointerdown', e=>{ e.preventDefault(); fn(true); }); b.addEventListener('pointerup', ()=>fn(false)); b.addEventListener('pointerleave', ()=>fn(false)); };
+  hold('tBrake', v=>{ touchIn.brake=v; });
+  el('tAct').addEventListener('pointerdown', e=>{ e.preventDefault(); if(G.mode==='play'&&!G.paused) tryEnterExit(); });
+  el('tShoot').addEventListener('pointerdown', e=>{ e.preventDefault(); if(G.mode==='play'&&!G.paused) shoot(); });
+})();
+</script>
+</body>
+</html>

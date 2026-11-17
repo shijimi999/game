@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light" />
+<link rel="icon" href="data:," />
+<title>HOTWIRE</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", YuGothic, "Noto Sans JP", system-ui, sans-serif;
+    background: #9fadb4;
+    color: #fff;
+    overflow-x: hidden;
+  }
+
+  .poster {
+    position: relative;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  /* ---------- scene ---------- */
+  .scene {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+  }
+  .scene svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  /* overcast daylight: flat grey light up top, the road falls into shade below */
+  .veil {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(to bottom, rgba(38,46,52,.16) 0%, rgba(38,46,52,0) 30%, rgba(38,46,52,0) 52%, rgba(26,32,37,.42) 100%),
+      radial-gradient(62% 46% at 50% 42%, rgba(26,34,40,.22) 0%, rgba(26,34,40,0) 72%),
+      radial-gradient(120% 90% at 50% 42%, rgba(0,0,0,0) 52%, rgba(20,27,32,.26) 100%);
+  }
+
+  /* slow cloud drift under a grey sky */
+  .clouds-a { animation: drift-a 100s linear infinite alternate; }
+  .clouds-b { animation: drift-b 130s linear infinite alternate; }
+  @keyframes drift-a { from { transform: translateX(0); } to { transform: translateX(24px); } }
+  @keyframes drift-b { from { transform: translateX(0); } to { transform: translateX(-18px); } }
+  /* the hanging container sways, barely */
+  .hanging { animation: sway 7s ease-in-out infinite alternate; transform-origin: 858px 158px; }
+  @keyframes sway { from { transform: rotate(-.5deg); } to { transform: rotate(.5deg); } }
+  @media (prefers-reduced-motion: reduce) {
+    .clouds-a, .clouds-b, .hanging { animation: none; }
+  }
+
+  /* ---------- content ---------- */
+  .content {
+    text-align: center;
+    padding: 3rem 1.25rem 4.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(2.6rem, 10vw, 5.6rem);
+    font-weight: 800;
+    letter-spacing: .14em;
+    /* compensate the trailing tracking so it sits optically centred */
+    text-indent: .14em;
+    line-height: 1.15;
+    color: #f5f2ea;
+    text-shadow: 0 1px 2px rgba(24,32,38,.55), 0 2px 22px rgba(24,32,38,.45);
+    white-space: nowrap;
+  }
+  h1 .wire { color: #e8a93e; }
+
+  .subtitle {
+    margin: 1.1rem 0 0;
+    font-size: clamp(.82rem, 2.6vw, 1rem);
+    font-weight: 400;
+    letter-spacing: .5em;
+    text-indent: .5em;
+    color: rgba(245,242,234,.97);
+    text-shadow: 0 1px 3px rgba(24,32,38,.8), 0 1px 12px rgba(24,32,38,.65);
+  }
+  .subtitle::before,
+  .subtitle::after {
+    content: "";
+    display: inline-block;
+    vertical-align: middle;
+    width: 2.2em;
+    height: 1px;
+    background: rgba(245,242,234,.55);
+    margin: 0 .9em 0 0;
+  }
+  .subtitle::after { margin: 0 0 0 .9em; }
+
+  .start {
+    margin-top: clamp(2.2rem, 6vh, 3.6rem);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 52px;
+    padding: .8rem 2.1rem;
+    border: 1px solid rgba(245,242,234,.85);
+    background: rgba(24,32,38,.38);
+    color: #f5f2ea;
+    font-size: .95rem;
+    letter-spacing: .18em;
+    text-indent: .18em;
+    text-decoration: none;
+    transition: background .25s ease, border-color .25s ease;
+  }
+  .start:hover { background: rgba(24,32,38,.62); border-color: #fff; }
+  .start:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 3px;
+    background: rgba(24,32,38,.62);
+  }
+
+  .notes {
+    margin: clamp(1.4rem, 4vh, 2rem) 0 0;
+    display: flex;
+    align-items: center;
+    gap: .9em;
+    font-size: .78rem;
+    letter-spacing: .22em;
+    text-indent: .22em;
+    color: rgba(240,238,230,.92);
+    text-shadow: 0 1px 6px rgba(24,32,38,.6);
+  }
+  .notes .sep {
+    width: 3px; height: 3px;
+    background: rgba(240,238,230,.7);
+    flex: none;
+  }
+
+  /* ---------- outline ---------- */
+  .outline {
+    background: #22282d;
+    color: #e8e6de;
+    padding: clamp(3rem, 8vh, 4.5rem) 1.25rem clamp(3.5rem, 9vh, 5rem);
+  }
+  .outline-inner {
+    max-width: 880px;
+    margin: 0 auto;
+  }
+  .outline h2 {
+    margin: 0;
+    font-size: clamp(1.15rem, 3.4vw, 1.5rem);
+    font-weight: 400;
+    letter-spacing: .34em;
+    text-indent: .34em;
+    text-align: center;
+    color: #f5f2ea;
+  }
+  .outline .lead {
+    margin: 1.2rem auto 0;
+    max-width: 38em;
+    text-align: center;
+    font-size: .92rem;
+    line-height: 2;
+    color: rgba(232,230,222,.84);
+  }
+  .feature-list {
+    list-style: none;
+    margin: 2.4rem 0 0;
+    padding: 0;
+    border-top: 1px solid rgba(232,230,222,.18);
+  }
+  .feature-list li {
+    display: flex;
+    gap: 1.1rem;
+    align-items: baseline;
+    padding: 1.15rem .25rem;
+    border-bottom: 1px solid rgba(232,230,222,.18);
+  }
+  .feature-no {
+    flex: none;
+    font-size: .72rem;
+    letter-spacing: .24em;
+    color: rgba(232,230,222,.55);
+    white-space: nowrap;
+  }
+  .feature-body { min-width: 0; }
+  .feature-name {
+    margin: 0;
+    font-size: 1.02rem;
+    font-weight: 600;
+    letter-spacing: .12em;
+    color: #f5f2ea;
+  }
+  .feature-name .stars { color: #e8a93e; letter-spacing: .1em; }
+  .feature-desc {
+    margin: .45rem 0 0;
+    font-size: .85rem;
+    line-height: 1.85;
+    color: rgba(232,230,222,.76);
+  }
+  .outline .foot {
+    margin: 2rem 0 0;
+    text-align: center;
+    font-size: .78rem;
+    line-height: 2;
+    letter-spacing: .14em;
+    color: rgba(232,230,222,.62);
+  }
+
+  @media (max-width: 480px) {
+    h1 { font-size: clamp(2.1rem, 12.5vw, 2.7rem); letter-spacing: .1em; text-indent: .1em; }
+    .subtitle { letter-spacing: .34em; text-indent: .34em; }
+    .subtitle::before, .subtitle::after { width: 1.2em; }
+    .start { width: min(78vw, 300px); padding-left: 1rem; padding-right: 1rem; }
+    .notes { font-size: .72rem; letter-spacing: .14em; text-indent: .14em; gap: .65em; flex-wrap: wrap; justify-content: center; }
+    .content { padding-bottom: 5.5rem; }
+    .feature-list li { flex-direction: column; gap: .35rem; }
+    .outline h2 { letter-spacing: .22em; text-indent: .22em; }
+  }
+</style>
+</head>
+<body>
+<main class="poster">
+
+  <!-- Flat illustration: the port of Longshore on an overcast day — gantry cranes,
+       container stacks and warehouses behind the harbour road, a car running in front. -->
+  <div class="scene" role="img" aria-label="曇りの昼の港町ロングショア。港のクレーンとコンテナ、倉庫街が並び、手前の港沿いの道を車が走るフラットな風景">
+    <svg viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+      <defs>
+        <!-- one shipping container: corrugated sides read as soft vertical stripes -->
+        <g id="box-rust">
+          <rect x="0" y="0" width="118" height="34" fill="#b0563a"/>
+          <g fill="#9c4a30">
+            <rect x="8" y="0" width="5" height="34"/><rect x="22" y="0" width="5" height="34"/>
+            <rect x="36" y="0" width="5" height="34"/><rect x="50" y="0" width="5" height="34"/>
+            <rect x="64" y="0" width="5" height="34"/><rect x="78" y="0" width="5" height="34"/>
+            <rect x="92" y="0" width="5" height="34"/><rect x="106" y="0" width="5" height="34"/>
+          </g>
+          <rect x="0" y="0" width="118" height="4" fill="#c06a49"/>
+        </g>
+        <g id="box-teal">
+          <rect x="0" y="0" width="118" height="34" fill="#3f7d7a"/>
+          <g fill="#356b68">
+            <rect x="8" y="0" width="5" height="34"/><rect x="22" y="0" width="5" height="34"/>
+            <rect x="36" y="0" width="5" height="34"/><rect x="50" y="0" width="5" height="34"/>
+            <rect x="64" y="0" width="5" height="34"/><rect x="78" y="0" width="5" height="34"/>
+            <rect x="92" y="0" width="5" height="34"/><rect x="106" y="0" width="5" height="34"/>
+          </g>
+          <rect x="0" y="0" width="118" height="4" fill="#4f8f8b"/>
+        </g>
+        <g id="box-ochre">
+          <rect x="0" y="0" width="118" height="34" fill="#c08a3e"/>
+          <g fill="#a97834">
+            <rect x="8" y="0" width="5" height="34"/><rect x="22" y="0" width="5" height="34"/>
+            <rect x="36" y="0" width="5" height="34"/><rect x="50" y="0" width="5" height="34"/>
+            <rect x="64" y="0" width="5" height="34"/><rect x="78" y="0" width="5" height="34"/>
+            <rect x="92" y="0" width="5" height="34"/><rect x="106" y="0" width="5" height="34"/>
+          </g>
+          <rect x="0" y="0" width="118" height="4" fill="#cd9a4f"/>
+        </g>
+        <g id="box-slate">
+          <rect x="0" y="0" width="118" height="34" fill="#5d7183"/>
+          <g fill="#4e6172">
+            <rect x="8" y="0" width="5" height="34"/><rect x="22" y="0" width="5" height="34"/>
+            <rect x="36" y="0" width="5" height="34"/><rect x="50" y="0" width="5" height="34"/>
+            <rect x="64" y="0" width="5" height="34"/><rect x="78" y="0" width="5" height="34"/>
+            <rect x="92" y="0" width="5" height="34"/><rect x="106" y="0" width="5" height="34"/>
+          </g>
+          <rect x="0" y="0" width="118" height="4" fill="#6d8296"/>
+        </g>
+        <!-- one warehouse shutter door -->
+        <g id="shutter">
+          <rect x="0" y="0" width="46" height="52" fill="#77828a"/>
+          <g fill="#68737b">
+            <rect x="0" y="8" width="46" height="3"/><rect x="0" y="18" width="46" height="3"/>
+            <rect x="0" y="28" width="46" height="3"/><rect x="0" y="38" width="46" height="3"/>
+          </g>
+        </g>
+      </defs>
+
+      <!-- overcast sky: flat grey bands, no sun -->
+      <rect x="0" y="0" width="1200" height="675" fill="#a7b4bc"/>
+      <rect x="0" y="0" width="1200" height="120" fill="#bcc7cd"/>
+      <rect x="0" y="240" width="1200" height="80" fill="#9fadb6"/>
+
+      <!-- clouds: flat, heavy, soft-edged -->
+      <g class="clouds-a" fill="#ccd4d9" opacity="0.95">
+        <ellipse cx="230" cy="74" rx="150" ry="20"/>
+        <ellipse cx="300" cy="54" rx="86" ry="15"/>
+        <ellipse cx="905" cy="118" rx="128" ry="17"/>
+        <ellipse cx="852" cy="102" rx="70" ry="13"/>
+      </g>
+      <g class="clouds-b" fill="#b3bfc7" opacity="0.9">
+        <ellipse cx="560" cy="96" rx="112" ry="14"/>
+        <ellipse cx="1140" cy="176" rx="100" ry="14"/>
+        <ellipse cx="96" cy="162" rx="92" ry="13"/>
+        <ellipse cx="700" cy="170" rx="80" ry="11"/>
+      </g>
+
+      <!-- downtown skyline, far shore of the port -->
+      <g fill="#8b9aa4">
+        <rect x="28" y="238" width="52" height="150"/>
+        <rect x="92" y="206" width="40" height="182"/>
+        <rect x="142" y="252" width="60" height="136"/>
+        <rect x="1010" y="226" width="46" height="162"/>
+        <rect x="1066" y="196" width="38" height="192"/>
+        <rect x="1114" y="244" width="58" height="144"/>
+      </g>
+      <g fill="#a3b1ba" opacity="0.8">
+        <rect x="102" y="222" width="8" height="8"/><rect x="118" y="222" width="8" height="8"/>
+        <rect x="102" y="244" width="8" height="8"/><rect x="118" y="266" width="8" height="8"/>
+        <rect x="1076" y="214" width="8" height="8"/><rect x="1076" y="236" width="8" height="8"/>
+        <rect x="1090" y="258" width="8" height="8"/>
+      </g>
+
+      <!-- ======== gantry crane, left ======== -->
+      <g stroke="#54626c" stroke-width="13" fill="none" stroke-linecap="square">
+        <path d="M252,470 V168"/>
+        <path d="M392,470 V168"/>
+        <path d="M196,168 H560"/>
+      </g>
+      <g stroke="#687780" stroke-width="5" fill="none">
+        <path d="M252,300 L392,190"/>
+        <path d="M392,300 L252,190"/>
+        <path d="M470,168 L392,250"/>
+      </g>
+      <rect x="238" y="452" width="28" height="18" fill="#47555f"/>
+      <rect x="378" y="452" width="28" height="18" fill="#47555f"/>
+      <!-- trolley and a hanging container -->
+      <rect x="428" y="158" width="34" height="16" fill="#47555f"/>
+      <g class="hanging">
+        <line x1="445" y1="174" x2="445" y2="216" stroke="#3c484f" stroke-width="4"/>
+        <g transform="translate(386,218) scale(1,0.94)">
+          <rect x="0" y="0" width="118" height="34" fill="#b0563a"/>
+          <g fill="#9c4a30">
+            <rect x="8" y="0" width="5" height="34"/><rect x="22" y="0" width="5" height="34"/>
+            <rect x="36" y="0" width="5" height="34"/><rect x="50" y="0" width="5" height="34"/>
+            <rect x="64" y="0" width="5" height="34"/><rect x="78" y="0" width="5" height="34"/>
+            <rect x="92" y="0" width="5" height="34"/><rect x="106" y="0" width="5" height="34"/>
+          </g>
+        </g>
+      </g>
+      <!-- operator cab -->
+      <rect x="252" y="182" width="30" height="24" fill="#7d8b94"/>
+      <rect x="257" y="187" width="20" height="12" fill="#33424c"/>
+
+      <!-- ======== gantry crane, right, further back ======== -->
+      <g stroke="#75848d" stroke-width="10" fill="none" stroke-linecap="square">
+        <path d="M742,462 V206"/>
+        <path d="M852,462 V206"/>
+        <path d="M700,206 H1010"/>
+      </g>
+      <g stroke="#87969f" stroke-width="4" fill="none">
+        <path d="M742,320 L852,228"/>
+        <path d="M852,320 L742,228"/>
+      </g>
+      <rect x="920" y="197" width="28" height="14" fill="#66747d"/>
+      <line x1="934" y1="211" x2="934" y2="252" stroke="#59666f" stroke-width="3.5"/>
+
+      <!-- ======== container stacks ======== -->
+      <g>
+        <use href="#box-teal" transform="translate(96,368)"/>
+        <use href="#box-rust" transform="translate(96,402)"/>
+        <use href="#box-slate" transform="translate(96,436)"/>
+        <use href="#box-ochre" transform="translate(222,402)"/>
+        <use href="#box-teal" transform="translate(222,436)"/>
+        <use href="#box-rust" transform="translate(560,402)"/>
+        <use href="#box-slate" transform="translate(560,436)"/>
+        <use href="#box-ochre" transform="translate(880,368)"/>
+        <use href="#box-teal" transform="translate(880,402)"/>
+        <use href="#box-rust" transform="translate(880,436)"/>
+        <use href="#box-slate" transform="translate(1006,402)"/>
+        <use href="#box-ochre" transform="translate(1006,436)"/>
+      </g>
+      <!-- soft shadows pooling under the stacks -->
+      <g fill="#3a454d" opacity="0.28">
+        <ellipse cx="272" cy="474" rx="185" ry="8"/>
+        <ellipse cx="620" cy="474" rx="80" ry="7"/>
+        <ellipse cx="950" cy="474" rx="185" ry="8"/>
+      </g>
+
+      <!-- ======== warehouses ======== -->
+      <g>
+        <!-- long warehouse, centre-left -->
+        <rect x="352" y="356" width="196" height="114" fill="#98a0a2"/>
+        <rect x="352" y="356" width="196" height="114" fill="none"/>
+        <polygon points="344,358 450,326 556,358" fill="#6d767c"/>
+        <rect x="352" y="356" width="196" height="7" fill="#aab1b3"/>
+        <use href="#shutter" transform="translate(376,418)"/>
+        <use href="#shutter" transform="translate(440,418)"/>
+        <rect x="508" y="424" width="22" height="46" fill="#5c666d"/>
+        <!-- small warehouse, right -->
+        <rect x="700" y="380" width="150" height="90" fill="#8b9296"/>
+        <polygon points="694,382 775,354 856,382" fill="#626b71"/>
+        <rect x="700" y="380" width="150" height="6" fill="#9aa1a4"/>
+        <use href="#shutter" transform="translate(724,418) scale(0.92,1)"/>
+        <rect x="796" y="424" width="20" height="46" fill="#525c62"/>
+      </g>
+
+      <!-- quay ground -->
+      <rect x="0" y="470" width="1200" height="66" fill="#7e8890"/>
+      <rect x="0" y="470" width="1200" height="6" fill="#8d979f"/>
+      <!-- a strip of harbour water at the far left edge -->
+      <path d="M0,470 h64 v66 H0 Z" fill="#5f7a84"/>
+      <g stroke="#7e99a2" stroke-width="3" opacity="0.7">
+        <line x1="8" y1="492" x2="44" y2="492"/>
+        <line x1="16" y1="512" x2="52" y2="512"/>
+      </g>
+
+      <!-- ======== the harbour road ======== -->
+      <rect x="0" y="536" width="1200" height="139" fill="#454e55"/>
+      <rect x="0" y="536" width="1200" height="7" fill="#59636a"/>
+      <!-- worn centre dashes -->
+      <g fill="#c9b458" opacity="0.85">
+        <rect x="30" y="618" width="86" height="7"/>
+        <rect x="196" y="618" width="86" height="7"/>
+        <rect x="362" y="618" width="86" height="7"/>
+        <rect x="760" y="618" width="86" height="7"/>
+        <rect x="926" y="618" width="86" height="7"/>
+        <rect x="1092" y="618" width="86" height="7"/>
+      </g>
+
+      <!-- ======== the car, running in front of the port ======== -->
+      <g>
+        <!-- soft shadow -->
+        <ellipse cx="618" cy="614" rx="128" ry="11" fill="#232a2f" opacity="0.4"/>
+        <!-- body: a low, boxy sedan -->
+        <path d="M492,600 L500,572 Q503,562 516,560 L548,556 Q560,532 590,530 L652,530 Q678,532 692,556 L724,562 Q740,565 742,578 L744,600 Q744,608 734,608 L502,608 Q492,608 492,600 Z" fill="#a03d33"/>
+        <!-- shaded lower half -->
+        <path d="M492,600 L492,592 L744,592 L744,600 Q744,608 734,608 L502,608 Q492,608 492,600 Z" fill="#8c332b"/>
+        <!-- cabin glass -->
+        <path d="M560,554 Q572,538 592,537 L612,537 L612,554 Z" fill="#2e3d46"/>
+        <path d="M620,537 L650,537 Q668,539 680,554 L620,554 Z" fill="#2e3d46"/>
+        <!-- details -->
+        <rect x="726" y="578" width="16" height="7" fill="#e8c96a"/>
+        <rect x="494" y="578" width="10" height="7" fill="#7e2a23"/>
+        <rect x="636" y="562" width="22" height="5" fill="#7e2a23"/>
+        <rect x="566" y="562" width="18" height="5" fill="#7e2a23"/>
+        <!-- wheels -->
+        <circle cx="548" cy="606" r="19" fill="#22282c"/>
+        <circle cx="548" cy="606" r="9" fill="#98a2a8"/>
+        <circle cx="692" cy="606" r="19" fill="#22282c"/>
+        <circle cx="692" cy="606" r="9" fill="#98a2a8"/>
+      </g>
+
+      <!-- a second car, small and far, heading the other way -->
+      <g opacity="0.9">
+        <ellipse cx="238" cy="566" rx="62" ry="6" fill="#232a2f" opacity="0.3"/>
+        <path d="M182,558 L186,542 Q188,536 196,535 L212,533 Q220,520 236,519 L262,519 Q276,520 284,533 L298,536 Q306,538 307,546 L307,558 Q307,562 301,562 L188,562 Q182,562 182,558 Z" fill="#5d7183"/>
+        <path d="M220,532 Q226,524 238,524 L246,524 L246,532 Z" fill="#2e3d46"/>
+        <path d="M250,524 L262,524 Q272,525 278,532 L250,532 Z" fill="#2e3d46"/>
+        <circle cx="212" cy="560" r="10" fill="#22282c"/>
+        <circle cx="212" cy="560" r="4.5" fill="#98a2a8"/>
+        <circle cx="282" cy="560" r="10" fill="#22282c"/>
+        <circle cx="282" cy="560" r="4.5" fill="#98a2a8"/>
+      </g>
+    </svg>
+  </div>
+  <div class="veil" aria-hidden="true"></div>
+
+  <div class="content">
+    <h1>HOT<span class="wire">WIRE</span></h1>
+    <p class="subtitle">港町ロングショア成り上がり</p>
+    <a class="start" href="hotwire.html">ゲームをはじめる</a>
+    <p class="notes"><span>ミッション全12本</span><span class="sep" aria-hidden="true"></span><span>街は最初から全開</span><span class="sep" aria-hidden="true"></span><span>手配度は星3段階</span><span class="sep" aria-hidden="true"></span><span>コントローラー対応</span></p>
+  </div>
+
+</main>
+
+<section class="outline" aria-labelledby="outline-title">
+  <div class="outline-inner">
+    <h2 id="outline-title">仕事の概要</h2>
+    <p class="lead">港町ロングショアの下っ端チンピラが主人公。スマホに届く仕事――配達、送迎、車両回収――をこなして金を稼ぎ、顔を売り、街の裏側を一段ずつ上がっていく。やらかせば警察に追われ、捕まれば罰金と武器没収。それでもハンドルを握り直して、次の着信を待つ。</p>
+    <ol class="feature-list">
+      <li>
+        <span class="feature-no">FEATURE 01</span>
+        <div class="feature-body">
+          <p class="feature-name">章立てミッション全12本</p>
+          <p class="feature-desc">第1章「下っ端」から第2章「中堅」、第3章「幹部候補」へ。配達や送迎の小さな仕事から始めて、逃走や大口の回収まで、立場が上がるほど仕事は荒く、報酬は大きくなる。合間には繰り返し受けられる小口仕事もある。</p>
+        </div>
+      </li>
+      <li>
+        <span class="feature-no">FEATURE 02</span>
+        <div class="feature-body">
+          <p class="feature-name">街は一枚マップで最初から全開</p>
+          <p class="feature-desc">港湾、ダウンタウン、住宅、工業の4地区からなるロングショア全域を、最初から自由に走り回れる。ロックされた地区はない。どこへ行くかは、着信と自分の腕しだい。</p>
+        </div>
+      </li>
+      <li>
+        <span class="feature-no">FEATURE 03</span>
+        <div class="feature-body">
+          <p class="feature-name">GTA式の手配システム <span class="stars">★★★</span></p>
+          <p class="feature-desc">手配度は星3段階。パトカーに見られれば即星、それ以外は近くの歩行者がスマホで通報し、数秒のラグのあとに星が付く。誰にも見られていなければ、軽い衝突は星なしで済むこともある。追っ手の台数は星の数しだいで、視界を切れば星は1つずつ下がっていく。</p>
+        </div>
+      </li>
+      <li>
+        <span class="feature-no">FEATURE 04</span>
+        <div class="feature-body">
+          <p class="feature-name">走りやすい運転</p>
+          <p class="feature-desc">ドライブアシストと直進スナップ、強めのグリップで、まっすぐ走るのが苦手でも車が暴れない。操作は画面基準が既定で、スティックを倒した方向へそのまま進む。設定で車基準にも切り替えられる。</p>
+        </div>
+      </li>
+      <li>
+        <span class="feature-no">FEATURE 05</span>
+        <div class="feature-body">
+          <p class="feature-name">コントローラー対応</p>
+          <p class="feature-desc">運転からスマホの着信の受諾まで、パッドだけで操作できる。仕事はスマホ型のパネルに届き、十字キーとボタンで受ける。キーボードとタッチでも遊べる。</p>
+        </div>
+      </li>
+    </ol>
+    <p class="foot">操作の要点：運転は左スティック／WASD ― 画面基準が既定（設定で車基準に切替可）。仕事はスマホの着信から受ける。進み具合はミッション完了などで自動保存。</p>
+  </div>
+</section>
+</body>
+</html>
