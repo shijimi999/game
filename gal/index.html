@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light" />
+<link rel="icon" href="data:," />
+<title>きみと、3年分の放課後</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", YuGothic, "Noto Sans JP", system-ui, sans-serif;
+    background: #bfe6f7;
+    color: #22354f;
+    overflow-x: hidden;
+  }
+  button, [role="button"], select, summary, input:not([type="checkbox"], [type="radio"]) { min-height: 2rem; }
+
+  .poster {
+    position: relative;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  /* ---------- scene ---------- */
+  .scene {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+  }
+  .scene svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  /* gentle light: bright sky up top, a touch of shade at the lawn's edge */
+  .veil {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(to bottom, rgba(255,255,255,.20) 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0) 78%, rgba(46,80,50,.12) 100%);
+  }
+
+  /* slow cloud drift */
+  .clouds-a { animation: drift-a 90s linear infinite alternate; }
+  .clouds-b { animation: drift-b 120s linear infinite alternate; }
+  @keyframes drift-a { from { transform: translateX(0); } to { transform: translateX(24px); } }
+  @keyframes drift-b { from { transform: translateX(0); } to { transform: translateX(-18px); } }
+  /* sakura petals drifting down */
+  .petal { animation: petal-fall 7s linear infinite; }
+  .petal.p2 { animation-duration: 9s; animation-delay: -3s; }
+  .petal.p3 { animation-duration: 8s; animation-delay: -5.5s; }
+  .petal.p4 { animation-duration: 10s; animation-delay: -1.8s; }
+  .petal.p5 { animation-duration: 7.6s; animation-delay: -4.2s; }
+  @keyframes petal-fall {
+    0% { transform: translate(0, -6px) rotate(0deg); opacity: 0; }
+    12% { opacity: .95; }
+    88% { opacity: .95; }
+    100% { transform: translate(-26px, 120px) rotate(150deg); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .clouds-a, .clouds-b, .petal { animation: none; }
+    .petal { opacity: .9; }
+  }
+
+  /* ---------- content ---------- */
+  .content {
+    text-align: center;
+    padding: clamp(2.4rem, 7vh, 4.2rem) 1.25rem 3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(1.85rem, 6.4vw, 3.9rem);
+    font-weight: 700;
+    letter-spacing: .06em;
+    line-height: 1.3;
+    color: #22354f;
+    text-shadow: 0 2px 0 rgba(255,255,255,.65), 0 4px 18px rgba(255,255,255,.55);
+  }
+  h1 .accent { color: #e04e6d; }
+
+  .subtitle {
+    margin: 1rem 0 0;
+    display: flex;
+    align-items: center;
+    gap: .9em;
+    font-size: clamp(.8rem, 2.6vw, .98rem);
+    font-weight: 600;
+    letter-spacing: .3em;
+    text-indent: .3em;
+    color: #33506e;
+    text-shadow: 0 1px 0 rgba(255,255,255,.6);
+  }
+  .subtitle::before,
+  .subtitle::after {
+    content: "";
+    width: 2.2em;
+    height: 2px;
+    border-radius: 2px;
+    background: rgba(51,80,110,.4);
+    flex: none;
+  }
+
+  .start {
+    margin-top: clamp(1.9rem, 5vh, 3rem);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 54px;
+    padding: .85rem 2.4rem;
+    border-radius: 999px;
+    background: #f2607c;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: .16em;
+    text-indent: .16em;
+    text-decoration: none;
+    box-shadow: 0 6px 18px rgba(224,78,109,.38), 0 2px 0 rgba(178,52,80,.55);
+    transition: background .25s ease, transform .25s ease;
+  }
+  .start:hover { background: #e04e6d; }
+  .start:focus-visible {
+    outline: 3px solid #22354f;
+    outline-offset: 3px;
+    background: #e04e6d;
+  }
+
+  .notes {
+    margin: clamp(1.3rem, 3.6vh, 1.9rem) 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: .9em;
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: .2em;
+    text-indent: .2em;
+    color: #33506e;
+    text-shadow: 0 1px 0 rgba(255,255,255,.6);
+  }
+  .notes .sep {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #f2607c;
+    flex: none;
+  }
+
+  /* ---------- outline ---------- */
+  .outline {
+    background: #22354f;
+    color: #eaf1f7;
+    padding: clamp(3rem, 8vh, 4.5rem) 1.25rem clamp(3.5rem, 9vh, 5rem);
+  }
+  .outline-inner {
+    max-width: 880px;
+    margin: 0 auto;
+  }
+  .outline h2 {
+    margin: 0;
+    font-size: clamp(1.15rem, 3.4vw, 1.5rem);
+    font-weight: 700;
+    letter-spacing: .34em;
+    text-indent: .34em;
+    text-align: center;
+    color: #fdfdff;
+  }
+  .outline .lead {
+    margin: 1.2rem auto 0;
+    max-width: 38em;
+    text-align: center;
+    font-size: .92rem;
+    line-height: 2.05;
+    color: rgba(234,241,247,.85);
+  }
+  .feature-list {
+    list-style: none;
+    margin: 2.4rem 0 0;
+    padding: 0;
+    border-top: 1px solid rgba(234,241,247,.18);
+  }
+  .feature-list li {
+    display: flex;
+    gap: 1.1rem;
+    align-items: baseline;
+    padding: 1.15rem .25rem;
+    border-bottom: 1px solid rgba(234,241,247,.18);
+  }
+  .feature-no {
+    flex: none;
+    font-size: .72rem;
+    letter-spacing: .24em;
+    color: rgba(234,241,247,.55);
+    white-space: nowrap;
+  }
+  .feature-body { min-width: 0; }
+  .feature-name {
+    margin: 0;
+    font-size: 1.02rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    color: #fdfdff;
+  }
+  .feature-name .who {
+    font-size: .82rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    color: #f6b8c6;
+    margin-left: .6em;
+  }
+  .feature-desc {
+    margin: .45rem 0 0;
+    font-size: .85rem;
+    line-height: 1.9;
+    color: rgba(234,241,247,.78);
+  }
+  .outline .foot {
+    margin: 2rem 0 0;
+    text-align: center;
+    font-size: .78rem;
+    line-height: 2;
+    letter-spacing: .12em;
+    color: rgba(234,241,247,.62);
+  }
+
+  @media (max-width: 480px) {
+    h1 { font-size: clamp(1.55rem, 8.4vw, 1.9rem); letter-spacing: .03em; }
+    .subtitle { letter-spacing: .2em; text-indent: .2em; gap: .6em; }
+    .subtitle::before, .subtitle::after { width: 1.2em; }
+    .start { width: min(78vw, 300px); padding-left: 1rem; padding-right: 1rem; }
+    .notes { font-size: .72rem; letter-spacing: .13em; text-indent: .13em; gap: .65em; }
+    .feature-list li { flex-direction: column; gap: .35rem; }
+    .outline h2 { letter-spacing: .22em; text-indent: .22em; }
+  }
+</style>
+</head>
+<body>
+<main class="poster">
+
+  <!-- Flat poster illustration in the game's own simple style (no outlines, plain shapes):
+       Aoba Academy under a spring sky — sakura, the school building with its clock tower,
+       the great camphor tree behind the school, and the three heroines in front. -->
+  <div class="scene" role="img" aria-label="春の青空の下、桜と時計台のある青葉学園の校舎と校舎裏の大楠を背に、ヒロイン3人が並んで立つフラットなイラスト">
+    <svg viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+      <!-- sky -->
+      <rect x="0" y="0" width="1200" height="675" fill="#bfe6f7"/>
+      <rect x="0" y="0" width="1200" height="120" fill="#d3f0fb"/>
+
+      <!-- sun -->
+      <circle cx="1064" cy="74" r="46" fill="#ffe9a3" opacity="0.35"/>
+      <circle cx="1064" cy="74" r="27" fill="#ffe9a3"/>
+
+      <!-- clouds: flat and soft -->
+      <g class="clouds-a" fill="#ffffff" opacity="0.95">
+        <ellipse cx="150" cy="64" rx="62" ry="17"/>
+        <ellipse cx="196" cy="52" rx="40" ry="13"/>
+        <ellipse cx="700" cy="44" rx="52" ry="14"/>
+        <ellipse cx="738" cy="34" rx="32" ry="10"/>
+      </g>
+      <g class="clouds-b" fill="#ffffff" opacity="0.8">
+        <ellipse cx="420" cy="96" rx="46" ry="12"/>
+        <ellipse cx="950" cy="128" rx="56" ry="13"/>
+        <ellipse cx="90" cy="150" rx="40" ry="11"/>
+      </g>
+
+      <!-- ======== the great camphor tree, behind the school (right) ======== -->
+      <g>
+        <path d="M972 478 C966 420 968 372 958 330 L986 330 C978 376 980 424 988 478 Z" fill="#7a4e2c"/>
+        <path d="M972 380 C940 356 912 348 884 350 C916 334 950 344 976 364 Z" fill="#7a4e2c"/>
+        <circle cx="968" cy="292" r="86" fill="#5e9c5f"/>
+        <circle cx="896" cy="322" r="56" fill="#6cab68"/>
+        <circle cx="1044" cy="318" r="58" fill="#549257"/>
+        <circle cx="928" cy="256" r="50" fill="#77b06e"/>
+        <circle cx="1016" cy="252" r="48" fill="#68a862"/>
+        <circle cx="968" cy="228" r="44" fill="#7cb877"/>
+      </g>
+
+      <!-- ======== school building ======== -->
+      <g>
+        <!-- left wing -->
+        <rect x="238" y="352" width="168" height="140" fill="#fff3d6"/>
+        <polygon points="226,354 418,354 322,306" fill="#5a6a82"/>
+        <!-- right wing -->
+        <rect x="794" y="352" width="168" height="140" fill="#fff3d6"/>
+        <polygon points="782,354 974,354 878,306" fill="#5a6a82"/>
+        <!-- main block -->
+        <rect x="392" y="318" width="416" height="174" fill="#fff8e2"/>
+        <polygon points="378,320 822,320 600,238" fill="#48607e"/>
+        <!-- clock tower -->
+        <rect x="562" y="196" width="76" height="130" fill="#fff8e2"/>
+        <polygon points="554,198 646,198 600,158" fill="#48607e"/>
+        <circle cx="600" cy="238" r="17" fill="#ffffff"/>
+        <circle cx="600" cy="238" r="17" fill="none" stroke="#48607e" stroke-width="3.5"/>
+        <path d="M600 238 L600 227 M600 238 L608 242" stroke="#48607e" stroke-width="3" stroke-linecap="round" fill="none"/>
+        <!-- windows -->
+        <g fill="#7fa8c9">
+          <rect x="272" y="382" width="26" height="34" rx="4"/><rect x="318" y="382" width="26" height="34" rx="4"/><rect x="272" y="434" width="26" height="34" rx="4"/><rect x="318" y="434" width="26" height="34" rx="4"/>
+          <rect x="856" y="382" width="26" height="34" rx="4"/><rect x="902" y="382" width="26" height="34" rx="4"/><rect x="856" y="434" width="26" height="34" rx="4"/><rect x="902" y="434" width="26" height="34" rx="4"/>
+          <rect x="428" y="352" width="28" height="36" rx="4"/><rect x="476" y="352" width="28" height="36" rx="4"/><rect x="696" y="352" width="28" height="36" rx="4"/><rect x="744" y="352" width="28" height="36" rx="4"/>
+          <rect x="428" y="412" width="28" height="36" rx="4"/><rect x="476" y="412" width="28" height="36" rx="4"/><rect x="696" y="412" width="28" height="36" rx="4"/><rect x="744" y="412" width="28" height="36" rx="4"/>
+          <rect x="584" y="282" width="32" height="30" rx="4"/>
+        </g>
+        <!-- entrance -->
+        <path d="M572 492 v-44 a28 24 0 0 1 56 0 v44 Z" fill="#48607e"/>
+        <rect x="556" y="486" width="88" height="6" fill="#5a6a82"/>
+      </g>
+
+      <!-- ======== sakura trees ======== -->
+      <g>
+        <!-- left, tall -->
+        <path d="M128 500 C122 446 124 402 114 362 L140 362 C132 406 134 452 142 500 Z" fill="#8a5a36"/>
+        <path d="M126 408 C100 386 76 378 52 382 C80 364 110 374 132 392 Z" fill="#8a5a36"/>
+        <circle cx="126" cy="316" r="64" fill="#f6b8c6"/>
+        <circle cx="72" cy="344" r="42" fill="#f9cfd9"/>
+        <circle cx="182" cy="342" r="44" fill="#f29eb2"/>
+        <circle cx="98" cy="282" r="38" fill="#f9cfd9"/>
+        <circle cx="156" cy="280" r="36" fill="#f6b8c6"/>
+        <!-- right, smaller, in front of the camphor -->
+        <path d="M1052 512 C1048 474 1049 444 1042 416 L1062 416 C1056 446 1057 478 1063 512 Z" fill="#8a5a36"/>
+        <circle cx="1052" cy="382" r="46" fill="#f6b8c6"/>
+        <circle cx="1014" cy="402" r="30" fill="#f9cfd9"/>
+        <circle cx="1090" cy="400" r="31" fill="#f29eb2"/>
+        <circle cx="1052" cy="352" r="28" fill="#f9cfd9"/>
+      </g>
+
+      <!-- ground -->
+      <rect x="0" y="492" width="1200" height="183" fill="#9ed29a"/>
+      <rect x="0" y="492" width="1200" height="10" fill="#aedea6"/>
+      <!-- path to the entrance -->
+      <polygon points="566,675 634,675 616,494 584,494" fill="#f3e2c2"/>
+      <!-- grass tufts -->
+      <g fill="#7cb877">
+        <path d="M60 560 q4 -16 8 0 q4 -20 8 0 q4 -14 8 0 Z"/>
+        <path d="M300 610 q4 -16 8 0 q4 -20 8 0 q4 -14 8 0 Z"/>
+        <path d="M880 596 q4 -16 8 0 q4 -20 8 0 q4 -14 8 0 Z"/>
+        <path d="M1120 560 q4 -16 8 0 q4 -20 8 0 q4 -14 8 0 Z"/>
+        <path d="M180 648 q4 -16 8 0 q4 -20 8 0 q4 -14 8 0 Z"/>
+        <path d="M990 652 q4 -16 8 0 q4 -20 8 0 q4 -14 8 0 Z"/>
+      </g>
+      <!-- fallen petals on the lawn -->
+      <g fill="#f6b8c6" opacity="0.85">
+        <ellipse cx="150" cy="540" rx="7" ry="4" transform="rotate(24 150 540)"/>
+        <ellipse cx="230" cy="586" rx="7" ry="4" transform="rotate(-18 230 586)"/>
+        <ellipse cx="90" cy="620" rx="7" ry="4" transform="rotate(40 90 620)"/>
+        <ellipse cx="1010" cy="560" rx="7" ry="4" transform="rotate(12 1010 560)"/>
+        <ellipse cx="1086" cy="612" rx="7" ry="4" transform="rotate(-30 1086 612)"/>
+        <ellipse cx="700" cy="640" rx="7" ry="4" transform="rotate(20 700 640)"/>
+      </g>
+
+      <!-- drifting petals -->
+      <g fill="#f9cfd9">
+        <ellipse class="petal" cx="170" cy="392" rx="7" ry="4.5"/>
+        <ellipse class="petal p2" cx="230" cy="360" rx="6" ry="4"/>
+        <ellipse class="petal p3" cx="105" cy="430" rx="6.5" ry="4"/>
+        <ellipse class="petal p4" cx="1080" cy="440" rx="6.5" ry="4"/>
+        <ellipse class="petal p5" cx="1018" cy="470" rx="6" ry="4"/>
+      </g>
+
+      <!-- soft shadows under the heroines -->
+      <g fill="#4c7a4a" opacity="0.28">
+        <ellipse cx="398" cy="664" rx="72" ry="10"/>
+        <ellipse cx="600" cy="670" rx="78" ry="11"/>
+        <ellipse cx="802" cy="664" rx="72" ry="10"/>
+      </g>
+
+      <!-- ======== Rin (left): black straight hair, blue tie, calm ======== -->
+      <g transform="translate(298,414)">
+        <rect x="50" y="34" width="100" height="138" rx="28" fill="#2f3542"/>
+        <rect x="52" y="138" width="96" height="112" rx="26" fill="#2e4059"/>
+        <polygon points="84,138 116,138 100,162" fill="#ffffff"/>
+        <rect x="93" y="148" width="14" height="36" rx="7" fill="#3d9bd6"/>
+        <circle cx="100" cy="94" r="46" fill="#ffe9d2"/>
+        <path d="M54 92 C52 50 72 30 100 30 C128 30 148 50 146 92 C132 70 118 64 100 64 C82 64 68 70 54 92 Z" fill="#2f3542"/>
+        <rect x="58" y="52" width="10" height="22" rx="5" fill="#3d9bd6"/>
+        <ellipse cx="66" cy="112" rx="8" ry="5" fill="#ffb3ab" opacity=".55"/>
+        <ellipse cx="134" cy="112" rx="8" ry="5" fill="#ffb3ab" opacity=".55"/>
+        <circle cx="84" cy="99" r="4.5" fill="#38302a"/>
+        <circle cx="116" cy="99" r="4.5" fill="#38302a"/>
+        <path d="M91 116 Q100 123 109 116" stroke="#c06a4a" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      </g>
+
+      <!-- ======== Himari (centre): brown side ponytail, pink tie & ribbon, smiling ======== -->
+      <g transform="translate(500,408)">
+        <path d="M136 46 C158 52 167 76 164 110 C161 142 151 162 139 168 C147 132 147 82 136 46 Z" fill="#8a5a36"/>
+        <rect x="52" y="138" width="96" height="112" rx="26" fill="#2e4059"/>
+        <polygon points="84,138 116,138 100,162" fill="#ffffff"/>
+        <rect x="93" y="148" width="14" height="36" rx="7" fill="#f2607c"/>
+        <circle cx="100" cy="94" r="46" fill="#ffe9d2"/>
+        <path d="M54 96 C50 52 70 30 100 30 C130 30 150 52 146 96 C134 72 120 66 100 66 C80 66 66 72 54 96 Z" fill="#8a5a36"/>
+        <rect x="131" y="32" width="13" height="24" rx="6.5" transform="rotate(16 137 44)" fill="#f2607c"/>
+        <ellipse cx="66" cy="112" rx="9" ry="5.5" fill="#ffb3ab" opacity=".7"/>
+        <ellipse cx="134" cy="112" rx="9" ry="5.5" fill="#ffb3ab" opacity=".7"/>
+        <path d="M74 100 Q84 90 94 100" stroke="#38302a" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+        <path d="M106 100 Q116 90 126 100" stroke="#38302a" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+        <path d="M89 114 Q100 129 111 114 Z" fill="#b06a4a"/>
+      </g>
+
+      <!-- ======== Yura (right): dusty-pink waves, green tie, smiling ======== -->
+      <g transform="translate(702,414)">
+        <circle cx="58" cy="86" r="24" fill="#c98aa6"/>
+        <circle cx="142" cy="86" r="24" fill="#c98aa6"/>
+        <circle cx="62" cy="122" r="20" fill="#c98aa6"/>
+        <circle cx="138" cy="122" r="20" fill="#c98aa6"/>
+        <rect x="52" y="138" width="96" height="112" rx="26" fill="#2e4059"/>
+        <polygon points="84,138 116,138 100,162" fill="#ffffff"/>
+        <rect x="93" y="148" width="14" height="36" rx="7" fill="#3fae7c"/>
+        <circle cx="100" cy="94" r="46" fill="#ffe9d2"/>
+        <path d="M54 96 C50 52 70 30 100 30 C130 30 150 52 146 96 C136 74 124 68 112 70 C104 60 92 60 86 70 C74 68 64 76 54 96 Z" fill="#c98aa6"/>
+        <circle cx="136" cy="44" r="8" fill="#ffd166"/>
+        <circle cx="136" cy="44" r="3.5" fill="#fff3d6"/>
+        <ellipse cx="66" cy="112" rx="9" ry="5.5" fill="#ffb3ab" opacity=".7"/>
+        <ellipse cx="134" cy="112" rx="9" ry="5.5" fill="#ffb3ab" opacity=".7"/>
+        <path d="M74 100 Q84 90 94 100" stroke="#38302a" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+        <path d="M106 100 Q116 90 126 100" stroke="#38302a" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+        <path d="M89 114 Q100 129 111 114 Z" fill="#b06a4a"/>
+      </g>
+    </svg>
+  </div>
+  <div class="veil" aria-hidden="true"></div>
+
+  <div class="content">
+    <h1>きみと、<span class="accent">3年分</span>の放課後</h1>
+    <p class="subtitle">育成型・学園恋愛シミュレーション</p>
+    <a class="start" href="gal.html">ゲームをはじめる</a>
+    <p class="notes"><span>ヒロイン3人</span><span class="sep" aria-hidden="true"></span><span>デート8スポット</span><span class="sep" aria-hidden="true"></span><span>エンディング全5種</span></p>
+  </div>
+
+</main>
+
+<section class="outline" aria-labelledby="outline-title">
+  <div class="outline-inner">
+    <h2 id="outline-title">あらすじ</h2>
+    <p class="lead">私立青葉学園高校に入学した主人公の3年間。勉強や運動で自分を磨き、3人の同級生との距離を少しずつ縮めていく。告白の舞台は、校舎裏の大楠の下。卒業までの恋を実らせる、育成型の学園恋愛シミュレーション。</p>
+    <ol class="feature-list">
+      <li>
+        <span class="feature-no">FEATURE 01</span>
+        <div class="feature-body">
+          <p class="feature-name">ヒロイン3人<span class="who">ひまり ・ 凛 ・ ゆら</span></p>
+          <p class="feature-desc">1年春に出会う元気な陸上部の日向ひまり、1年秋に接点ができるクールな優等生・白瀬凛、2年春に美術室で出会う芸術系の森永ゆら。3人とも同級生で、クラスはバラバラ。親密度はハートの段階表示、放っておくと「爆弾」がたまるのも本家式。</p>
+        </div>
+      </li>
+      <li>
+        <span class="feature-no">FEATURE 02</span>
+        <div class="feature-body">
+          <p class="feature-name">自分を磨く育成</p>
+          <p class="feature-desc">パラメータは文系・理系・芸術・運動・雑学・容姿の6項目＋ストレス。平日は週1コマンドでサクサク進み、中間・期末テストでは順位が出る。凛を狙うなら、学年1位が実質の関門になる。</p>
+        </div>
+      </li>
+      <li>
+        <span class="feature-no">FEATURE 03</span>
+        <div class="feature-body">
+          <p class="feature-name">デートと季節イベント</p>
+          <p class="feature-desc">デートスポットは公園・映画館・水族館・美術館・カフェ・ボウリング・遊園地・海の8か所、会話の3択つきで、子ごとに好き・苦手な場所がある。季節イベントは体育祭・文化祭・クリスマス・バレンタイン＋2年の修学旅行。バイトでお金を稼げば、誕生日やクリスマスにプレゼントも渡せる。</p>
+        </div>
+      </li>
+      <li>
+        <span class="feature-no">FEATURE 04</span>
+        <div class="feature-body">
+          <p class="feature-name">エンディング全5種</p>
+          <p class="feature-desc">告白は3年のクリスマス→卒業式の二段構え。クリスマスに実れば、残りの期間はカップルイベントで過ごせる。結末はヒロイン別3種＋告白失敗＋バッドの全5種で、到達状況はタイトル画面に残る。</p>
+        </div>
+      </li>
+    </ol>
+    <p class="foot">操作：マウス／タップ中心 ― 主人公の名前は自分で入力します。進行はブラウザに自動セーブされるので、いつでも「つづきから」遊べます。</p>
+  </div>
+</section>
+</body>
+</html>
