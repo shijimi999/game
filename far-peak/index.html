@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light" />
+<link rel="icon" href="data:," />
+<title>FAR PEAK</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", YuGothic, "Noto Sans JP", system-ui, sans-serif;
+    background: #bcd4e8;
+    color: #fff;
+    overflow-x: hidden;
+  }
+
+  .poster {
+    position: relative;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  /* ---------- scene ---------- */
+  .scene {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+  }
+  .scene svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  /* soft alpine light: gentle brightening up top, quiet shading toward the village */
+  .veil {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(to bottom, rgba(28,44,58,.10) 0%, rgba(28,44,58,0) 26%, rgba(28,44,58,0) 50%, rgba(22,34,44,.36) 100%),
+      radial-gradient(62% 46% at 50% 44%, rgba(22,38,52,.20) 0%, rgba(22,38,52,0) 72%),
+      radial-gradient(120% 90% at 50% 42%, rgba(0,0,0,0) 52%, rgba(18,30,40,.24) 100%);
+  }
+
+  /* slow cloud drift */
+  .clouds-a { animation: drift-a 90s linear infinite alternate; }
+  .clouds-b { animation: drift-b 120s linear infinite alternate; }
+  @keyframes drift-a { from { transform: translateX(0); } to { transform: translateX(26px); } }
+  @keyframes drift-b { from { transform: translateX(0); } to { transform: translateX(-20px); } }
+  /* prayer flags: a faint flutter */
+  .flags { animation: flutter 5s ease-in-out infinite alternate; transform-origin: 600px 300px; }
+  @keyframes flutter { from { transform: rotate(0deg); } to { transform: rotate(.35deg); } }
+  @media (prefers-reduced-motion: reduce) {
+    .clouds-a, .clouds-b, .flags { animation: none; }
+  }
+
+  /* ---------- content ---------- */
+  .content {
+    text-align: center;
+    padding: 3rem 1.25rem 4.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(2.6rem, 10vw, 5.6rem);
+    font-weight: 300;
+    letter-spacing: .30em;
+    /* compensate the trailing tracking so it sits optically centred */
+    text-indent: .30em;
+    line-height: 1.15;
+    color: #f4f8fb;
+    text-shadow: 0 1px 2px rgba(22,38,52,.5), 0 2px 22px rgba(22,38,52,.4);
+    white-space: nowrap;
+  }
+
+  .subtitle {
+    margin: 1.1rem 0 0;
+    font-size: clamp(.82rem, 2.6vw, 1rem);
+    font-weight: 400;
+    letter-spacing: .62em;
+    text-indent: .62em;
+    color: rgba(242,247,250,.97);
+    text-shadow: 0 1px 3px rgba(22,38,52,.75), 0 1px 12px rgba(22,38,52,.65);
+  }
+  .subtitle::before,
+  .subtitle::after {
+    content: "";
+    display: inline-block;
+    vertical-align: middle;
+    width: 2.2em;
+    height: 1px;
+    background: rgba(242,247,250,.55);
+    margin: 0 .9em 0 0;
+  }
+  .subtitle::after { margin: 0 0 0 .9em; }
+
+  .start {
+    margin-top: clamp(2.2rem, 6vh, 3.6rem);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 52px;
+    padding: .8rem 2.1rem;
+    border: 1px solid rgba(244,248,251,.85);
+    background: rgba(24,38,50,.34);
+    color: #f4f8fb;
+    font-size: .95rem;
+    letter-spacing: .18em;
+    text-indent: .18em;
+    text-decoration: none;
+    transition: background .25s ease, border-color .25s ease;
+  }
+  .start:hover { background: rgba(24,38,50,.58); border-color: #fff; }
+  .start:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 3px;
+    background: rgba(24,38,50,.58);
+  }
+
+  .notes {
+    margin: clamp(1.4rem, 4vh, 2rem) 0 0;
+    display: flex;
+    align-items: center;
+    gap: .9em;
+    font-size: .78rem;
+    letter-spacing: .22em;
+    text-indent: .22em;
+    color: rgba(238,244,248,.9);
+    text-shadow: 0 1px 6px rgba(22,38,52,.55);
+  }
+  .notes .sep {
+    width: 3px; height: 3px;
+    background: rgba(238,244,248,.7);
+    flex: none;
+  }
+
+  /* ---------- outline ---------- */
+  .outline {
+    background: #24313c;
+    color: #e9eff3;
+    padding: clamp(3rem, 8vh, 4.5rem) 1.25rem clamp(3.5rem, 9vh, 5rem);
+  }
+  .outline-inner {
+    max-width: 880px;
+    margin: 0 auto;
+  }
+  .outline h2 {
+    margin: 0;
+    font-size: clamp(1.15rem, 3.4vw, 1.5rem);
+    font-weight: 400;
+    letter-spacing: .34em;
+    text-indent: .34em;
+    text-align: center;
+    color: #f4f8fb;
+  }
+  .outline .lead {
+    margin: 1.2rem auto 0;
+    max-width: 38em;
+    text-align: center;
+    font-size: .92rem;
+    line-height: 2;
+    color: rgba(233,239,243,.82);
+  }
+  .feature-list {
+    list-style: none;
+    margin: 2.4rem 0 0;
+    padding: 0;
+    border-top: 1px solid rgba(233,239,243,.18);
+  }
+  .feature-list li {
+    display: flex;
+    gap: 1.1rem;
+    align-items: baseline;
+    padding: 1.15rem .25rem;
+    border-bottom: 1px solid rgba(233,239,243,.18);
+  }
+  .feature-no {
+    flex: none;
+    font-size: .72rem;
+    letter-spacing: .24em;
+    color: rgba(233,239,243,.55);
+    white-space: nowrap;
+  }
+  .feature-body { min-width: 0; }
+  .feature-name {
+    margin: 0;
+    font-size: 1.02rem;
+    font-weight: 600;
+    letter-spacing: .12em;
+    color: #f4f8fb;
+  }
+  .feature-desc {
+    margin: .45rem 0 0;
+    font-size: .85rem;
+    line-height: 1.85;
+    color: rgba(233,239,243,.75);
+  }
+  .outline .foot {
+    margin: 2rem 0 0;
+    text-align: center;
+    font-size: .78rem;
+    line-height: 2;
+    letter-spacing: .14em;
+    color: rgba(233,239,243,.6);
+  }
+
+  @media (max-width: 480px) {
+    h1 { font-size: clamp(2rem, 12vw, 2.6rem); letter-spacing: .22em; text-indent: .22em; }
+    .subtitle { letter-spacing: .44em; text-indent: .44em; }
+    .subtitle::before, .subtitle::after { width: 1.2em; }
+    .start { width: min(78vw, 300px); padding-left: 1rem; padding-right: 1rem; }
+    .notes { font-size: .72rem; letter-spacing: .14em; text-indent: .14em; gap: .65em; flex-wrap: wrap; justify-content: center; }
+    .content { padding-bottom: 5.5rem; }
+    .feature-list li { flex-direction: column; gap: .35rem; }
+    .outline h2 { letter-spacing: .22em; text-indent: .22em; }
+  }
+</style>
+</head>
+<body>
+<main class="poster">
+
+  <!-- Flat illustration: snow peaks behind a stone bell tower, a mountain village
+       strung with prayer flags, and pine forest on the slopes. -->
+  <div class="scene" role="img" aria-label="淡い青空の下、雪山を背に石造りの鐘の塔が立ち、祈祷旗がはためく山の村と松林が広がるフラットな風景">
+    <svg viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+      <defs>
+        <!-- one pine: trunk and three soft tiers -->
+        <g id="pine">
+          <rect x="-3" y="26" width="6" height="16" fill="#5d4a38"/>
+          <polygon points="0,-34 17,2 -17,2" fill="#42624a"/>
+          <polygon points="0,-16 20,16 -20,16" fill="#3b5942"/>
+          <polygon points="0,2 23,32 -23,32" fill="#33503a"/>
+          <polygon points="0,-34 17,2 0,2" fill="#4c7054"/>
+        </g>
+        <!-- one small house: stone walls, snow roof -->
+        <g id="house">
+          <rect x="-34" y="0" width="68" height="40" fill="#a49a8b"/>
+          <rect x="-34" y="13" width="68" height="3" fill="#948a7c"/>
+          <rect x="-34" y="27" width="68" height="3" fill="#948a7c"/>
+          <polygon points="-42,2 0,-22 42,2" fill="#5a666e"/>
+          <polygon points="-42,2 0,-22 42,2 34,2 0,-15 -34,2" fill="#eef3f6"/>
+          <rect x="-7" y="18" width="14" height="22" fill="#4c4238"/>
+          <rect x="16" y="10" width="10" height="10" fill="#31404a"/>
+        </g>
+      </defs>
+
+      <!-- pale blue sky -->
+      <rect x="0" y="0" width="1200" height="675" fill="#bcd4e8"/>
+      <rect x="0" y="0" width="1200" height="130" fill="#cfe1f0"/>
+      <rect x="0" y="300" width="1200" height="90" fill="#aecbe4"/>
+
+      <!-- pale sun, high right -->
+      <circle cx="1015" cy="92" r="34" fill="#f6efdb" opacity="0.9"/>
+      <circle cx="1015" cy="92" r="52" fill="#f6efdb" opacity="0.25"/>
+
+      <!-- clouds: flat and soft -->
+      <g class="clouds-a" fill="#eef4f9" opacity="0.9">
+        <ellipse cx="215" cy="86" rx="120" ry="17"/>
+        <ellipse cx="270" cy="68" rx="70" ry="14"/>
+        <ellipse cx="880" cy="140" rx="105" ry="14"/>
+        <ellipse cx="830" cy="126" rx="58" ry="11"/>
+      </g>
+      <g class="clouds-b" fill="#dbe8f2" opacity="0.8">
+        <ellipse cx="520" cy="112" rx="92" ry="12"/>
+        <ellipse cx="1120" cy="196" rx="86" ry="12"/>
+        <ellipse cx="90" cy="176" rx="76" ry="11"/>
+      </g>
+
+      <!-- far snow range -->
+      <polygon points="0,340 120,208 212,282 322,168 432,266 542,188 662,286 762,178 882,272 982,204 1102,286 1200,224 1200,430 0,430" fill="#e6edf2"/>
+      <!-- shadow facets on the snow -->
+      <g fill="#b9cbdc" opacity="0.85">
+        <polygon points="322,168 432,266 372,266 322,214"/>
+        <polygon points="762,178 882,272 812,272 762,222"/>
+        <polygon points="120,208 212,282 162,282 120,240"/>
+        <polygon points="542,188 662,286 596,286 542,232"/>
+        <polygon points="982,204 1102,286 1036,286 982,240"/>
+      </g>
+      <!-- snow sparkle facets -->
+      <g fill="#f7fafc">
+        <polygon points="322,168 372,214 322,232 288,200"/>
+        <polygon points="762,178 806,220 762,236 730,204"/>
+        <polygon points="120,208 152,238 120,250 96,226"/>
+      </g>
+
+      <!-- mid range: blue-grey slopes -->
+      <polygon points="0,408 150,302 302,384 472,292 642,392 822,302 1002,388 1200,318 1200,520 0,520" fill="#7e9db2"/>
+      <polygon points="472,292 642,392 560,392 472,338" fill="#6d8ca2"/>
+      <polygon points="150,302 302,384 224,384 150,340" fill="#6d8ca2"/>
+      <polygon points="822,302 1002,388 918,388 822,344" fill="#6d8ca2"/>
+      <!-- snow streaks on the mid range -->
+      <g fill="#dfe9f0" opacity="0.9">
+        <polygon points="452,306 472,292 494,308 472,322"/>
+        <polygon points="130,316 150,302 172,318 150,332"/>
+        <polygon points="802,316 822,302 844,318 822,332"/>
+      </g>
+
+      <!-- near hills -->
+      <polygon points="0,452 210,392 430,470 430,675 0,675" fill="#5f7d63"/>
+      <polygon points="1200,438 980,388 790,462 790,675 1200,675" fill="#55735c"/>
+      <!-- valley floor -->
+      <polygon points="0,675 330,520 870,520 1200,675" fill="#71835f"/>
+
+      <!-- pine forest on the slopes -->
+      <g>
+        <use href="#pine" transform="translate(70,452) scale(1.15)"/>
+        <use href="#pine" transform="translate(128,470) scale(0.9)"/>
+        <use href="#pine" transform="translate(178,442) scale(1.3)"/>
+        <use href="#pine" transform="translate(238,478) scale(1)"/>
+        <use href="#pine" transform="translate(292,458) scale(1.2)"/>
+        <use href="#pine" transform="translate(1010,448) scale(1.2)"/>
+        <use href="#pine" transform="translate(1072,470) scale(0.95)"/>
+        <use href="#pine" transform="translate(1128,440) scale(1.3)"/>
+        <use href="#pine" transform="translate(958,478) scale(1)"/>
+        <use href="#pine" transform="translate(906,458) scale(1.15)"/>
+      </g>
+
+      <!-- ======== bell tower, centre-right ======== -->
+      <g>
+        <!-- platform -->
+        <rect x="726" y="466" width="132" height="12" fill="#7c766c"/>
+        <rect x="718" y="478" width="148" height="10" fill="#6b655c"/>
+        <!-- stone body -->
+        <rect x="736" y="252" width="112" height="216" fill="#98938a"/>
+        <rect x="820" y="252" width="28" height="216" fill="#86817a"/>
+        <!-- stone courses -->
+        <g fill="#847e75">
+          <rect x="736" y="292" width="112" height="4"/>
+          <rect x="736" y="336" width="112" height="4"/>
+          <rect x="736" y="380" width="112" height="4"/>
+          <rect x="736" y="424" width="112" height="4"/>
+        </g>
+        <g fill="#a39d93">
+          <rect x="758" y="270" width="22" height="10"/>
+          <rect x="796" y="314" width="22" height="10"/>
+          <rect x="752" y="358" width="22" height="10"/>
+          <rect x="800" y="402" width="22" height="10"/>
+        </g>
+        <!-- lower doorway -->
+        <path d="M778,468 v-34 a14,14 0 0 1 28,0 v34 Z" fill="#39434a"/>
+        <!-- bell chamber: arched opening -->
+        <path d="M758,318 v-34 a34,30 0 0 1 68,0 v34 Z" fill="#2e383e"/>
+        <!-- the bell -->
+        <path d="M784,282 h16 l4,22 a6,6 0 0 1 -6,7 h-12 a6,6 0 0 1 -6,-7 Z" fill="#c2a054"/>
+        <circle cx="792" cy="315" r="3.5" fill="#8a6f33"/>
+        <rect x="789" y="274" width="6" height="9" fill="#8a6f33"/>
+        <!-- tiered roofs with snow -->
+        <polygon points="724,256 792,222 860,256" fill="#4c5a63"/>
+        <polygon points="724,256 792,222 860,256 846,256 792,232 738,256" fill="#eef3f6"/>
+        <polygon points="748,224 792,198 836,224" fill="#42525b"/>
+        <polygon points="748,224 792,198 836,224 824,224 792,207 760,224" fill="#eef3f6"/>
+        <!-- finial -->
+        <rect x="790" y="176" width="4" height="24" fill="#39434a"/>
+        <circle cx="792" cy="172" r="5" fill="#c2a054"/>
+      </g>
+
+      <!-- ======== village ======== -->
+      <g>
+        <use href="#house" transform="translate(452,540) scale(1.15)"/>
+        <use href="#house" transform="translate(566,566) scale(0.95)"/>
+        <use href="#house" transform="translate(664,548) scale(1.05)"/>
+        <use href="#house" transform="translate(356,578) scale(0.9)"/>
+        <!-- a lit window, warm against the cold -->
+        <rect x="672" y="556" width="9" height="9" fill="#e8b93e"/>
+      </g>
+
+      <!-- flag poles in the village -->
+      <rect x="398" y="470" width="4" height="86" fill="#5d4a38"/>
+      <rect x="906" y="452" width="4" height="92" fill="#5d4a38"/>
+
+      <!-- ======== prayer flags ======== -->
+      <g class="flags">
+        <!-- strings -->
+        <g fill="none" stroke="#41463f" stroke-width="1.6" opacity="0.75">
+          <path d="M792,182 Q560,300 402,474"/>
+          <path d="M792,182 Q880,320 908,456"/>
+          <path d="M402,478 Q520,540 724,486"/>
+        </g>
+        <!-- flags on the long string to the left pole: blue white red green yellow -->
+        <g>
+          <rect x="712" y="216" width="17" height="12" fill="#4a7ec2" transform="rotate(38 720 222)"/>
+          <rect x="664" y="240" width="17" height="12" fill="#f2f2ee" transform="rotate(32 672 246)"/>
+          <rect x="616" y="264" width="17" height="12" fill="#c94f42" transform="rotate(28 624 270)"/>
+          <rect x="568" y="292" width="17" height="12" fill="#4a9a5b" transform="rotate(26 576 298)"/>
+          <rect x="522" y="326" width="17" height="12" fill="#e8b93e" transform="rotate(28 530 332)"/>
+          <rect x="478" y="366" width="17" height="12" fill="#4a7ec2" transform="rotate(34 486 372)"/>
+          <rect x="440" y="412" width="17" height="12" fill="#f2f2ee" transform="rotate(42 448 418)"/>
+        </g>
+        <!-- flags on the string to the right pole -->
+        <g>
+          <rect x="820" y="238" width="17" height="12" fill="#e8b93e" transform="rotate(48 828 244)"/>
+          <rect x="846" y="292" width="17" height="12" fill="#4a9a5b" transform="rotate(38 854 298)"/>
+          <rect x="868" y="348" width="17" height="12" fill="#c94f42" transform="rotate(28 876 354)"/>
+          <rect x="884" y="402" width="17" height="12" fill="#4a7ec2" transform="rotate(20 892 408)"/>
+        </g>
+        <!-- flags across the village front -->
+        <g>
+          <rect x="452" y="492" width="17" height="12" fill="#c94f42" transform="rotate(14 460 498)"/>
+          <rect x="508" y="506" width="17" height="12" fill="#4a9a5b" transform="rotate(8 516 512)"/>
+          <rect x="564" y="510" width="17" height="12" fill="#f2f2ee" transform="rotate(2 572 516)"/>
+          <rect x="620" y="504" width="17" height="12" fill="#e8b93e" transform="rotate(-4 628 510)"/>
+          <rect x="676" y="492" width="17" height="12" fill="#4a7ec2" transform="rotate(-10 684 498)"/>
+        </g>
+      </g>
+
+      <!-- foreground pines framing the village -->
+      <g>
+        <use href="#pine" transform="translate(52,596) scale(1.7)"/>
+        <use href="#pine" transform="translate(118,622) scale(1.35)"/>
+        <use href="#pine" transform="translate(1150,600) scale(1.65)"/>
+        <use href="#pine" transform="translate(1084,626) scale(1.3)"/>
+      </g>
+
+      <!-- snow patches on the valley floor -->
+      <g fill="#eef3f6" opacity="0.95">
+        <ellipse cx="250" cy="640" rx="90" ry="10"/>
+        <ellipse cx="960" cy="648" rx="100" ry="11"/>
+        <ellipse cx="600" cy="660" rx="120" ry="9"/>
+        <ellipse cx="430" cy="618" rx="52" ry="7"/>
+        <ellipse cx="770" cy="622" rx="56" ry="7"/>
+      </g>
+    </svg>
+  </div>
+  <div class="veil" aria-hidden="true"></div>
+
+  <div class="content">
+    <h1>FAR PEAK</h1>
+    <p class="subtitle">山岳地帯の解放作戦</p>
+    <a class="start" href="far-peak.html">ゲームをはじめる</a>
+    <p class="notes"><span>拠点9つ＋要塞＋放送本部</span><span class="sep" aria-hidden="true"></span><span>武器5種＋投擲</span><span class="sep" aria-hidden="true"></span><span>コントローラ対応</span><span class="sep" aria-hidden="true"></span><span>3D酔いしにくい設計</span></p>
+  </div>
+
+</main>
+
+<section class="outline" aria-labelledby="outline-title">
+  <div class="outline-inner">
+    <h2 id="outline-title">作戦概要</h2>
+    <p class="lead">旅行で山岳地帯の小国を訪れた主人公は、独裁者「将軍」の私兵軍による支配に巻き込まれる。レジスタンスとともに拠点を解放し、鐘の塔を止めて地図を開きながら北へ進み、最後は放送本部で将軍の放送を止める。</p>
+    <ol class="feature-list">
+      <li>
+        <span class="feature-no">FEATURE 01</span>
+        <div class="feature-body">
+          <p class="feature-name">拠点解放</p>
+          <p class="feature-desc">拠点9つと要塞、そして最奥の放送本部。ステルスでも正面からでも落とせる。エリア2の拠点を解放するごとに、放送本部の警備は薄くなっていく。</p>
+        </div>
+      </li>
+      <li>
+        <span class="feature-no">FEATURE 02</span>
+        <div class="feature-body">
+          <p class="feature-name">鐘の塔と地図</p>
+          <p class="feature-desc">鐘の塔は全4基。塔の放送設備を止めると将軍のプロパガンダ放送が止み、その一帯の地図が開く。解放した拠点と塔のあいだはファストトラベルで行き来できる。</p>
+        </div>
+      </li>
+      <li>
+        <span class="feature-no">FEATURE 03</span>
+        <div class="feature-body">
+          <p class="feature-name">武器5種＋投擲</p>
+          <p class="feature-desc">ピストル、アサルトライフル、ショットガン、スナイパーライフル、弓の5種。投擲は石ころ、手榴弾、火炎瓶、動物を呼ぶ肉。カメラで敵をマークしてから仕掛けることもできる。</p>
+        </div>
+      </li>
+      <li>
+        <span class="feature-no">FEATURE 04</span>
+        <div class="feature-body">
+          <p class="feature-name">スキルツリーとカルマ</p>
+          <p class="feature-desc">スキルは虎（攻撃）と象（防御）の2系統、各6種。道中では人質救出などのカルマイベントが起こり、薬草から作る注射や、将軍のポスター剥がし（全12枚）も進み具合に数えられる。</p>
+        </div>
+      </li>
+    </ol>
+    <p class="foot">操作：コントローラー／キーボード両対応 ― 回転はスナップターンが既定で、画面シェイクや視野角の変化を抑えた、3D酔いしにくい設計です。</p>
+  </div>
+</section>
+</body>
+</html>
