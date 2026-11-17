@@ -24,13 +24,13 @@
       /* プレイ中はタッチのスクロール／ズームを無効化（メニューのスクロールは妨げない） */
       #stage:not(.menu){ touch-action:none; }
       /* ---------- フルスクリーン（CARRY YOUと同仕様：表示のみ・内部解像度とゲームロジックは不変） ---------- */
-      .fs-btn{ position:absolute; top:136px; right:10px; z-index:20; min-height:2rem;
+      .fs-btn{ position:absolute; top:176px; right:12px; z-index:20; min-height:2rem;
         background:rgba(10,12,14,.78); color:var(--ink); border:1px solid var(--line);
         border-radius:6px; padding:5px 11px; font-size:12.5px; font-weight:700; letter-spacing:.04em; }
       .fs-btn:hover{ border-color:var(--accent); background:rgba(10,12,14,.92); }
       /* メニュー表示中はステージがパネルの高さに伸びるため、ボタンは右下隅へ逃がす（パネル本文に重ならない位置） */
       #stage.menu .fs-btn{ top:auto; bottom:10px; }
-      @media (max-width:700px){ .fs-btn{ font-size:11px; padding:4px 8px; } }
+      @media (max-width:700px){ .fs-btn{ top:124px; font-size:11px; padding:4px 8px; } }
       #stage:fullscreen{ width:100%; height:100%; border:none; border-radius:0; background:#000; box-shadow:none; }
       #stage:-webkit-full-screen{ width:100%; height:100%; border:none; border-radius:0; background:#000; box-shadow:none; }
       /* フルスクリーン時はキャンバス＋HUD＋画面レイヤーを16:9のまま黒帯の中央に収める */
@@ -50,15 +50,15 @@
         border-radius:50%; background:rgba(10,12,14,.22); display:none; pointer-events:none; }
       .stickKnob{ position:absolute; left:50%; top:50%; width:44px; height:44px; margin:-22px 0 0 -22px;
         border-radius:50%; background:rgba(255,140,26,.5); border:2px solid rgba(255,255,255,.55); }
-      #tbtns{ position:absolute; right:8px; bottom:70px; display:grid; grid-template-columns:repeat(2,56px); gap:8px; }
+      #tbtns{ position:absolute; right:8px; bottom:122px; display:grid; grid-template-columns:repeat(2,56px); gap:8px; }
       .tbtn{ pointer-events:auto; touch-action:none; min-height:44px; padding:4px 2px; font-size:12px; font-weight:700;
         color:var(--ink); background:rgba(10,12,14,.72); border:1px solid var(--line); border-radius:8px; }
       .tbtn:active{ background:rgba(255,140,26,.55); border-color:var(--accent); }
-      #tbPause{ position:absolute; top:52px; left:10px; width:44px; min-height:36px; }
+      #tbPause{ position:absolute; top:10px; left:10px; width:44px; min-height:36px; }
       @media (max-width:700px){
-        #tbtns{ grid-template-columns:repeat(4,48px); bottom:52px; right:6px; gap:6px; }
+        #tbtns{ grid-template-columns:repeat(4,48px); bottom:98px; right:6px; gap:6px; }
         .tbtn{ min-height:38px; font-size:11px; }
-        #tbPause{ top:46px; }
+        #tbPause{ top:10px; }
       }
       /* メニュー表示中はステージが内容の高さに伸びて、パネルが切れないようにする */
       #stage.menu{ aspect-ratio:auto; }
@@ -72,32 +72,30 @@
       /* ---------- HUD ---------- */
       #hud{ position:absolute; inset:0; pointer-events:none; font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace; }
       .hidden{ display:none !important; }
-      #objective{ position:absolute; top:10px; left:50%; transform:translateX(-50%);
-        background:rgba(10,12,14,.78); border:1px solid var(--line); border-left:4px solid var(--accent);
-        padding:6px 14px; font-size:13px; letter-spacing:.04em; white-space:nowrap; max-width:92%; }
+      #objective{ position:absolute; top:12px; left:50%; transform:translateX(-50%);
+        background:rgba(10,12,14,.78); border:1px solid var(--line); border-left:5px solid var(--accent);
+        padding:9px 20px; font-size:18px; letter-spacing:.04em; white-space:nowrap; max-width:92%; }
       #objective b{ color:var(--accent2); }
-      #padstatus{ position:absolute; top:10px; left:10px; font-size:11px; color:var(--dim);
-        background:rgba(10,12,14,.7); border:1px solid var(--line); padding:5px 9px; }
-      #padstatus.on{ color:var(--ok); border-color:#2c4a34; }
-      #sndstatus{ position:absolute; top:40px; left:10px; font-size:11px; color:var(--dim);
-        background:rgba(10,12,14,.7); border:1px solid var(--line); padding:5px 9px; pointer-events:auto; cursor:pointer; }
-      #sndstatus.on{ color:var(--ink); }
-      #sndstatus.off{ color:var(--faint); }
-      #bgmstatus{ position:absolute; top:70px; left:10px; font-size:11px; color:var(--dim);
-        background:rgba(10,12,14,.7); border:1px solid var(--line); padding:5px 9px; pointer-events:auto; cursor:pointer; }
-      #bgmstatus.on{ color:var(--ink); }
-      #bgmstatus.off{ color:var(--faint); }
-      #aimstatus{ position:absolute; top:100px; left:10px; font-size:11px; color:var(--dim);
-        background:rgba(10,12,14,.7); border:1px solid var(--line); padding:5px 9px; pointer-events:auto; cursor:pointer; }
-      #aimstatus.on{ color:var(--ink); }
-      #aimstatus.off{ color:var(--faint); }
       #padstatusTitle{ font-size:12px; color:var(--dim); background:var(--panel2); border:1px solid var(--line);
         padding:6px 10px; margin-top:12px; font-family:ui-monospace,Menlo,Consolas,monospace; }
       #padstatusTitle.on{ color:var(--ok); border-color:#2c4a34; }
+      .padStatusBox{ font-size:12px; color:var(--dim); background:var(--panel2); border:1px solid var(--line);
+        padding:6px 10px; margin-top:12px; font-family:ui-monospace,Menlo,Consolas,monospace; }
+      .padStatusBox.on{ color:var(--ok); border-color:#2c4a34; }
+      .padStatusBox.blocked{ color:#ffb35c; border-color:#7a5320; }
+      .padSelectRow{ margin-top:10px; background:var(--panel2); border:1px solid var(--line); padding:10px 12px; }
+      .padSelectRow label{ font-size:12.5px; font-weight:700; letter-spacing:.04em; display:block; margin-bottom:6px; color:var(--ink); }
+      .padSelect{ width:100%; background:#0f1216; color:var(--ink); border:1px solid var(--line); border-radius:4px; padding:8px 10px; font-size:13px; min-height:2.5rem; }
+      .padSelect:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+      .padSelectHint{ font-size:11.5px; color:var(--dim); line-height:1.65; margin-top:6px; }
+      .padSelectMeta{ font-size:11px; color:var(--faint); margin-top:6px; font-family:ui-monospace,Menlo,Consolas,monospace; white-space:pre-line; line-height:1.55; word-break:break-all; }
+      .padSelectRow .padSelectActions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+      .padSelectRow .padSelectActions button{ background:transparent; color:var(--ink); border:1px solid var(--line); padding:6px 12px; border-radius:4px; font-size:12px; }
+      .padSelectRow .padSelectActions button:hover{ border-color:var(--accent); }
       .padDiag{ font-size:11px; color:var(--dim); background:rgba(10,12,14,.55); border:1px solid var(--line);
         padding:6px 10px; margin-top:8px; font-family:ui-monospace,Menlo,Consolas,monospace;
         white-space:pre-line; line-height:1.55; word-break:break-all; }
-      #padstatus.blocked, #padstatusTitle.blocked{ color:#ffb35c; border-color:#7a5320; }
+      #padstatusTitle.blocked{ color:#ffb35c; border-color:#7a5320; }
       .padBlockHelp{ font-size:12.5px; color:var(--ink); background:rgba(60,40,8,.35); border:1px solid #7a5320;
         padding:10px 12px; margin-top:8px; line-height:1.75; }
       .padBlockHelp b{ color:var(--accent2); }
@@ -106,44 +104,61 @@
       .padBlockHelp .btnPadRetry{ margin-top:8px; background:transparent; color:var(--ink);
         border:1px solid #7a5320; padding:8px 16px; border-radius:4px; font-size:13px; }
       .padBlockHelp .btnPadRetry:hover{ border-color:var(--accent); }
-      #mmapWrap{ position:absolute; top:10px; right:10px; background:rgba(10,12,14,.78); border:1px solid var(--line); padding:4px; }
-      #mmapWrap .cap{ font-size:9px; color:var(--faint); text-align:center; letter-spacing:.2em; padding-top:2px; }
-      canvas#minimap{ display:block; width:132px; height:99px; }
-      #bl{ position:absolute; left:14px; bottom:12px; }
-      #hpLabel{ font-size:10px; color:var(--dim); letter-spacing:.18em; margin-bottom:3px; }
-      #hpBarOuter{ width:210px; height:13px; background:rgba(0,0,0,.65); border:1px solid var(--line); }
+      #mmapWrap{ position:absolute; top:12px; right:12px; background:rgba(10,12,14,.78); border:1px solid var(--line); padding:5px; }
+      #mmapWrap .cap{ font-size:11px; color:var(--faint); text-align:center; letter-spacing:.2em; padding-top:3px; }
+      canvas#minimap{ display:block; width:176px; height:132px; }
+      #bl{ position:absolute; left:16px; bottom:14px; }
+      #hpLabel{ font-size:13px; color:var(--dim); letter-spacing:.18em; margin-bottom:4px; }
+      #hpBarOuter{ width:300px; height:20px; background:rgba(0,0,0,.65); border:1px solid var(--line); }
       #hpBar{ height:100%; width:100%; background:var(--hp); transition:width .12s; }
-      #kitRow{ margin-top:6px; font-size:12px; color:var(--dim); }
-      #kitRow .kit{ display:inline-block; border:1px solid var(--line); background:rgba(10,12,14,.7); padding:2px 8px; margin-right:6px; color:var(--ink); }
+      #kitRow{ margin-top:8px; font-size:16px; color:var(--dim); }
+      #kitRow .kit{ display:inline-block; border:1px solid var(--line); background:rgba(10,12,14,.7); padding:4px 11px; margin-right:8px; color:var(--ink); }
       #kitRow .kit b{ color:var(--armor); }
-      #br{ position:absolute; right:14px; bottom:12px; text-align:right; }
-      #weapName{ font-size:13px; letter-spacing:.03em; }
+      #br{ position:absolute; right:16px; bottom:14px; text-align:right; }
+      #weapName{ font-size:18px; letter-spacing:.03em; }
       #weapName .rar{ font-weight:700; }
-      #weapAlt{ font-size:11px; color:var(--dim); margin-top:2px; white-space:nowrap; }
-      #ammo{ font-size:30px; line-height:1; font-weight:700; }
-      #ammo small{ font-size:13px; color:var(--dim); font-weight:400; }
-      #ammo.reload{ color:var(--accent2); font-size:16px; }
-      #turretCd{ margin-top:5px; font-size:11px; color:var(--dim); }
-      #turretCd .bar{ display:inline-block; width:74px; height:7px; background:rgba(0,0,0,.6); border:1px solid var(--line); vertical-align:middle; margin-left:6px; }
+      #weapAlt{ font-size:14px; color:var(--dim); margin-top:3px; white-space:nowrap; }
+      #ammo{ font-size:44px; line-height:1; font-weight:700; }
+      #ammo small{ font-size:19px; color:var(--dim); font-weight:400; }
+      #ammo.reload{ color:var(--accent2); font-size:23px; }
+      #turretCd{ margin-top:7px; font-size:15px; color:var(--dim); }
+      #turretCd .bar{ display:inline-block; width:104px; height:10px; background:rgba(0,0,0,.6); border:1px solid var(--line); vertical-align:middle; margin-left:7px; }
       #turretCd .bar i{ display:block; height:100%; background:var(--accent); width:100%; }
       #turretCd.ready{ color:var(--accent2); }
-      #pickupPrompt{ position:absolute; left:50%; bottom:86px; transform:translateX(-50%);
-        background:rgba(10,12,14,.9); border:1px solid var(--line); padding:9px 14px; min-width:250px; text-align:left; }
-      #pickupPrompt .pn{ font-size:14px; font-weight:700; }
-      #pickupPrompt .pd{ font-size:11px; color:var(--dim); margin-top:2px; }
-      #pickupPrompt .pk{ font-size:11px; color:var(--accent2); margin-top:5px; }
+      #pickupPrompt{ position:absolute; left:50%; bottom:118px; transform:translateX(-50%);
+        background:rgba(10,12,14,.9); border:1px solid var(--line); padding:12px 18px; min-width:320px; text-align:left; }
+      #pickupPrompt .pn{ font-size:19px; font-weight:700; }
+      #pickupPrompt .pd{ font-size:15px; color:var(--dim); margin-top:3px; }
+      #pickupPrompt .pk{ font-size:15px; color:var(--accent2); margin-top:7px; }
       #pickupPrompt .up{ color:var(--ok); } #pickupPrompt .down{ color:var(--danger); }
-      #holdBar{ height:4px; background:#000; border:1px solid var(--line); margin-top:6px; }
+      #holdBar{ height:6px; background:#000; border:1px solid var(--line); margin-top:8px; }
       #holdFill{ height:100%; width:0%; background:var(--accent); }
-      #toast{ position:absolute; top:64px; left:50%; transform:translateX(-50%); text-align:center;
-        font-size:20px; font-weight:700; letter-spacing:.14em; color:#fff; text-shadow:0 2px 10px #000; opacity:0; transition:opacity .25s; }
-      #toast small{ display:block; font-size:12px; color:var(--accent2); letter-spacing:.08em; margin-top:4px; font-weight:400; }
-      #bossWrap{ position:absolute; top:52px; left:50%; transform:translateX(-50%); width:min(430px,70%); }
-      #bossWrap .bn{ font-size:11px; letter-spacing:.2em; color:#ffb3ae; text-align:center; margin-bottom:3px; text-shadow:0 1px 4px #000; }
-      #bossBarOuter{ height:9px; background:rgba(0,0,0,.7); border:1px solid #5a2b28; }
+      #toast{ position:absolute; top:78px; left:50%; transform:translateX(-50%); text-align:center;
+        font-size:27px; font-weight:700; letter-spacing:.14em; color:#fff; text-shadow:0 2px 10px #000; opacity:0; transition:opacity .25s; }
+      #toast small{ display:block; font-size:16px; color:var(--accent2); letter-spacing:.08em; margin-top:5px; font-weight:400; }
+      #bossWrap{ position:absolute; top:66px; left:50%; transform:translateX(-50%); width:min(520px,72%); }
+      #bossWrap .bn{ font-size:15px; letter-spacing:.2em; color:#ffb3ae; text-align:center; margin-bottom:4px; text-shadow:0 1px 4px #000; }
+      #bossBarOuter{ height:13px; background:rgba(0,0,0,.7); border:1px solid #5a2b28; }
       #bossBar{ height:100%; background:var(--danger); width:100%; transition:width .12s; }
-      #hint{ position:absolute; bottom:64px; left:50%; transform:translateX(-50%); font-size:12px; color:#ffd9ae;
-        background:rgba(10,12,14,.75); padding:4px 12px; border:1px solid var(--line); white-space:nowrap; }
+      #hint{ position:absolute; bottom:88px; left:50%; transform:translateX(-50%); font-size:16px; color:#ffd9ae;
+        background:rgba(10,12,14,.75); padding:6px 16px; border:1px solid var(--line); white-space:nowrap; }
+      /* 狭い画面ではHUDを少し抑えて、プレイ画面を圧迫しない */
+      @media (max-width:700px){
+        #objective{ font-size:14px; padding:7px 12px; }
+        canvas#minimap{ width:118px; height:88px; }
+        #hpBarOuter{ width:190px; height:16px; }
+        #hpLabel{ font-size:11px; }
+        #kitRow{ font-size:13px; }
+        #weapName{ font-size:15px; }
+        #weapAlt{ font-size:12px; }
+        #ammo{ font-size:33px; } #ammo small{ font-size:15px; } #ammo.reload{ font-size:18px; }
+        #turretCd{ font-size:12px; } #turretCd .bar{ width:76px; height:8px; }
+        #pickupPrompt{ min-width:0; width:88%; bottom:104px; padding:10px 14px; }
+        #pickupPrompt .pn{ font-size:16px; } #pickupPrompt .pd,#pickupPrompt .pk{ font-size:13px; }
+        #hint{ font-size:13px; bottom:76px; max-width:94%; white-space:normal; text-align:center; }
+        #toast{ font-size:21px; top:64px; } #toast small{ font-size:13px; }
+        #bossWrap{ top:56px; } #bossWrap .bn{ font-size:12px; }
+      }
 
       /* ---------- Screens ---------- */
       /* パネルの中央寄せは align/justify-content ではなく .panel の margin:auto で行う。
@@ -200,10 +215,6 @@
         <div id="lowhp"></div>
 
         <div id="hud" class="hidden">
-          <div id="padstatus">🎮 コントローラー未接続</div>
-          <div id="sndstatus" class="on" title="クリック／Mキーで環境音のON・OFF">🔊 環境音 ON（Mで切替）</div>
-          <div id="bgmstatus" class="on" title="クリック／NキーでBGMのON・OFF">🎵 BGM ON（Nで切替）</div>
-          <div id="aimstatus" class="on" title="クリックでエイムアシストの強さを切り替え（パッド／タッチ照準のみ。LTを押した瞬間の吸着＋追尾もこの設定で変わる）">🎯 アシスト：標準</div>
           <div id="objective">—</div>
           <div id="mmapWrap"><canvas id="minimap" width="144" height="108"></canvas><div class="cap">TACTICAL MAP</div></div>
           <div id="bossWrap" class="hidden"><div class="bn">⚠ 重装ターゲット</div><div id="bossBarOuter"><div id="bossBar"></div></div></div>
@@ -260,7 +271,7 @@
               <table class="ctrl">
                 <tr><td class="k">左スティック</td><td>移動</td></tr>
                 <tr><td class="k">十字キー</td><td>移動（スティックのないパッド用）</td></tr>
-                <tr><td class="k">右スティック</td><td>照準（エイムアシストは下のボタン／HUD左上で OFF／弱／標準／強 を選択式に切替。パッド・タッチ照準のみ効く）</td></tr>
+                <tr><td class="k">右スティック</td><td>照準（エイムアシストは下のボタンで OFF／弱／標準／強 を選択式に切替。パッド・タッチ照準のみ効く）</td></tr>
                 <tr><td class="k">RT</td><td>射撃</td></tr>
                 <tr><td class="k">LT 長押し</td><td>カバーから身を乗り出す。押した瞬間、いちばん撃ちやすい敵へ照準が吸着し、押している間は軽く追尾する（Division式。アシストOFFでは吸着しない）</td></tr>
                 <tr><td class="k">A</td><td>カバーに吸着 ／ 解除</td></tr>
@@ -273,6 +284,18 @@
               </table>
             </div>
             <div id="padstatusTitle">🎮 コントローラー未接続（キーボード/マウス可）</div>
+            <div class="padSelectRow">
+              <label for="padSelectTitle">🎮 使うコントローラーを選ぶ</label>
+              <select id="padSelectTitle" class="padSelect" aria-label="使うコントローラーを選ぶ">
+                <option value="-1">自動で選ぶ（ボタン／スティックを動かしたパッドを優先）</option>
+              </select>
+              <div class="padSelectHint">USBスピーカーなど、ゲームパッドではない機器が検出されてしまう場合は、ここで<b>使うパッドだけ</b>を指定してください。指定したスロット以外は無視されます。「自動」に戻すと、今まで通り入力があったパッドを優先します。パッドのボタンを押すと下の診断に機種名とスロット番号が出るので、それを目印に選んでください。</div>
+              <div class="padSelectMeta">検出中… パッドのボタンを押すと一覧が更新されます</div>
+              <div class="padSelectActions">
+                <button type="button" class="btnPadAuto">自動に戻す</button>
+                <button type="button" class="btnPadUseActive">今動かしたパッドに固定する</button>
+              </div>
+            </div>
             <div style="margin-top:8px;"><button type="button" class="ghostbtn btnSndToggle" style="padding:7px 14px; font-size:13px;">🔊 環境音：ON（風・遠くの銃声・地響き）</button></div>
             <div style="margin-top:8px;"><button type="button" class="ghostbtn btnBgmToggle" style="padding:7px 14px; font-size:13px;">🎵 BGM：ON（ダークな電子パルス）</button></div>
             <div style="margin-top:8px;"><button type="button" class="ghostbtn btnAimToggle" style="padding:7px 14px; font-size:13px;">🎯 エイムアシスト：標準</button></div>
@@ -289,7 +312,7 @@
               <button type="button" class="btnPadRetry">コントローラー検出を再試行</button>
             </div>
             <div class="note">
-              コントローラーは、ゲーム画面を一度クリック（タップ）してからボタンを押すと認識します。Xbox系のほか、HORIなどの社外パッドにも対応しています（非標準マッピングの読み替え、十字キーだけのパッドでの移動、トリガーが軸で届く機種にも対応）。認識すると上の欄と左上に機種名つきで「接続中」と表示されます。未接続のままのときは上の「コントローラー診断」を見てください：いずれかのスロットに機種名（id）が出ていればブラウザには見えていて、ボタン番号や軸の値がボタン操作に反応するかで切り分けられます。全スロット「なし」の場合は、この画面を開いているブラウザ側がパッド入力を受け取れていない状態です。診断に「permissions policy」と出ている場合は、表示環境側がコントローラー機能を禁止している状態で、上の案内が対処法になります（ボタンを押しても認識しません）。カバー中は正面の弾を防げますが側面・背後からは当たります。敵もカバーを使い、タレットは囮にもなります。
+              コントローラーは、ゲーム画面を一度クリック（タップ）してからボタンを押すと認識します。Xbox系のほか、HORIなどの社外パッドにも対応しています（非標準マッピングの読み替え、十字キーだけのパッドでの移動、トリガーが軸で届く機種にも対応）。認識すると上の欄に機種名つきで「接続中」と表示されます。未接続のままのときは上の「コントローラー診断」を見てください：いずれかのスロットに機種名（id）が出ていればブラウザには見えていて、ボタン番号や軸の値がボタン操作に反応するかで切り分けられます。全スロット「なし」の場合は、この画面を開いているブラウザ側がパッド入力を受け取れていない状態です。診断に「permissions policy」と出ている場合は、表示環境側がコントローラー機能を禁止している状態で、上の案内が対処法になります（ボタンを押しても認識しません）。カバー中は正面の弾を防げますが側面・背後からは当たります。敵もカバーを使い、タレットは囮にもなります。
               スマホ・タブレットではタッチでも遊べます：画面の左半分をドラッグで移動、右半分をドラッグで照準（強く倒すと射撃）、カバーやタレットは画面のボタンから使えます。
             </div>
           </div>
@@ -333,6 +356,19 @@
           <div class="panel">
             <h1>PAUSED</h1>
             <div class="sub">Esc / STARTでもう一度押すと再開します。</div>
+            <div id="padstatusPause" class="padStatusBox">🎮 コントローラー未接続（キーボード/マウス可）</div>
+            <div class="padSelectRow">
+              <label for="padSelectPause">🎮 使うコントローラーを選ぶ</label>
+              <select id="padSelectPause" class="padSelect" aria-label="使うコントローラーを選ぶ">
+                <option value="-1">自動で選ぶ（ボタン／スティックを動かしたパッドを優先）</option>
+              </select>
+              <div class="padSelectHint">USBスピーカーなど別の機器が混ざる場合は、使うパッドのスロットだけを指定してください。指定中は他のスロットを無視します。</div>
+              <div class="padSelectMeta">検出中…</div>
+              <div class="padSelectActions">
+                <button type="button" class="btnPadAuto">自動に戻す</button>
+                <button type="button" class="btnPadUseActive">今動かしたパッドに固定する</button>
+              </div>
+            </div>
             <div class="padDiag">【コントローラー診断】</div>
             <div class="padBlockHelp hidden">
               <b>この表示環境では、コントローラー機能がブロックされています。</b><br>
@@ -374,10 +410,11 @@
         <b>タッチ：</b>左半分ドラッグ＝移動、右半分ドラッグ＝照準・射撃、ボタンでカバー／ロール／タレット等。
         <b>環境音：</b><kbd>M</kbd> で ON／OFF。風と街の低い残響に混じって、遠くの銃声や地響きが時々聞こえる（戦闘の気配は音だけの演出で、実際の敵とは連動しない）。室内ミッション（国家記念堂）では風が弱まってこもり、遠くの音も壁越しに反響する室内の空気感に切り替わる。
         <b>BGM：</b><kbd>N</kbd> で ON／OFF。ダークな電子パルスのループで、敵が近づいたり撃ち合いが始まるとリズムと低音が乗って戦闘版に切り替わり、静まると数秒かけて探索版へ戻る。環境音とは別々に切り替えられる。
-        <b>エイムアシスト：</b>タイトル／ポーズのボタンか、プレイ中は左上の「アシスト」表示クリックで OFF／弱／標準／強 を選択式に切替（パッド・タッチ照準のみ。マウス照準には効かない）。
+        <b>エイムアシスト：</b>タイトル／ポーズのボタンで OFF／弱／標準／強 を選択式に切替（パッド・タッチ照準のみ。マウス照準には効かない）。
         <b>スナップ照準（Division式）：</b><span class="pad">LT</span>（タッチでは「構える」ボタン）を押した瞬間、射程内で弾の通る敵のうち、今向いている方向にいちばん近い敵へ照準が吸着し、オレンジのマーカーが付く。押している間はその敵を軽く追尾するが、スティックで大きく外せば手放せる。敵がいない／全員物陰のときは吸着せず自由照準のまま。カバー外でLTを押しても照準ボタンとして働く。アシストをOFFにすると吸着・追尾も切れる。
         <b>敵の動き：</b>敵は見た瞬間に気づくとは限らず、距離やカバー越しだと気づくまで間がある。見失うと最後に見た場所を探しに来て、見つからなければ警戒を解く。発見は仲間に伝わり、同じカバーに固まらず側面へ回る者や、カバーへ制圧射撃をする者もいる。ライフル兵は距離を保って制圧、ラッシャーは味方の制圧中に詰め、重装は撃たれながら前進する。傷ついた敵は後ろのカバーへ下がる。
         <b>フルスクリーン：</b>画面右の ⛶ ボタン / <kbd>Alt</kbd>+<kbd>Enter</kbd> で切替、<kbd>Esc</kbd> で解除。
+        <b>コントローラー選択：</b>タイトル／ポーズ画面の「使うコントローラーを選ぶ」で、使うパッドのスロットだけを指定できます。USBスピーカーなど別の機器がゲームパッドとして検出される場合は、パッドのボタンを押して診断でスロット番号を確認し、そのスロットに固定してください（指定中は他のスロットを無視します）。
       </div>
     </div>
 
@@ -624,7 +661,7 @@ function ambBoom(){
      ・戦闘レイヤー：キック／16分ベース／ハット／スネアが重なる緊張版
    戦闘判定（近くの敵・敵の発砲・自分の発砲・被弾）で戦闘レイヤーが自動で
    クロスフェードインし、気配が消えてから数秒かけてゆっくり探索側へ戻る。
-   音量・ミュートは環境音と別系統（Nキー／画面左上・タイトル・ポーズのボタン）。
+   音量・ミュートは環境音と別系統（Nキー／タイトル・ポーズのボタン）。
    鳴り始めは環境音と同じく、最初のクリック／キー操作以降（AudioContext の制約）。 */
 const BGM_BPM = 92;
 const BGM_STEP = 60 / BGM_BPM / 4;                 // 16分音符の長さ
@@ -1139,6 +1176,12 @@ cv.addEventListener('contextmenu', e=>e.preventDefault());
    - フォーカス喪失時などにリストが一時的に空を返す環境があるため、
      最後に見えてから 2.5 秒は「未接続」に落とさない。 */
 let padEventIndex = -1, padEventId = "", padLastSeenAt = 0, padEverEvent = false;
+/* 手動選択：-1 = 自動（入力があったパッド優先）。0以上 = そのスロットだけを使う。
+   USBスピーカー等が Gamepad として列挙されても、指定外スロットは一切採用しない。
+   選択はこのセッション内だけ保持する（保存しない）。 */
+let padSelectedIndex = -1, padSelectedId = "";
+let padLastActiveIndex = -1, padLastActiveId = "";
+let padSelectSig = "";
 const padApiAvailable = !!((navigator.getGamepads) || (navigator.webkitGetGamepads));
 /* 表示環境（埋め込み iframe 等）の Permissions Policy が "gamepad" を禁止していると、
    getGamepads() は例外を投げて常に失敗する。これはパッド側の問題ではないため、
@@ -1229,7 +1272,7 @@ function snapshotSlot(i, g){
 function pollPad(){
   pad = null;
   /* ポリシーでブロックされている間は毎フレーム叩かず、間隔を空けて再試行する */
-  if(padBlocked && performance.now() < padRetryAt) return null;
+  if(padBlocked && performance.now() < padRetryAt){ try{ syncPadSelectUI(); }catch(err){} return null; }
   let list = null;
   padDiagErr = "";
   try{
@@ -1247,6 +1290,7 @@ function pollPad(){
   padDiagSlots = [];
   if(list){
     let first = null, eventPad = null, active = null;
+    const byIndex = {};
     for(let i=0; i<list.length; i++){           // iterable 前提にしない（添字アクセスのみ）
       let g = null;
       try{ g = list[i]; }catch(err){ padDiagSlots.push(snapshotSlot(i, null)); continue; }
@@ -1255,21 +1299,112 @@ function pollPad(){
       let usable = false;
       try{ usable = !!((g.buttons && g.buttons.length) || (g.axes && g.axes.length>=2)); }catch(err){}
       if(!usable) continue;                    // connected フラグは見ない（社外パッドで false のままの実装がある）
+      byIndex[i] = g;
       if(!first) first = g;
       if(i===padEventIndex) eventPad = g;
-      if(!active && padActivity(g)) active = g;
+      if(padActivity(g)){
+        padLastActiveIndex = i;
+        try{ padLastActiveId = g.id || ""; }catch(err){}
+        if(!active) active = g;
+      }
     }
-    pad = active || eventPad || first;
+    if(padSelectedIndex >= 0){
+      /* 手動固定：指定スロットだけを採用し、他はスピーカー等の誤検出として無視する */
+      pad = byIndex[padSelectedIndex] || null;
+      if(pad){ try{ padSelectedId = pad.id || ""; }catch(err){} }
+    } else {
+      pad = active || eventPad || first;
+    }
   }
   if(pad){
     padLastSeenAt = performance.now(); padConnected = true;
     computeBM(pad);
     if(padActivity(pad)) usingPad = true;
   }
+  else if(padSelectedIndex >= 0){
+    /* 手動固定中は、他デバイスが見えていても「接続中」にしない */
+    padConnected = false;
+  }
   else if(padEverEvent && padLastSeenAt>0 && (performance.now()-padLastSeenAt) < 2500){
     padConnected = true;   // 一時的な空応答では接続表示を落とさない
   } else padConnected = false;
+  try{ syncPadSelectUI(); }catch(err){}
   return pad;
+}
+function setPadSelection(idx){
+  padSelectedIndex = (typeof idx==="number" && idx>=0) ? idx : -1;
+  if(padSelectedIndex>=0){
+    const s = padDiagSlots[padSelectedIndex];
+    padSelectedId = (s && s.present) ? (s.id||"") : "";
+  } else {
+    padSelectedId = "";
+  }
+  /* 旧パッドのボタン押下状態が残らないようエッジ判定をリセット */
+  for(let i=0;i<padPrev.length;i++) padPrev[i]=false;
+  padSelectSig = ""; /* 次回 sync で必ず再描画 */
+  lastDiagTxt = "";
+  try{ syncPadSelectUI(); }catch(err){}
+  try{ pollPad(); }catch(err){}
+}
+function syncPadSelectUI(){
+  const selects = document.querySelectorAll('.padSelect');
+  if(!selects.length) return;
+  /* スロット構成の署名：id/有無が変わったときだけ option を作り直す（毎フレーム作り直すと選択操作を妨げる） */
+  let sig = "sel:"+padSelectedIndex+"|blocked:"+padBlocked+"|";
+  for(const s of padDiagSlots) sig += s.idx+":"+(s.present?1:0)+":"+(s.id||"").slice(0,60)+":"+s.nb+"/"+s.na+";";
+  if(padSelectedIndex>=0 && padSelectedIndex>=padDiagSlots.length) sig += "|extra:"+padSelectedIndex;
+  const needRebuild = (sig !== padSelectSig);
+  if(needRebuild){
+    padSelectSig = sig;
+    selects.forEach(sel=>{
+      const cur = String(padSelectedIndex);
+      let html = '<option value="-1">自動で選ぶ（ボタン／スティックを動かしたパッドを優先）</option>';
+      if(padBlocked){
+        html += '<option value="-1" disabled>（この表示環境では検出できません）</option>';
+      } else if(!padDiagSlots.length){
+        html += '<option value="-1" disabled>（まだ何も検出されていません — パッドのボタンを押してください）</option>';
+      } else {
+        for(const s of padDiagSlots){
+          if(!s.present){
+            html += '<option value="'+s.idx+'">スロット'+s.idx+'：（なし）</option>';
+          } else {
+            const nm = (s.id||"(id不明)").replace(/\s*\(.*?\)\s*/g,"").trim().slice(0,44) || "(id不明)";
+            html += '<option value="'+s.idx+'">スロット'+s.idx+'：'+nm.replace(/</g,"&lt;")+' （ボタン'+s.nb+'／軸'+s.na+'）</option>';
+          }
+        }
+        if(padSelectedIndex>=0 && padSelectedIndex>=padDiagSlots.length){
+          html += '<option value="'+padSelectedIndex+'">スロット'+padSelectedIndex+'：（現在は未検出）</option>';
+        }
+      }
+      sel.innerHTML = html;
+      sel.value = cur;
+      sel.disabled = !!padBlocked;
+    });
+  } else {
+    selects.forEach(sel=>{ if(sel.value !== String(padSelectedIndex)) sel.value = String(padSelectedIndex); });
+  }
+  /* 補足テキスト：いま何を採用しているか／何が邪魔をしているか */
+  let meta = "";
+  if(padBlocked){
+    meta = "この表示環境では Gamepad API がブロックされているため選択できません。ブラウザで直接開くと選べます。";
+  } else if(padSelectedIndex>=0){
+    const s = padDiagSlots[padSelectedIndex];
+    if(s && s.present) meta = "固定中：スロット"+padSelectedIndex+" ＝ "+(s.id||"(id不明)").slice(0,56)+"\n他のスロットは無視しています。変えるときは上のプルダウンから選び直してください。";
+    else meta = "固定中：スロット"+padSelectedIndex+" — このスロットには今パッドが見えていません。他の機器は無視したまま待機します。使うパッドを差し直すか、「自動に戻す」を押してください。";
+  } else if(pad){
+    let idxTxt = "?";
+    try{ idxTxt = String(pad.index); }catch(err){}
+    let nm2 = "";
+    try{ nm2 = (pad.id||"").replace(/\s*\(.*?\)\s*/g,"").trim().slice(0,40); }catch(err){}
+    meta = "自動選択中：いま採用しているのは スロット"+idxTxt+(nm2?" ＝ "+nm2:"")+" です。\n別の機器（スピーカー等）を掴んでしまうときは、その機器ではないスロットを選んで固定してください。";
+    if(padLastActiveIndex>=0 && padLastActiveIndex!==pad.index) meta += "\n直近で入力があったのは スロット"+padLastActiveIndex+" でした。";
+  } else if(padDiagSlots.some(s=>s.present)){
+    const listTxt = padDiagSlots.filter(s=>s.present).map(s=>"スロット"+s.idx).join("、");
+    meta = "検出されている機器："+listTxt+"。使うパッドのボタンを押すか、プルダウンで直接指定してください。スピーカー等は選ばなければ使われません（自動時は入力があったものを優先します）。";
+  } else {
+    meta = "まだ機器が検出されていません。パッドを接続してボタンを押すと、ここにスロット一覧が出ます。";
+  }
+  document.querySelectorAll('.padSelectMeta').forEach(el=>{ if(el.textContent!==meta) el.textContent = meta; });
 }
 /* ブロック状態からの手動再試行（ボタン押下＝ユーザー操作のタイミングで再チェックする） */
 function retryPadDetection(){
@@ -1285,6 +1420,26 @@ function retryPadDetection(){
 }
 document.querySelectorAll('.btnPadRetry').forEach(b=>{
   b.addEventListener('click', ()=>{ try{ retryPadDetection(); }catch(err){} });
+});
+document.querySelectorAll('.padSelect').forEach(sel=>{
+  sel.addEventListener('change', ()=>{
+    const v = parseInt(sel.value, 10);
+    try{ setPadSelection(isNaN(v) ? -1 : v); }catch(err){}
+    /* タイトル／ポーズ両方のプルダウンを同期 */
+    document.querySelectorAll('.padSelect').forEach(s2=>{ s2.value = String(padSelectedIndex); });
+  });
+});
+document.querySelectorAll('.btnPadAuto').forEach(b=>{
+  b.addEventListener('click', ()=>{ try{ setPadSelection(-1); }catch(err){} });
+});
+document.querySelectorAll('.btnPadUseActive').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    /* 直近で実際に入力があったパッドがあればそれに固定。なければ現在採用中のパッドを使う */
+    let target = padLastActiveIndex;
+    if(target < 0 && pad){ try{ target = pad.index; }catch(err){} }
+    if(target >= 0){ try{ setPadSelection(target); }catch(err){} }
+    else { try{ pollPad(); }catch(err){} }
+  });
 });
 function padRawBtn(i){
   if(!pad || !pad.buttons) return 0;
@@ -2855,17 +3010,23 @@ function buildPadDiag(){
     return lines.join("\n");
   }
   if(!padDiagSlots.length) lines.push("スロット: 取得結果なし（空）");
+  if(padSelectedIndex>=0) lines.push("選択: 手動固定 — スロット" + padSelectedIndex + " のみ使用（他の機器は無視）");
+  else lines.push("選択: 自動（入力があったパッドを優先）");
+  if(padLastActiveIndex>=0) lines.push("直近で入力があったスロット: " + padLastActiveIndex);
   let any = false;
   for(const s of padDiagSlots){
-    if(!s.present){ lines.push("スロット" + s.idx + ": なし"); continue; }
+    const markSel = (padSelectedIndex===s.idx) ? " ★選択中" : "";
+    const markUse = (pad && pad.index===s.idx) ? " ●採用中" : "";
+    if(!s.present){ lines.push("スロット" + s.idx + ": なし" + markSel); continue; }
     any = true;
-    lines.push("スロット" + s.idx + ": " + (s.id ? s.id.slice(0,48) : "(id不明)"));
+    lines.push("スロット" + s.idx + ": " + (s.id ? s.id.slice(0,48) : "(id不明)") + markSel + markUse);
     lines.push("  mapping=" + (s.mapping || "(空＝非標準)") + " / connected=" + s.connected + " / ボタン" + s.nb + " / 軸" + s.na);
     if(s.pressed.length) lines.push("  押下中ボタン番号: " + s.pressed.join(", "));
     if(s.axesTxt) lines.push("  軸の値: " + s.axesTxt);
   }
   if(padDiagSlots.length && !any) lines.push("→ 全スロット空：この画面（ブラウザ）にはパッドが見えていません");
-  if(pad) lines.push("採用中: " + (padProfileName || "標準") + " として解釈");
+  if(padSelectedIndex>=0 && !pad) lines.push("→ 指定したスロット" + padSelectedIndex + " にはパッドが無いため、他の機器は使わず待機しています");
+  if(pad) lines.push("採用中: スロット" + pad.index + " を " + (padProfileName || "標準") + " として解釈");
   return lines.join("\n");
 }
 
@@ -2884,19 +3045,25 @@ function stepFrame(ts){
   if((game.state==="playing"||game.state==="paused") && pad && (padBtnEdge(BM.START) || padBtnEdge(BM.BACK))) togglePause();
   const ps = document.getElementById('padstatus');
   const pst = document.getElementById('padstatusTitle');
-  if(ps || pst){
+  const psp = document.getElementById('padstatusPause');
+  if(ps || pst || psp){
     let txt, on = false;
     if(pad){
       let nm = "";
       try{ nm = (pad.id || padEventId || "").replace(/\s*\(.*?\)\s*/g,"").trim(); }catch(err){}
-      txt = "🎮 コントローラー接続中" + (nm ? "："+nm.slice(0,22) : "") + (padProfileName && padProfileName!=="標準マッピング" ? "（"+padProfileName+"）" : "");
+      let slotTxt = "";
+      try{ slotTxt = "［スロット"+pad.index+(padSelectedIndex>=0?"・手動固定":"・自動")+"］"; }catch(err){}
+      txt = "🎮 コントローラー接続中" + slotTxt + (nm ? "："+nm.slice(0,22) : "") + (padProfileName && padProfileName!=="標準マッピング" ? "（"+padProfileName+"）" : "");
       on = true;
+    }
+    else if(padSelectedIndex>=0 && !padBlocked){
+      txt = "🎮 スロット"+padSelectedIndex+" を固定中 — そのスロットにパッドがありません（他の機器は無視中／キーボード可）";
     }
     else if(padConnected){ txt="🎮 コントローラー接続中（再検出中…）"; on=true; }
     else if(padBlocked){ txt="🎮 コントローラー：この表示環境では利用不可（キーボード/マウス可）"; }
     else if(!padApiAvailable){ txt="🎮 この画面ではコントローラー検出不可（キーボード/マウス可）"; }
     else { txt="🎮 コントローラー未接続（キーボード/マウス可）"; }
-    for(const el of [ps, pst]){ if(el){ el.textContent = txt; el.classList.toggle('on', on); el.classList.toggle('blocked', !pad && padBlocked); } }
+    for(const el of [ps, pst, psp]){ if(el){ el.textContent = txt; el.classList.toggle('on', on); el.classList.toggle('blocked', !pad && padBlocked); } }
   }
   document.querySelectorAll('.padBlockHelp').forEach(el=>{ el.classList.toggle('hidden', !(!pad && padBlocked)); });
   /* コントローラー診断：スロットごとの生の検出状況（変わったときだけ書き換える） */
