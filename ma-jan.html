@@ -1,0 +1,1750 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐾 とりまの麻雀教室</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap');
+
+  :root {
+    --cream: #fdf6e3;
+    --warm-white: #fffdf7;
+    --sage: #7aab8a;
+    --sage-dark: #5a8a6a;
+    --sage-light: #c8e6c9;
+    --terracotta: #d4785a;
+    --terracotta-light: #f4c4b0;
+    --honey: #e8a835;
+    --honey-light: #fde9b0;
+    --sky: #7ab8d4;
+    --sky-light: #d0edf8;
+    --lavender: #a89bca;
+    --brown: #8b6f47;
+    --brown-light: #d4b896;
+    --tile-bg: #fffef5;
+    --tile-border: #d4c8a0;
+    --tile-shadow: #b8aa80;
+    --red: #c0392b;
+    --green-tile: #2ecc71;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Zen Maru Gothic', 'M PLUS Rounded 1c', sans-serif;
+    background: var(--cream);
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(122,171,138,0.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(232,168,53,0.12) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(168,155,202,0.08) 0%, transparent 70%);
+    overflow-x: hidden;
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    text-align: center;
+    padding: 18px 20px 12px;
+    background: linear-gradient(135deg, #5a8a6a 0%, #7aab8a 50%, #8abb9a 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -20px; left: -20px; right: -20px; bottom: -20px;
+    background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.06'%3E%3Ccircle cx='20' cy='20' r='3'/%3E%3C/g%3E%3C/svg%3E");
+  }
+  .header-title {
+    font-size: 1.7rem;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 2px 3px 0 rgba(0,0,0,0.15);
+    letter-spacing: 2px;
+    position: relative;
+  }
+  .header-subtitle {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.85);
+    margin-top: 2px;
+    position: relative;
+    font-weight: 500;
+  }
+
+  /* ===== TEACHER AREA ===== */
+  .teacher-area {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 14px;
+    padding: 14px 20px 10px;
+    background: linear-gradient(180deg, rgba(90,138,106,0.1) 0%, transparent 100%);
+  }
+  .teacher-bubble-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 340px;
+    order: 2;
+  }
+  .teacher-bubble {
+    background: var(--warm-white);
+    border: 2.5px solid var(--brown-light);
+    border-radius: 18px 18px 18px 4px;
+    padding: 10px 16px;
+    font-size: 0.85rem;
+    color: #5a4030;
+    line-height: 1.55;
+    box-shadow: 3px 4px 0 var(--brown-light);
+    position: relative;
+    min-height: 44px;
+    transition: all 0.3s ease;
+  }
+  .teacher-bubble::before {
+    content: '';
+    position: absolute;
+    bottom: -2px; left: -12px;
+    width: 14px; height: 14px;
+    background: var(--warm-white);
+    border-left: 2.5px solid var(--brown-light);
+    border-bottom: 2.5px solid var(--brown-light);
+    border-radius: 0 0 0 10px;
+  }
+  .teacher-name-tag {
+    background: var(--sage);
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 20px;
+    margin-bottom: 5px;
+    margin-left: 4px;
+    letter-spacing: 1px;
+  }
+
+  .teacher-char {
+    font-size: 3.8rem;
+    line-height: 1;
+    order: 1;
+    filter: drop-shadow(2px 3px 0 rgba(0,0,0,0.1));
+    animation: teacherBob 3s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  @keyframes teacherBob {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+
+  /* ===== SCORE PANEL ===== */
+  .score-panel {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 8px 16px;
+    flex-wrap: wrap;
+  }
+  .score-chip {
+    background: var(--warm-white);
+    border: 2px solid var(--tile-border);
+    border-radius: 20px;
+    padding: 5px 16px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--brown);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 2px 2px 0 var(--tile-border);
+  }
+  .score-chip .val {
+    color: var(--terracotta);
+    font-size: 1rem;
+  }
+
+  /* ===== DISCARD AREA ===== */
+  .section-label {
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--sage-dark);
+    letter-spacing: 2px;
+    margin: 6px 0 4px;
+    text-transform: uppercase;
+  }
+  .discard-area {
+    min-height: 58px;
+    background: rgba(122,171,138,0.12);
+    border: 2px dashed rgba(122,171,138,0.4);
+    border-radius: 14px;
+    margin: 0 16px 8px;
+    padding: 8px 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-content: flex-start;
+  }
+
+  /* ===== HAND AREA ===== */
+  .hand-section {
+    padding: 0 14px 10px;
+  }
+  .hand-label {
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--brown);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+  .hand-tiles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    min-height: 80px;
+    padding: 8px;
+    background: rgba(212,184,150,0.15);
+    border-radius: 16px;
+    border: 2px solid rgba(212,184,150,0.3);
+  }
+
+  /* ===== TILE ===== */
+  .tile {
+    width: 48px;
+    height: 64px;
+    background: var(--tile-bg);
+    border: 2.5px solid var(--tile-border);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    box-shadow: 2px 4px 0 var(--tile-shadow), 0 2px 8px rgba(0,0,0,0.08);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    user-select: none;
+    font-family: 'Zen Maru Gothic', sans-serif;
+  }
+  .tile:hover {
+    transform: translateY(-6px);
+    box-shadow: 2px 10px 0 var(--tile-shadow), 0 4px 12px rgba(0,0,0,0.12);
+  }
+  .tile.selected {
+    transform: translateY(-10px);
+    box-shadow: 2px 14px 0 var(--sage), 0 6px 16px rgba(122,171,138,0.3);
+    border-color: var(--sage);
+    background: #f0faf2;
+  }
+  .tile.tsumo-tile {
+    border-color: var(--honey);
+    background: #fffbf0;
+    box-shadow: 2px 4px 0 #c8a030, 0 2px 8px rgba(232,168,53,0.2);
+    animation: tsumoGlow 0.6s ease;
+  }
+  @keyframes tsumoGlow {
+    0% { transform: scale(0.8) translateY(-20px); opacity: 0; }
+    60% { transform: scale(1.08) translateY(-8px); }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+  }
+  .tile-num {
+    font-size: 1.3rem;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .tile-suit {
+    font-size: 0.9rem;
+    line-height: 1;
+  }
+  .tile-label {
+    font-size: 0.55rem;
+    font-weight: 700;
+    color: #999;
+    margin-top: 1px;
+    letter-spacing: 0.5px;
+  }
+
+  /* Suit colors */
+  .suit-m .tile-num { color: #c0392b; }
+  .suit-p .tile-num { color: #2980b9; }
+  .suit-s .tile-num { color: #27ae60; }
+  .suit-z .tile-num { color: #8b5e3c; }
+  .suit-z .tile-suit { font-size: 1.1rem; }
+
+  /* Small tile (discard) */
+  .tile-small {
+    width: 32px;
+    height: 42px;
+    border-radius: 5px;
+    box-shadow: 1px 2px 0 var(--tile-shadow);
+    cursor: default;
+    font-family: 'Zen Maru Gothic', sans-serif;
+  }
+  .tile-small:hover { transform: none; box-shadow: 1px 2px 0 var(--tile-shadow); }
+  .tile-small .tile-num { font-size: 0.85rem; }
+  .tile-small .tile-suit { font-size: 0.6rem; }
+  .tile-small .tile-label { display: none; }
+
+  /* ===== CONTROLS ===== */
+  .controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 10px 16px;
+  }
+  .btn {
+    padding: 9px 20px;
+    border: none;
+    border-radius: 25px;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    letter-spacing: 0.5px;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.15);
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 0 rgba(0,0,0,0.15); }
+  .btn:active { transform: translateY(1px); box-shadow: 0 1px 0 rgba(0,0,0,0.15); }
+  .btn-primary { background: var(--sage); color: #fff; }
+  .btn-secondary { background: var(--honey); color: #fff; }
+  .btn-danger { background: var(--terracotta); color: #fff; }
+  .btn-info { background: var(--sky); color: #fff; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* ===== TENPAI INDICATOR ===== */
+  .tenpai-bar {
+    margin: 0 16px 8px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-align: center;
+    transition: all 0.4s ease;
+    letter-spacing: 0.5px;
+  }
+  .tenpai-bar.tenpai {
+    background: linear-gradient(135deg, #fff9e6, #fef3c7);
+    border: 2px solid var(--honey);
+    color: #92620a;
+    animation: tenpaiPulse 2s ease-in-out infinite;
+  }
+  @keyframes tenpaiPulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(232,168,53,0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(232,168,53,0); }
+  }
+  .tenpai-bar.normal {
+    background: rgba(200,200,200,0.15);
+    border: 2px solid rgba(200,200,200,0.3);
+    color: #bbb;
+  }
+
+  /* ===== YAKU LIST ===== */
+  .yaku-panel {
+    margin: 0 16px 10px;
+    background: var(--warm-white);
+    border: 2px solid var(--tile-border);
+    border-radius: 14px;
+    padding: 10px 14px;
+    display: none;
+  }
+  .yaku-panel.show { display: block; }
+  .yaku-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--sage-dark);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+  .yaku-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .yaku-chip {
+    background: var(--sage-light);
+    border: 1.5px solid var(--sage);
+    color: var(--sage-dark);
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+  .yaku-chip.riichi { background: #fde8d8; border-color: var(--terracotta); color: var(--terracotta); }
+
+  /* ===== WIN OVERLAY ===== */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .overlay.show { display: flex; }
+  .win-card {
+    background: var(--warm-white);
+    border: 4px solid var(--honey);
+    border-radius: 24px;
+    padding: 28px 32px;
+    text-align: center;
+    max-width: 360px;
+    width: 100%;
+    box-shadow: 6px 8px 0 var(--honey), 0 20px 60px rgba(0,0,0,0.3);
+    animation: winPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes winPop {
+    0% { transform: scale(0.5) rotate(-5deg); opacity: 0; }
+    100% { transform: scale(1) rotate(0); opacity: 1; }
+  }
+  .win-emoji { font-size: 3.5rem; margin-bottom: 8px; }
+  .win-title { font-size: 1.6rem; font-weight: 900; color: var(--terracotta); margin-bottom: 6px; }
+  .win-yaku { margin: 10px 0; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .win-score { font-size: 1.1rem; font-weight: 700; color: var(--brown); margin: 8px 0; }
+
+  /* ===== HINT AREA ===== */
+  .hint-area {
+    margin: 0 16px 8px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    background: var(--sky-light);
+    border: 2px solid var(--sky);
+    font-size: 0.8rem;
+    color: #2c6a8a;
+    display: none;
+    font-weight: 500;
+    line-height: 1.5;
+  }
+  .hint-area.show { display: block; }
+
+  /* ===== WALL COUNT ===== */
+  .wall-info {
+    text-align: center;
+    font-size: 0.72rem;
+    color: #aaa;
+    margin-bottom: 4px;
+    font-weight: 500;
+  }
+
+  /* ===== DECORATION ===== */
+  .paw-deco {
+    position: fixed;
+    font-size: 1.2rem;
+    opacity: 0.06;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Floating particles */
+  @keyframes float1 {
+    0%,100% { transform: translate(0,0) rotate(0deg); }
+    33% { transform: translate(10px,-15px) rotate(10deg); }
+    66% { transform: translate(-8px,-8px) rotate(-5deg); }
+  }
+  .paw1 { top: 15%; left: 5%; animation: float1 8s ease-in-out infinite; }
+  .paw2 { top: 40%; right: 4%; animation: float1 10s ease-in-out infinite 2s; }
+  .paw3 { bottom: 20%; left: 3%; animation: float1 9s ease-in-out infinite 4s; }
+
+  /* ===== TOAST ===== */
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--brown);
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 25px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    z-index: 200;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    pointer-events: none;
+    white-space: nowrap;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  .riichi-indicator {
+    display: inline-block;
+    background: var(--terracotta);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 900;
+    padding: 2px 8px;
+    border-radius: 10px;
+    letter-spacing: 1px;
+    margin-left: 4px;
+  }
+
+
+
+
+
+  /* ===== ROUND / WIND STATUS ===== */
+  .round-panel {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 4px auto 8px;
+    padding: 0 16px;
+  }
+  .round-chip {
+    background: #fffaf0;
+    border: 2px solid var(--honey);
+    border-radius: 18px;
+    padding: 5px 13px;
+    font-size: 0.78rem;
+    font-weight: 900;
+    color: var(--brown);
+    box-shadow: 2px 2px 0 rgba(232,168,53,0.35);
+  }
+  .round-chip .val {
+    color: var(--terracotta);
+    font-size: 0.98rem;
+    margin-left: 3px;
+  }
+
+  /* compact status for table layout */
+  .hint-area, .tenpai-bar, .yaku-panel { max-width: 760px; margin-left: auto; margin-right: auto; }
+
+  /* ===== JANTAKU BOARD ===== */
+  .mahjong-board {
+    width: min(980px, calc(100% - 20px));
+    margin: 8px auto 10px;
+    display: grid;
+    grid-template-columns: minmax(100px, 0.85fr) minmax(240px, 2.3fr) minmax(100px, 0.85fr);
+    grid-template-rows: auto minmax(150px, auto) auto;
+    grid-template-areas:
+      ". top ."
+      "left center right"
+      "bottom bottom bottom";
+    gap: 8px;
+    align-items: center;
+  }
+  .seat-top { grid-area: top; }
+  .seat-left { grid-area: left; align-self: stretch; }
+  .seat-right { grid-area: right; align-self: stretch; }
+  .seat-bottom { grid-area: bottom; }
+  .table-center {
+    grid-area: center;
+    min-height: 180px;
+    background: linear-gradient(135deg, rgba(122,171,138,0.24), rgba(232,168,53,0.12));
+    border: 4px solid rgba(90,138,106,0.35);
+    border-radius: 28px;
+    padding: 12px;
+    box-shadow: inset 0 0 0 4px rgba(255,255,255,0.45), 0 6px 0 rgba(90,138,106,0.18);
+  }
+  .seat-card {
+    background: var(--warm-white);
+    border: 2px solid var(--tile-border);
+    border-radius: 16px;
+    padding: 8px;
+    box-shadow: 2px 3px 0 var(--tile-border);
+    min-height: 88px;
+    height: 100%;
+  }
+  .seat-card.active {
+    border-color: var(--honey);
+    box-shadow: 2px 3px 0 var(--honey);
+    background: #fffaf0;
+  }
+  .cpu-name {
+    font-size: 0.82rem;
+    font-weight: 900;
+    color: var(--brown);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    text-align: center;
+  }
+  .cpu-status {
+    font-size: 0.68rem;
+    color: #987;
+    margin-bottom: 5px;
+    text-align: center;
+  }
+  .cpu-discards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    align-content: flex-start;
+    justify-content: center;
+    min-height: 42px;
+  }
+  .seat-left .cpu-discards, .seat-right .cpu-discards {
+    max-height: 142px;
+    overflow: hidden;
+  }
+  .table-center .section-label { margin-top: 0; }
+  .table-center .discard-area { margin: 0; min-height: 120px; background: rgba(255,255,255,0.45); }
+  .seat-bottom .hand-section { padding: 0; }
+
+  @media (max-width: 720px) {
+    .mahjong-board {
+      grid-template-columns: 1fr 1fr;
+      grid-template-areas:
+        "top top"
+        "left right"
+        "center center"
+        "bottom bottom";
+    }
+    .seat-left .cpu-discards, .seat-right .cpu-discards { max-height: none; }
+  }
+
+  /* Responsive tweaks */
+  @media (max-width: 400px) {
+    .tile { width: 42px; height: 56px; }
+    .tile-num { font-size: 1.1rem; }
+    .tile-suit { font-size: 0.75rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Decorations -->
+<div class="paw-deco paw1">🐾🐾🐾</div>
+<div class="paw-deco paw2">🌿🌿</div>
+<div class="paw-deco paw3">🐾🌿🐾</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-title">🐾 とりまの麻雀教室 🐾</div>
+  <div class="header-subtitle">どうぶつ先生たちと一緒に練習しよう！</div>
+</div>
+
+<!-- Teacher -->
+<div class="teacher-area">
+  <div class="teacher-char" id="teacherChar">🦦</div>
+  <div class="teacher-bubble-wrap">
+    <div class="teacher-name-tag" id="teacherName">カワウソ先生</div>
+    <div class="teacher-bubble" id="teacherMsg">ようこそ〜！配牌したら14枚になるよ。捨てたい牌をクリックして「捨てる」を押してね！</div>
+  </div>
+</div>
+
+<!-- Score -->
+<div class="score-panel">
+  <div class="score-chip">🏆 点数 <span class="val" id="scoreVal">25000</span>点</div>
+  <div class="score-chip">🀄 ツモ <span class="val" id="tsumoCount">0</span>回</div>
+  <div class="score-chip">🏅 和了 <span class="val" id="winCount">0</span>回</div>
+</div>
+
+<!-- Round / Wind -->
+<div class="round-panel" id="roundPanel">
+  <div class="round-chip">🌬️ 場風 <span class="val" id="roundWindVal">東</span></div>
+  <div class="round-chip">📍 局 <span class="val" id="kyokuVal">1局</span></div>
+  <div class="round-chip">🙋 自風 <span class="val" id="playerWindVal">東</span></div>
+</div>
+
+<!-- Hidden/compact status areas needed by the game logic -->
+<div class="hint-area" id="hintArea"></div>
+<div class="tenpai-bar normal" id="tenpaiBar">— 手牌を整えてテンパイを目指そう —</div>
+<div class="yaku-panel" id="yakuPanel">
+  <div class="yaku-title">🎯 役の候補</div>
+  <div class="yaku-list" id="yakuList"></div>
+</div>
+
+<!-- Mahjong table board -->
+<div class="section-label">どうぶつ卓</div>
+<div class="mahjong-board">
+  <div class="seat seat-top" id="cpuTop"></div>
+  <div class="seat seat-left" id="cpuLeft"></div>
+  <div class="table-center">
+    <div class="section-label">中央の捨て牌</div>
+    <div class="discard-area" id="discardArea"></div>
+  </div>
+  <div class="seat seat-right" id="cpuRight"></div>
+  <div class="seat seat-bottom">
+    <div class="hand-section">
+      <div class="hand-label">あなたの手牌（クリックで選択 → 捨てる）</div>
+      <div class="hand-tiles" id="handTiles"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Wall count -->
+<div class="wall-info" id="wallInfo"></div>
+
+<!-- Controls -->
+<div class="controls">
+  <button class="btn btn-primary" id="btnDeal" onclick="dealHand()">🀄 配牌する</button>
+  <button class="btn btn-secondary" id="btnTsumo" onclick="doTsumo()" disabled>🎲 手動ツモ</button>
+  <button class="btn btn-danger" id="btnDiscard" onclick="discardSelected()" disabled>🗑️ 捨てる</button>
+  <button class="btn btn-info" id="btnRiichi" onclick="toggleRiichi()" disabled>⚡ リーチ</button>
+  <button class="btn" style="background:#a89bca;color:#fff;" id="btnHint" onclick="showHint()" disabled>💡 ヒント</button>
+</div>
+
+<!-- Win overlay -->
+<div class="overlay" id="winOverlay">
+  <div class="win-card">
+    <div class="win-emoji" id="winEmoji">🎊</div>
+    <div class="win-title" id="winTitle">ツモ和了！</div>
+    <div class="win-yaku" id="winYaku"></div>
+    <div class="win-score" id="winScore"></div>
+    <div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="dealHand()">もう一局！</button>
+      <button class="btn btn-secondary" onclick="closeOverlay()">手牌を見る</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== TILE DEFINITIONS =====
+const SUITS = {
+  m: { label: '萬', emoji: '🔴', chars: ['一','二','三','四','五','六','七','八','九'] },
+  p: { label: '筒', emoji: '🔵', chars: ['①','②','③','④','⑤','⑥','⑦','⑧','⑨'] },
+  s: { label: '索', emoji: '🟢', chars: ['１','２','３','４','５','６','７','８','９'] },
+  z: { label: '字', emoji: '⬛', chars: ['東','南','西','北','白','發','中'] }
+};
+
+// z: 1-4 = winds (East South West North), 5=haku, 6=hatsu, 7=chun
+const WIND_NAMES = ['東','南','西','北'];
+const HONOR_NAMES = ['白','發','中'];
+
+function makeTile(suit, num) { return { suit, num, id: suit + num }; }
+
+function buildWall() {
+  const wall = [];
+  for (let n = 1; n <= 9; n++) { for (let k = 0; k < 4; k++) wall.push(makeTile('m', n)); }
+  for (let n = 1; n <= 9; n++) { for (let k = 0; k < 4; k++) wall.push(makeTile('p', n)); }
+  for (let n = 1; n <= 9; n++) { for (let k = 0; k < 4; k++) wall.push(makeTile('s', n)); }
+  for (let n = 1; n <= 7; n++) { for (let k = 0; k < 4; k++) wall.push(makeTile('z', n)); }
+  return shuffle(wall);
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ===== GAME STATE =====
+let wall = [];
+let hand = [];
+let discards = [];
+let selectedIdx = -1;
+let tsumoIdx = -1; // index of last drawn tile
+let isRiichi = false;
+let score = 25000;
+let tsumoCount = 0;
+let winCount = 0;
+let gameActive = false;
+let lastHint = '';
+let roundWindIndex = 0; // 0=東場, 1=南場, 2=西場, 3=北場
+let kyokuNumber = 1;   // 1〜4局
+let hasStartedOnce = false;
+const WIND_CHARS = ['東','南','西','北'];
+const SEAT_NAMES = ['あなた','うさぎさん','コアラ席','かめ席'];
+
+function getPlayerWind() {
+  // ざっくり親が時計回りに移る想定：東1=東、東2=北、東3=西、東4=南
+  const windsByKyoku = ['東','北','西','南'];
+  return windsByKyoku[(kyokuNumber - 1) % 4];
+}
+
+function advanceRoundCounter() {
+  kyokuNumber++;
+  if (kyokuNumber > 4) {
+    kyokuNumber = 1;
+    roundWindIndex = (roundWindIndex + 1) % WIND_CHARS.length;
+  }
+}
+
+function renderRoundInfo() {
+  const rw = document.getElementById('roundWindVal');
+  const ky = document.getElementById('kyokuVal');
+  const pw = document.getElementById('playerWindVal');
+  if (rw) rw.textContent = WIND_CHARS[roundWindIndex];
+  if (ky) ky.textContent = `${kyokuNumber}局`;
+  if (pw) pw.textContent = getPlayerWind();
+}
+
+
+// Teachers roster
+const teachers = [
+  { char: '🦦', name: 'カワウソ先生', mood: ['ずるずる〜', 'うまいね！', 'じっくり考えよう'] },
+  { char: '🦔', name: 'ハリネズミ先生', mood: ['とげとげ真剣モード！', 'ふむふむ', 'きをつけて！'] },
+  { char: '🐨', name: 'コアラ先生', mood: ['ぽわわ〜', 'いいね！', 'もくもく練習じゃ'] },
+  { char: '🦭', name: 'アザラシ先生', mood: ['ぷはっ！', 'すばらしい！', 'がんばれ〜'] },
+  { char: '🐸', name: 'カエル先生', mood: ['ケロ！', 'ピョン！うまい！', 'ジャンプで逆転じゃ'] },
+];
+let currentTeacher = teachers[0];
+
+function randomTeacher() {
+  currentTeacher = teachers[Math.floor(Math.random() * teachers.length)];
+  document.getElementById('teacherChar').textContent = currentTeacher.char;
+  document.getElementById('teacherName').textContent = currentTeacher.name;
+}
+
+function setMsg(msg) {
+  document.getElementById('teacherMsg').textContent = msg;
+}
+
+// ===== TILE RENDERING =====
+function tileLabel(t) {
+  if (t.suit === 'z') {
+    if (t.num <= 4) return WIND_NAMES[t.num - 1];
+    return HONOR_NAMES[t.num - 5];
+  }
+  const s = SUITS[t.suit];
+  return s.chars[t.num - 1];
+}
+
+function tileSuitLabel(t) {
+  if (t.suit === 'z') return '';
+  return SUITS[t.suit].label;
+}
+
+function renderTileEl(t, idx, isSmall, isTsumo) {
+  const div = document.createElement('div');
+  div.className = `tile suit-${t.suit}` + (isSmall ? ' tile-small' : '') + (isTsumo ? ' tsumo-tile' : '');
+  if (!isSmall) {
+    div.dataset.idx = idx;
+    div.onclick = () => selectTile(idx);
+  }
+  const numDiv = document.createElement('div');
+  numDiv.className = 'tile-num';
+  numDiv.textContent = tileLabel(t);
+  const suitDiv = document.createElement('div');
+  suitDiv.className = 'tile-suit';
+  suitDiv.textContent = tileSuitLabel(t);
+  const labelDiv = document.createElement('div');
+  labelDiv.className = 'tile-label';
+  labelDiv.textContent = t.suit !== 'z' ? t.suit.toUpperCase() : '字';
+  div.appendChild(numDiv);
+  div.appendChild(suitDiv);
+  div.appendChild(labelDiv);
+  return div;
+}
+
+function renderHand() {
+  const area = document.getElementById('handTiles');
+  area.innerHTML = '';
+  const sorted = sortHand(hand);
+
+  sorted.forEach((t, i) => {
+    const isTsumo = (i === hand.length - 1 && tsumoIdx !== -1 && tileKey(t) === tileKey(hand[tsumoIdx]));
+    const el = renderTileEl(t, i, false, false);
+    if (i === selectedIdx) el.classList.add('selected');
+    // re-index after sort
+    el.onclick = () => selectTile(i);
+    area.appendChild(el);
+  });
+
+  // Sync selectedIdx to sorted order
+  updateControls();
+  checkYaku();
+}
+
+function renderDiscards() {
+  const area = document.getElementById('discardArea');
+  area.innerHTML = '';
+  discards.forEach(t => {
+    area.appendChild(renderTileEl(t, -1, true, false));
+  });
+}
+
+function tileKey(t) { return t.suit + t.num; }
+
+// Sort hand: m1-9, p1-9, s1-9, z1-7
+function sortHand(tiles) {
+  const order = { m: 0, p: 1, s: 2, z: 3 };
+  return [...tiles].sort((a, b) => {
+    if (order[a.suit] !== order[b.suit]) return order[a.suit] - order[b.suit];
+    return a.num - b.num;
+  });
+}
+
+// ===== GAME ACTIONS =====
+function dealHand() {
+  wall = buildWall();
+  hand = [];
+  discards = [];
+  selectedIdx = -1;
+  tsumoIdx = -1;
+  isRiichi = false;
+  gameActive = true;
+  randomTeacher();
+
+  for (let i = 0; i < 14; i++) hand.push(wall.pop());
+
+  document.getElementById('btnDeal').textContent = '🔄 新局';
+  document.getElementById('btnTsumo').disabled = true;
+  document.getElementById('btnHint').disabled = false;
+  document.getElementById('btnRiichi').disabled = false;
+  document.getElementById('hintArea')?.classList.remove('show');
+  hideOverlay();
+  closeOverlay();
+
+  renderHand();
+  renderDiscards();
+  updateWallInfo();
+  setMsg('牌を14枚配ったよ！まず1枚選んで「捨てる」を押してね。');
+  checkYaku();
+
+  // Check win on initial 14-tile hand, otherwise prompt discard
+  setTimeout(() => {
+    const yakus = detectYaku(sortHand(hand), isRiichi);
+    if (yakus.length > 0) {
+      setMsg(`おっ！この配牌、もう和了できる形だよ。役: ${yakus.map(y=>y.name).join('・')}`);
+    } else {
+      setMsg('まず1枚捨てよう。捨てると次からツモできるよ！');
+    }
+  }, 300);
+}
+
+function selectTile(idx) {
+  if (!gameActive) return;
+  if (isRiichi) {
+    // リーチ中は選択不可
+    showToast('リーチ中は捨て牌を選べないよ！');
+    return;
+  }
+  if (selectedIdx === idx) {
+    selectedIdx = -1;
+  } else {
+    selectedIdx = idx;
+  }
+  renderHand();
+}
+
+function discardSelected() {
+  if (selectedIdx < 0 || !gameActive) return;
+
+  const sorted = sortHand(hand);
+  const tile = sorted[selectedIdx];
+  const origIdx = hand.findIndex(t => t === tile);
+  if (origIdx < 0) {
+    showToast('牌の選択がずれたみたい。もう一度選んでね！');
+    selectedIdx = -1;
+    renderHand();
+    return;
+  }
+  hand.splice(origIdx, 1);
+  discards.push(tile);
+  selectedIdx = -1;
+  tsumoIdx = -1;
+
+  renderHand();
+  renderDiscards();
+  updateWallInfo();
+
+  // auto-tsumo if hand has 13 tiles
+  if (hand.length === 13) {
+    setTimeout(() => {
+      const waits = getTenpaiWaits(hand);
+      if (waits.length > 0) {
+        const waitStr = waits.map(tileLabel).join('・');
+        setMsg(`テンパイ！${waitStr}待ちだよ。ツモボタンで引いてみよう！`);
+      } else {
+        const msgs = [
+          'どれを捨てようか考えて！',
+          'うまく整えてテンパイを目指そう！',
+          'ツモで牌を引いて手を育てよう！',
+        ];
+        setMsg(msgs[Math.floor(Math.random() * msgs.length)]);
+      }
+    }, 100);
+  }
+}
+
+function doTsumo() {
+  if (wall.length === 0) {
+    showToast('牌が尽きた！流局じゃ〜');
+    setMsg('牌山が空になったよ。新局しよう！');
+    return;
+  }
+  if (hand.length >= 14) {
+    showToast('先に牌を捨ててね！');
+    return;
+  }
+
+  const drawn = wall.pop();
+  hand.push(drawn);
+  tsumoIdx = hand.length - 1;
+  tsumoCount++;
+  document.getElementById('tsumoCount').textContent = tsumoCount;
+  selectedIdx = -1;
+
+  renderHand();
+  updateWallInfo();
+
+  // Check tsumo win
+  const sorted = sortHand(hand);
+  if (isWinningHand(sorted)) {
+    const yakus = detectYaku(sorted, isRiichi);
+    if (yakus.length > 0) {
+      triggerWin(yakus, 'ツモ');
+      return;
+    }
+  }
+
+  // Check riichi tsumo
+  if (isRiichi) {
+    const waits = getTenpaiWaits(sortHand(hand.slice(0, -1)));
+    const lastTile = sortHand(hand)[hand.length - 1];
+    // In riichi, we auto-discard non-winning
+    const isWait = waits.some(w => tileKey(w) === tileKey(drawn));
+    if (!isWait) {
+      // must discard the drawn tile
+      setTimeout(() => {
+        const tIdx = hand.indexOf(drawn);
+        hand.splice(tIdx, 1);
+        discards.push(drawn);
+        tsumoIdx = -1;
+        renderHand();
+        renderDiscards();
+        setMsg('リーチ中はツモ牌しか捨てられないよ！');
+      }, 800);
+      return;
+    }
+  }
+
+  const msgs = [
+    `${tileLabel(drawn)}を引いたよ！`,
+    `ツモ${tileLabel(drawn)}！どうする？`,
+    `きた〜${tileLabel(drawn)}！`,
+  ];
+  setMsg(msgs[Math.floor(Math.random() * msgs.length)]);
+  checkYaku();
+}
+
+function toggleRiichi() {
+  if (!gameActive || hand.length !== 13) {
+    showToast('13枚の時にリーチできるよ！');
+    return;
+  }
+  const waits = getTenpaiWaits(sortHand(hand));
+  if (waits.length === 0) {
+    showToast('テンパイしていないとリーチできないよ！');
+    setMsg('テンパイ（あと1枚で和了）の時にリーチできるよ！');
+    return;
+  }
+  isRiichi = !isRiichi;
+  const btn = document.getElementById('btnRiichi');
+  if (isRiichi) {
+    btn.textContent = '⚡ リーチ中！';
+    btn.style.background = '#c0392b';
+    score -= 1000;
+    document.getElementById('scoreVal').textContent = score;
+    setMsg(`リーチ！${waits.map(tileLabel).join('・')}待ちで待ってよう！`);
+    showToast('⚡ リーチ！');
+  } else {
+    btn.textContent = '⚡ リーチ';
+    btn.style.background = '';
+    setMsg('リーチ解除したよ。');
+  }
+}
+
+function showHint() {
+  const sorted = sortHand(hand);
+  const waits = getTenpaiWaits(sorted);
+
+  let hint = '';
+  if (waits.length > 0) {
+    hint = `🎯 テンパイ中！待ち牌：${waits.map(tileLabel).join('・')}`;
+  } else {
+    // Suggest discard
+    const best = findBestDiscard(sorted);
+    if (best) {
+      hint = `💡 「${tileLabel(best)}」を捨てると手が進みやすいかも！`;
+    } else {
+      hint = '🤔 うーん、じっくり考えてみよう！';
+    }
+  }
+
+  const area = document.getElementById('hintArea');
+  area.textContent = hint;
+  area.classList.add('show');
+  setMsg('ヒントを出したよ！参考にしてね〜');
+}
+
+// ===== YAKU DETECTION =====
+
+function isWinningHand(sorted) {
+  return canMakeSets(sorted, 0, []);
+}
+
+// Check if tiles form valid hand (4 sets + 1 pair)
+function canMakeSets(tiles, pairCount, sets) {
+  if (tiles.length === 0 && pairCount === 1) return true;
+  if (tiles.length === 0) return false;
+
+  const t = tiles[0];
+
+  // Try as pair
+  if (pairCount === 0) {
+    const pairIdx = tiles.findIndex((x, i) => i > 0 && tileKey(x) === tileKey(t));
+    if (pairIdx > 0) {
+      const rest = tiles.filter((_, i) => i !== 0 && i !== pairIdx);
+      if (canMakeSets(rest, 1, sets)) return true;
+    }
+  }
+
+  // Try as triplet (kōtsu)
+  const same = tiles.filter(x => tileKey(x) === tileKey(t));
+  if (same.length >= 3) {
+    let rest = [...tiles];
+    for (let k = 0; k < 3; k++) {
+      const ri = rest.findIndex(x => tileKey(x) === tileKey(t));
+      rest.splice(ri, 1);
+    }
+    if (canMakeSets(rest, pairCount, [...sets, [t,t,t]])) return true;
+  }
+
+  // Try as sequence (shuntsu) - only for numbered suits
+  if (t.suit !== 'z' && t.num <= 7) {
+    const t2 = tiles.find((x, i) => i > 0 && x.suit === t.suit && x.num === t.num + 1);
+    if (t2) {
+      const t3 = tiles.find((x, i) => {
+        const idx1 = tiles.indexOf(t2);
+        return i > 0 && x !== t2 && x.suit === t.suit && x.num === t.num + 2;
+      });
+      if (t3) {
+        let rest = [...tiles];
+        rest.splice(rest.indexOf(t), 1);
+        rest.splice(rest.indexOf(t2), 1);
+        rest.splice(rest.indexOf(t3), 1);
+        if (canMakeSets(rest, pairCount, [...sets, [t,t2,t3]])) return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+// Chiitoi (seven pairs)
+function isChiitoitsu(sorted) {
+  const counts = {};
+  sorted.forEach(t => { counts[tileKey(t)] = (counts[tileKey(t)] || 0) + 1; });
+  const vals = Object.values(counts);
+  return vals.length === 7 && vals.every(v => v === 2);
+}
+
+// Kokushi (13 orphans)
+function isKokushi(sorted) {
+  const terminals = ['m1','m9','p1','p9','s1','s9','z1','z2','z3','z4','z5','z6','z7'];
+  const keys = sorted.map(tileKey);
+  const hasAll = terminals.every(k => keys.includes(k));
+  const pairCount = terminals.filter(k => keys.filter(x => x === k).length >= 2).length;
+  return hasAll && pairCount >= 1;
+}
+
+function detectYaku(sorted, riichi) {
+  const yakus = [];
+
+  // Check chiitoi first
+  if (isChiitoitsu(sorted)) {
+    if (riichi) yakus.push({ name: 'リーチ', han: 1 });
+    yakus.push({ name: '七対子', han: 2 });
+    return yakus;
+  }
+
+  if (!isWinningHand(sorted)) return yakus;
+
+  if (riichi) yakus.push({ name: 'リーチ', han: 1 });
+
+  // Tanyao (all simples - no terminals or honors)
+  const hasTanyao = sorted.every(t => t.suit !== 'z' && t.num >= 2 && t.num <= 8);
+  if (hasTanyao) yakus.push({ name: 'タンヤオ', han: 1 });
+
+  // Toitoi (all triplets)
+  const hasToitoi = checkToitoi(sorted);
+  if (hasToitoi) yakus.push({ name: 'トイトイ', han: 2 });
+
+  // Yakuhai (value tiles - hatsu, haku, chun)
+  const counts = {};
+  sorted.forEach(t => { counts[tileKey(t)] = (counts[tileKey(t)] || 0) + 1; });
+  ['z5','z6','z7'].forEach((k, i) => {
+    if (counts[k] >= 3) yakus.push({ name: ['白','發','中'][i], han: 1 });
+  });
+  // Seat/round winds (East = z1, South = z2 for simplicity)
+  ['z1','z2'].forEach((k, i) => {
+    if (counts[k] >= 3) yakus.push({ name: ['東','南'][i]+'役牌', han: 1 });
+  });
+
+  // Ittsu (straight flush / pure straight)
+  const hasIttsu = checkIttsu(sorted);
+  if (hasIttsu) yakus.push({ name: '一気通貫', han: 2 });
+
+  // Pinfu (all sequences, non-yakuhai pair, two-sided wait) - simplified
+  const hasPinfu = checkPinfu(sorted);
+  if (hasPinfu && !riichi) yakus.push({ name: 'ピンフ', han: 1 });
+  else if (hasPinfu && riichi) yakus.push({ name: 'ピンフ', han: 1 });
+
+  // Tsumo (menzen tsumo) - since this is a solo game, any win is tsumo
+  if (!riichi) yakus.push({ name: 'メンゼンツモ', han: 1 });
+
+  return yakus;
+}
+
+function checkToitoi(sorted) {
+  // All sets must be triplets (pair + 4 triplets)
+  const result = extractSets(sorted);
+  if (!result) return false;
+  return result.sets.every(s => tileKey(s[0]) === tileKey(s[1]));
+}
+
+function extractSets(tiles) {
+  // Try to extract pair + 4 sets, return them
+  for (let pi = 0; pi < tiles.length; pi++) {
+    for (let pj = pi + 1; pj < tiles.length; pj++) {
+      if (tileKey(tiles[pi]) !== tileKey(tiles[pj])) continue;
+      const rest = tiles.filter((_, i) => i !== pi && i !== pj);
+      const sets = [];
+      if (extractAllSets(rest, sets)) return { pair: tiles[pi], sets };
+    }
+  }
+  return null;
+}
+
+function extractAllSets(tiles, sets) {
+  if (tiles.length === 0) return true;
+  const t = tiles[0];
+
+  // Try triplet
+  const same = tiles.filter(x => tileKey(x) === tileKey(t));
+  if (same.length >= 3) {
+    let rest = [...tiles];
+    for (let k = 0; k < 3; k++) rest.splice(rest.findIndex(x => tileKey(x) === tileKey(t)), 1);
+    if (extractAllSets(rest, sets)) { sets.push([t,t,t]); return true; }
+  }
+
+  // Try sequence
+  if (t.suit !== 'z' && t.num <= 7) {
+    const t2 = tiles.find((x, i) => i > 0 && x.suit === t.suit && x.num === t.num + 1);
+    const t3 = t2 ? tiles.find((x, i) => i > 0 && x !== t2 && x.suit === t.suit && x.num === t.num + 2) : null;
+    if (t2 && t3) {
+      let rest = [...tiles];
+      rest.splice(rest.indexOf(t), 1);
+      rest.splice(rest.indexOf(t2), 1);
+      rest.splice(rest.indexOf(t3), 1);
+      if (extractAllSets(rest, sets)) { sets.push([t,t2,t3]); return true; }
+    }
+  }
+
+  return false;
+}
+
+function checkIttsu(sorted) {
+  const result = extractSets(sorted);
+  if (!result) return false;
+  for (const suit of ['m', 'p', 's']) {
+    const seqs = result.sets.filter(s => s[0].suit === suit && tileKey(s[0]) !== tileKey(s[1]));
+    const has123 = seqs.some(s => s[0].num === 1);
+    const has456 = seqs.some(s => s[0].num === 4);
+    const has789 = seqs.some(s => s[0].num === 7);
+    if (has123 && has456 && has789) return true;
+  }
+  return false;
+}
+
+function checkPinfu(sorted) {
+  const result = extractSets(sorted);
+  if (!result) return false;
+  // All sets must be sequences
+  const allSeqs = result.sets.every(s => s[0].num !== s[1].num || (s[0].suit !== s[1].suit));
+  // Actually check properly: sequences have 3 consecutive nums
+  const allSeqs2 = result.sets.every(s => {
+    if (s[0].suit === 'z') return false;
+    return s[0].num + 1 === s[1].num && s[1].num + 1 === s[2].num;
+  });
+  // Pair must not be yakuhai
+  const pair = result.pair;
+  const pairIsYaku = (pair.suit === 'z' && pair.num >= 5) || (pair.suit === 'z' && pair.num <= 2);
+  return allSeqs2 && !pairIsYaku;
+}
+
+// ===== TENPAI / WAITS =====
+function getTenpaiWaits(sorted13) {
+  if (sorted13.length !== 13) return [];
+  const waits = [];
+  const allTiles = [
+    ...Array.from({length:9},(_,i)=>makeTile('m',i+1)),
+    ...Array.from({length:9},(_,i)=>makeTile('p',i+1)),
+    ...Array.from({length:9},(_,i)=>makeTile('s',i+1)),
+    ...Array.from({length:7},(_,i)=>makeTile('z',i+1)),
+  ];
+  for (const t of allTiles) {
+    const test = sortHand([...sorted13, t]);
+    if (isWinningHand(test) || isChiitoitsu(test) || isKokushi(test)) {
+      waits.push(t);
+    }
+  }
+  return waits;
+}
+
+function findBestDiscard(sorted) {
+  // Try discarding each tile and see how many waits we get
+  let best = null;
+  let bestCount = -1;
+  for (let i = 0; i < sorted.length; i++) {
+    const rest = sorted.filter((_, j) => j !== i);
+    const waits = getTenpaiWaits(rest);
+    if (waits.length > bestCount) {
+      bestCount = waits.length;
+      best = sorted[i];
+    }
+  }
+  return best;
+}
+
+function checkYaku() {
+  const sorted = sortHand(hand);
+
+  // Check if 14 tiles (winning state)
+  if (sorted.length === 14) {
+    const yakus = detectYaku(sorted, isRiichi);
+    const panel = document.getElementById('yakuPanel');
+    const list = document.getElementById('yakuList');
+    if (yakus.length > 0) {
+      panel.classList.add('show');
+      list.innerHTML = '';
+      yakus.forEach(y => {
+        const chip = document.createElement('div');
+        chip.className = 'yaku-chip' + (y.name === 'リーチ' ? ' riichi' : '');
+        chip.textContent = `${y.name} ${y.han}飜`;
+        list.appendChild(chip);
+      });
+    } else {
+      panel.classList.remove('show');
+    }
+
+    // Tenpai bar
+    const bar = document.getElementById('tenpaiBar');
+    bar.className = 'tenpai-bar normal';
+    bar.textContent = yakus.length > 0 ? `✨ 和了できるよ！役: ${yakus.map(y=>y.name).join('・')}` : '— 14枚：和了役なし —';
+    return;
+  }
+
+  if (sorted.length !== 13) return;
+
+  const waits = getTenpaiWaits(sorted);
+  const bar = document.getElementById('tenpaiBar');
+  const panel = document.getElementById('yakuPanel');
+
+  if (waits.length > 0) {
+    bar.className = 'tenpai-bar tenpai';
+    bar.innerHTML = `⭐ テンパイ！待ち牌: <strong>${waits.map(tileLabel).join('・')}</strong> (${waits.length}種)`;
+    panel.classList.remove('show');
+  } else {
+    bar.className = 'tenpai-bar normal';
+    bar.textContent = '— 手牌を整えてテンパイを目指そう —';
+    panel.classList.remove('show');
+  }
+}
+
+function updateControls() {
+  const hasSelected = selectedIdx >= 0;
+  const has14 = hand.length === 14;
+  const has13 = hand.length === 13;
+  document.getElementById('btnDiscard').disabled = !gameActive || !hasSelected || !has14;
+  document.getElementById('btnTsumo').disabled = !gameActive || !has13;
+  document.getElementById('btnRiichi').disabled = !gameActive || !has13;
+}
+
+function updateWallInfo() {
+  document.getElementById('wallInfo').textContent = `牌山残り: ${wall.length}枚`;
+}
+
+// ===== WIN =====
+function triggerWin(yakus, method) {
+  winCount++;
+  document.getElementById('winCount').textContent = winCount;
+
+  // Calculate score
+  const totalHan = yakus.reduce((s, y) => s + y.han, 0);
+  let pts = totalHan * 1000 + 500;
+  if (isRiichi) pts += 1000;
+  score += pts;
+  document.getElementById('scoreVal').textContent = score;
+
+  // Show overlay
+  const emojis = ['🎊','🎉','🏆','✨','🌟'];
+  document.getElementById('winEmoji').textContent = emojis[Math.floor(Math.random() * emojis.length)];
+  document.getElementById('winTitle').textContent = `${method}和了！`;
+  const winYakuEl = document.getElementById('winYaku');
+  winYakuEl.innerHTML = '';
+  yakus.forEach(y => {
+    const chip = document.createElement('div');
+    chip.className = 'yaku-chip' + (y.name === 'リーチ' ? ' riichi' : '');
+    chip.textContent = `${y.name} ${y.han}飜`;
+    winYakuEl.appendChild(chip);
+  });
+  document.getElementById('winScore').textContent = `+${pts}点！ (合計: ${score}点)`;
+  document.getElementById('winOverlay').classList.add('show');
+
+  const msgs = [
+    `やった〜！${yakus.map(y=>y.name).join('・')}！`,
+    `すごい！和了したよ！`,
+    `完璧じゃ！また練習しよう！`,
+  ];
+  setMsg(msgs[Math.floor(Math.random() * msgs.length)]);
+  gameActive = false;
+  updateControls();
+}
+
+function hideOverlay() {
+  document.getElementById('winOverlay').classList.remove('show');
+}
+function closeOverlay() {
+  document.getElementById('winOverlay').classList.remove('show');
+}
+
+// ===== TOAST =====
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+
+
+// ===== HEPPIPI CPU MODE OVERRIDES =====
+var cpuPlayers = [
+  { name: 'うさぎさん', char: '🐰', hand: [], discards: [], style: 'riichi', note: 'すぐ走る' },
+  { name: 'たぬきさん', char: '🦝', hand: [], discards: [], style: 'pon', note: 'なんとなく集める' },
+  { name: 'かめさん', char: '🐢', hand: [], discards: [], style: 'safe', note: 'ゆっくり' },
+];
+var currentTurnName = 'あなた';
+var cpuThinking = false;
+
+
+function getCpuWind(index) {
+  const playerWind = getPlayerWind();
+  const order = ['東','南','西','北'];
+  const p = order.indexOf(playerWind);
+  // 左・上・右の順に、下家・対面・上家っぽく表示
+  return order[(p + index + 1) % 4];
+}
+
+function renderCpuTable(activeIndex = -1) {
+  const slots = [
+    document.getElementById('cpuLeft'),   // 下家っぽい左
+    document.getElementById('cpuTop'),    // 対面っぽい上
+    document.getElementById('cpuRight'),  // 上家っぽい右
+  ];
+  const oldTable = document.getElementById('cpuTable');
+  if (oldTable) oldTable.innerHTML = '';
+  slots.forEach(slot => { if (slot) slot.innerHTML = ''; });
+
+  cpuPlayers.forEach((cpu, i) => {
+    const card = document.createElement('div');
+    card.className = 'seat-card' + (i === activeIndex ? ' active' : '');
+    const name = document.createElement('div');
+    name.className = 'cpu-name';
+    name.textContent = `${cpu.char} ${cpu.name}（${getCpuWind(i)}）`;
+    const status = document.createElement('div');
+    status.className = 'cpu-status';
+    status.textContent = `${cpu.note} / 手牌${cpu.hand.length}枚 / 捨て牌${cpu.discards.length}枚`;
+    const disc = document.createElement('div');
+    disc.className = 'cpu-discards';
+    cpu.discards.slice(-12).forEach(t => disc.appendChild(renderTileEl(t, -1, true, false)));
+    card.appendChild(name);
+    card.appendChild(status);
+    card.appendChild(disc);
+
+    if (slots[i]) slots[i].appendChild(card);
+    else if (oldTable) oldTable.appendChild(card);
+  });
+}
+
+function dealHand() {
+  if (hasStartedOnce) advanceRoundCounter();
+  hasStartedOnce = true;
+  renderRoundInfo();
+  wall = buildWall();
+  hand = [];
+  discards = [];
+  cpuPlayers.forEach(cpu => { cpu.hand = []; cpu.discards = []; });
+  selectedIdx = -1;
+  tsumoIdx = -1;
+  isRiichi = false;
+  gameActive = true;
+  cpuThinking = false;
+  currentTurnName = 'あなた';
+  randomTeacher();
+
+  // 4人戦っぽく、自分だけ14枚、どうぶつCPUは13枚から開始
+  for (let i = 0; i < 14; i++) hand.push(wall.pop());
+  for (const cpu of cpuPlayers) {
+    for (let i = 0; i < 13; i++) cpu.hand.push(wall.pop());
+  }
+
+  document.getElementById('btnDeal').textContent = '🔄 新局';
+  document.getElementById('btnHint').disabled = false;
+  document.getElementById('btnRiichi') && (document.getElementById('btnRiichi').textContent = '⚡ リーチ');
+  document.getElementById('btnRiichi') && (document.getElementById('btnRiichi').style.background = '');
+  document.getElementById('hintArea')?.classList.remove('show');
+  closeOverlay();
+
+  renderHand();
+  renderDiscards();
+  renderCpuTable();
+  updateWallInfo();
+  setMsg(`${WIND_CHARS[roundWindIndex]}${kyokuNumber}局、あなたは${getPlayerWind()}だよ。まず1枚選んで「捨てる」。CPUのあと、自動でツモって戻るよ。`);
+  checkYaku();
+}
+
+function renderDiscards() {
+  const area = document.getElementById('discardArea');
+  area.innerHTML = '';
+  discards.slice(-24).forEach(t => area.appendChild(renderTileEl(t, -1, true, false)));
+  renderCpuTable();
+}
+
+function discardSelected() {
+  if (selectedIdx < 0 || !gameActive || cpuThinking) return;
+  if (hand.length !== 14) {
+    showToast('先にツモして14枚にしてね！');
+    return;
+  }
+
+  const sorted = sortHand(hand);
+  const tile = sorted[selectedIdx];
+  const origIdx = hand.findIndex(t => t === tile);
+  if (origIdx < 0) {
+    showToast('牌の選択がずれたみたい。もう一度選んでね！');
+    selectedIdx = -1;
+    renderHand();
+    return;
+  }
+  hand.splice(origIdx, 1);
+  discards.push(tile);
+  selectedIdx = -1;
+  tsumoIdx = -1;
+
+  renderHand();
+  renderDiscards();
+  updateWallInfo();
+  setMsg(`${tileLabel(tile)}を捨てたよ。どうぶつたちの番！`);
+
+  runCpuRound();
+}
+
+function doTsumo() {
+  if (!gameActive || cpuThinking) return;
+  if (wall.length === 0) {
+    showToast('牌が尽きた！流局じゃ〜');
+    setMsg('牌山が空になったよ。新局しよう！');
+    gameActive = false;
+    updateControls();
+    return;
+  }
+  if (hand.length >= 14) {
+    showToast('先に牌を捨ててね！');
+    return;
+  }
+
+  const drawn = wall.pop();
+  hand.push(drawn);
+  tsumoIdx = hand.length - 1;
+  tsumoCount++;
+  document.getElementById('tsumoCount').textContent = tsumoCount;
+  selectedIdx = -1;
+
+  renderHand();
+  updateWallInfo();
+
+  const sorted = sortHand(hand);
+  if (isWinningHand(sorted) || isChiitoitsu(sorted) || isKokushi(sorted)) {
+    const yakus = detectYaku(sorted, isRiichi);
+    if (yakus.length > 0) {
+      triggerWin(yakus, 'ツモ');
+      return;
+    }
+  }
+
+  setMsg(`${tileLabel(drawn)}をツモったよ。1枚選んで捨てよう！`);
+  checkYaku();
+}
+
+function runCpuRound() {
+  cpuThinking = true;
+  updateControls();
+  let i = 0;
+  const step = () => {
+    if (!gameActive) return;
+    if (i >= cpuPlayers.length) {
+      cpuThinking = false;
+      currentTurnName = 'あなた';
+      renderCpuTable();
+      // 2巡目以降も迷わないよう、CPUの番が終わったら自動でツモする
+      playerAutoTsumoAfterCpu();
+      return;
+    }
+    cpuTakeTurn(i);
+    i++;
+    setTimeout(step, 520);
+  };
+  setTimeout(step, 250);
+}
+
+function playerAutoTsumoAfterCpu() {
+  if (!gameActive) return;
+  if (hand.length !== 13) {
+    // 念のため。14枚ならそのまま捨てられる状態にする。
+    renderHand();
+    updateControls();
+    return;
+  }
+  if (wall.length === 0) {
+    showToast('牌が尽きた！流局じゃ〜');
+    setMsg('牌山が空になったよ。新局しよう！');
+    gameActive = false;
+    updateControls();
+    return;
+  }
+
+  const drawn = wall.pop();
+  hand.push(drawn);
+  tsumoIdx = hand.length - 1;
+  tsumoCount++;
+  document.getElementById('tsumoCount').textContent = tsumoCount;
+  selectedIdx = -1;
+
+  renderHand();
+  updateWallInfo();
+
+  const sorted = sortHand(hand);
+  if (isWinningHand(sorted) || isChiitoitsu(sorted) || isKokushi(sorted)) {
+    const yakus = detectYaku(sorted, isRiichi);
+    if (yakus.length > 0) {
+      triggerWin(yakus, 'ツモ');
+      return;
+    }
+  }
+
+  const waits = getTenpaiWaits(sortHand(hand.slice(0, -1)));
+  if (waits.length > 0) {
+    setMsg(`あなたの番！${tileLabel(drawn)}をツモったよ。テンパイ中かも。1枚選んで捨てよう。`);
+  } else {
+    setMsg(`あなたの番！${tileLabel(drawn)}をツモったよ。1枚選んで捨てよう。`);
+  }
+  checkYaku();
+  updateControls();
+}
+
+function cpuTakeTurn(index) {
+  const cpu = cpuPlayers[index];
+  renderCpuTable(index);
+  if (wall.length === 0) {
+    gameActive = false;
+    setMsg('牌山が空になったよ。流局〜。');
+    updateControls();
+    return;
+  }
+
+  const drawn = wall.pop();
+  cpu.hand.push(drawn);
+
+  const sorted = sortHand(cpu.hand);
+  if (isWinningHand(sorted) || isChiitoitsu(sorted) || isKokushi(sorted)) {
+    const yakus = detectYaku(sorted, false);
+    if (yakus.length > 0 && Math.random() < 0.65) {
+      triggerCpuWin(cpu, yakus);
+      return;
+    }
+  }
+
+  const discardIndex = chooseCpuDiscardIndex(cpu);
+  const tile = cpu.hand.splice(discardIndex, 1)[0];
+  cpu.discards.push(tile);
+  updateWallInfo();
+  renderCpuTable(index);
+
+  const cpuMsgs = [
+    `${cpu.char}${cpu.name}「よくわかんないけど ${tileLabel(tile)} ぽいっ」`,
+    `${cpu.char}${cpu.name}が ${tileLabel(tile)} を捨てたよ。`,
+    `${cpu.char}${cpu.name}「えいっ」 ${tileLabel(tile)} を捨てた！`,
+  ];
+  setMsg(cpuMsgs[Math.floor(Math.random() * cpuMsgs.length)]);
+}
+
+function chooseCpuDiscardIndex(cpu) {
+  const tiles = cpu.hand;
+  const counts = {};
+  tiles.forEach(t => counts[tileKey(t)] = (counts[tileKey(t)] || 0) + 1);
+
+  // へたっぴ成分：たまに完全ランダム
+  const dumbRate = cpu.style === 'riichi' ? 0.38 : cpu.style === 'pon' ? 0.32 : 0.45;
+  if (Math.random() < dumbRate) return Math.floor(Math.random() * tiles.length);
+
+  const scored = tiles.map((t, idx) => {
+    let keep = 0;
+    const key = tileKey(t);
+    if (counts[key] >= 2) keep += cpu.style === 'pon' ? 5 : 3; // 対子好き
+    if (t.suit === 'z') keep += counts[key] >= 2 ? 2 : -2;
+    if (t.suit !== 'z') {
+      const near1 = tiles.some(x => x.suit === t.suit && Math.abs(x.num - t.num) === 1);
+      const near2 = tiles.some(x => x.suit === t.suit && Math.abs(x.num - t.num) === 2);
+      if (near1) keep += 4;
+      if (near2) keep += 1;
+      if (t.num === 1 || t.num === 9) keep -= 1;
+      if (t.num >= 2 && t.num <= 8 && cpu.style === 'riichi') keep += 1;
+    }
+    if (cpu.style === 'safe' && t.suit === 'z') keep += 1; // かめは字牌を少し残す
+    return { idx, keep };
+  });
+
+  scored.sort((a, b) => a.keep - b.keep || Math.random() - 0.5);
+  return scored[0].idx;
+}
+
+function triggerCpuWin(cpu, yakus) {
+  gameActive = false;
+  cpuThinking = false;
+  document.getElementById('winEmoji').textContent = cpu.char;
+  document.getElementById('winTitle').textContent = `${cpu.name}がツモ和了！`;
+  const winYakuEl = document.getElementById('winYaku');
+  winYakuEl.innerHTML = '';
+  yakus.forEach(y => {
+    const chip = document.createElement('div');
+    chip.className = 'yaku-chip';
+    chip.textContent = `${y.name} ${y.han}飜`;
+    winYakuEl.appendChild(chip);
+  });
+  document.getElementById('winScore').textContent = 'へたっぴCPUなのに、たまにあがる。';
+  document.getElementById('winOverlay').classList.add('show');
+  setMsg(`${cpu.char}${cpu.name}があがった！くやしいけど、かわいいから許す。`);
+  updateControls();
+}
+
+function updateControls() {
+  const hasSelected = selectedIdx >= 0;
+  const has14 = hand.length === 14;
+  const has13 = hand.length === 13;
+  document.getElementById('btnDiscard').disabled = !gameActive || cpuThinking || !hasSelected || !has14;
+  document.getElementById('btnTsumo').disabled = !gameActive || cpuThinking || !has13;
+  document.getElementById('btnRiichi').disabled = !gameActive || cpuThinking || !has13;
+  const hintBtn = document.getElementById('btnHint');
+  if (hintBtn) hintBtn.disabled = !gameActive || cpuThinking;
+}
+
+function updateWallInfo() {
+  const wallInfo = document.getElementById('wallInfo');
+  const cpuText = cpuPlayers && cpuPlayers.length ? ' / CPU3匹入り・鳴きなしへたっぴ卓' : '';
+  wallInfo.textContent = `牌山残り: ${wall.length}枚${cpuText}`;
+}
+
+// ===== INIT =====
+renderRoundInfo();
+setMsg('ようこそ〜！「配牌する」を押すと14枚配るよ。捨てたい牌をクリックして「捨てる」ボタンで捨てよう！');
+</script>
+</body>
+</html>
