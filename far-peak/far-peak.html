@@ -29,7 +29,7 @@
         border:1px solid var(--line); border-radius:10px; overflow:hidden;
         box-shadow:0 10px 30px rgba(0,0,0,.25); touch-action:none; user-select:none;
       }
-      canvas#game{ position:absolute; inset:0; width:100%; height:100%; display:block; image-rendering:pixelated; }
+      canvas#game{ position:absolute; inset:0; width:100%; height:100%; display:block; image-rendering:auto; }
       /* ---------- HUD ---------- */
       .hud{ position:absolute; pointer-events:none; font-size:14px; }
       #hudObjective{ top:10px; left:12px; max-width:56%; color:#eef6f0; text-shadow:0 1px 3px rgba(0,0,0,.8); line-height:1.45; }
@@ -244,7 +244,7 @@
   <body>
     <div class="wrap">
       <div class="stage" id="stage">
-        <canvas id="game" width="480" height="270"></canvas>
+        <canvas id="game" width="960" height="540"></canvas>
         <div id="healVeil"></div>
         <div id="dmgVeil"></div>
         <div id="cameraFrame"><div class="cVig"></div><span class="cf tl"></span><span class="cf tr"></span><span class="cf bl"></span><span class="cf br"></span><span class="cLabel" id="cameraLabel">カメラ ― ズーム 1/4 ・ 合わせ続けると自動マーク</span></div>
@@ -326,6 +326,13 @@
               <button class="btn sub" id="continueBtn" hidden>続きから（セーブあり）</button>
             </div>
             <div><span id="clearedBadge" hidden>制圧完了 ― 山は解放された</span></div>
+            <div class="setrow" style="max-width:360px;">
+              <label for="snowSelTitle">降雪の演出</label>
+              <select id="snowSelTitle">
+                <option value="on" selected>ON（ゆっくり少量）</option>
+                <option value="off">OFF</option>
+              </select>
+            </div>
             <span class="padstatus" id="titlePad"><span class="dot"></span><span id="titlePadText">コントローラー未接続</span></span>
             </div>
             <div>
@@ -382,6 +389,14 @@
                 <option value="1">大</option>
               </select>
             </div>
+            <div class="setrow">
+              <label for="snowSel">降雪の演出</label>
+              <select id="snowSel">
+                <option value="on" selected>ON（ゆっくり少量）</option>
+                <option value="off">OFF</option>
+              </select>
+            </div>
+            <p class="setnote">雪は演出だけの軽い降雪です。気になるときはOFFにできます（タイトル画面でも切り替えられます）。</p>
 
             <h3>操作 ― カメラ</h3>
             <table class="controls">
@@ -528,10 +543,12 @@
    酔い対策（第1弾と同一）：等速移動・慣性なし／回転速度上限／
    ヘッドボブなし／画面シェイクなし／視野角固定90度／照準常時表示
    ============================================================ */
-var W = 480, H = 270;
+var W = 480, H = 270; /* 論理座標（ゲームの計算はこの大きさのまま） */
+var RENDER_SCALE = 2; /* 描画キャンバスの内部解像度は 960x540。論理座標を2倍で描き、滑らかに補間する */
 var cv = document.getElementById('game');
 var ctx = cv.getContext('2d');
-ctx.imageSmoothingEnabled = false;
+ctx.imageSmoothingEnabled = true;
+ctx.imageSmoothingQuality = 'high';
 
 /* ---------------- Map（手続き生成） ----------------
    grid: 0 空 / 1 石壁 / 2 柵 / 3 見張り台
@@ -815,400 +832,573 @@ function syncGate(){
 </script>
 <script>
 "use strict";
-/* ---------------- Procedural textures & sprites ---------------- */
+/* ---------------- Procedural textures & sprites ----------------
+   なめらかフラット絵版：ドット絵ではなく、丸みのある面と曲線で描く。
+   テクスチャは256×256、スプライトは従来の2倍の解像度で生成し、
+   描画側のスムージング補間で輪郭が滑らかに出るようにする。 */
 function mkCanvas(w, h){ var c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+function ctx2(c){ var g = c.getContext('2d'); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; return g; }
+/* 角丸の面 */
+function rrPath(g, x, y, w, h, r){
+  r = Math.min(r, w / 2, h / 2);
+  g.beginPath();
+  g.moveTo(x + r, y);
+  g.lineTo(x + w - r, y); g.quadraticCurveTo(x + w, y, x + w, y + r);
+  g.lineTo(x + w, y + h - r); g.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  g.lineTo(x + r, y + h); g.quadraticCurveTo(x, y + h, x, y + h - r);
+  g.lineTo(x, y + r); g.quadraticCurveTo(x, y, x + r, y);
+  g.closePath();
+}
+function fillRR(g, x, y, w, h, r, col){ g.fillStyle = col; rrPath(g, x, y, w, h, r); g.fill(); }
+function circF(g, x, y, r, col){ g.fillStyle = col; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); }
+function ellF(g, x, y, rx, ry, col, alpha){
+  if (alpha !== undefined) g.globalAlpha = alpha;
+  g.fillStyle = col; g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, 7); g.fill();
+  g.globalAlpha = 1;
+}
+function triF(g, x1, y1, x2, y2, x3, y3, col){
+  g.fillStyle = col; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.lineTo(x3, y3); g.closePath(); g.fill();
+}
 function makeWallTexture(kind){
-  var c = mkCanvas(64, 64), g = c.getContext('2d');
-  var x, y;
+  var S = 256;
+  var c = mkCanvas(S, S), g = ctx2(c);
+  var x, y, i;
+  var seed = kind * 7919 + 137;
+  function rnd(){ seed = (seed * 16807) % 2147483647; return (seed % 1000) / 1000; }
+  function snowCap(depth, col){
+    /* 上部の雪：ギザギザではなく、ゆるやかに垂れる波形で描く */
+    g.fillStyle = col;
+    g.beginPath();
+    g.moveTo(0, 0); g.lineTo(S, 0); g.lineTo(S, depth * 0.5);
+    for (x = S; x > 0; x -= 32){
+      g.quadraticCurveTo(x - 16, depth * (0.7 + rnd() * 0.7), x - 32, depth * (0.45 + rnd() * 0.3));
+    }
+    g.lineTo(0, 0); g.closePath(); g.fill();
+  }
   if (kind === 1){
-    g.fillStyle = '#8d9291'; g.fillRect(0, 0, 64, 64);
-    for (y = 0; y < 4; y++) for (x = 0; x < 2; x++){
-      var ox = (y % 2) * 16 + x * 32;
-      g.fillStyle = (x + y) % 2 ? '#969c9b' : '#878d8c';
-      g.fillRect(ox - 16, y * 16 + 1, 30, 14);
-      g.fillRect(ox + 16, y * 16 + 1, 30, 14);
+    /* 石壁・岩壁：大きな角丸の石＋柔らかい面の陰影＋苔＋雪 */
+    g.fillStyle = '#68706e'; g.fillRect(0, 0, S, S);
+    var rows = [0, 62, 126, 192, 256];
+    for (y = 0; y < 4; y++){
+      var rh = rows[y + 1] - rows[y], off = (y % 2) * 46;
+      for (x = -1; x < 3; x++){
+        var sx = off + x * 92, sw = 88, tone = 0.88 + rnd() * 0.26;
+        var base = 'rgb(' + Math.round(143 * tone) + ',' + Math.round(149 * tone) + ',' + Math.round(147 * tone) + ')';
+        fillRR(g, sx + 3, rows[y] + 3, sw - 6, rh - 6, 13, base);
+        fillRR(g, sx + 10, rows[y] + 7, sw - 20, 8, 4, 'rgba(255,255,255,.16)');
+        fillRR(g, sx + 10, rows[y + 1] - 15, sw - 20, 8, 4, 'rgba(0,0,0,.15)');
+        for (i = 0; i < 3; i++)
+          ellF(g, sx + 14 + rnd() * (sw - 28), rows[y] + 12 + rnd() * (rh - 24), 5 + rnd() * 7, 3 + rnd() * 4, rnd() > 0.5 ? '#000000' : '#ffffff', 0.05);
+      }
     }
-    g.fillStyle = 'rgba(60,70,66,.35)';
-    g.fillRect(0, 52, 64, 12);
-    g.fillStyle = '#5d7263'; g.fillRect(4, 0, 10, 5); g.fillRect(44, 0, 14, 4);
+    g.strokeStyle = 'rgba(38,44,42,.38)'; g.lineWidth = 2.5; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(56, 70); g.quadraticCurveTo(66, 88, 60, 108); g.quadraticCurveTo(56, 122, 62, 134); g.stroke();
+    g.beginPath(); g.moveTo(188, 138); g.quadraticCurveTo(178, 156, 184, 172); g.stroke();
+    /* 苔：柔らかい楕円の重なりで下部に */
+    for (i = 0; i < 9; i++)
+      ellF(g, 16 + rnd() * 224, 232 + rnd() * 20, 16 + rnd() * 20, 8 + rnd() * 7, '#5d7a52', 0.20);
+    var mg = g.createLinearGradient(0, 208, 0, 256);
+    mg.addColorStop(0, 'rgba(84,104,80,0)'); mg.addColorStop(1, 'rgba(84,104,80,.32)');
+    g.fillStyle = mg; g.fillRect(0, 208, S, 48);
+    snowCap(22, '#edf3f6');
+    ellF(g, 60, 5, 52, 4, '#ffffff', 0.5); ellF(g, 180, 4, 60, 4, '#ffffff', 0.45);
   } else if (kind === 2){
-    g.fillStyle = '#6e5133'; g.fillRect(0, 0, 64, 64);
+    /* 木の壁・柵：板の面＋ゆるやかな木目の曲線＋節＋横梁 */
+    g.fillStyle = '#5f452a'; g.fillRect(0, 0, S, S);
     for (x = 0; x < 4; x++){
-      g.fillStyle = x % 2 ? '#7d5c39' : '#75552f';
-      g.fillRect(x * 16 + 1, 0, 14, 64);
-      g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(x * 16 + 13, 0, 2, 64);
-      g.fillStyle = 'rgba(255,235,200,.12)'; g.fillRect(x * 16 + 2, 0, 2, 64);
+      var px = x * 64, ptone = 0.92 + rnd() * 0.18;
+      g.fillStyle = 'rgb(' + Math.round(125 * ptone) + ',' + Math.round(92 * ptone) + ',' + Math.round(57 * ptone) + ')';
+      g.fillRect(px, 0, 64, S);
+      g.fillStyle = 'rgba(0,0,0,.22)'; g.fillRect(px + 61, 0, 3, S);
+      g.fillStyle = 'rgba(255,235,200,.10)'; g.fillRect(px + 2, 0, 3, S);
+      g.strokeStyle = 'rgba(70,48,24,.35)'; g.lineWidth = 3; g.lineCap = 'round';
+      for (i = 0; i < 3; i++){
+        var gx = px + 12 + rnd() * 38;
+        g.beginPath(); g.moveTo(gx, -4);
+        g.bezierCurveTo(gx + (rnd() * 10 - 5), 84, gx + (rnd() * 10 - 5), 170, gx + (rnd() * 6 - 3), 260);
+        g.stroke();
+      }
+      var kx = px + 16 + rnd() * 30, ky = 30 + rnd() * 190;
+      ellF(g, kx, ky, 8, 11, 'rgba(56,36,16,.5)');
+      ellF(g, kx, ky, 4.6, 6.6, 'rgba(40,24,10,.55)');
+      ellF(g, kx, ky, 2, 3, 'rgba(24,14,5,.7)');
     }
-    g.fillStyle = '#5d4227'; g.fillRect(0, 10, 64, 7); g.fillRect(0, 44, 64, 7);
-    g.fillStyle = '#3d2c18';
-    g.fillRect(6, 12, 3, 3); g.fillRect(54, 12, 3, 3); g.fillRect(6, 46, 3, 3); g.fillRect(54, 46, 3, 3);
+    fillRR(g, -4, 38, S + 8, 30, 7, '#54391f');
+    fillRR(g, -4, 180, S + 8, 30, 7, '#54391f');
+    fillRR(g, -4, 40, S + 8, 7, 3, 'rgba(255,235,200,.12)');
+    fillRR(g, -4, 182, S + 8, 7, 3, 'rgba(255,235,200,.12)');
+    [[26, 53], [230, 53], [26, 195], [230, 195]].forEach(function(p){
+      circF(g, p[0], p[1], 5, '#2e1e0e'); circF(g, p[0] - 1.6, p[1] - 1.6, 1.8, 'rgba(255,240,210,.5)');
+    });
   } else if (kind === 4){
-    /* 北の関所の鉄の門：暗い鉄格子＋雪 */
-    g.fillStyle = '#31383e'; g.fillRect(0, 0, 64, 64);
-    for (x = 0; x < 6; x++){
-      g.fillStyle = x % 2 ? '#454f57' : '#3d454d';
-      g.fillRect(x * 11 + 2, 0, 7, 64);
-      g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(x * 11 + 2, 0, 2, 64);
+    /* 北の関所の鉄の門：丸みのある鉄格子＋柔らかい錆＋雪 */
+    var bg = g.createLinearGradient(0, 0, 0, S);
+    bg.addColorStop(0, '#3d464f'); bg.addColorStop(1, '#293037');
+    g.fillStyle = bg; g.fillRect(0, 0, S, S);
+    var barGrad = g.createLinearGradient(0, 0, S, 0);
+    barGrad.addColorStop(0, '#4b565f'); barGrad.addColorStop(0.2, '#333c44'); barGrad.addColorStop(0.42, '#4a545e');
+    barGrad.addColorStop(0.62, '#323a42'); barGrad.addColorStop(0.82, '#48535d'); barGrad.addColorStop(1, '#31383f');
+    g.fillStyle = barGrad;
+    for (x = 0; x < 6; x++) fillRR(g, x * 43 + 7, -6, 29, S + 12, 9, barGrad);
+    for (i = 0; i < 10; i++)
+      ellF(g, 14 + rnd() * 228, 50 + rnd() * 180, 5 + rnd() * 10, 10 + rnd() * 22, '#96582c', 0.16);
+    fillRR(g, -4, 30, S + 8, 34, 7, '#22282e');
+    fillRR(g, -4, 188, S + 8, 34, 7, '#22282e');
+    fillRR(g, -4, 32, S + 8, 6, 3, 'rgba(255,255,255,.10)');
+    fillRR(g, -4, 190, S + 8, 6, 3, 'rgba(255,255,255,.10)');
+    for (x = 0; x < 4; x++){
+      [47, 205].forEach(function(ry){
+        circF(g, 32 + x * 64, ry, 5.5, '#6a757f');
+        circF(g, 30.4, ry - 1.6, 1.9, 'rgba(255,255,255,.55)');
+      });
     }
-    g.fillStyle = '#23282d'; g.fillRect(0, 8, 64, 8); g.fillRect(0, 46, 64, 8);
-    g.fillStyle = '#59636c';
-    g.fillRect(4, 11, 3, 3); g.fillRect(57, 11, 3, 3); g.fillRect(4, 49, 3, 3); g.fillRect(57, 49, 3, 3);
-    g.fillStyle = 'rgba(245,250,252,.9)'; g.fillRect(0, 0, 64, 5);
+    fillRR(g, -4, 26, S + 8, 7, 3, 'rgba(245,250,252,.85)');
+    fillRR(g, -4, 184, S + 8, 7, 3, 'rgba(245,250,252,.7)');
+    snowCap(26, 'rgba(245,250,252,.95)');
   } else {
-    g.fillStyle = '#77603c'; g.fillRect(0, 0, 64, 64);
-    for (x = 0; x < 4; x++){ g.fillStyle = x % 2 ? '#81683f' : '#6f5836'; g.fillRect(x * 16 + 1, 0, 14, 64); }
-    g.fillStyle = '#241a10'; g.fillRect(22, 14, 20, 18);
-    g.fillStyle = '#3a5a74'; g.fillRect(24, 16, 16, 14);
-    g.fillStyle = '#4c3a22'; g.fillRect(0, 40, 64, 6);
-    g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = 5;
-    g.beginPath(); g.moveTo(0, 64); g.lineTo(64, 40); g.moveTo(0, 40); g.lineTo(64, 64); g.stroke();
+    /* 見張り台・祠の壁：板壁＋丸窓の明かり＋丸みのある扉＋祈祷旗と垂れ幕 */
+    g.fillStyle = '#77603c'; g.fillRect(0, 0, S, S);
+    for (y = 0; y < 5; y++){
+      var wtone = 0.92 + rnd() * 0.16;
+      g.fillStyle = 'rgb(' + Math.round(129 * wtone) + ',' + Math.round(104 * wtone) + ',' + Math.round(63 * wtone) + ')';
+      g.fillRect(0, y * 52, S, 49);
+      g.fillStyle = 'rgba(0,0,0,.16)'; g.fillRect(0, y * 52 + 47, S, 3);
+      g.fillStyle = 'rgba(255,240,210,.08)'; g.fillRect(0, y * 52 + 2, S, 3);
+    }
+    fillRR(g, -4, -4, S + 8, 22, 6, '#4c3a22');
+    /* 窓（暖かい明かり＋格子） */
+    fillRR(g, 22, 84, 68, 82, 9, '#241a10');
+    var wg = g.createRadialGradient(56, 118, 6, 56, 125, 46);
+    wg.addColorStop(0, '#ffd98a'); wg.addColorStop(0.6, '#eda94e'); wg.addColorStop(1, '#d98a34');
+    g.fillStyle = wg; rrPath(g, 29, 91, 54, 68, 6); g.fill();
+    g.strokeStyle = '#241a10'; g.lineWidth = 6; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(56, 93); g.lineTo(56, 157); g.moveTo(31, 125); g.lineTo(81, 125); g.stroke();
+    /* 扉（板＋取っ手＋蝶番） */
+    fillRR(g, 166, 68, 68, 188, 9, '#5d4227');
+    g.strokeStyle = 'rgba(0,0,0,.22)'; g.lineWidth = 3;
+    g.beginPath(); g.moveTo(183, 76); g.lineTo(183, 248); g.moveTo(200, 76); g.lineTo(200, 248); g.moveTo(217, 76); g.lineTo(217, 248); g.stroke();
+    fillRR(g, 166, 88, 18, 10, 4, '#2e2010'); fillRR(g, 166, 208, 18, 10, 4, '#2e2010');
+    circF(g, 222, 168, 7, '#c9a23a'); circF(g, 220, 166, 2.4, 'rgba(255,255,255,.6)');
+    /* 祈祷旗：たるんだ紐に沿う、波打つ小旗 */
+    g.strokeStyle = '#ddd6c2'; g.lineWidth = 3.4; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(0, 24); g.quadraticCurveTo(128, 62, 256, 24); g.stroke();
+    var flagCols = ['#3a6bc2', '#e8e4da', '#c23a2e', '#3f9e57', '#e8c832'];
+    for (i = 0; i < 5; i++){
+      var fx = 22 + i * 46, fy = 33 + Math.sin(i / 4 * Math.PI) * 13;
+      g.fillStyle = flagCols[i];
+      g.beginPath();
+      g.moveTo(fx, fy); g.lineTo(fx + 34, fy + 3);
+      g.quadraticCurveTo(fx + 30, fy + 26, fx + 17, fy + 29);
+      g.quadraticCurveTo(fx + 4, fy + 26, fx, fy);
+      g.closePath(); g.fill();
+      ellF(g, fx + 17, fy + 25, 13, 3.4, '#000000', 0.13);
+    }
+    /* 布の垂れ幕（白布＋赤い帯） */
+    g.fillStyle = '#e9e1cd';
+    g.beginPath();
+    g.moveTo(104, 16); g.lineTo(150, 16); g.lineTo(150, 82);
+    g.quadraticCurveTo(140, 90, 127, 84); g.quadraticCurveTo(114, 90, 104, 82);
+    g.closePath(); g.fill();
+    g.fillStyle = '#c23a2e';
+    g.beginPath();
+    g.moveTo(104, 64); g.lineTo(150, 64); g.lineTo(150, 82);
+    g.quadraticCurveTo(140, 90, 127, 84); g.quadraticCurveTo(114, 90, 104, 82);
+    g.closePath(); g.fill();
+    circF(g, 127, 38, 9, '#8c2f23'); circF(g, 127, 38, 4.4, '#e9e1cd');
+    fillRR(g, -4, -4, S + 8, 9, 4, 'rgba(240,246,249,.85)');
   }
   return c;
 }
 var wallTex = [null, makeWallTexture(1), makeWallTexture(2), makeWallTexture(3), makeWallTexture(4)];
 
 function makeTreeSprite(){
-  /* 松の木：まっすぐな幹＋三角の樹冠3段＋雪帽子 */
-  var c = mkCanvas(128, 128), g = c.getContext('2d');
-  g.fillStyle = '#5d4630'; g.fillRect(59, 84, 10, 44);
-  g.fillStyle = '#4c3826'; g.fillRect(59, 84, 4, 44);
-  function tier(yTop, halfW, yBot, col){
-    g.fillStyle = col;
-    g.beginPath(); g.moveTo(64, yTop); g.lineTo(64 + halfW, yBot); g.lineTo(64 - halfW, yBot); g.closePath(); g.fill();
-    g.fillStyle = 'rgba(245,250,252,.85)';
-    g.beginPath(); g.moveTo(64, yTop); g.lineTo(64 + halfW * 0.42, yTop + (yBot - yTop) * 0.42); g.lineTo(64 - halfW * 0.42, yTop + (yBot - yTop) * 0.42); g.closePath(); g.fill();
+  /* 松の木：柔らかい幹＋丸い樹冠の重なり＋雪 */
+  var c = mkCanvas(256, 256), g = ctx2(c); g.scale(2, 2);
+  g.fillStyle = '#5d4630';
+  g.beginPath();
+  g.moveTo(59, 128); g.quadraticCurveTo(61, 104, 60, 82); g.lineTo(68, 82); g.quadraticCurveTo(67, 104, 69, 128); g.closePath(); g.fill();
+  ellF(g, 56, 126, 9, 4, '#4c3826'); ellF(g, 72, 126, 9, 4, '#4c3826');
+  ellF(g, 64, 108, 4, 20, '#4c3826', 0.55);
+  function crown(cy, r, col){
+    ellF(g, 64, cy, r, r * 0.62, col);
+    ellF(g, 64 - r * 0.45, cy + r * 0.16, r * 0.55, r * 0.4, col);
+    ellF(g, 64 + r * 0.45, cy + r * 0.16, r * 0.55, r * 0.4, col);
   }
-  tier(58, 46, 96, '#274d33');
-  tier(34, 38, 74, '#2e5a3c');
-  tier(10, 29, 52, '#356847');
+  crown(88, 47, '#274d33'); crown(64, 39, '#2e5a3c'); crown(40, 30, '#356847');
+  ellF(g, 52, 30, 17, 6, 'rgba(245,250,252,.9)');
+  ellF(g, 66, 52, 20, 6, 'rgba(245,250,252,.75)');
+  ellF(g, 48, 78, 22, 6, 'rgba(245,250,252,.6)');
+  ellF(g, 50, 36, 10, 7, 'rgba(255,255,255,.14)');
   return c;
 }
 function makeCrateSprite(supply){
-  var c = mkCanvas(96, 96), g = c.getContext('2d');
-  g.fillStyle = supply ? '#5d6e46' : '#8a6a3e'; g.fillRect(8, 22, 80, 72);
-  g.fillStyle = supply ? '#6c7f52' : '#97764a'; g.fillRect(8, 22, 80, 10);
-  g.strokeStyle = '#42502e'; g.lineWidth = 5; g.strokeRect(10, 24, 76, 68);
-  g.beginPath(); g.moveTo(10, 24); g.lineTo(86, 92); g.moveTo(86, 24); g.lineTo(10, 92); g.stroke();
-  g.fillStyle = 'rgba(0,0,0,.18)'; g.fillRect(8, 82, 80, 12);
-  g.fillStyle = supply ? '#31402a' : '#42503e'; g.fillRect(30, 44, 36, 16);
-  g.fillStyle = '#cfd6c8'; g.font = 'bold 11px sans-serif'; g.textAlign = 'center'; g.fillText('補給', 48, 56);
+  var c = mkCanvas(192, 192), g = ctx2(c); g.scale(2, 2);
+  fillRR(g, 8, 22, 80, 72, 7, supply ? '#5d6e46' : '#8a6a3e');
+  fillRR(g, 8, 22, 80, 16, 7, supply ? '#6c7f52' : '#97764a');
+  g.strokeStyle = supply ? '#42502e' : '#5d4630'; g.lineWidth = 5; g.lineCap = 'round';
+  rrPath(g, 13, 27, 70, 62, 5); g.stroke();
+  g.beginPath(); g.moveTo(15, 29); g.lineTo(81, 87); g.moveTo(81, 29); g.lineTo(15, 87); g.stroke();
+  ellF(g, 48, 90, 36, 5, 'rgba(0,0,0,.16)');
+  fillRR(g, 30, 44, 36, 17, 5, supply ? '#31402a' : '#42503e');
+  g.fillStyle = '#cfd6c8'; g.font = 'bold 11px sans-serif'; g.textAlign = 'center'; g.fillText('補給', 48, 56.5);
   return c;
 }
 function makePostSprite(){
   /* 祈祷旗の柱：柱から色とりどりの小旗が下がる */
-  var c = mkCanvas(48, 96), g = c.getContext('2d');
-  g.fillStyle = '#5d4630'; g.fillRect(21, 4, 6, 92);
-  g.fillStyle = '#3d2c1a'; g.fillRect(21, 4, 6, 5);
-  g.strokeStyle = '#ddd6c2'; g.lineWidth = 1.6;
+  var c = mkCanvas(96, 192), g = ctx2(c); g.scale(2, 2);
+  fillRR(g, 21, 4, 6, 92, 3, '#5d4630');
+  circF(g, 24, 7, 4.4, '#3d2c1a');
+  g.strokeStyle = '#ddd6c2'; g.lineWidth = 1.8; g.lineCap = 'round';
   g.beginPath(); g.moveTo(24, 10); g.quadraticCurveTo(10, 22, 3, 38); g.stroke();
   g.beginPath(); g.moveTo(24, 10); g.quadraticCurveTo(38, 22, 45, 38); g.stroke();
   var cols = ['#3a6bc2', '#e8e4da', '#c23a2e', '#3f9e57', '#e8c832'];
   for (var i = 0; i < 5; i++){
+    var lx = 19 - i * 4, ly = 15 + i * 5, rx = 26 + i * 4, ry = 15 + i * 5;
     g.fillStyle = cols[i];
-    var lx = 19 - i * 4, ly = 15 + i * 5;
-    g.fillRect(lx - 3, ly, 7, 9);
-    var rx = 26 + i * 4, ry = 15 + i * 5;
-    g.fillRect(rx - 3, ry, 7, 9);
+    g.beginPath(); g.moveTo(lx - 3.5, ly); g.lineTo(lx + 3.5, ly); g.quadraticCurveTo(lx + 3, ly + 8, lx, ly + 9.5); g.quadraticCurveTo(lx - 3, ly + 8, lx - 3.5, ly); g.closePath(); g.fill();
+    g.beginPath(); g.moveTo(rx - 3.5, ry); g.lineTo(rx + 3.5, ry); g.quadraticCurveTo(rx + 3, ry + 8, rx, ry + 9.5); g.quadraticCurveTo(rx - 3, ry + 8, rx - 3.5, ry); g.closePath(); g.fill();
   }
-  g.fillStyle = cols[2]; g.fillRect(20, 12, 8, 10);
+  fillRR(g, 19.5, 11, 9, 11, 3, cols[2]);
   return c;
 }
 function makeTowerSprite(){
-  /* 鐘の塔：石造りの塔身＋三角屋根＋鐘＋拡声ホーン */
-  var c = mkCanvas(128, 256), g = c.getContext('2d');
-  g.fillStyle = '#8d9291'; g.fillRect(34, 78, 60, 178);
-  g.fillStyle = '#7c8281'; g.fillRect(34, 78, 10, 178);
-  g.fillStyle = 'rgba(60,70,66,.3)';
-  for (var y = 96; y < 250; y += 22) g.fillRect(34, y, 60, 3);
-  g.fillRect(58, 100, 3, 150);
-  g.fillStyle = '#eef3f4'; g.fillRect(34, 78, 60, 7);
+  /* 鐘の塔：石造りの塔身＋丸みのある屋根＋鐘＋拡声ホーン */
+  var c = mkCanvas(256, 512), g = ctx2(c); g.scale(2, 2);
+  g.fillStyle = '#8d9291';
+  g.beginPath();
+  g.moveTo(36, 256); g.lineTo(38, 78); g.quadraticCurveTo(64, 70, 90, 78); g.lineTo(92, 256); g.closePath(); g.fill();
+  ellF(g, 43, 160, 4, 82, 'rgba(0,0,0,.14)');
+  g.strokeStyle = 'rgba(60,70,66,.28)'; g.lineWidth = 3; g.lineCap = 'round';
+  for (var y = 98; y < 250; y += 24){ g.beginPath(); g.moveTo(38, y); g.quadraticCurveTo(64, y + 3, 90, y); g.stroke(); }
+  fillRR(g, 34, 74, 60, 9, 4, '#eef3f4');
   /* 屋根 */
   g.fillStyle = '#6d4a2f';
-  g.beginPath(); g.moveTo(64, 8); g.lineTo(102, 62); g.lineTo(26, 62); g.closePath(); g.fill();
-  g.fillStyle = 'rgba(245,250,252,.9)';
-  g.beginPath(); g.moveTo(64, 8); g.lineTo(84, 36); g.lineTo(44, 36); g.closePath(); g.fill();
-  g.fillStyle = '#54381f'; g.fillRect(24, 60, 80, 8);
+  g.beginPath(); g.moveTo(64, 6); g.quadraticCurveTo(84, 30, 103, 63); g.quadraticCurveTo(64, 56, 25, 63); g.quadraticCurveTo(44, 30, 64, 6); g.closePath(); g.fill();
+  g.fillStyle = 'rgba(245,250,252,.92)';
+  g.beginPath(); g.moveTo(64, 6); g.quadraticCurveTo(76, 22, 85, 37); g.quadraticCurveTo(64, 32, 43, 37); g.quadraticCurveTo(52, 22, 64, 6); g.closePath(); g.fill();
+  fillRR(g, 23, 59, 82, 9, 4, '#54381f');
   /* 鐘楼の開口と鐘 */
-  g.fillStyle = '#241d16'; g.fillRect(46, 70, 36, 44);
+  fillRR(g, 45, 69, 38, 46, 9, '#241d16');
   g.fillStyle = '#c9a23a';
-  g.beginPath(); g.moveTo(56, 82); g.lineTo(72, 82); g.lineTo(76, 102); g.lineTo(52, 102); g.closePath(); g.fill();
-  g.fillStyle = '#a8832a'; g.fillRect(50, 102, 28, 5);
-  g.fillStyle = '#6d5516'; g.beginPath(); g.arc(64, 111, 4, 0, 7); g.fill();
+  g.beginPath();
+  g.moveTo(57, 80); g.quadraticCurveTo(56, 92, 52, 102); g.lineTo(76, 102); g.quadraticCurveTo(72, 92, 71, 80); g.quadraticCurveTo(64, 76, 57, 80); g.closePath(); g.fill();
+  fillRR(g, 50, 101, 28, 6, 3, '#a8832a');
+  circF(g, 64, 111, 4.2, '#6d5516');
   /* 拡声ホーン（放送設備） */
   g.fillStyle = '#39424a';
-  g.beginPath(); g.moveTo(94, 128); g.lineTo(114, 118); g.lineTo(114, 140); g.lineTo(94, 134); g.closePath(); g.fill();
-  g.fillRect(88, 126, 8, 8);
+  g.beginPath();
+  g.moveTo(93, 127); g.quadraticCurveTo(104, 120, 115, 117); g.lineTo(115, 141); g.quadraticCurveTo(104, 137, 93, 135); g.closePath(); g.fill();
+  fillRR(g, 87, 125, 9, 10, 3, '#39424a');
   /* 入口と窓 */
-  g.fillStyle = '#3a2c1c'; g.fillRect(54, 216, 20, 40);
-  g.fillStyle = '#ffd98a'; g.fillRect(59, 150, 10, 14);
-  g.fillStyle = '#e5482e'; g.beginPath(); g.arc(64, 20, 4, 0, 7); g.fill();
+  g.fillStyle = '#3a2c1c';
+  g.beginPath(); g.moveTo(54, 256); g.lineTo(54, 226); g.quadraticCurveTo(64, 214, 74, 226); g.lineTo(74, 256); g.closePath(); g.fill();
+  fillRR(g, 58, 148, 12, 16, 5, '#ffd98a');
+  circF(g, 64, 19, 4.2, '#e5482e'); circF(g, 62.6, 17.6, 1.5, 'rgba(255,255,255,.6)');
   return c;
 }
 function makeAlarmSprite(){
-  var c = mkCanvas(64, 96), g = c.getContext('2d');
-  g.fillStyle = '#5a5148'; g.fillRect(29, 40, 6, 56);
-  g.fillStyle = '#a33327'; g.fillRect(14, 8, 36, 34);
-  g.fillStyle = '#c4453a'; g.fillRect(17, 11, 30, 12);
-  g.fillStyle = '#ffd98a'; g.beginPath(); g.arc(32, 31, 5, 0, 7); g.fill();
-  g.fillStyle = '#2b2b2b'; g.fillRect(24, 46, 16, 10);
+  var c = mkCanvas(128, 192), g = ctx2(c); g.scale(2, 2);
+  fillRR(g, 29, 38, 6, 58, 3, '#5a5148');
+  fillRR(g, 13, 7, 38, 36, 9, '#a33327');
+  fillRR(g, 17, 11, 30, 13, 6, '#c4453a');
+  var lg = g.createRadialGradient(30, 29, 1, 32, 31, 8);
+  lg.addColorStop(0, '#fff3c4'); lg.addColorStop(1, '#ffd98a');
+  g.fillStyle = lg; g.beginPath(); g.arc(32, 31, 5.4, 0, 7); g.fill();
+  fillRR(g, 23, 45, 18, 11, 4, '#2b2b2b');
   return c;
 }
+function personBase(g, o){
+  /* 人型の土台：丸い頭、角丸の胴と手足。o で色と装備を差し替える */
+  fillRR(g, 33, 90, 11, 36, 5, o.leg); fillRR(g, 52, 90, 11, 36, 5, o.leg);
+  fillRR(g, 30, 121, 16, 7, 3.5, o.boot); fillRR(g, 50, 121, 16, 7, 3.5, o.boot);
+  fillRR(g, 17, 47, 13, 36, 6, o.coat); fillRR(g, 66, 47, 13, 36, 6, o.coat);
+  circF(g, 23.5, 85, 5.6, '#c9a184'); circF(g, 72.5, 85, 5.6, '#c9a184');
+  fillRR(g, 29, 42, 38, 55, 9, o.coat);
+  if (o.belt){ fillRR(g, 29, 90, 38, 6, 3, o.belt); circF(g, 48, 93, 3, '#c9a23a'); fillRR(g, 44, 91.4, 8, 3.4, 1.7, '#c9a23a'); }
+  circF(g, 48, 31, 11.5, '#c9a184');
+  ellF(g, 44.6, 32, 1.7, 2.2, '#241d16'); ellF(g, 51.4, 32, 1.7, 2.2, '#241d16');
+  g.strokeStyle = 'rgba(90,60,40,.75)'; g.lineWidth = 1.7; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(41.6, 28.4); g.quadraticCurveTo(44.6, 27.2, 47.4, 28.4); g.stroke();
+  g.beginPath(); g.moveTo(48.6, 28.4); g.quadraticCurveTo(51.4, 27.2, 54.4, 28.4); g.stroke();
+}
 function makeSoldierSprite(kind){
-  var c = mkCanvas(96, 128), g = c.getContext('2d');
+  var c = mkCanvas(192, 256), g = ctx2(c); g.scale(2, 2);
   if (kind === 'dead'){
-    g.fillStyle = '#4c5548'; g.fillRect(8, 100, 62, 16);
-    g.fillStyle = '#3d463c'; g.fillRect(62, 102, 20, 12);
-    g.fillStyle = '#c9a184'; g.beginPath(); g.arc(84, 106, 7, 0, 7); g.fill();
-    g.fillStyle = '#2e2e2e'; g.fillRect(20, 90, 26, 6);
+    ellF(g, 40, 108, 34, 12, '#4c5548');
+    ellF(g, 34, 104, 24, 8, '#5d6357', 0.8);
+    circF(g, 84, 106, 7.4, '#c9a184');
+    fillRR(g, 16, 88, 28, 7, 3.5, '#2e2e2e');
     return c;
   }
   if (kind === 'heavy'){
-    /* 重装兵：幅広の防弾板・赤いバンダナ・太い散弾銃 */
-    g.fillStyle = '#2c2f2c'; g.fillRect(28, 92, 14, 34); g.fillRect(54, 92, 14, 34);
-    g.fillStyle = '#1d1f1d'; g.fillRect(24, 122, 19, 6); g.fillRect(52, 122, 19, 6);
-    g.fillStyle = '#4a4f45'; g.fillRect(20, 42, 56, 54);
-    g.fillStyle = '#5d6357'; g.fillRect(26, 48, 20, 26); g.fillRect(50, 48, 20, 26);
-    g.fillStyle = '#33362f'; g.fillRect(26, 78, 44, 8);
-    g.fillStyle = '#8c2f23'; g.fillRect(20, 42, 56, 7);
-    g.fillStyle = '#4a4f45'; g.fillRect(8, 46, 13, 36); g.fillRect(75, 46, 13, 36);
-    g.fillStyle = '#c9a184'; g.fillRect(10, 80, 10, 10); g.fillRect(76, 80, 10, 10);
-    g.fillStyle = '#1c1c1c'; g.fillRect(72, 58, 22, 10); g.fillRect(90, 55, 7, 7); g.fillRect(90, 64, 7, 5);
-    g.fillStyle = '#c9a184'; g.beginPath(); g.arc(48, 31, 12, 0, 7); g.fill();
-    g.fillStyle = '#8c2f23'; g.beginPath(); g.arc(48, 27, 13, Math.PI, 0); g.fill();
-    g.fillRect(35, 25, 26, 5);
-    g.fillStyle = '#5d6357'; g.fillRect(38, 10, 20, 6);
+    personBase(g, { leg: '#2c2f2c', boot: '#1d1f1d', coat: '#4a4f45', belt: '#33362f' });
+    fillRR(g, 24, 42, 48, 55, 10, '#4a4f45');
+    fillRR(g, 30, 48, 15, 24, 5, '#5d6357'); fillRR(g, 51, 48, 15, 24, 5, '#5d6357');
+    fillRR(g, 20, 42, 56, 8, 4, '#8c2f23');
+    ellF(g, 21, 46, 10, 7, '#3a3f36'); ellF(g, 75, 46, 10, 7, '#3a3f36');
+    ellF(g, 21, 43.4, 9, 3.4, '#6a7060', 0.9); ellF(g, 75, 43.4, 9, 3.4, '#6a7060', 0.9);
+    [[32, 56], [64, 56], [32, 82], [64, 82]].forEach(function(p){ circF(g, p[0], p[1], 1.9, '#22251f'); });
+    g.save(); g.translate(48, 63); g.rotate(0.6); fillRR(g, -35, -4.5, 70, 9, 4, '#6e5133'); g.restore();
+    g.fillStyle = '#c9a23a';
+    for (var bi = -3; bi <= 3; bi++){ g.save(); g.translate(48 + bi * 9, 63 + bi * 5.4); g.rotate(0.6); rrPath(g, -2.2, -3.4, 4.4, 6.8, 2); g.fill(); g.restore(); }
+    /* 武器（太い散弾銃） */
+    g.save(); g.translate(83, 63); g.rotate(-0.06); fillRR(g, -11, -5.5, 24, 11, 5, '#1c1c1c'); fillRR(g, 11, -4, 9, 6, 3, '#333333'); g.restore();
+    /* 頭：赤いバンダナとバイザー */
+    circF(g, 48, 31, 11.5, '#c9a184');
+    g.fillStyle = '#8c2f23'; g.beginPath(); g.arc(48, 29, 12.4, Math.PI, 0); g.quadraticCurveTo(60, 33, 48, 31); g.quadraticCurveTo(36, 33, 35.6, 29); g.closePath(); g.fill();
+    fillRR(g, 35, 24.6, 26, 5.4, 2.7, '#8c2f23');
+    fillRR(g, 41, 15, 14, 6.4, 3, '#5d6357');
+    fillRR(g, 39, 33.4, 18, 3.6, 1.8, '#1c1c1c');
+    ellF(g, 48, 39, 7, 1.8, 'rgba(20,16,12,.5)');
     return c;
   }
-  g.fillStyle = '#333a33'; g.fillRect(34, 92, 10, 34); g.fillRect(52, 92, 10, 34);
-  g.fillStyle = '#22261f'; g.fillRect(31, 122, 15, 6); g.fillRect(50, 122, 15, 6);
-  g.fillStyle = '#59624f'; g.fillRect(30, 44, 36, 52);
-  g.fillStyle = '#49523f'; g.fillRect(30, 62, 36, 8);
-  g.fillStyle = '#6b7460'; g.fillRect(42, 48, 12, 20);
-  g.fillStyle = '#c33'; g.fillRect(30, 44, 36, 6);
-  g.fillStyle = '#59624f'; g.fillRect(18, 48, 12, 34); g.fillRect(66, 48, 12, 34);
-  g.fillStyle = '#c9a184'; g.fillRect(20, 80, 9, 10); g.fillRect(67, 80, 9, 10);
-  g.fillStyle = '#232323'; g.fillRect(66, 62, 26, 7); g.fillRect(86, 59, 8, 5);
-  g.fillStyle = '#c9a184'; g.beginPath(); g.arc(48, 32, 11, 0, 7); g.fill();
-  g.fillStyle = '#46503e'; g.beginPath(); g.arc(48, 28, 12, Math.PI, 0); g.fill();
-  g.fillRect(36, 26, 24, 4);
+  personBase(g, { leg: '#333a33', boot: '#22261f', coat: '#59624f', belt: '#2e2e2e' });
+  fillRR(g, 30, 60, 36, 9, 4, '#49523f');
+  fillRR(g, 41, 47, 14, 21, 4, '#6b7460');
+  fillRR(g, 30, 42, 36, 7, 3.5, '#c23a2e');
+  fillRR(g, 33, 51, 11, 13, 3, '#414b38'); fillRR(g, 52, 51, 11, 13, 3, '#414b38');
+  fillRR(g, 33, 51, 11, 3, 1.5, 'rgba(0,0,0,.25)'); fillRR(g, 52, 51, 11, 3, 1.5, 'rgba(0,0,0,.25)');
+  fillRR(g, 55, 43, 5.4, 27, 2.7, '#39412f');
+  fillRR(g, 32, 102, 13, 11, 4, '#41493c'); fillRR(g, 51, 102, 13, 11, 4, '#41493c');
+  fillRR(g, 21, 80, 9, 7, 3, '#59624f'); fillRR(g, 66, 80, 9, 7, 3, '#59624f');
+  /* 武器（ライフル） */
+  g.save(); g.translate(79, 62); g.rotate(-0.05); fillRR(g, -13, -4, 27, 8, 4, '#232323'); fillRR(g, 12, -3, 9, 5, 2.5, '#3a3a3a'); g.restore();
+  /* 頭：ヘルメット */
+  g.fillStyle = '#46503e'; g.beginPath(); g.arc(48, 29, 12.4, Math.PI, 0); g.quadraticCurveTo(59, 32, 48, 30.4); g.quadraticCurveTo(37, 32, 35.6, 29); g.closePath(); g.fill();
+  fillRR(g, 35, 24.8, 26, 4.6, 2.3, '#46503e');
   return c;
 }
 function makeWolfSprite(dead){
-  var c = mkCanvas(112, 96), g = c.getContext('2d');
+  var c = mkCanvas(224, 192), g = ctx2(c); g.scale(2, 2);
   if (dead){
-    g.fillStyle = '#6a7076'; g.beginPath(); g.ellipse(52, 78, 34, 11, 0, 0, 7); g.fill();
-    g.fillStyle = '#565c62'; g.beginPath(); g.ellipse(86, 80, 12, 8, 0, 0, 7); g.fill();
+    ellF(g, 52, 79, 35, 11.5, '#6a7076');
+    ellF(g, 86, 81, 12.5, 8, '#565c62');
+    ellF(g, 40, 74, 20, 5, '#7d838a', 0.7);
     return c;
   }
-  g.fillStyle = '#4c5258';
-  g.fillRect(28, 62, 7, 28); g.fillRect(44, 64, 7, 26); g.fillRect(64, 64, 7, 26); g.fillRect(78, 62, 7, 28);
-  g.fillStyle = '#6a7076'; g.beginPath(); g.ellipse(54, 50, 35, 20, 0, 0, 7); g.fill();
-  g.fillStyle = '#7d838a'; g.beginPath(); g.ellipse(50, 43, 28, 13, 0, 0, 7); g.fill();
-  /* 頭：耳・長い鼻 */
-  g.fillStyle = '#62686e'; g.beginPath(); g.ellipse(88, 48, 14, 11, 0, 0, 7); g.fill();
-  g.beginPath(); g.moveTo(78, 40); g.lineTo(81, 28); g.lineTo(87, 39); g.closePath(); g.fill();
-  g.beginPath(); g.moveTo(90, 38); g.lineTo(95, 27); g.lineTo(98, 40); g.closePath(); g.fill();
-  g.fillStyle = '#555b61'; g.beginPath(); g.ellipse(101, 53, 8, 5, 0, 0, 7); g.fill();
-  g.fillStyle = '#14161a'; g.beginPath(); g.arc(106, 51, 2.4, 0, 7); g.arc(88, 45, 2.6, 0, 7); g.fill();
-  g.fillStyle = '#e8e8e8'; g.fillRect(98, 58, 3, 4); g.fillRect(103, 58, 3, 4);
-  /* しっぽ */
-  g.strokeStyle = '#5d646a'; g.lineWidth = 6; g.lineCap = 'round';
-  g.beginPath(); g.moveTo(20, 44); g.quadraticCurveTo(8, 38, 6, 26); g.stroke();
+  fillRR(g, 27, 60, 8, 30, 4, '#4c5258'); fillRR(g, 43, 62, 8, 28, 4, '#4c5258');
+  fillRR(g, 63, 62, 8, 28, 4, '#4c5258'); fillRR(g, 77, 60, 8, 30, 4, '#4c5258');
+  ellF(g, 54, 50, 36, 20.5, '#6a7076');
+  ellF(g, 50, 42, 29, 13.5, '#7d838a');
+  ellF(g, 46, 39, 24, 10, '#4c5258', 0.85);
+  ellF(g, 58, 59, 24, 9, '#878d93', 0.9);
+  g.strokeStyle = '#5d646a'; g.lineWidth = 6.5; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(21, 44); g.quadraticCurveTo(8, 38, 6, 25); g.stroke();
+  ellF(g, 88, 48, 14.5, 11.5, '#62686e');
+  triF(g, 77, 42, 80, 27, 88, 39, '#62686e');
+  triF(g, 89, 40, 95, 26, 99, 41, '#62686e');
+  ellF(g, 101, 53, 8.5, 5.4, '#555b61');
+  circF(g, 106.5, 51, 2.6, '#14161a'); circF(g, 88, 45, 2.7, '#14161a');
+  triF(g, 97, 57, 100.4, 57, 98.6, 62, '#e8e8e8');
+  triF(g, 102, 57, 105.4, 57, 103.6, 62, '#e8e8e8');
   return c;
 }
 function makeYakSprite(dead){
-  var c = mkCanvas(128, 112), g = c.getContext('2d');
+  var c = mkCanvas(256, 224), g = ctx2(c); g.scale(2, 2);
   if (dead){
-    g.fillStyle = '#4c3a2a'; g.beginPath(); g.ellipse(60, 88, 42, 14, 0, 0, 7); g.fill();
-    g.fillStyle = '#3d2e20'; g.beginPath(); g.ellipse(102, 90, 14, 10, 0, 0, 7); g.fill();
+    ellF(g, 60, 89, 43, 14.5, '#4c3a2a');
+    ellF(g, 102, 91, 14.5, 10, '#3d2e20');
     return c;
   }
-  g.fillStyle = '#33261a';
-  g.fillRect(30, 74, 10, 34); g.fillRect(52, 76, 10, 32); g.fillRect(76, 76, 10, 32); g.fillRect(94, 74, 10, 34);
-  /* 大きな体と長い毛 */
-  g.fillStyle = '#4c3a2a'; g.beginPath(); g.ellipse(62, 56, 44, 30, 0, 0, 7); g.fill();
-  g.fillStyle = '#5d4832'; g.beginPath(); g.ellipse(58, 46, 36, 20, 0, 0, 7); g.fill();
-  g.strokeStyle = '#3a2b1d'; g.lineWidth = 3;
-  for (var i = 0; i < 7; i++){ g.beginPath(); g.moveTo(28 + i * 11, 66); g.lineTo(26 + i * 11, 84); g.stroke(); }
-  /* 背中のこぶ */
-  g.fillStyle = '#5d4832'; g.beginPath(); g.ellipse(52, 30, 18, 10, 0, 0, 7); g.fill();
-  /* 頭と角 */
-  g.fillStyle = '#42301f'; g.beginPath(); g.ellipse(104, 60, 16, 14, 0, 0, 7); g.fill();
-  g.strokeStyle = '#ddd3bc'; g.lineWidth = 5; g.lineCap = 'round';
-  g.beginPath(); g.moveTo(96, 48); g.quadraticCurveTo(86, 36, 92, 28); g.stroke();
-  g.beginPath(); g.moveTo(110, 48); g.quadraticCurveTo(118, 36, 114, 27); g.stroke();
-  g.fillStyle = '#6d5843'; g.beginPath(); g.ellipse(112, 68, 8, 6, 0, 0, 7); g.fill();
-  g.fillStyle = '#171008'; g.beginPath(); g.arc(100, 55, 3, 0, 7); g.fill();
-  g.strokeStyle = '#33261a'; g.lineWidth = 4;
-  g.beginPath(); g.moveTo(19, 50); g.quadraticCurveTo(8, 56, 10, 70); g.stroke();
+  fillRR(g, 29, 72, 11, 36, 5, '#33261a'); fillRR(g, 51, 74, 11, 34, 5, '#33261a');
+  fillRR(g, 75, 74, 11, 34, 5, '#33261a'); fillRR(g, 93, 72, 11, 36, 5, '#33261a');
+  ellF(g, 62, 56, 45, 30.5, '#4c3a2a');
+  ellF(g, 58, 45, 37, 20.5, '#5d4832');
+  g.strokeStyle = '#3a2b1d'; g.lineWidth = 3.4; g.lineCap = 'round';
+  for (var i = 0; i < 7; i++){ g.beginPath(); g.moveTo(28 + i * 11, 64); g.quadraticCurveTo(25 + i * 11, 74, 27 + i * 11, 85); g.stroke(); }
+  ellF(g, 52, 29, 18.5, 10.5, '#5d4832');
+  /* 鞍掛け布（赤地に青の縁と黄の菱形） */
+  fillRR(g, 29, 37, 48, 26, 6, '#a33327');
+  fillRR(g, 29, 37, 48, 5, 2.5, '#2e4a7a'); fillRR(g, 29, 58, 48, 5, 2.5, '#2e4a7a');
+  g.fillStyle = '#e8c832';
+  [41, 54, 67].forEach(function(dx){
+    g.beginPath(); g.moveTo(dx, 44.6); g.lineTo(dx + 5.4, 50.6); g.lineTo(dx, 56.6); g.lineTo(dx - 5.4, 50.6); g.closePath(); g.fill();
+  });
+  [34, 46, 58, 70].forEach(function(fx){ fillRR(g, fx - 1.6, 63, 3.2, 5.4, 1.6, '#e8c832'); });
+  ellF(g, 104, 60, 16.5, 14.5, '#42301f');
+  g.strokeStyle = '#ddd3bc'; g.lineWidth = 5.4; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(96, 48); g.quadraticCurveTo(85, 36, 92, 27); g.stroke();
+  g.beginPath(); g.moveTo(110, 48); g.quadraticCurveTo(119, 36, 114, 26); g.stroke();
+  ellF(g, 112, 68, 8.5, 6.4, '#6d5843');
+  circF(g, 100, 55, 3.1, '#171008');
+  g.strokeStyle = '#33261a'; g.lineWidth = 4.4;
+  g.beginPath(); g.moveTo(19, 50); g.quadraticCurveTo(7, 56, 10, 71); g.stroke();
   return c;
 }
 function makeHunterSprite(){
-  /* ハンター：深いフード＋弓。色味を変えて一般兵と区別 */
-  var c = mkCanvas(96, 128), g = c.getContext('2d');
-  g.fillStyle = '#2e2a33'; g.fillRect(34, 92, 10, 34); g.fillRect(52, 92, 10, 34);
-  g.fillStyle = '#1d1a21'; g.fillRect(31, 122, 15, 6); g.fillRect(50, 122, 15, 6);
-  g.fillStyle = '#4a4258'; g.fillRect(30, 44, 36, 52);
-  g.fillStyle = '#3a3347'; g.fillRect(30, 62, 36, 8);
-  g.fillStyle = '#5d5470'; g.fillRect(42, 48, 12, 20);
-  g.fillStyle = '#4a4258'; g.fillRect(18, 48, 12, 34); g.fillRect(66, 48, 12, 34);
-  g.fillStyle = '#c9a184'; g.fillRect(20, 80, 9, 10); g.fillRect(67, 80, 9, 10);
+  /* ハンター：深いフード＋弓＋矢筒＋赤いスカーフ */
+  var c = mkCanvas(192, 256), g = ctx2(c); g.scale(2, 2);
+  personBase(g, { leg: '#2e2a33', boot: '#1d1a21', coat: '#4a4258', belt: null });
+  fillRR(g, 30, 60, 36, 9, 4, '#3a3347');
+  fillRR(g, 41, 47, 14, 21, 4, '#5d5470');
+  /* 矢筒と矢 */
+  g.save(); g.translate(16.5, 52); g.rotate(0.1); fillRR(g, -4.5, -13, 9, 27, 4, '#5d4020'); fillRR(g, -4.5, -13, 9, 6, 3, '#4a3319'); g.restore();
+  g.strokeStyle = '#c8b490'; g.lineWidth = 2.1; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(15, 42); g.lineTo(12.6, 29); g.moveTo(18.4, 42); g.lineTo(19.4, 28); g.stroke();
+  triF(g, 12.6, 29, 9.4, 22.6, 15.8, 25, '#e8e4da');
+  triF(g, 19.4, 28, 16.8, 21.4, 22.4, 24.2, '#e8e4da');
+  /* スカーフ */
+  fillRR(g, 37, 41, 22, 7, 3.5, '#a33327');
+  triF(g, 55, 47, 62.5, 58, 53.4, 58.6, '#a33327');
+  fillRR(g, 57, 65, 11, 10, 4, '#6d5133'); circF(g, 62.5, 69, 2, '#c9a23a');
   /* 弓（斜めに構える） */
-  g.strokeStyle = '#5d4020'; g.lineWidth = 4; g.lineCap = 'round';
-  g.beginPath(); g.moveTo(74, 30); g.quadraticCurveTo(92, 62, 74, 96); g.stroke();
-  g.strokeStyle = 'rgba(240,240,230,.85)'; g.lineWidth = 1.4;
-  g.beginPath(); g.moveTo(74, 30); g.lineTo(74, 96); g.stroke();
-  /* フードと顔の影 */
-  g.fillStyle = '#c9a184'; g.beginPath(); g.arc(48, 34, 10, 0, 7); g.fill();
+  g.strokeStyle = '#5d4020'; g.lineWidth = 4.4; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(74, 29); g.quadraticCurveTo(93, 62, 74, 97); g.stroke();
+  g.strokeStyle = 'rgba(240,240,230,.85)'; g.lineWidth = 1.5;
+  g.beginPath(); g.moveTo(74, 29); g.lineTo(74, 97); g.stroke();
+  /* フードと顔の影（目は光る点ではなく柔らかい影の中の目） */
+  circF(g, 48, 33, 10.5, '#c9a184');
+  ellF(g, 44.8, 34, 1.6, 2.1, '#241d16'); ellF(g, 51.2, 34, 1.6, 2.1, '#241d16');
   g.fillStyle = '#38304a';
-  g.beginPath(); g.moveTo(33, 38); g.quadraticCurveTo(48, 8, 63, 38); g.lineTo(58, 40); g.quadraticCurveTo(48, 22, 38, 40); g.closePath(); g.fill();
-  g.fillStyle = 'rgba(10,8,14,.55)'; g.fillRect(40, 34, 16, 6);
-  g.fillStyle = '#ffd23c'; g.fillRect(43, 36, 3, 2); g.fillRect(51, 36, 3, 2);
+  g.beginPath();
+  g.moveTo(32.6, 39); g.quadraticCurveTo(35, 12, 48, 10.6); g.quadraticCurveTo(61, 12, 63.4, 39);
+  g.quadraticCurveTo(57, 43, 55.4, 37); g.quadraticCurveTo(52, 24, 48, 23.4);
+  g.quadraticCurveTo(44, 24, 40.6, 37); g.quadraticCurveTo(39, 43, 32.6, 39);
+  g.closePath(); g.fill();
+  g.strokeStyle = '#6a5f85'; g.lineWidth = 2.1;
+  g.beginPath(); g.moveTo(35.4, 37.4); g.quadraticCurveTo(48, 15.4, 60.6, 37.4); g.stroke();
   return c;
 }
 function makePlantSprite(){
-  /* 薬草：背の高い草＋目立つ色の花 */
-  var c = mkCanvas(64, 64), g = c.getContext('2d');
-  g.strokeStyle = '#3f7a3a'; g.lineWidth = 3; g.lineCap = 'round';
+  /* 薬草：丸い葉と花 */
+  var c = mkCanvas(128, 128), g = ctx2(c); g.scale(2, 2);
+  g.strokeStyle = '#3f7a3a'; g.lineWidth = 3.2; g.lineCap = 'round';
   for (var i = 0; i < 6; i++){
     g.beginPath(); g.moveTo(32, 62);
     g.quadraticCurveTo(14 + i * 7, 40, 10 + i * 9, 22 + (i % 3) * 8); g.stroke();
   }
+  [[14, 44, -0.6], [30, 50, 0.4], [48, 46, 0.9], [22, 56, -0.2]].forEach(function(l){
+    g.save(); g.translate(l[0], l[1]); g.rotate(l[2]); ellF(g, 0, 0, 8, 3.6, '#4c8a44'); g.restore();
+  });
   function flower(x, y, col){
     g.fillStyle = col;
     for (var k = 0; k < 5; k++){
-      var a = k / 5 * Math.PI * 2;
-      g.beginPath(); g.arc(x + Math.cos(a) * 5, y + Math.sin(a) * 5, 4, 0, 7); g.fill();
+      var a = k / 5 * Math.PI * 2 - Math.PI / 2;
+      g.beginPath(); g.ellipse(x + Math.cos(a) * 5.2, y + Math.sin(a) * 5.2, 4.4, 3.4, a, 0, 7); g.fill();
     }
-    g.fillStyle = '#ffe98a'; g.beginPath(); g.arc(x, y, 3.4, 0, 7); g.fill();
+    circF(g, x, y, 3.4, '#ffe98a');
   }
   flower(16, 20, '#e86aa8'); flower(34, 13, '#f2f2f2'); flower(48, 24, '#e86aa8'); flower(26, 32, '#ffb84d');
   return c;
 }
 function makePosterSprite(){
-  /* 将軍のポスター：赤地に顔のシルエットと星 */
-  var c = mkCanvas(64, 96), g = c.getContext('2d');
-  g.fillStyle = '#e8e0cc'; g.fillRect(2, 2, 60, 92);
-  g.fillStyle = '#a33327'; g.fillRect(7, 7, 50, 82);
+  /* 将軍のポスター：少し丸みのある紙＋赤地に顔のシルエットと星 */
+  var c = mkCanvas(128, 192), g = ctx2(c); g.scale(2, 2);
+  fillRR(g, 2, 2, 60, 92, 4, '#e8e0cc');
+  fillRR(g, 7, 7, 50, 82, 3, '#a33327');
   g.fillStyle = '#ffd23c';
   g.beginPath();
   var cx = 32, cy = 22;
   for (var i = 0; i < 10; i++){
-    var a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 4 : 9;
+    var a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 4.2 : 9.4;
     var px = cx + Math.cos(a) * r, py = cy + Math.sin(a) * r;
     if (i === 0) g.moveTo(px, py); else g.lineTo(px, py);
   }
   g.closePath(); g.fill();
-  g.fillStyle = '#2b2b33'; g.beginPath(); g.arc(32, 52, 13, 0, 7); g.fill();
-  g.fillRect(19, 62, 26, 16);
-  g.fillStyle = '#e8e0cc'; g.fillRect(24, 44, 16, 4);
-  g.fillStyle = '#ffd23c'; g.fillRect(12, 82, 40, 4);
+  circF(g, 32, 51, 13, '#2b2b33');
+  g.fillStyle = '#2b2b33';
+  g.beginPath(); g.moveTo(18, 90); g.lineTo(19, 66); g.quadraticCurveTo(32, 58, 45, 66); g.lineTo(46, 90); g.closePath(); g.fill();
+  fillRR(g, 23, 43, 18, 4.6, 2.3, '#e8e0cc');
+  fillRR(g, 11, 81, 42, 4.6, 2.3, '#ffd23c');
   return c;
 }
 function makeMeatSprite(){
-  var c = mkCanvas(48, 48), g = c.getContext('2d');
-  g.fillStyle = '#a8433a'; g.beginPath(); g.ellipse(22, 26, 15, 11, -0.5, 0, 7); g.fill();
-  g.fillStyle = '#c25a4e'; g.beginPath(); g.ellipse(19, 23, 9, 6, -0.5, 0, 7); g.fill();
-  g.strokeStyle = '#e8e0cc'; g.lineWidth = 5; g.lineCap = 'round';
-  g.beginPath(); g.moveTo(32, 32); g.lineTo(42, 42); g.stroke();
-  g.fillStyle = '#e8e0cc'; g.beginPath(); g.arc(43, 43, 4, 0, 7); g.arc(38, 45, 3.4, 0, 7); g.fill();
+  var c = mkCanvas(96, 96), g = ctx2(c); g.scale(2, 2);
+  ellF(g, 22, 26, 15.5, 11.5, '#a8433a');
+  g.save(); g.translate(19, 22); g.rotate(-0.5); ellF(g, 0, 0, 9.5, 6.4, '#c25a4e'); g.restore();
+  g.strokeStyle = '#e8e0cc'; g.lineWidth = 5.4; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(31, 31); g.lineTo(41, 41); g.stroke();
+  circF(g, 43, 43, 4.2, '#e8e0cc'); circF(g, 37.6, 45, 3.6, '#e8e0cc');
   return c;
 }
 function makePersonSprite(kind){
   /* 村人（人質）／レジスタンス（救援対象） */
-  var c = mkCanvas(96, 128), g = c.getContext('2d');
+  var c = mkCanvas(192, 256), g = ctx2(c); g.scale(2, 2);
   var coat = kind === 'ally' ? '#7a4a8c' : '#8c6a3a';
   var hat = kind === 'ally' ? '#5d3866' : '#c2b49a';
-  g.fillStyle = '#3d3630'; g.fillRect(34, 92, 10, 34); g.fillRect(52, 92, 10, 34);
-  g.fillStyle = '#2b2622'; g.fillRect(31, 122, 15, 6); g.fillRect(50, 122, 15, 6);
-  g.fillStyle = coat; g.fillRect(30, 44, 36, 52);
-  g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(30, 62, 36, 7);
-  g.fillStyle = coat; g.fillRect(18, 48, 12, 34); g.fillRect(66, 48, 12, 34);
-  g.fillStyle = '#c9a184'; g.fillRect(20, 80, 9, 10); g.fillRect(67, 80, 9, 10);
-  if (kind === 'ally'){ g.fillStyle = '#c23a2e'; g.fillRect(64, 50, 15, 9); }
-  g.fillStyle = '#c9a184'; g.beginPath(); g.arc(48, 32, 11, 0, 7); g.fill();
-  g.fillStyle = hat; g.beginPath(); g.arc(48, 28, 12, Math.PI, 0); g.fill();
-  g.fillRect(35, 26, 26, 4);
+  personBase(g, { leg: '#3d3630', boot: '#2b2622', coat: coat, belt: null });
+  fillRR(g, 30, 60, 36, 8, 4, 'rgba(0,0,0,.18)');
+  if (kind === 'ally') fillRR(g, 63, 49, 16, 10, 4, '#c23a2e');
+  g.fillStyle = hat; g.beginPath(); g.arc(48, 29, 12.4, Math.PI, 0); g.quadraticCurveTo(59, 32, 48, 30.4); g.quadraticCurveTo(37, 32, 35.6, 29); g.closePath(); g.fill();
+  fillRR(g, 34.6, 24.8, 26.8, 4.8, 2.4, hat);
   return c;
 }
 function makeCartSprite(){
-  /* 荷車：木の荷台＋大きな車輪＋積荷（乗り物ではなく兵士が引く荷車の表現） */
-  var c = mkCanvas(128, 96), g = c.getContext('2d');
-  g.fillStyle = '#6d4c2a'; g.fillRect(14, 34, 92, 30);
-  g.fillStyle = '#7d5a33'; g.fillRect(14, 34, 92, 8);
-  g.strokeStyle = '#4c3519'; g.lineWidth = 4; g.strokeRect(16, 36, 88, 26);
-  g.fillStyle = '#8c97a3'; g.fillRect(30, 14, 26, 22); g.fillStyle = '#a8b2ba'; g.fillRect(30, 14, 26, 6);
-  g.fillStyle = '#7a6a4a'; g.fillRect(62, 18, 30, 18);
+  /* 荷車：木の荷台＋大きな車輪＋積荷 */
+  var c = mkCanvas(256, 192), g = ctx2(c); g.scale(2, 2);
+  fillRR(g, 13, 33, 94, 32, 6, '#6d4c2a');
+  fillRR(g, 13, 33, 94, 10, 5, '#7d5a33');
+  g.strokeStyle = '#4c3519'; g.lineWidth = 4; g.lineCap = 'round';
+  rrPath(g, 17, 37, 86, 24, 4); g.stroke();
+  g.beginPath(); g.moveTo(60, 38); g.lineTo(60, 61); g.stroke();
+  ellF(g, 43, 24, 14, 11, '#8c97a3'); ellF(g, 43, 20, 12, 5, '#a8b2ba');
+  ellF(g, 77, 26, 16, 10, '#7a6a4a'); ellF(g, 77, 22, 13, 5, '#8d7c58');
   g.fillStyle = '#5d4630';
-  g.beginPath(); g.moveTo(106, 44); g.lineTo(126, 58); g.lineTo(124, 63); g.lineTo(104, 52); g.closePath(); g.fill();
-  g.fillStyle = '#3a2c1c';
-  g.beginPath(); g.arc(36, 72, 15, 0, 7); g.fill();
-  g.beginPath(); g.arc(88, 72, 15, 0, 7); g.fill();
-  g.fillStyle = '#6d4c2a';
-  g.beginPath(); g.arc(36, 72, 7, 0, 7); g.fill();
-  g.beginPath(); g.arc(88, 72, 7, 0, 7); g.fill();
+  g.beginPath(); g.moveTo(105, 43); g.quadraticCurveTo(118, 50, 126, 58); g.lineTo(123, 64); g.quadraticCurveTo(114, 56, 103, 51); g.closePath(); g.fill();
+  [36, 88].forEach(function(wx){
+    circF(g, wx, 72, 15.5, '#3a2c1c');
+    circF(g, wx, 72, 11, '#54381f');
+    g.strokeStyle = '#3a2c1c'; g.lineWidth = 3;
+    g.beginPath(); g.moveTo(wx - 9, 72); g.lineTo(wx + 9, 72); g.moveTo(wx, 63); g.lineTo(wx, 81); g.stroke();
+    circF(g, wx, 72, 4.6, '#6d4c2a');
+  });
   return c;
 }
 function makeLeopardSprite(dead){
-  /* 雪豹：淡い毛皮＋斑点＋長いしっぽ。狼より一回り大きく、速い */
-  var c = mkCanvas(120, 96), g = c.getContext('2d');
+  /* 雪豹：淡い毛皮＋ロゼット斑＋長いしっぽ */
+  var c = mkCanvas(240, 192), g = ctx2(c); g.scale(2, 2);
   if (dead){
-    g.fillStyle = '#cfc8b8'; g.beginPath(); g.ellipse(56, 78, 38, 11, 0, 0, 7); g.fill();
-    g.fillStyle = '#bfb7a4'; g.beginPath(); g.ellipse(92, 80, 13, 8, 0, 0, 7); g.fill();
+    ellF(g, 56, 79, 39, 11.5, '#cfc8b8');
+    ellF(g, 92, 81, 13.5, 8, '#bfb7a4');
     return c;
   }
-  g.fillStyle = '#b7ae99';
-  g.fillRect(30, 60, 8, 30); g.fillRect(48, 62, 8, 28); g.fillRect(70, 62, 8, 28); g.fillRect(86, 60, 8, 30);
-  g.fillStyle = '#ddd6c4'; g.beginPath(); g.ellipse(60, 48, 40, 21, 0, 0, 7); g.fill();
-  g.fillStyle = '#e8e2d2'; g.beginPath(); g.ellipse(56, 41, 32, 13, 0, 0, 7); g.fill();
-  g.fillStyle = '#8a7f68';
-  [[38,38],[52,34],[66,40],[80,36],[46,48],[62,50],[74,48],[34,48]].forEach(function(p){
-    g.beginPath(); g.arc(p[0], p[1], 3.2, 0, 7); g.fill();
+  fillRR(g, 29, 58, 9, 32, 4.5, '#b7ae99'); fillRR(g, 47, 60, 9, 30, 4.5, '#b7ae99');
+  fillRR(g, 69, 60, 9, 30, 4.5, '#b7ae99'); fillRR(g, 85, 58, 9, 32, 4.5, '#b7ae99');
+  ellF(g, 60, 48, 41, 21.5, '#ddd6c4');
+  ellF(g, 56, 40, 33, 13.5, '#e8e2d2');
+  g.strokeStyle = '#7a6f58'; g.lineWidth = 2; g.lineCap = 'round';
+  [[38, 38], [52, 34], [66, 40], [80, 36], [46, 50], [62, 52], [74, 49], [34, 49], [44, 43], [58, 45], [70, 43], [50, 56], [64, 57]].forEach(function(p){
+    g.beginPath(); g.arc(p[0], p[1], 3.6, 0.5, 5.4); g.stroke();
   });
-  /* 頭：丸い耳・短い鼻 */
-  g.fillStyle = '#d5cdb8'; g.beginPath(); g.ellipse(96, 46, 15, 12, 0, 0, 7); g.fill();
-  g.beginPath(); g.arc(86, 35, 5, 0, 7); g.fill();
-  g.beginPath(); g.arc(102, 33, 5, 0, 7); g.fill();
-  g.fillStyle = '#c9c0aa'; g.beginPath(); g.ellipse(106, 52, 8, 5, 0, 0, 7); g.fill();
-  g.fillStyle = '#241f16'; g.beginPath(); g.arc(110, 50, 2.4, 0, 7); g.arc(95, 43, 2.6, 0, 7); g.fill();
-  /* 長く太いしっぽ */
-  g.strokeStyle = '#cfc7b2'; g.lineWidth = 8; g.lineCap = 'round';
-  g.beginPath(); g.moveTo(22, 42); g.quadraticCurveTo(6, 40, 5, 24); g.stroke();
-  g.strokeStyle = '#8a7f68'; g.lineWidth = 8;
-  g.beginPath(); g.moveTo(6, 28); g.quadraticCurveTo(5, 24, 6, 21); g.stroke();
+  ellF(g, 84, 57, 9.5, 8, '#f2ecdd');
+  [33, 51, 73, 89].forEach(function(lx){ fillRR(g, lx - 1, 71, 5.4, 3.4, 1.7, '#8a7f68'); });
+  g.strokeStyle = '#cfc7b2'; g.lineWidth = 8.4; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(22, 42); g.quadraticCurveTo(6, 40, 5, 23); g.stroke();
+  g.strokeStyle = '#8a7f68';
+  g.beginPath(); g.moveTo(5.4, 27); g.quadraticCurveTo(5, 23, 6, 20); g.stroke();
+  ellF(g, 96, 46, 15.5, 12.5, '#d5cdb8');
+  circF(g, 86, 35, 5.2, '#d5cdb8'); circF(g, 102, 33, 5.2, '#d5cdb8');
+  circF(g, 86, 35, 2.4, '#b7ae99'); circF(g, 102, 33, 2.4, '#b7ae99');
+  ellF(g, 106, 52, 8.5, 5.4, '#c9c0aa');
+  circF(g, 110.5, 50, 2.6, '#241f16'); circF(g, 95, 43, 2.7, '#241f16');
   return c;
 }
 function makeIceSprite(){
-  /* 凍った湖の氷：平たい楕円の氷盤（装飾） */
-  var c = mkCanvas(128, 48), g = c.getContext('2d');
-  g.fillStyle = 'rgba(168,205,224,.92)';
-  g.beginPath(); g.ellipse(64, 26, 60, 18, 0, 0, 7); g.fill();
-  g.fillStyle = 'rgba(214,236,246,.95)';
-  g.beginPath(); g.ellipse(58, 22, 44, 12, 0, 0, 7); g.fill();
-  g.strokeStyle = 'rgba(120,160,185,.8)'; g.lineWidth = 2;
-  g.beginPath(); g.moveTo(30, 18); g.lineTo(52, 28); g.lineTo(74, 20); g.stroke();
-  g.beginPath(); g.moveTo(52, 28); g.lineTo(66, 34); g.stroke();
-  g.fillStyle = 'rgba(255,255,255,.85)';
-  g.beginPath(); g.ellipse(40, 16, 10, 3.4, -0.4, 0, 7); g.fill();
+  /* 凍った湖の氷：平たい氷盤（装飾） */
+  var c = mkCanvas(256, 96), g = ctx2(c); g.scale(2, 2);
+  ellF(g, 64, 27, 61, 18.5, 'rgba(168,205,224,.92)');
+  ellF(g, 58, 22, 45, 12.5, 'rgba(214,236,246,.95)');
+  g.strokeStyle = 'rgba(120,160,185,.75)'; g.lineWidth = 2; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(30, 18); g.quadraticCurveTo(42, 24, 52, 28); g.quadraticCurveTo(62, 24, 74, 20); g.stroke();
+  g.beginPath(); g.moveTo(52, 28); g.quadraticCurveTo(58, 31, 66, 34); g.stroke();
+  ellF(g, 40, 15, 11, 3.6, 'rgba(255,255,255,.85)');
   return c;
 }
 function makeTransmitterSprite(){
-  /* 放送室の送信設備：アンテナマスト＋送信機の棚＋赤いランプ */
-  var c = mkCanvas(96, 128), g = c.getContext('2d');
-  g.strokeStyle = '#5a6672'; g.lineWidth = 4;
-  g.beginPath(); g.moveTo(48, 108); g.lineTo(48, 14); g.stroke();
-  g.lineWidth = 2;
-  g.beginPath(); g.moveTo(30, 26); g.lineTo(66, 26); g.moveTo(36, 40); g.lineTo(60, 40); g.stroke();
-  g.fillStyle = '#e5482e';
-  g.beginPath(); g.arc(48, 10, 5, 0, 7); g.fill();
-  g.fillStyle = '#39424c'; g.fillRect(14, 62, 68, 48);
-  g.fillStyle = '#232a31'; g.fillRect(19, 67, 58, 16);
-  g.fillStyle = '#7fd4ff'; g.fillRect(23, 71, 22, 8);
-  g.fillStyle = '#ffd23c'; g.beginPath(); g.arc(58, 75, 3.4, 0, 7); g.fill();
-  g.fillStyle = '#58b06a'; g.beginPath(); g.arc(68, 75, 3.4, 0, 7); g.fill();
+  /* 放送室の送信設備：アンテナマスト＋送信機＋ランプ */
+  var c = mkCanvas(192, 256), g = ctx2(c); g.scale(2, 2);
+  g.strokeStyle = '#5a6672'; g.lineWidth = 4.4; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(48, 110); g.lineTo(48, 13); g.stroke();
+  g.lineWidth = 2.2;
+  g.beginPath(); g.moveTo(29, 26); g.lineTo(67, 26); g.moveTo(35, 41); g.lineTo(61, 41); g.stroke();
+  circF(g, 48, 9.6, 5.4, '#e5482e'); circF(g, 46.4, 8, 1.9, 'rgba(255,255,255,.65)');
+  fillRR(g, 13, 60, 70, 50, 7, '#39424c');
+  fillRR(g, 18, 65, 60, 18, 5, '#232a31');
+  fillRR(g, 22, 69, 23, 9, 4, '#7fd4ff');
+  circF(g, 58, 74, 3.6, '#ffd23c'); circF(g, 68, 74, 3.6, '#58b06a');
   g.fillStyle = '#4a545e';
-  for (var i = 0; i < 4; i++){ g.beginPath(); g.arc(27 + i * 14, 94, 4.6, 0, 7); g.fill(); }
-  g.fillStyle = '#1d2329'; g.fillRect(10, 108, 76, 6);
+  for (var i = 0; i < 4; i++){ g.beginPath(); g.arc(27 + i * 14, 94, 4.8, 0, 7); g.fill(); circF(g, 25.6 + i * 14, 92.6, 1.6, 'rgba(255,255,255,.35)'); }
+  fillRR(g, 9, 107, 78, 7, 3.5, '#1d2329');
   return c;
 }
 var sprTree = makeTreeSprite(), sprCrate = makeCrateSprite(false), sprCrateSupply = makeCrateSprite(true),
@@ -3260,27 +3450,43 @@ function buildGradients(){
   snowFloorGrad.addColorStop(0, '#c3ccd2'); snowFloorGrad.addColorStop(0.45, '#d9e1e6'); snowFloorGrad.addColorStop(1, '#e8eef2');
 }
 buildGradients();
-var CLOUDS = [0.4, 1.5, 2.6, 3.9, 5.1, 5.9];
+var CLOUDS = [0.3, 0.9, 1.5, 2.2, 2.9, 3.6, 4.3, 5.0, 5.7];
 var PEAKS = [
   { a: 0.2, h: 62, w: 120 }, { a: 1.1, h: 44, w: 90 }, { a: 2.0, h: 74, w: 140 },
   { a: 3.0, h: 52, w: 105 }, { a: 4.1, h: 68, w: 130 }, { a: 5.2, h: 40, w: 85 }, { a: 5.9, h: 56, w: 110 }
 ];
-function drawPeaks(){
-  /* 遠景の雪山シルエット（視点の向きでゆるやかに流れる） */
+function drawPeakLayer(off, hMul, wMul, colMain, colShade, snowAlpha, baseOff){
   PEAKS.forEach(function(p){
-    var rel = ((p.a - player.angle) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI;
+    var rel = ((p.a + off - player.angle) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI;
     if (Math.abs(rel) > 1.25) return;
     var sx = W / 2 * (1 + Math.tan(rel));
-    var base = H / 2 + 2, top = base - p.h;
-    ctx.fillStyle = '#7e97ad';
-    ctx.beginPath(); ctx.moveTo(sx - p.w / 2, base); ctx.lineTo(sx, top); ctx.lineTo(sx + p.w / 2, base); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#5f7a90';
-    ctx.beginPath(); ctx.moveTo(sx, top); ctx.lineTo(sx + p.w / 2, base); ctx.lineTo(sx + p.w * 0.12, base); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = 'rgba(248,252,255,.95)';
-    ctx.beginPath(); ctx.moveTo(sx, top); ctx.lineTo(sx + p.w * 0.16, top + p.h * 0.34); ctx.lineTo(sx + p.w * 0.04, top + p.h * 0.26); ctx.lineTo(sx - p.w * 0.07, top + p.h * 0.38); ctx.lineTo(sx - p.w * 0.16, top + p.h * 0.3); ctx.closePath(); ctx.fill();
+    var ph = p.h * hMul, pw = p.w * wMul;
+    var base = H / 2 + 2 + baseOff, top = base - ph;
+    ctx.fillStyle = colMain;
+    ctx.beginPath(); ctx.moveTo(sx - pw / 2, base); ctx.lineTo(sx, top); ctx.lineTo(sx + pw / 2, base); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = colShade;
+    ctx.beginPath(); ctx.moveTo(sx, top); ctx.lineTo(sx + pw / 2, base); ctx.lineTo(sx + pw * 0.12, base); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(248,252,255,' + snowAlpha + ')';
+    ctx.beginPath(); ctx.moveTo(sx, top); ctx.lineTo(sx + pw * 0.16, top + ph * 0.34); ctx.lineTo(sx + pw * 0.04, top + ph * 0.26); ctx.lineTo(sx - pw * 0.07, top + ph * 0.38); ctx.lineTo(sx - pw * 0.16, top + ph * 0.3); ctx.closePath(); ctx.fill();
   });
 }
+function drawPeaks(){
+  /* 遠景の雪山シルエット（視点の向きでゆるやかに流れる）。奥の稜線は淡く高く、手前は濃く低く */
+  drawPeakLayer(0.55, 1.45, 1.5, '#a7bccf', '#93a9bd', 0.75, -6);
+  drawPeakLayer(0, 1, 1, '#7e97ad', '#5f7a90', 0.95, 0);
+  /* 地平線の低い尾根（手前の山裾） */
+  ctx.fillStyle = 'rgba(110,132,120,.5)';
+  ctx.beginPath();
+  ctx.moveTo(0, H / 2 + 2);
+  for (var rx = 0; rx <= W; rx += 24){
+    var ra = player.angle + (rx / W - 0.5) * 2.2;
+    ctx.lineTo(rx, H / 2 + 2 - (Math.sin(ra * 3.1) * 3 + Math.sin(ra * 7.3) * 2 + 4));
+  }
+  ctx.lineTo(W, H / 2 + 2); ctx.closePath(); ctx.fill();
+}
 function render(){
+  ctx.setTransform(RENDER_SCALE, 0, 0, RENDER_SCALE, 0, 0);
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
   var inA2 = player.y < GATE_Y;
   ctx.fillStyle = inA2 ? snowSkyGrad : skyGrad; ctx.fillRect(0, 0, W, H / 2);
   ctx.fillStyle = inA2 ? snowFloorGrad : floorGrad; ctx.fillRect(0, H / 2, W, H / 2);
@@ -3288,15 +3494,22 @@ function render(){
   var dirX = Math.cos(player.angle), dirY = Math.sin(player.angle);
   var ps = planeScale();
   var planeX = -dirY * ps, planeY = dirX * ps;
-  ctx.fillStyle = 'rgba(255,255,255,.5)';
   CLOUDS.forEach(function(b, i){
     var rel = ((b - player.angle) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI;
     if (Math.abs(rel) > 1.1) return;
     var sx = W / 2 * (1 + Math.tan(rel));
-    var sy = 16 + (i % 3) * 17, s = 15 + (i % 4) * 6;
+    var sy = 14 + (i % 3) * 16, s = 15 + (i % 4) * 6;
+    /* 雲の陰（下側を薄い青灰で落としてから白を重ねる） */
+    ctx.fillStyle = 'rgba(168,192,212,.5)';
+    ctx.beginPath();
+    ctx.ellipse(sx, sy + 4, s, s * 0.3, 0, 0, 7);
+    ctx.ellipse(sx + s * 0.5, sy + 6, s * 0.6, s * 0.22, 0, 0, 7);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.62)';
     ctx.beginPath();
     ctx.ellipse(sx, sy, s, s * 0.32, 0, 0, 7);
     ctx.ellipse(sx + s * 0.5, sy + 3, s * 0.6, s * 0.24, 0, 0, 7);
+    ctx.ellipse(sx - s * 0.45, sy + 2, s * 0.5, s * 0.2, 0, 0, 7);
     ctx.fill();
   });
   for (var x = 0; x < W; x++){
@@ -3322,11 +3535,17 @@ function render(){
     var y0 = (H - lineH) / 2;
     var wallX = side === 0 ? player.y + dist * rdy : player.x + dist * rdx;
     wallX -= Math.floor(wallX);
-    var texX = Math.floor(wallX * 64);
-    if (side === 0 && rdx > 0) texX = 63 - texX;
-    if (side === 1 && rdy < 0) texX = 63 - texX;
-    ctx.drawImage(wallTex[tile] || wallTex[1], texX, 0, 1, 64, x, y0, 1, lineH);
+    var texX = Math.floor(wallX * 256);
+    if (side === 0 && rdx > 0) texX = 255 - texX;
+    if (side === 1 && rdy < 0) texX = 255 - texX;
+    ctx.drawImage(wallTex[tile] || wallTex[1], texX, 0, 1, 256, x, y0, 1, lineH);
     if (side === 1){ ctx.fillStyle = 'rgba(10,20,15,.28)'; ctx.fillRect(x, y0, 1, lineH); }
+    /* 距離の減衰＋軽い霧：遠い壁ほど地平線の色に霞ませる */
+    if (dist > 4.5){
+      var fogA = Math.min(0.52, (dist - 4.5) / 22);
+      ctx.fillStyle = 'rgba(223,235,244,' + fogA.toFixed(3) + ')';
+      ctx.fillRect(x, y0, 1, lineH);
+    }
   }
   var list = [];
   trees.forEach(function(t){ list.push({ img: sprTree, x: t.x, y: t.y, hS: 1.3, wS: 1.05 }); });
@@ -3414,6 +3633,32 @@ function render(){
     ctx.strokeText('マーク中', W / 2, H / 2 + 34); ctx.fillText('マーク中', W / 2, H / 2 + 34);
     ctx.restore();
   }
+  drawSnowfall();
+}
+/* ---------------- 降雪（演出のみ。設定でON/OFF、既定ON。ゆっくり少量だけ舞う） ---------------- */
+var snowfallOn = true;
+var snowFlakes = [];
+for (var sfi = 0; sfi < 80; sfi++){
+  snowFlakes.push({ x: Math.random() * 480, y: Math.random() * 270, r: 0.8 + Math.random() * 1.7, s: 10 + Math.random() * 16, ph: Math.random() * 6.28, sw: 4 + Math.random() * 8 });
+}
+var snowLastT = performance.now();
+function drawSnowfall(){
+  if (!snowfallOn) { snowLastT = performance.now(); return; }
+  var now = performance.now();
+  var dt = Math.min(0.05, (now - snowLastT) / 1000);
+  snowLastT = now;
+  ctx.save();
+  ctx.fillStyle = '#ffffff';
+  for (var i = 0; i < snowFlakes.length; i++){
+    var f = snowFlakes[i];
+    f.y += f.s * dt;
+    f.x += Math.sin(now / 1400 + f.ph) * f.sw * dt;
+    if (f.y > H + 3){ f.y = -3; f.x = Math.random() * W; }
+    if (f.x > W + 3) f.x = -3; else if (f.x < -3) f.x = W + 3;
+    ctx.globalAlpha = 0.32 + (f.r - 0.8) / 1.7 * 0.5;
+    ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, 7); ctx.fill();
+  }
+  ctx.restore();
 }
 function drawMarkIconShape(x, y, kind, heavy, occluded){
   ctx.save();
@@ -3546,93 +3791,136 @@ function drawThrowablesFx(){
 function drawViewmodel(){
   var cx = W / 2;
   ctx.save();
+  /* なめらか版：武器モデルも角丸の面と曲線で描く（ドット絵風の矩形の積み重ねにしない） */
+  function vmRR(x, y, w, h, r, col){ ctx.fillStyle = col; rrPath(ctx, x, y, w, h, r); ctx.fill(); }
+  function vmCirc(x, y, r, col){ ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); }
+  function vmPath(pts, col){
+    ctx.fillStyle = col; ctx.beginPath();
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+    ctx.closePath(); ctx.fill();
+  }
+  function muzzleStar(fx, fy, s){
+    ctx.fillStyle = 'rgba(255,205,90,.95)';
+    ctx.beginPath();
+    for (var i = 0; i < 8; i++){
+      var a = i / 8 * Math.PI * 2, r = (i % 2 ? s * 0.45 : s);
+      var px = fx + Math.cos(a) * r, py = fy + Math.sin(a) * r;
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.closePath(); ctx.fill();
+    vmCirc(fx, fy, s * 0.32, 'rgba(255,240,190,.95)');
+  }
   if (cameraMode){
-    /* カメラ（双眼鏡）：武器は下ろし、下部に筐体だけを描く。ズーム演出はなし */
+    /* カメラ（双眼鏡）：武器は下ろし、下部に丸みのある筐体だけを描く。ズーム演出はなし */
     ctx.fillStyle = '#141a17';
     ctx.beginPath();
-    ctx.moveTo(cx - 92, H); ctx.lineTo(cx - 62, H - 26); ctx.lineTo(cx - 18, H - 26); ctx.lineTo(cx - 8, H); ctx.closePath(); ctx.fill();
+    ctx.moveTo(cx - 94, H); ctx.quadraticCurveTo(cx - 78, H - 24, cx - 60, H - 27);
+    ctx.lineTo(cx - 18, H - 27); ctx.quadraticCurveTo(cx - 9, H - 14, cx - 7, H); ctx.closePath(); ctx.fill();
     ctx.beginPath();
-    ctx.moveTo(cx + 92, H); ctx.lineTo(cx + 62, H - 26); ctx.lineTo(cx + 18, H - 26); ctx.lineTo(cx + 8, H); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#232d28'; ctx.fillRect(cx - 62, H - 30, 124, 7);
-    ctx.fillStyle = '#ffe9a8'; ctx.beginPath(); ctx.arc(cx, H - 26, 2.5, 0, 7); ctx.fill();
+    ctx.moveTo(cx + 94, H); ctx.quadraticCurveTo(cx + 78, H - 24, cx + 60, H - 27);
+    ctx.lineTo(cx + 18, H - 27); ctx.quadraticCurveTo(cx + 9, H - 14, cx + 7, H); ctx.closePath(); ctx.fill();
+    vmRR(cx - 63, H - 31, 126, 8, 4, '#232d28');
+    vmCirc(cx, H - 27, 2.6, '#ffe9a8');
     ctx.restore();
     return;
   }
   if (player.weapon === 1){
+    /* アサルトライフル */
     var kick = muzzle > 0 ? 3 : 0;
-    ctx.fillStyle = '#22282b';
+    vmPath([[cx + 6, H], [cx + 24, H - 56 + kick], [cx + 40, H - 54 + kick], [cx + 47, H]], '#22282b');
+    vmRR(cx + 28, H - 75 + kick, 8, 27, 3.4, '#31393d');
+    vmRR(cx + 31, H - 82 + kick, 3.4, 8, 1.7, '#171c1e');
+    vmRR(cx + 25.4, H - 58 + kick, 13, 15, 3, 'rgba(0,0,0,.28)');
+    ctx.fillStyle = 'rgba(0,0,0,.4)';
+    [0, 6, 12].forEach(function(d){ rrPath(ctx, cx + 27, H - 55 + kick + d, 11, 2.2, 1.1); ctx.fill(); });
+    ctx.fillStyle = '#262c2f';
     ctx.beginPath();
-    ctx.moveTo(cx + 8, H); ctx.lineTo(cx + 26, H - 58 + kick); ctx.lineTo(cx + 42, H - 52 + kick);
-    ctx.lineTo(cx + 46, H); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#31393d';
-    ctx.fillRect(cx + 30, H - 74 + kick, 7, 26);
-    ctx.fillStyle = '#171c1e';
-    ctx.fillRect(cx - 6, H - 8, 60, 12);
-    if (muzzle > 0){
-      ctx.fillStyle = 'rgba(255,205,90,.95)';
-      ctx.beginPath();
-      var fx = cx + 33, fy = H - 80 + kick;
-      ctx.moveTo(fx, fy - 10); ctx.lineTo(fx + 4, fy - 2); ctx.lineTo(fx + 11, fy - 4);
-      ctx.lineTo(fx + 5, fy + 2); ctx.lineTo(fx + 7, fy + 9); ctx.lineTo(fx, fy + 4);
-      ctx.lineTo(fx - 7, fy + 9); ctx.lineTo(fx - 5, fy + 2); ctx.lineTo(fx - 11, fy - 4);
-      ctx.lineTo(fx - 4, fy - 2); ctx.closePath(); ctx.fill();
-    }
+    ctx.moveTo(cx + 19, H - 23 + kick); ctx.lineTo(cx + 29, H - 23 + kick);
+    ctx.quadraticCurveTo(cx + 28, H - 10 + kick, cx + 26, H - 1 + kick); ctx.lineTo(cx + 16, H - 1 + kick);
+    ctx.quadraticCurveTo(cx + 17, H - 10 + kick, cx + 19, H - 23 + kick); ctx.closePath(); ctx.fill();
+    vmRR(cx + 2, H - 27 + kick, 13, 9, 4, '#171c1e');
+    vmRR(cx - 7, H - 9, 62, 13, 5, '#171c1e');
+    if (muzzle > 0) muzzleStar(cx + 32, H - 82 + kick, 11);
   } else if (player.weapon === 4) {
     var ch = player.bowCharge >= 0 ? player.bowCharge : 0;
-    ctx.strokeStyle = '#6d4c26'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+    ctx.strokeStyle = '#6d4c26'; ctx.lineWidth = 6.4; ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.moveTo(cx - 66, H - 8);
-    ctx.quadraticCurveTo(cx - 96, H - 78, cx - 60, H - 128);
+    ctx.quadraticCurveTo(cx - 97, H - 78, cx - 60, H - 129);
     ctx.stroke();
-    ctx.strokeStyle = 'rgba(240,240,230,.9)'; ctx.lineWidth = 1.6;
+    ctx.strokeStyle = 'rgba(240,240,230,.9)'; ctx.lineWidth = 1.7;
     var pull = ch * 20;
     ctx.beginPath();
-    ctx.moveTo(cx - 60, H - 128);
+    ctx.moveTo(cx - 60, H - 129);
     ctx.lineTo(cx - 62 + pull, H - 68);
     ctx.lineTo(cx - 66, H - 8);
     ctx.stroke();
     if (player.bowCharge >= 0){
-      ctx.strokeStyle = '#c8b490'; ctx.lineWidth = 3;
+      ctx.strokeStyle = '#c8b490'; ctx.lineWidth = 3.2;
       ctx.beginPath();
-      ctx.moveTo(cx - 62 + pull, H - 68); ctx.lineTo(cx - 8, H - 68);
+      ctx.moveTo(cx - 62 + pull, H - 68); ctx.lineTo(cx - 9, H - 68);
       ctx.stroke();
       ctx.fillStyle = '#d8dde2';
       ctx.beginPath();
-      ctx.moveTo(cx - 2, H - 68); ctx.lineTo(cx - 12, H - 72); ctx.lineTo(cx - 12, H - 64);
+      ctx.moveTo(cx - 1, H - 68); ctx.lineTo(cx - 12, H - 72.4); ctx.lineTo(cx - 12, H - 63.6);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#c23a2e';
+      var fxB = cx - 62 + pull;
+      ctx.beginPath();
+      ctx.moveTo(fxB - 1, H - 68); ctx.lineTo(fxB + 8, H - 74.4); ctx.lineTo(fxB + 10, H - 68); ctx.lineTo(fxB + 8, H - 61.6);
       ctx.closePath(); ctx.fill();
     }
-    ctx.fillStyle = '#4a3820';
-    ctx.fillRect(cx - 74, H - 26, 16, 26);
+    ctx.strokeStyle = '#8a6a42'; ctx.lineWidth = 2.1;
+    ctx.beginPath();
+    ctx.moveTo(cx - 70, H - 74); ctx.lineTo(cx - 66, H - 62);
+    ctx.moveTo(cx - 71.4, H - 66); ctx.lineTo(cx - 67.4, H - 54);
+    ctx.stroke();
+    vmRR(cx - 75, H - 27, 17, 27, 5, '#4a3820');
   } else if (player.weapon === 0){
     /* ピストル：小さく速い */
     var kickP = muzzle > 0 ? 2 : 0;
-    ctx.fillStyle = '#2a2f33';
-    ctx.beginPath();
-    ctx.moveTo(cx + 16, H); ctx.lineTo(cx + 24, H - 34 + kickP); ctx.lineTo(cx + 38, H - 32 + kickP); ctx.lineTo(cx + 40, H); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#3a4147'; ctx.fillRect(cx + 26, H - 44 + kickP, 6, 13);
-    ctx.fillStyle = '#171a1c'; ctx.fillRect(cx + 4, H - 6, 44, 10);
-    if (muzzle > 0){ ctx.fillStyle = 'rgba(255,205,90,.95)'; ctx.beginPath(); ctx.arc(cx + 29, H - 48 + kickP, 5, 0, 7); ctx.fill(); }
+    vmPath([[cx + 15, H], [cx + 23, H - 33 + kickP], [cx + 37, H - 31 + kickP], [cx + 41, H]], '#2a2f33');
+    vmRR(cx + 25, H - 45 + kickP, 7, 14, 3, '#3a4147');
+    ctx.fillStyle = 'rgba(0,0,0,.45)';
+    rrPath(ctx, cx + 26.4, H - 40 + kickP, 4.4, 1.8, 0.9); ctx.fill();
+    rrPath(ctx, cx + 26.4, H - 36 + kickP, 4.4, 1.8, 0.9); ctx.fill();
+    vmRR(cx + 27.4, H - 49 + kickP, 2.6, 4.6, 1.3, '#171a1c');
+    vmRR(cx + 21, H - 41 + kickP, 4.6, 3.4, 1.7, '#171a1c');
+    ctx.fillStyle = 'rgba(255,255,255,.14)';
+    rrPath(ctx, cx + 19.6, H - 18 + kickP, 10.4, 2.2, 1.1); ctx.fill();
+    rrPath(ctx, cx + 19.6, H - 13 + kickP, 10.4, 2.2, 1.1); ctx.fill();
+    vmRR(cx + 3, H - 7, 46, 11, 5, '#171a1c');
+    if (muzzle > 0) muzzleStar(cx + 28.5, H - 49 + kickP, 6.5);
   } else if (player.weapon === 2){
     /* ショットガン：太い銃身とポンプ */
     var kickS = muzzle > 0 ? 4 : 0;
-    ctx.fillStyle = '#4a3421';
-    ctx.beginPath();
-    ctx.moveTo(cx + 4, H); ctx.lineTo(cx + 22, H - 46 + kickS); ctx.lineTo(cx + 40, H - 42 + kickS); ctx.lineTo(cx + 44, H); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#22282b'; ctx.fillRect(cx + 28, H - 66 + kickS, 10, 24);
-    ctx.fillStyle = '#5d4227'; ctx.fillRect(cx + 24, H - 48 + kickS, 16, 8);
-    ctx.fillStyle = '#171c1e'; ctx.fillRect(cx - 8, H - 8, 62, 12);
-    if (muzzle > 0){ ctx.fillStyle = 'rgba(255,190,80,.95)'; ctx.beginPath(); ctx.arc(cx + 33, H - 72 + kickS, 8, 0, 7); ctx.fill(); }
+    vmPath([[cx + 3, H], [cx + 21, H - 45 + kickS], [cx + 39, H - 41 + kickS], [cx + 45, H]], '#4a3421');
+    vmRR(cx + 27, H - 67 + kickS, 11, 25, 4.6, '#22282b');
+    vmRR(cx + 23, H - 49 + kickS, 17, 9, 4.4, '#5d4227');
+    ctx.fillStyle = 'rgba(0,0,0,.4)';
+    rrPath(ctx, cx + 24.6, H - 45.4 + kickS, 14.4, 2, 1); ctx.fill();
+    rrPath(ctx, cx + 24.6, H - 41.4 + kickS, 14.4, 2, 1); ctx.fill();
+    vmRR(cx + 30, H - 53 + kickS, 5.6, 13, 2.8, '#31393d');
+    ctx.fillStyle = '#101314'; ctx.beginPath(); ctx.ellipse(cx + 32.5, H - 68 + kickS, 6.4, 2.6, 0, 0, 7); ctx.fill();
+    vmRR(cx - 9, H - 9, 64, 13, 5, '#171c1e');
+    if (muzzle > 0) muzzleStar(cx + 32.5, H - 71 + kickS, 10);
   } else if (player.weapon === 3){
     /* スナイパー：長い銃身とスコープ */
     var kickN = muzzle > 0 ? 3 : 0;
-    ctx.fillStyle = '#20261f';
-    ctx.beginPath();
-    ctx.moveTo(cx + 10, H); ctx.lineTo(cx + 24, H - 52 + kickN); ctx.lineTo(cx + 34, H - 50 + kickN); ctx.lineTo(cx + 38, H); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#31393d'; ctx.fillRect(cx + 30, H - 92 + kickN, 5, 44);
-    ctx.fillStyle = '#10130f'; ctx.fillRect(cx + 24, H - 78 + kickN, 16, 7);
-    ctx.fillStyle = '#7fd4ff'; ctx.beginPath(); ctx.arc(cx + 32, H - 74 + kickN, 2.2, 0, 7); ctx.fill();
-    ctx.fillStyle = '#171c1e'; ctx.fillRect(cx - 4, H - 8, 56, 12);
-    if (muzzle > 0){ ctx.fillStyle = 'rgba(255,205,90,.95)'; ctx.beginPath(); ctx.arc(cx + 32, H - 97 + kickN, 6, 0, 7); ctx.fill(); }
+    vmPath([[cx + 9, H], [cx + 23, H - 51 + kickN], [cx + 33, H - 49 + kickN], [cx + 39, H]], '#20261f');
+    vmRR(cx + 29.4, H - 93 + kickN, 5.6, 45, 2.8, '#31393d');
+    vmRR(cx + 23, H - 79 + kickN, 17, 8, 4, '#10130f');
+    vmCirc(cx + 31.5, H - 75 + kickN, 2.4, '#7fd4ff'); vmCirc(cx + 30.8, H - 75.8 + kickN, 0.9, 'rgba(255,255,255,.8)');
+    vmRR(cx + 19, H - 63 + kickN, 6.4, 3.4, 1.7, '#0c0f0c');
+    vmCirc(cx + 18, H - 60.6 + kickN, 2.6, '#0c0f0c');
+    ctx.fillStyle = 'rgba(0,0,0,.5)';
+    rrPath(ctx, cx + 29.8, H - 88.6 + kickN, 4.8, 2.1, 1); ctx.fill();
+    rrPath(ctx, cx + 29.8, H - 83.6 + kickN, 4.8, 2.1, 1); ctx.fill();
+    ctx.strokeStyle = '#141814'; ctx.lineWidth = 2.6; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(cx + 30.6, H - 46 + kickN); ctx.lineTo(cx + 23.4, H - 29 + kickN); ctx.moveTo(cx + 34, H - 46 + kickN); ctx.lineTo(cx + 40.6, H - 29 + kickN); ctx.stroke();
+    vmRR(cx - 5, H - 9, 58, 13, 5, '#171c1e');
+    if (muzzle > 0) muzzleStar(cx + 32, H - 97 + kickN, 8);
   }
   ctx.restore();
 }
@@ -4130,6 +4418,13 @@ document.getElementById('rotMode').addEventListener('change', function(e){
 document.getElementById('volSel').addEventListener('change', function(e){
   setVolume(parseFloat(e.target.value));
 });
+function setSnowfall(on){
+  snowfallOn = on;
+  document.getElementById('snowSel').value = on ? 'on' : 'off';
+  document.getElementById('snowSelTitle').value = on ? 'on' : 'off';
+}
+document.getElementById('snowSel').addEventListener('change', function(e){ setSnowfall(e.target.value === 'on'); });
+document.getElementById('snowSelTitle').addEventListener('change', function(e){ setSnowfall(e.target.value === 'on'); });
 
 /* ---------------- Main loop ---------------- */
 var lastT = performance.now();
