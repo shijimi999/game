@@ -1507,15 +1507,23 @@ function update(dt){
        - landing on top of any solid — a platform, the motel balcony,
          the bridge deck, not just the ground (bottles used to fall
          through all of those and only ever burn at ground level);
-       - smashing into the side of a cover crate / car body, the fence,
-         the gate or a wall: the fuel spills and burns at its base. */
+       - smashing into the side of a TALL solid — a cover crate / car
+         body, the fence, the gate or a wall: the fuel spills and burns
+         at its base.
+       Thin ledges (h < 24: porches, platforms, the balcony, the bridge
+       deck) never smash a bottle from the side or below. The arc's apex
+       clears their undersides by only a few px, so the old any-contact
+       test popped bottles mid-flight a few frames after the throw
+       whenever Wyatt threw from under or beside one — the fire then
+       appeared on the ground short of the target and the throw read as
+       a dud. A thin ledge can now only be landed on, from above. */
     const steps = Math.max(1, Math.ceil(Math.max(Math.abs(bo.x - prevX), Math.abs(bo.y - prevY)) / 3));
     let hitE = null, landY = null, hitX = bo.x;
     for(let i = 1; i <= steps && !hitE && landY === null; i++){
       const sx = prevX + (bo.x - prevX) * i / steps, sy = prevY + (bo.y - prevY) * i / steps;
       for(const e of state.enemies){
         if(!e.alive) continue;
-        if(sx > e.x - 3 && sx < e.x + e.w + 3 && sy > e.y - e.h - 3 && sy < e.y + 3){ hitE = e; hitX = sx; break; }
+        if(sx > e.x - 8 && sx < e.x + e.w + 8 && sy > e.y - e.h - 8 && sy < e.y + 8){ hitE = e; hitX = sx; break; }
       }
       if(hitE) break;
       for(const s of solids){
@@ -1523,7 +1531,7 @@ function update(dt){
         if(s.ventDoor && state.ventOpen) continue;
         if(sx <= s.x || sx >= s.x + s.w) continue;
         if(!s.cover && bo.vy > 0 && sy >= s.y && prevY + (bo.y - prevY) * (i - 1) / steps <= s.y){ landY = s.y; hitX = sx; break; }
-        if(sy > s.y && sy < s.y + s.h){ landY = surfaceBelow(sx, sy); hitX = sx; break; }
+        if(s.h >= 24 && sy > s.y && sy < s.y + s.h){ landY = surfaceBelow(sx, sy); hitX = sx; break; }
       }
     }
     if(hitE){
@@ -1533,6 +1541,16 @@ function update(dt){
     } else if(landY !== null){
       bo.dead = true;
       igniteMolotov(hitX, landY);
+    } else {
+      /* safety net: gravity guarantees a landing within ~40 frames, but
+         a thrown bottle must NEVER just vanish — if one is somehow
+         still airborne after 4 s (or has left the world), it smashes
+         and burns wherever it is. */
+      bo.age = (bo.age || 0) + 1;
+      if(bo.age > 240 || bo.x < -80 || bo.x > WORLD_W + 80){
+        bo.dead = true;
+        igniteMolotov(bo.x, surfaceBelow(bo.x, bo.y));
+      }
     }
   }
   state.bottles = state.bottles.filter(b => !b.dead);
@@ -1562,14 +1580,30 @@ function update(dt){
        the patch's vertical span. (The old test had no lower bound tied to
        the patch, so a fire lit on a platform could never hurt the enemy
        standing in it, whose feet are far above GROUND_Y.) Anyone caught
-       in it — guard, infected, listener — catches fire and burns. */
+       in it — guard, infected, listener — catches fire (burnT below). */
     for(const e of state.enemies){
       if(e.alive && e.x + e.w > f.x && e.x < f.x + f.w && e.y > f.y && e.y <= f.y + f.h + 2){
-        e.hp -= 2.2*dt; e.burned = true;
-        if(e.hp <= 0){ e.alive = false; state.kills++; }
+        e.burnT = Math.max(e.burnT || 0, 1.5); e.burned = true;
       }
     }
     if(p.x + p.w > f.x && p.x < f.x + f.w && p.y > f.y && p.y <= f.y + f.h + 2) damagePlayer(16*dt + 2);
+  }
+  /* Catching fire is sticky: an enemy whose clothes have caught keeps
+     burning at the same rate wherever it runs, until it burns to death.
+     This matters most for the fast infected — the molotov's own bang
+     (noise, radius 300) throws a patrolling one straight into 'chase',
+     so it used to sprint out of the 88px patch in ~19 frames, take
+     ~0.7 of its 2 hp and survive: a throw that visibly drenched it in
+     flames read as a dud. Guards (frozen in 'suspicious') and listeners
+     (rushing TO the noise, i.e. into the fire) stayed put and burned,
+     which is why only the infected seemed fireproof. While an enemy
+     stands in a patch burnT is refreshed every frame, so the old
+     time-to-kill standing in flames is unchanged. */
+  for(const e of state.enemies){
+    if(e.alive && e.burnT > 0){
+      e.burnT -= dt; e.hp -= 2.2*dt; e.burned = true;
+      if(e.hp <= 0){ e.alive = false; state.kills++; }
+    }
   }
   for(const f of state.fires) if(f.t <= 0) state.embers.push({ x:f.x, y:f.y, w:f.w, t:2.6 });
   state.fires = state.fires.filter(f => f.t > 0);
