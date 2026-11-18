@@ -30,6 +30,21 @@
         box-shadow:0 10px 30px rgba(0,0,0,.25); touch-action:none; user-select:none;
       }
       canvas#game{ position:absolute; inset:0; width:100%; height:100%; display:block; image-rendering:auto; }
+      /* ---------- Fullscreen（16:9維持・はみ出しは黒帯レターボックス） ---------- */
+      .wrap:fullscreen, .wrap:-webkit-full-screen{
+        max-width:none; width:100%; height:100%; padding:0; background:#000;
+        display:flex; align-items:center; justify-content:center;
+      }
+      .wrap:fullscreen .stage, .wrap:-webkit-full-screen .stage{
+        width:min(100vw, 177.78vh); flex:none; border:none; border-radius:0; box-shadow:none;
+      }
+      .wrap:fullscreen .underbar, .wrap:-webkit-full-screen .underbar{ display:none; }
+      #fsBtnHud{
+        pointer-events:auto; margin-top:6px; width:36px; height:36px; min-height:36px; padding:0;
+        border-radius:8px; background:rgba(8,14,11,.62); color:#eef6f0;
+        border:1px solid rgba(255,255,255,.45); font-size:18px; line-height:1; cursor:pointer;
+      }
+      #fsBtnHud:active{ transform:translateY(1px); }
       /* ---------- HUD ---------- */
       .hud{ position:absolute; pointer-events:none; font-size:14px; }
       #hudObjective{ top:10px; left:12px; max-width:56%; color:#eef6f0; text-shadow:0 1px 3px rgba(0,0,0,.8); line-height:1.45; }
@@ -72,6 +87,7 @@
       #hpText{ font-size:12.5px; margin-top:4px; letter-spacing:.05em; }
       #resLine{ font-size:12.5px; margin-top:3px; color:#ffe9bd; letter-spacing:.04em; }
       #crouchTag{ display:none; margin-left:8px; padding:1px 8px; border-radius:4px; background:rgba(20,40,30,.75); color:#a8dcbc; font-size:11.5px; }
+      #hideTag{ display:none; margin-left:6px; padding:1px 8px; border-radius:4px; background:rgba(24,66,38,.85); color:#c9f2d4; font-size:11.5px; font-weight:700; border:1px solid rgba(140,220,160,.55); }
       #hudBottomR{ right:12px; bottom:12px; text-align:right; color:#eef6f0; text-shadow:0 1px 3px rgba(0,0,0,.85); }
       #weaponName{ font-size:17px; font-weight:800; letter-spacing:.04em; }
       #weaponSub{ font-size:12px; color:#cfe0d4; margin-top:2px; }
@@ -259,10 +275,11 @@
           <canvas id="minimap" width="148" height="148"></canvas>
           <div id="mapLabel">周辺のみ表示中</div>
           <div><span id="markCount">マーク済み 0</span></div>
+          <div><button id="fsBtnHud" type="button" title="フルスクリーン（Alt+Enter）" aria-label="フルスクリーン（Alt+Enter）">⛶</button></div>
         </div>
         <div class="hud" id="hudBottomL">
           <div class="hpbar" id="hpBarWrap"><div id="hpBar"></div></div>
-          <div id="hpText">体力 100<span id="crouchTag">しゃがみ中</span></div>
+          <div id="hpText">体力 100<span id="crouchTag">しゃがみ中</span><span id="hideTag">隠れている（草むら）</span></div>
           <div id="resLine">皮 ×0　肉 ×1　包帯 ×2</div>
           <div id="skillHud">XP 0　スキルポイント 0</div>
         </div>
@@ -314,6 +331,8 @@
               道中では人質救出などの小事件が起きることがあり、解決すると<b>カルマ</b>が上がって特典がつく。
               色の目立つ薬草を摘むと注射（狩猟／回復）が作れる。将軍のポスターは見つけたら剥がそう（全12枚）。
               弓持ちの<b>ハンター</b>は気配が薄く、動物をけしかけてくるので注意。
+              隠れ場所として、野原や拠点の周りには<b>草むら</b>（エリア2では雪をかぶった低木）が点々と生えていて、中でしゃがむと敵からほぼ見つからなくなる。
+              開けた雪原には<b>岩</b>と<b>雪のこぶ</b>もあり、松の木の幹とあわせて視線を遮る遮蔽になる（岩・雪のこぶは通り抜け不可）。
               <b>武器は全5種</b>（ピストル／アサルトライフル／ショットガン／スナイパー／弓）。最初はピストル・AR・弓を所持。
               <b>ショットガンは要塞の解放で、スナイパーはエリア2で最初の鐘の塔を止めると入手</b>できる。
               <b>投擲物</b>は4種（石ころ＝音で注意逸らし／手榴弾＝範囲爆発／火炎瓶＝数秒燃える／肉＝ベイト）を使い分けられる。
@@ -324,6 +343,7 @@
             <div class="btnrow">
               <button class="btn" id="startBtn">新しく始める</button>
               <button class="btn sub" id="continueBtn" hidden>続きから（セーブあり）</button>
+              <button class="btn sub" id="fsBtnTitle" type="button">フルスクリーン</button>
             </div>
             <div><span id="clearedBadge" hidden>制圧完了 ― 山は解放された</span></div>
             <div class="setrow" style="max-width:360px;">
@@ -350,7 +370,10 @@
               <tr><td>テイクダウン／調べる</td><td>X ／ <kbd>F</kbd>（敵の背後に近づくと表示）</td></tr>
               <tr><td>回復（包帯を使う）</td><td>A ／ <kbd>H</kbd>（体力＋45）</td></tr>
               <tr><td>しゃがむ</td><td>B ／ <kbd>Ctrl</kbd>（遅くなるが見つかりにくい）</td></tr>
+              <tr><td>隠れる（草むら）</td><td>草むら（エリア2では雪をかぶった低木）の中に入ってしゃがむと、敵からほぼ見つからなくなる（至近距離は除く）。立ったままだと効果は弱い。隠れている間は画面左下に「隠れている」と出る</td></tr>
+              <tr><td>遮蔽物</td><td>岩・雪のこぶ（吹きだまり）・松の木の幹は敵の視線を遮る。陰に回れば視線が切れて発見メーターが下がる。岩と雪のこぶは通り抜けできない</td></tr>
               <tr><td>ポーズ・設定</td><td>Start ／ <kbd>Esc</kbd>（クラフト・スキルツリー・ファストトラベル・回転方式・環境音）</td></tr>
+              <tr><td>フルスクリーン</td><td>画面右上の <b>⛶</b> ボタン ／ <kbd>Alt</kbd>＋<kbd>Enter</kbd>（解除は <kbd>Esc</kbd>）。16:9のまま黒帯つきで広がる</td></tr>
               <tr><td>スキル</td><td>XPを貯めるとスキルポイントが入る。ポーズ画面で虎（攻撃）6種／象（防御）6種を段階式に取得</td></tr>
               <tr><td>投擲物の選択</td><td>十字キー下 ／ <kbd>V</kbd> ― 石ころ→手榴弾→火炎瓶→肉（ベイト）の順に切り替える。選択中の投擲物と残数は画面右下に常時表示</td></tr>
               <tr><td>投げる</td><td>RB ／ <kbd>G</kbd> ― 選択中の投擲物を放物線で投げる（壁に当たるとその場に落ちる）</td></tr>
@@ -481,6 +504,7 @@
 
             <div class="btnrow">
               <button class="btn" id="resumeBtn">再開する</button>
+              <button class="btn sub" id="fsBtnPause" type="button">フルスクリーン</button>
               <button class="btn sub" id="restartBtn">セーブを消して最初から</button>
               <button class="btn sub" id="toTitleBtn">タイトルへ</button>
             </div>
@@ -531,7 +555,7 @@
 
       <div class="underbar">
         <span>操作：<kbd>WASD</kbd> 移動 ／ <kbd>←→</kbd> 振り向き ／ <kbd>1</kbd>〜<kbd>5</kbd> 武器選択 ／ 左クリック 射撃 ／ 右クリック長押し 狙う ／ <kbd>C</kbd> カメラで自動マーク（カメラ中は <kbd>E</kbd>／<kbd>Q</kbd>・ホイールで段階ズーム）／ <kbd>F</kbd> テイクダウン・調べる ／ <kbd>H</kbd> 回復 ／ <kbd>V</kbd> 投擲物の選択 ／ <kbd>G</kbd> 投げる ／ <kbd>T</kbd> 狩猟の注射 ／ <kbd>R</kbd> 回復の注射 ／ <kbd>Esc</kbd> ポーズ</span>
-        <span>画面をクリックするとマウスで振り向けます（ポインターロック対応ブラウザのみ）</span>
+        <span>画面をクリックするとマウスで振り向けます（ポインターロック対応ブラウザのみ）／ <kbd>Alt</kbd>＋<kbd>Enter</kbd> でフルスクリーン</span>
       </div>
     </div>
 
@@ -552,7 +576,10 @@ ctx.imageSmoothingQuality = 'high';
 
 /* ---------------- Map（手続き生成） ----------------
    grid: 0 空 / 1 石壁 / 2 柵 / 3 見張り台
-   spriteCells: tree（松） / crate / tower（鐘の塔） / alarm / post（祈祷旗）      */
+   spriteCells: tree（松） / crate / tower（鐘の塔） / alarm / post（祈祷旗）
+                / rock（岩） / snow（雪のこぶ） ― rock・snow は通行不可＋視線遮断
+   bushes（草むら）は spriteCells に入れない（通り抜けられる隠れ場所）。
+   中でしゃがむと敵からほぼ見つからなくなる。配置は placeCover() で固定。      */
 var MW = 54, MH = 74;
 var AREA_SHIFT = 42;              /* エリア1の旧座標を南へずらす量（北にエリア2＋放送本部の帯を追加） */
 var A2_SHIFT = 12;                /* エリア2の旧座標を南へずらす量（最北に放送本部の帯を追加） */
@@ -564,6 +591,7 @@ var TRANSMITTER = { x: 46.5, y: 3.5 };   /* 放送室の送信設備の位置 */
 var gameCleared = false;                 /* 制圧完了フラグ（セーブ対象） */
 var grid = [], spriteCells = {};
 var trees = [], crates = [], posts = [], ices = [];
+var bushes = [], rocks = [], bushCells = {};   /* 草むら {x,y,snow} ／ 岩・雪のこぶ {x,y,kind}（spriteCells='rock'/'snow'） */
 var playerSpawn = { x: 2.5, y: 2.5 };
 
 var OUTPOSTS = [
@@ -810,7 +838,11 @@ function losClear(x0, y0, x1, y1){
     var cx = Math.floor(x), cy = Math.floor(y);
     if (cx < 0 || cy < 0 || cx >= MW || cy >= MH) return false;
     if (grid[cy][cx] > 0) return false;
-    if (spriteCells[cx + ',' + cy] === 'tower') return false;
+    var sc = spriteCells[cx + ',' + cy];
+    /* 鐘の塔・松の木（幹）・岩・雪のこぶは視線を遮る。箱と祈祷旗は背が低いので遮らない。
+       草むらは bushCells 側（spriteCells に入れない）なので、ここでは遮らない
+       ―― 草むらの効果は canSee() の「しゃがみ中は至近距離以外見えない」で出す */
+    if (sc === 'tower' || sc === 'tree' || sc === 'rock' || sc === 'snow') return false;
   }
   return true;
 }
@@ -1384,6 +1416,115 @@ function makeIceSprite(){
   ellF(g, 40, 15, 11, 3.6, 'rgba(255,255,255,.85)');
   return c;
 }
+function makeBushSprite(snow){
+  /* 草むら（隠れ場所）：丸い低木の茂み。エリア2用は雪をかぶった低木＋枯れ枝 */
+  var c = mkCanvas(256, 192), g = ctx2(c); g.scale(2, 2);
+  ellF(g, 64, 90, 47, 5.5, 'rgba(0,0,0,.18)');
+  /* 幹と枝（下部に少しだけ見える） */
+  g.strokeStyle = '#5d4630'; g.lineWidth = 4.4; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(52, 92); g.quadraticCurveTo(54, 76, 48, 64); g.stroke();
+  g.beginPath(); g.moveTo(76, 92); g.quadraticCurveTo(74, 76, 80, 64); g.stroke();
+  if (snow){
+    g.lineWidth = 2.6;
+    g.beginPath(); g.moveTo(38, 66); g.quadraticCurveTo(34, 50, 28, 42); g.stroke();
+    g.beginPath(); g.moveTo(92, 64); g.quadraticCurveTo(97, 48, 103, 41); g.stroke();
+  }
+  function blob(x, y, rx, ry, col){ ellF(g, x, y, rx, ry, col); }
+  if (!snow){
+    blob(64, 68, 45, 24, '#274d33');
+    blob(38, 74, 24, 16, '#2e5a3c'); blob(90, 74, 24, 16, '#2e5a3c');
+    blob(50, 56, 26, 17, '#356847'); blob(78, 56, 26, 17, '#356847');
+    blob(64, 47, 24, 14, '#3f7a4a');
+    ellF(g, 52, 42, 12, 5, 'rgba(190,230,170,.35)');
+    ellF(g, 76, 50, 13, 5, 'rgba(190,230,170,.28)');
+    ellF(g, 40, 64, 10, 4.4, 'rgba(190,230,170,.22)');
+    /* 小花・実のアクセント */
+    circF(g, 46, 52, 2.2, '#e8c832'); circF(g, 84, 60, 2.2, '#e86aa8'); circF(g, 62, 66, 2, '#e8c832');
+  } else {
+    blob(64, 68, 45, 24, '#4c5f55');
+    blob(38, 74, 24, 16, '#55685d'); blob(90, 74, 24, 16, '#55685d');
+    blob(50, 56, 26, 17, '#5f7268'); blob(78, 56, 26, 17, '#5f7268');
+    blob(64, 47, 24, 14, '#687c71');
+    /* 雪の帽子：各房の上に白を重ねる */
+    ellF(g, 64, 38, 23, 7.5, 'rgba(242,247,250,.95)');
+    ellF(g, 48, 49, 20, 6.4, 'rgba(242,247,250,.88)');
+    ellF(g, 80, 49, 20, 6.4, 'rgba(242,247,250,.88)');
+    ellF(g, 36, 67, 17, 5.4, 'rgba(242,247,250,.7)');
+    ellF(g, 92, 67, 17, 5.4, 'rgba(242,247,250,.7)');
+    ellF(g, 58, 44, 9, 3.4, 'rgba(255,255,255,.9)');
+  }
+  return c;
+}
+function makeRockSprite(){
+  /* 岩（遮蔽物）：丸みのある岩塊＋雪の帽子＋小石 */
+  var c = mkCanvas(256, 192), g = ctx2(c); g.scale(2, 2);
+  ellF(g, 64, 90, 48, 5.5, 'rgba(0,0,0,.2)');
+  g.fillStyle = '#83898a';
+  g.beginPath();
+  g.moveTo(20, 90);
+  g.quadraticCurveTo(16, 62, 30, 44);
+  g.quadraticCurveTo(44, 24, 66, 22);
+  g.quadraticCurveTo(90, 20, 100, 42);
+  g.quadraticCurveTo(110, 62, 106, 90);
+  g.closePath(); g.fill();
+  /* 右下の陰 */
+  g.fillStyle = 'rgba(52,58,60,.35)';
+  g.beginPath();
+  g.moveTo(66, 22);
+  g.quadraticCurveTo(90, 20, 100, 42);
+  g.quadraticCurveTo(110, 62, 106, 90);
+  g.lineTo(64, 90);
+  g.quadraticCurveTo(84, 62, 78, 40);
+  g.quadraticCurveTo(74, 28, 66, 22);
+  g.closePath(); g.fill();
+  /* 左上の光 */
+  ellF(g, 46, 40, 17, 10, 'rgba(255,255,255,.16)');
+  /* ひび */
+  g.strokeStyle = 'rgba(40,46,48,.4)'; g.lineWidth = 2.4; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(58, 52); g.quadraticCurveTo(64, 62, 60, 74); g.stroke();
+  g.beginPath(); g.moveTo(86, 58); g.quadraticCurveTo(82, 66, 85, 76); g.stroke();
+  /* 上部の雪 */
+  g.fillStyle = 'rgba(242,247,250,.92)';
+  g.beginPath();
+  g.moveTo(38, 33);
+  g.quadraticCurveTo(50, 21, 66, 20);
+  g.quadraticCurveTo(84, 19, 94, 31);
+  g.quadraticCurveTo(84, 34, 76, 30);
+  g.quadraticCurveTo(68, 36, 58, 31);
+  g.quadraticCurveTo(48, 36, 38, 33);
+  g.closePath(); g.fill();
+  /* 足元の小石 */
+  ellF(g, 14, 88, 9, 5, '#757d7e'); ellF(g, 114, 89, 7, 4, '#757d7e');
+  ellF(g, 12, 86, 6, 2.4, 'rgba(242,247,250,.8)');
+  return c;
+}
+function makeSnowMoundSprite(){
+  /* 雪のこぶ／吹きだまり（遮蔽物）：低く丸い雪の盛り上がり */
+  var c = mkCanvas(256, 160), g = ctx2(c); g.scale(2, 2);
+  ellF(g, 64, 74, 52, 5, 'rgba(90,120,150,.25)');
+  /* 本体：なだらかな盛り上がり */
+  g.fillStyle = '#e6eef4';
+  g.beginPath();
+  g.moveTo(8, 74);
+  g.quadraticCurveTo(14, 44, 44, 32);
+  g.quadraticCurveTo(66, 22, 88, 32);
+  g.quadraticCurveTo(114, 42, 120, 74);
+  g.closePath(); g.fill();
+  /* 右側へ流れる吹きだまりの裾 */
+  g.fillStyle = '#dbe7f0';
+  g.beginPath();
+  g.moveTo(78, 74);
+  g.quadraticCurveTo(96, 50, 108, 48);
+  g.quadraticCurveTo(118, 56, 120, 74);
+  g.closePath(); g.fill();
+  /* 下面の淡い青い陰 */
+  ellF(g, 64, 70, 46, 6, 'rgba(150,180,205,.35)');
+  /* 頂の光とキラキラ */
+  ellF(g, 52, 34, 20, 6, 'rgba(255,255,255,.95)');
+  circF(g, 40, 44, 1.7, '#ffffff'); circF(g, 84, 40, 1.5, '#ffffff'); circF(g, 66, 52, 1.6, '#ffffff');
+  circF(g, 96, 58, 1.4, '#ffffff'); circF(g, 30, 58, 1.4, '#ffffff');
+  return c;
+}
 function makeTransmitterSprite(){
   /* 放送室の送信設備：アンテナマスト＋送信機＋ランプ */
   var c = mkCanvas(192, 256), g = ctx2(c); g.scale(2, 2);
@@ -1409,7 +1550,9 @@ var sprTree = makeTreeSprite(), sprCrate = makeCrateSprite(false), sprCrateSuppl
     sprHunter = makeHunterSprite(), sprPlant = makePlantSprite(), sprPoster = makePosterSprite(),
     sprMeat = makeMeatSprite(), sprVillager = makePersonSprite('villager'), sprAlly = makePersonSprite('ally'),
     sprCart = makeCartSprite(), sprLeopard = makeLeopardSprite(false), sprLeopardDead = makeLeopardSprite(true),
-    sprIce = makeIceSprite(), sprTransmitter = makeTransmitterSprite();
+    sprIce = makeIceSprite(), sprTransmitter = makeTransmitterSprite(),
+    sprBush = makeBushSprite(false), sprBushSnow = makeBushSprite(true),
+    sprRock = makeRockSprite(), sprSnowMound = makeSnowMoundSprite();
 </script>
 <script>
 "use strict";
@@ -1728,9 +1871,9 @@ function ammoCaps(){ return AMMO_CAPS[prog.craftAmmo]; }
 function medCap(){ return MED_CAPS[prog.craftMed]; }
 
 var ENEMY_DEFS = [
-  /* 拠点A */
+  /* 拠点A（西の鐘の塔T1と同じ囲いの中。塔の守備は巡回兵1人だけに減らした。
+     囲いの外の配置は従来どおり） */
   { outpost: 'A', x: 21.5, y: 8.5,  wp: [[21.5, 8.5], [24.5, 8.5]], sentry: false },
-  { outpost: 'A', x: 24.5, y: 10.5, wp: null, sentry: true, face: Math.PI },
   { outpost: 'A', x: 11.5, y: 11.5, wp: [[11.5, 11.5], [16.5, 11.5], [16.5, 12.5], [11.5, 12.5]], sentry: false },
   { outpost: 'A', x: 17.5, y: 14.5, wp: null, sentry: true, face: Math.PI / 2 },
   { outpost: 'A', x: 7.5,  y: 14.5, wp: [[7.5, 14.5], [12.5, 16.5], [7.5, 16.5]], sentry: false },
@@ -1741,13 +1884,10 @@ var ENEMY_DEFS = [
   { outpost: 'B', x: 39.5, y: 28.5, wp: null, sentry: true, face: -Math.PI / 2 },
   { outpost: 'B', x: 37.5, y: 26.5, wp: null, sentry: true, face: Math.PI, heavy: true },
   { outpost: 'B', x: 32.5, y: 28.5, wp: [[32.5, 28.5], [37.5, 28.5]], sentry: false, hunter: true },
-  /* 拠点C：岩山の砦 */
+  /* 拠点C：岩山の砦（東の鐘の塔T2と同じ囲いの中。塔の守備は一般の巡回兵1人だけに
+     減らし、囲いの中の歩哨・重装兵・ハンターは外した。囲いの外の巡回は従来どおり） */
   { outpost: 'C', x: 33.5, y: 5.5,  wp: [[33.5, 5.5], [38.5, 5.5]], sentry: false },
-  { outpost: 'C', x: 39.5, y: 8.5,  wp: null, sentry: true, face: Math.PI },
   { outpost: 'C', x: 27.5, y: 6.5,  wp: [[27.5, 6.5], [29.5, 12.5], [27.5, 12.5]], sentry: false },
-  { outpost: 'C', x: 32.5, y: 4.5,  wp: null, sentry: true, face: Math.PI / 2 },
-  { outpost: 'C', x: 36.5, y: 7.5,  wp: null, sentry: true, face: Math.PI, heavy: true },
-  { outpost: 'C', x: 34.5, y: 7.5,  wp: null, sentry: true, face: Math.PI, hunter: true },
   /* 要塞D：兵士9人（重装2・ハンター2）＋警報装置2つ */
   { outpost: 'D', x: 49.5, y: 15.5, wp: [[49.5, 15.5], [49.5, 16.5]], sentry: false },
   { outpost: 'D', x: 46.5, y: 18.5, wp: [[46.5, 18.5], [51.5, 18.5]], sentry: false },
@@ -1826,6 +1966,83 @@ var BOAR_HOMES = ANIMAL_DEFS; /* 互換名（内部変数 boars は動物全般�
 ENEMY_DEFS.forEach(function(d){ if (d.outpost && 'ABCD'.indexOf(d.outpost) >= 0){ d.y += AREA_SHIFT; if (d.wp) d.wp.forEach(function(w){ w[1] += AREA_SHIFT; }); } });
 ENEMY_DEFS.forEach(function(d){ if (d.outpost && 'EFGHI'.indexOf(d.outpost) >= 0){ d.y += A2_SHIFT; if (d.wp) d.wp.forEach(function(w){ w[1] += A2_SHIFT; }); } });
 ANIMAL_DEFS.forEach(function(d){ if (d.a2) d.y += A2_SHIFT; else d.y += AREA_SHIFT; });
+
+/* ---------------- 隠れ場所の固定配置（草むら／岩／雪のこぶ） ----------------
+   座標はすべて最終マップ座標（シフト済み）。セーブ対象にはしない。
+   草むら：通行可。spriteCells に入れず bushCells で管理し、canSee() で効果を出す。
+   岩・雪のこぶ：spriteCells に 'rock'/'snow' で入れ、通行不可＋視線遮断にする。
+   配置の目安：拠点の周囲と侵入経路、拠点間の開けた野原、エリア2の雪原。
+   遮蔽から遮蔽へ移れるよう、開けた場所では数セル間隔の連なりを意識した。
+   敵の配置・巡回路・補給箱・出入口・イベント発生地点とは重ねない（下の予約で二重に防ぐ）。 */
+(function placeCover(){
+  function key(x, y){ return x + ',' + y; }
+  var resRock = {}, resBush = {};
+  function rr(x, y){ resRock[key(Math.floor(x), Math.floor(y))] = true; }
+  function rb(x, y){ resBush[key(Math.floor(x), Math.floor(y))] = true; }
+  function both(x, y){ rr(x, y); rb(x, y); }
+  ENEMY_DEFS.forEach(function(d){ rr(d.x, d.y); if (d.wp) d.wp.forEach(function(w){ rr(w[0], w[1]); }); });
+  ANIMAL_DEFS.forEach(function(d){ rr(d.x, d.y); });
+  PLANT_DEFS.forEach(function(p){ both(p.x, p.y); });
+  POSTER_DEFS.forEach(function(p){ both(p.x, p.y); });
+  OUTPOSTS.forEach(function(o){ both(o.cx, o.cy); both(o.travelX, o.travelY); });
+  TOWERS.forEach(function(t){ rr(t.x, t.y); both(t.travelX, t.travelY); });
+  ALARM_DEFS.forEach(function(a){ rr(a.x, a.y); });
+  Object.keys(REINFORCE).forEach(function(k){ REINFORCE[k].forEach(function(p){ rr(p[0], p[1]); }); });
+  both(TRANSMITTER.x, TRANSMITTER.y); both(playerSpawn.x, playerSpawn.y); rr(HQ.cx, HQ.cy);
+  rr(GATE_X, GATE_Y); rr(GATE_X + 1, GATE_Y); rb(GATE_X, GATE_Y); rb(GATE_X + 1, GATE_Y);
+  for (var cx = 2; cx <= 42; cx++){ rr(cx, 59); rr(cx, 60); rr(cx, 61); }  /* 輸送小隊（カルマイベント）の進路は岩で塞がない */
+  function cellFree(x, y){
+    if (x < 1 || y < 1 || x >= MW - 1 || y >= MH - 1) return false;
+    return grid[y][x] === 0 && !spriteCells[key(x, y)];
+  }
+  /* 岩・雪のこぶ（遮蔽物）を先に置く */
+  var ROCK_DEFS = [
+    /* エリア1：岩 */
+    [8,50],[13,54],[9,58],[14,63],[21,45],[33,43],[28,52],[30,57],[22,64],
+    [32,58],[38,58],[43,52],[43,63],[44,45],[48,50],[12,68],[27,64],
+    /* エリア2：雪のこぶ中心＋岩 */
+    [22,13,'snow'],[34,12,'snow'],[36,11,'snow'],[47,11,'snow'],[13,14,'snow'],[6,17,'rock'],
+    [18,20,'snow'],[33,17,'rock'],[22,27,'snow'],[27,29,'snow'],[32,33,'snow'],[35,21,'rock'],
+    [14,28,'snow'],[8,29,'snow'],[23,34,'snow'],[32,30,'snow'],[29,36,'snow'],[22,40,'snow'],
+    [38,41,'snow'],[50,21,'rock'],[51,30,'snow'],[16,5,'snow'],[24,6,'snow']
+  ];
+  ROCK_DEFS.forEach(function(p){
+    var x = p[0], y = p[1], kind = p[2] || 'rock';
+    if (!cellFree(x, y) || resRock[key(x, y)] || bushCells[key(x, y)]) return;
+    rocks.push({ x: x + .5, y: y + .5, kind: kind, cx: x, cy: y });
+    spriteCells[key(x, y)] = kind;
+  });
+  /* 草むら（エリア2＝y < GATE_Y は雪をかぶった低木） */
+  var BUSH_DEFS = [
+    /* エリア1 */
+    [4,47],[5,47],[9,44],[10,44],[13,50],[13,51],[18,60],[19,60],[21,54],[24,54],
+    [18,52],[18,53],[29,46],[30,46],[28,49],[29,50],[33,52],[36,52],[24,57],[25,57],
+    [31,56],[32,56],[24,61],[28,62],[33,61],[36,61],[29,61],[30,68],[38,68],[26,66],
+    [26,67],[43,56],[43,59],[47,63],[48,63],[44,48],[44,49],[14,66],[15,66],[20,68],
+    [21,68],[23,43],[30,43],
+    /* エリア2＋放送本部の庭 */
+    [24,41],[29,41],[18,13],[19,13],[36,13],[37,13],[30,12],[31,12],[38,11],[39,11],
+    [44,11],[45,11],[5,22],[5,23],[12,26],[13,26],[14,20],[24,23],[28,23],[20,20],
+    [20,21],[23,29],[24,29],[30,31],[31,31],[26,26],[29,26],[40,27],[44,27],[39,21],
+    [46,21],[11,29],[10,29],[11,34],[11,35],[15,37],[18,37],[33,33],[33,36],[38,33],
+    [44,33],[39,39],[44,39],[49,24],[50,24],[49,33],[50,33],[4,30],[5,30],[16,39],
+    [17,39],[24,34],[25,34],[34,9],[48,9]
+  ];
+  BUSH_DEFS.forEach(function(p){
+    var x = p[0], y = p[1];
+    if (!cellFree(x, y) || resBush[key(x, y)] || bushCells[key(x, y)]) return;
+    bushes.push({ x: x + .5, y: y + .5, snow: y < GATE_Y, cx: x, cy: y });
+    bushCells[key(x, y)] = true;
+  });
+})();
+/* プレイヤーが草むらの中にいるか／草むら＋しゃがみで隠れているか */
+function playerInBush(){
+  if (!player) return false;
+  return !!bushCells[Math.floor(player.x) + ',' + Math.floor(player.y)];
+}
+function playerHidden(){
+  return !!(player && player.crouch && playerInBush());
+}
 
 function makeEnemy(def){
   return {
@@ -1991,6 +2208,14 @@ var mouseFire = false, mouseAim = false, pointerLocked = false;
 var snapCooldown = 0, padPrev = [], padSnapArmed = true, mouseAccum = 0;
 var touchFlags = { fwd: false, back: false, left: false, right: false, fire: false, act: false };
 document.addEventListener('keydown', function(e){
+  /* Alt+Enter：フルスクリーン切替（どの画面でも）。Escで解除するのはブラウザ標準に任せる */
+  if (e.altKey && e.code === 'Enter'){
+    e.preventDefault();
+    if (!e.repeat && typeof toggleFullscreen === 'function') toggleFullscreen();
+    return;
+  }
+  /* フルスクリーン中のEscはブラウザが解除に使うので、ポーズの開閉には使わない */
+  if (e.code === 'Escape' && (document.fullscreenElement || document.webkitFullscreenElement)) return;
   if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space'].indexOf(e.key) >= 0) e.preventDefault();
   if (e.key === 'Control') e.preventDefault();
   keys[e.code] = true;
@@ -3180,7 +3405,12 @@ function updateInteract(dt, gp){
 
 /* --- enemies --- */
 function canSee(en, distP){
+  var inBush = playerInBush();
+  /* 草むら＋しゃがみ＝本家式の隠れ場所：至近距離（目の前）以外は見えない */
+  if (inBush && player.crouch && distP > 1.5) return false;
   var vis = player.crouch ? 7.5 : 11;
+  /* 草むらに立ったままでは効果は弱い：視認距離だけ少し縮む（上昇率の鈍化は updateEnemy 側） */
+  if (inBush && !player.crouch) vis = Math.min(vis, 8);
   if (distP > vis) return false;
   if (distP > 1.35){
     var toP = Math.atan2(player.y - en.y, player.x - en.x);
@@ -3254,12 +3484,14 @@ function updateEnemy(en, dt){
     if (!en.alert){
       var rate = distP < 3 ? 130 : distP < 6.5 ? 62 : 30;
       if (player.crouch) rate *= 0.55;
+      if (playerInBush() && !player.crouch) rate *= 0.55; /* 草むらに立っていると気づかれにくい（弱い効果） */
       if (en.hunter) rate *= 0.35; /* ハンターは気配が薄く、こちらの発見メーターが上がりにくい */
       en.awareness += rate * dt;
       if (en.awareness >= 100) makeAlert(en);
     }
   } else if (!en.alert){
-    en.awareness = Math.max(0, en.awareness - 11 * dt);
+    /* 草むらに隠れている間は、上がっていた発見メーターも速く下がる */
+    en.awareness = Math.max(0, en.awareness - (playerHidden() ? 34 : 11) * dt);
   } else {
     en.loseT += dt;
   }
@@ -3550,6 +3782,8 @@ function render(){
   var list = [];
   trees.forEach(function(t){ list.push({ img: sprTree, x: t.x, y: t.y, hS: 1.3, wS: 1.05 }); });
   crates.forEach(function(t){ list.push({ img: t.outpost ? sprCrateSupply : sprCrate, x: t.x, y: t.y, hS: 0.6, wS: 0.85, low: true }); });
+  bushes.forEach(function(t){ list.push({ img: t.snow ? sprBushSnow : sprBush, x: t.x, y: t.y, hS: 0.55, wS: 1.05, low: true }); });
+  rocks.forEach(function(t){ list.push({ img: t.kind === 'snow' ? sprSnowMound : sprRock, x: t.x, y: t.y, hS: t.kind === 'snow' ? 0.5 : 0.72, wS: 1.0, low: true }); });
   posts.forEach(function(t){ list.push({ img: sprPost, x: t.x, y: t.y, hS: 0.85, wS: 0.45, low: true }); });
   ices.forEach(function(t){ list.push({ img: sprIce, x: t.x, y: t.y, hS: 0.24, wS: 1.6, low: true }); });
   TOWERS.forEach(function(t){ list.push({ img: sprTower, x: t.x, y: t.y, hS: 2.35, wS: 1.0, dim: t.stopped }); });
@@ -3621,6 +3855,23 @@ function render(){
   drawMarkedIcons();
   drawThrowablesFx();
   drawViewmodel();
+  /* 草むらに隠れている間は、画面下端に葉の縁取りを薄く出して「茂みの中」を伝える */
+  if (player && playerHidden()){
+    ctx.save();
+    ctx.fillStyle = 'rgba(22,46,30,.38)';
+    for (var hx = -8; hx < W + 8; hx += 26){
+      ctx.beginPath();
+      ctx.ellipse(hx + ((hx * 7) % 13), H + 4, 17, 13 + ((hx * 11) % 7), 0, 0, 7);
+      ctx.fill();
+    }
+    ctx.fillStyle = 'rgba(46,96,58,.35)';
+    for (var hx2 = 4; hx2 < W + 8; hx2 += 34){
+      ctx.beginPath();
+      ctx.ellipse(hx2, H + 7, 13, 9, 0, 0, 7);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
   if (cameraMode && markProgress > 0 && markTargetRef){
     var frac = Math.min(1, markProgress / MARK_TIME);
     ctx.save();
@@ -3948,6 +4199,17 @@ function drawMapOn(g, S, full){
     g.fillStyle = '#bfe0ea';
     g.beginPath(); g.ellipse(ic.x * cw, ic.y * chh, cw * 0.8, chh * 0.5, 0, 0, 7); g.fill();
   });
+  /* 草むら（薄い緑／雪原は薄い白緑）と岩・雪のこぶ（薄いグレー／白）を薄く表示 */
+  bushes.forEach(function(b){
+    if (!full && !cellRevealed(b.cx, b.cy)) return;
+    g.fillStyle = b.snow ? 'rgba(196,220,200,.6)' : 'rgba(96,178,110,.55)';
+    g.beginPath(); g.ellipse(b.x * cw, b.y * chh, cw * 0.55, chh * 0.4, 0, 0, 7); g.fill();
+  });
+  rocks.forEach(function(r){
+    if (!full && !cellRevealed(r.cx, r.cy)) return;
+    g.fillStyle = r.kind === 'snow' ? 'rgba(226,238,246,.75)' : 'rgba(168,172,172,.8)';
+    g.fillRect(r.cx * cw + 0.5, r.cy * chh + 0.5, cw - 1, chh - 1);
+  });
   /* 拠点マーカー */
   OUTPOSTS.forEach(function(o){
     if (!full && !cellRevealed(Math.floor(o.cx), Math.floor(o.cy))) return;
@@ -4036,7 +4298,11 @@ function drawMapOn(g, S, full){
   g.lineTo(player.x * cw + Math.cos(player.angle) * cw * 1.6, player.y * chh + Math.sin(player.angle) * chh * 1.6);
   g.stroke();
 }
-function drawMinimap(){ drawMapOn(mm, 148, false); }
+var MM_SCALE = 1; /* ミニマップの実解像度倍率（resizeCanvasで表示サイズ×DPRに追従させる） */
+function drawMinimap(){
+  mm.setTransform(MM_SCALE, 0, 0, MM_SCALE, 0, 0);
+  drawMapOn(mm, 148, false);
+}
 
 /* ---------------- HUD ---------------- */
 var hpBarEl = document.getElementById('hpBar'),
@@ -4053,6 +4319,12 @@ function updateHUD(){
   if (sh) sh.textContent = 'XP ' + prog.xp + ' / ' + xpForNext() + '　スキルポイント ' + prog.sp + '　カルマ Lv' + prog.karma +
     (huntT > 0 ? '　狩猟の注射 あと' + Math.ceil(huntT) + '秒' : '');
   document.getElementById('crouchTag').style.display = player.crouch ? 'inline-block' : 'none';
+  var hideEl = document.getElementById('hideTag');
+  if (hideEl){
+    var inBushNow = playerInBush();
+    hideEl.style.display = inBushNow ? 'inline-block' : 'none';
+    if (inBushNow) hideEl.textContent = player.crouch ? '隠れている（草むら）' : '草むらの中（しゃがむと隠れる）';
+  }
   resLineEl.textContent = '皮 ×' + prog.hides + '　包帯 ×' + player.medkits + ' / ' + medCap() +
     '　注射 狩' + player.syrHunt + '・回' + player.syrHeal + '　薬草 ×' + prog.herbs;
   var thEl = document.getElementById('throwHud');
@@ -4370,7 +4642,11 @@ function showResult(mode){
   var stXpEl = document.getElementById('stXp');
   if (stXpEl) stXpEl.textContent = prog.xp + ' XP（次まで ' + xpForNext() + '）／ ' + prog.sp + ' P';
   document.getElementById('stTime').textContent = fmtTime(game.time);
-  var rg = document.getElementById('resultMap').getContext('2d');
+  var rmEl = document.getElementById('resultMap');
+  var rmBack = Math.round(216 * Math.min(2, window.devicePixelRatio || 1));
+  if (rmEl.width !== rmBack || rmEl.height !== rmBack){ rmEl.width = rmBack; rmEl.height = rmBack; }
+  var rg = rmEl.getContext('2d');
+  rg.setTransform(rmBack / 216, 0, 0, rmBack / 216, 0, 0);
   drawMapOn(rg, 216, true);
   showOnly(resultEl);
   sfxJingle(mode === 'all' || mode === 'clear');
@@ -4425,6 +4701,77 @@ function setSnowfall(on){
 }
 document.getElementById('snowSel').addEventListener('change', function(e){ setSnowfall(e.target.value === 'on'); });
 document.getElementById('snowSelTitle').addEventListener('change', function(e){ setSnowfall(e.target.value === 'on'); });
+
+/* ---------------- Fullscreen & 解像度追従 ----------------
+   ぼやけ対策：キャンバスの実解像度を「表示サイズ × デバイスピクセル密度」に
+   追従させる（上限は幅2560）。フルスクリーン切替とリサイズのたびに再計算し、
+   空・地面のグラデーションも焼き直す。ミニマップも同じ倍率で描き直す。
+   論理座標（480×270）・レイの本数・当たり判定は変更しない。 */
+function isFullscreen(){ return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+function toggleFullscreen(){
+  if (isFullscreen()){
+    var ex = document.exitFullscreen || document.webkitExitFullscreen;
+    if (ex){ try { var xp = ex.call(document); if (xp && xp.catch) xp.catch(function(){}); } catch (err) {} }
+    return;
+  }
+  var el = document.querySelector('.wrap');
+  var req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (!req){
+    if (typeof game !== 'undefined' && game.state === 'play') showMsg('このブラウザではフルスクリーンにできません', 2);
+    return;
+  }
+  try {
+    var p = req.call(el);
+    if (p && p.catch) p.catch(function(){});
+  } catch (err) {}
+}
+function syncFsButtons(){
+  var on = isFullscreen();
+  var t = document.getElementById('fsBtnTitle');
+  if (t) t.textContent = on ? 'フルスクリーンを終わる' : 'フルスクリーン';
+  var pz = document.getElementById('fsBtnPause');
+  if (pz) pz.textContent = on ? 'フルスクリーンを終わる' : 'フルスクリーン';
+  var h = document.getElementById('fsBtnHud');
+  if (h){
+    h.title = on ? 'フルスクリーンを終わる（Esc）' : 'フルスクリーン（Alt+Enter）';
+    h.setAttribute('aria-label', h.title);
+  }
+}
+function resizeCanvas(){
+  var dispW = cv.clientWidth || 960;
+  var dpr = window.devicePixelRatio || 1;
+  var targetW = Math.round(dispW * dpr);
+  if (targetW < 480) targetW = 480;
+  if (targetW > 2560) targetW = 2560;
+  var targetH = Math.round(targetW * 9 / 16);
+  if (cv.width !== targetW || cv.height !== targetH){
+    cv.width = targetW; cv.height = targetH;
+  }
+  RENDER_SCALE = targetW / W;
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+  buildGradients(); /* 空・地面のグラデーションを新しい解像度で焼き直す */
+  var mmEl = document.getElementById('minimap');
+  var mmDisp = mmEl.clientWidth || 148;
+  var mmBack = Math.max(148, Math.min(512, Math.round(mmDisp * dpr)));
+  if (mmEl.width !== mmBack || mmEl.height !== mmBack){
+    mmEl.width = mmBack; mmEl.height = mmBack;
+  }
+  MM_SCALE = mmBack / 148;
+}
+var fsResizeQueued = false;
+function queueFsResize(){
+  if (fsResizeQueued) return;
+  fsResizeQueued = true;
+  requestAnimationFrame(function(){ fsResizeQueued = false; resizeCanvas(); });
+}
+document.getElementById('fsBtnTitle').addEventListener('click', toggleFullscreen);
+document.getElementById('fsBtnPause').addEventListener('click', toggleFullscreen);
+document.getElementById('fsBtnHud').addEventListener('click', toggleFullscreen);
+window.addEventListener('resize', queueFsResize);
+document.addEventListener('fullscreenchange', function(){ resizeCanvas(); syncFsButtons(); queueFsResize(); });
+document.addEventListener('webkitfullscreenchange', function(){ resizeCanvas(); syncFsButtons(); queueFsResize(); });
+resizeCanvas();
+syncFsButtons();
 
 /* ---------------- Main loop ---------------- */
 var lastT = performance.now();
