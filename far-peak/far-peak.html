@@ -358,7 +358,7 @@
             <div>
             <table class="controls">
               <tr><td>移動</td><td>左スティック ／ <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></td></tr>
-              <tr><td>振り向き</td><td>右スティック ／ <kbd>←</kbd><kbd>→</kbd>（カクッと段階回転）</td></tr>
+              <tr><td>振り向き</td><td>右スティック ／ <kbd>←</kbd><kbd>→</kbd>（なめらかに回転・既定。ポーズ画面でスナップ等にも変更可）</td></tr>
               <tr><td>狙う（微調整）</td><td>LT 長押し ／ 右クリック長押し ― ゆっくり回れる</td></tr>
               <tr><td>撃つ</td><td>RT ／ 左クリック（弓は長押しで溜めて離す。スナイパーは構え中のズームで遠くを狙える）</td></tr>
               <tr><td>カメラ（マーキング）</td><td>十字キー上 ／ <kbd>C</kbd> ― 出し入れ（トグル）。構えたまま照準を合わせ続けると約0.6秒で自動マーク。マークは壁越し・ミニマップでも見える</td></tr>
@@ -397,12 +397,13 @@
             <div class="setrow">
               <label for="rotMode">回転方式</label>
               <select id="rotMode">
-                <option value="snap" selected>スナップターン（標準）</option>
-                <option value="smooth">なめらか（速度上限つき）</option>
+                <option value="snap">スナップターン</option>
+                <option value="smooth" selected>なめらか（標準・速度上限つき）</option>
                 <option value="grid">グリッド移動＋90度ターン</option>
               </select>
             </div>
-            <p class="setnote">スナップターンは一定角度ずつカクッと回ります。狙う（LT／右クリック）間は、どの方式でもゆっくり微調整できます。</p>
+            <p class="setnote">既定は「なめらか」（速度上限つきの等速回転）です。スナップターンは一定角度ずつカクッと回り、右スティック（←→キー）を倒し続けると連続で回ります。狙う（LT／右クリック）間は、どの方式でもゆっくり微調整できます。</p>
+            <p class="setnote" id="padDebug">パッド診断：コントローラー未接続</p>
             <div class="setrow">
               <label for="volSel">環境音の音量</label>
               <select id="volSel">
@@ -1860,7 +1861,7 @@ function markedCount(){
   if (alarms) alarms.forEach(function(a){ if (a.active && a.marked) n++; });
   return n;
 }
-var rotMode = 'snap';
+var rotMode = 'smooth';
 var gridStep = null;
 var towerHold = 0, towerHoldTarget = null;
 
@@ -2326,6 +2327,61 @@ function padEdge(gp, i){
   var now = padBtn(gp, i), was = !!padPrev[i];
   padPrev[i] = now;
   return now && !was;
+}
+/* 右スティック横軸の読み取り。
+   標準マッピングでは axes[2] だが、非標準マッピングのパッド（HORI製など
+   DirectInput系）では右スティック横が axes[3] や axes[4] に来たり、
+   axes[2] がトリガー軸だったりして、そのままだと回転が一切届かない。
+   非標準の場合は「トリガーを押していないときに、静止位置（≒0）を見たことのある
+   軸の中で1本だけ大きく倒れている軸」を右スティック横軸として自動で覚える。 */
+var padRxIndex = -1, padRxId = '', padAxisRestOk = {};
+function padRightStickX(gp){
+  if (!gp || !gp.axes) return 0;
+  var ax = gp.axes;
+  if (gp.mapping === 'standard'){
+    var sv = ax[2] || 0;
+    return Math.abs(sv) > 0.18 ? sv : 0;
+  }
+  var i, v;
+  for (i = 2; i < ax.length && i <= 5; i++){
+    if (Math.abs(ax[i] || 0) < 0.2) padAxisRestOk[i] = true;
+  }
+  if (padRxIndex >= 0 && padRxId === gp.id){
+    v = ax[padRxIndex] || 0;
+    return Math.abs(v) > 0.18 ? v : 0;
+  }
+  if (!padBtn(gp, 6) && !padBtn(gp, 7)){
+    var best = -1, bestV = 0, second = 0;
+    for (i = 2; i < ax.length && i <= 5; i++){
+      if (!padAxisRestOk[i]) continue;
+      v = Math.abs(ax[i] || 0);
+      if (v > bestV){ second = bestV; bestV = v; best = i; }
+      else if (v > second){ second = v; }
+    }
+    if (best >= 0 && bestV > 0.55 && second < 0.35){
+      padRxIndex = best; padRxId = gp.id;
+    }
+  }
+  if (padRxIndex >= 0 && padRxId === gp.id){
+    v = ax[padRxIndex] || 0;
+    return Math.abs(v) > 0.18 ? v : 0;
+  }
+  v = ax[2] || 0;
+  return Math.abs(v) > 0.18 ? v : 0;
+}
+/* ポーズ画面の設定欄に出す、パッド入力の簡易診断表示 */
+function updatePadDebug(gp){
+  var el = document.getElementById('padDebug');
+  if (!el) return;
+  if (!gp){ el.textContent = 'パッド診断：コントローラー未接続'; return; }
+  var parts = [];
+  for (var i = 0; i < gp.axes.length; i++) parts.push('[' + i + '] ' + (gp.axes[i] || 0).toFixed(2));
+  var rx = (gp.mapping === 'standard') ? 2 : padRxIndex;
+  el.textContent = 'パッド診断：' + String(gp.id || '').slice(0, 30) +
+    ' ／ mapping: ' + (gp.mapping || 'なし（非標準）') +
+    ' ／ 右スティック横軸：' + (rx >= 0 ? 'axes[' + rx + ']' : '検出中（右スティックを左右に倒すと自動で合わせます）') +
+    ' ／ 横入力：' + padRightStickX(gp).toFixed(2) +
+    ' ／ axes: ' + parts.join(' ');
 }
 
 /* touch */
@@ -3187,23 +3243,23 @@ function updatePlayer(dt, gp){
   if (emptyMsgCd > 0) emptyMsgCd -= dt;
   var aim = aiming();
   var keyL = keys['ArrowLeft'] || touchFlags.left, keyR = keys['ArrowRight'] || touchFlags.right;
-  var stickX = 0;
-  if (gp && Math.abs(gp.axes[2] || 0) > 0.18) stickX = gp.axes[2];
+  var stickX = gp ? padRightStickX(gp) : 0;
   if (rotMode === 'grid' && !aim){
     var step = Math.PI / 2;
     if (snapCooldown <= 0){
-      if (keyL || stickX < -0.6){ player.angle -= step; snapCooldown = 0.22; }
-      else if (keyR || stickX > 0.6){ player.angle += step; snapCooldown = 0.22; }
+      if (keyL || stickX < -0.5){ player.angle -= step; snapCooldown = 0.22; }
+      else if (keyR || stickX > 0.5){ player.angle += step; snapCooldown = 0.22; }
     }
   } else if (rotMode === 'snap' && !aim){
     var sstep = Math.PI / 12;
     if (snapCooldown <= 0){
       if (keyL){ player.angle -= sstep; snapCooldown = 0.16; }
       else if (keyR){ player.angle += sstep; snapCooldown = 0.16; }
-      else if (stickX < -0.6 && padSnapArmed){ player.angle -= sstep; padSnapArmed = false; }
-      else if (stickX > 0.6 && padSnapArmed){ player.angle += sstep; padSnapArmed = false; }
+      /* スティックは倒し続けるとキーボード長押しと同じく一定間隔で回り続ける
+         （以前は「倒して戻す」1回につき1ステップだけで、360度見回せなかった） */
+      else if (stickX < -0.5){ player.angle -= sstep; snapCooldown = 0.17; }
+      else if (stickX > 0.5){ player.angle += sstep; snapCooldown = 0.17; }
     }
-    if (Math.abs(stickX) < 0.3) padSnapArmed = true;
   } else {
     var rate = aim ? 1.25 : 2.3;
     var turn = 0;
@@ -4775,12 +4831,17 @@ syncFsButtons();
 
 /* ---------------- Main loop ---------------- */
 var lastT = performance.now();
+var padDebugAt = 0;
 function loop(now){
   requestAnimationFrame(loop);
   var dt = Math.min(0.05, (now - lastT) / 1000);
   lastT = now;
   var gp = getPad();
   if (gp && !padConnected){ padConnected = true; padName = gp.id || ''; refreshPadUI(); }
+  if ((game.state === 'pause' || game.state === 'title') && now - padDebugAt > 150){
+    padDebugAt = now;
+    updatePadDebug(gp);
+  }
   if (game.state === 'play'){
     game.time += dt;
     if (gp){
