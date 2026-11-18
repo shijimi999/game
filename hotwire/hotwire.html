@@ -85,6 +85,18 @@
   .mbtn:disabled { opacity: .35; cursor: default; }
   .setRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 14px auto 0; max-width: 420px; font-size: 14px; }
   .setRow select { background: #2b3038; color: #fff; border: 1px solid rgba(255,255,255,.25); border-radius: 7px; padding: 6px 8px; font-size: 14px; }
+  /* ---------- コントローラー選択（COVERLINEと同等） ---------- */
+  .padSelectRow { margin: 14px auto 0; max-width: 420px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 12px 14px; text-align: left; }
+  .padSelHead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 14px; font-weight: 700; }
+  .padStatus { font-size: 11.5px; font-weight: 600; color: #9fd08a; text-align: right; word-break: break-all; }
+  .padStatus.none { color: #8f97a3; }
+  .padStatus.fixedMissing { color: #ff9d5c; }
+  .padSelect { width: 100%; margin-top: 8px; background: #2b3038; color: #fff; border: 1px solid rgba(255,255,255,.25); border-radius: 7px; padding: 7px 8px; font-size: 13.5px; }
+  .padSelectMeta { font-size: 11.5px; color: #8f97a3; line-height: 1.6; margin-top: 7px; white-space: pre-line; word-break: break-all; }
+  .padSelectActions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 9px; }
+  .padSelectActions .mbtn { padding: 7px 12px; font-size: 13px; flex: 1; white-space: nowrap; }
+  .padSelectHint { font-size: 11.5px; color: #8f97a3; line-height: 1.65; margin-top: 8px; }
+  .padSelectRow:has(select.pad-focus) { border-color: rgba(255,211,92,.55); background: rgba(255,211,92,.08); }
   #ctrlHelp { text-align: left; font-size: 12.5px; line-height: 1.75; color: #c2c9d2; background: rgba(255,255,255,.05); border-radius: 10px; padding: 12px 16px; margin-top: 18px; }
   #ctrlHelp b { color: #ffd35c; font-weight: 700; }
   .note { font-size: 11.5px; color: #8f97a3; margin-top: 12px; line-height: 1.6; }
@@ -228,6 +240,16 @@
       <select id="selSchemeT"><option value="screen">画面基準（おすすめ）</option><option value="car">車基準（GTA式）</option></select></div>
     <div class="setRow"><span>難易度</span>
       <select id="selDiffT"><option value="easy">EASY</option><option value="normal">NORMAL</option><option value="hard">HARD</option></select></div>
+    <div class="padSelectRow">
+      <div class="padSelHead"><span>使うコントローラー</span><span class="padStatus none" id="padStatusT">🎮 コントローラー未接続（キーボード/マウス可）</span></div>
+      <select id="selPadT" class="padSelect" aria-label="使うコントローラーを選ぶ"><option value="-1">自動で選ぶ（入力があったパッドを優先）</option></select>
+      <div class="padSelectMeta">検出中… パッドのボタンを押すと一覧が更新されます</div>
+      <div class="padSelectActions">
+        <button class="mbtn btnPadUseActive" id="btnPadUseActiveT" type="button">今動かしたパッドに固定する</button>
+        <button class="mbtn btnPadAuto" id="btnPadAutoT" type="button">自動に戻す</button>
+      </div>
+      <div class="padSelectHint">USBスピーカーなど、ゲームパッドではない機器が検出されてしまう場合は、ここで<b>使うパッドだけ</b>を指定してください。指定中は他のパッドの入力（運転・メニュー操作）を一切使いません。「自動」に戻すと、入力があったパッドを優先します。</div>
+    </div>
     <div class="setRow"><span>BGM（HIPHOP）</span>
       <button class="mbtn" id="btnBgmT" style="padding:6px 18px; font-size:14px;">ON</button></div>
     <div class="setRow"><span>全画面表示</span>
@@ -238,6 +260,7 @@
       <b>運転（画面基準）：</b>押した方向へ車が回って進む。離すと減速。<b>Space</b>でブレーキ→バック<br>
       <b>運転（車基準）：</b>↑アクセル／↓ブレーキ・バック／←→ハンドル<br>
       <b>パッド：</b>左スティック、<b>A</b>乗り降り、<b>B／LT</b>ブレーキ、<b>RT</b>アクセル（車基準）、<b>X</b>発砲、<b>Start</b>ポーズ<br>
+      <b>コントローラー選択：</b>タイトル／ポーズ画面の「使うコントローラー」で、使うパッドのスロットだけを指定できます。USBスピーカーなど別の機器がゲームパッドとして検出される場合は、使うパッドを動かして「今動かしたパッドに固定する」か、プルダウンでスロットを選んでください（指定中は他のスロットを無視します）。選択は保存され、保存した機器が次回つながっていないときは自動選択に戻ります<br>
       <b>その他：</b>Esc／P ポーズ、M 音ON/OFF、Alt+Enter／⛶ボタン 全画面（解除はEscまたは同じボタン）<br>
       <b>音楽：</b>パーティ寄りHIPHOP風BGM（跳ねるドラム＋うねるシンセリード＋シャウト風スタブの合成ループ、100BPM）。手配★が付くと追跡アレンジに切り替わり、ポーズ中は小さくなる。Bキー／設定のボタンでON・OFF（効果音とは別）<br>
       <b>難易度：</b>EASY／NORMAL／HARDで変わるのはパトカーの追跡の強さだけ（最高速度・旋回と加速・狙いの正確さ・星が消えるまでの捜索時間・出現と補充の速さ）。星の付き方、ミッション、報酬は同じ。タイトルとポーズで変更でき、その場で反映される（星の数は変わらない）
@@ -255,6 +278,16 @@
       <select id="selSchemeP"><option value="screen">画面基準</option><option value="car">車基準</option></select></div>
     <div class="setRow"><span>難易度</span>
       <select id="selDiffP"><option value="easy">EASY</option><option value="normal">NORMAL</option><option value="hard">HARD</option></select></div>
+    <div class="padSelectRow">
+      <div class="padSelHead"><span>使うコントローラー</span><span class="padStatus none" id="padStatusP">🎮 コントローラー未接続（キーボード/マウス可）</span></div>
+      <select id="selPadP" class="padSelect" aria-label="使うコントローラーを選ぶ"><option value="-1">自動で選ぶ（入力があったパッドを優先）</option></select>
+      <div class="padSelectMeta">検出中…</div>
+      <div class="padSelectActions">
+        <button class="mbtn btnPadUseActive" id="btnPadUseActiveP" type="button">今動かしたパッドに固定する</button>
+        <button class="mbtn btnPadAuto" id="btnPadAutoP" type="button">自動に戻す</button>
+      </div>
+      <div class="padSelectHint">USBスピーカーなど別の機器が混ざる場合は、使うパッドのスロットだけを指定してください。指定中は他のスロットを無視します。</div>
+    </div>
     <div class="setRow"><span>BGM（HIPHOP）</span>
       <button class="mbtn" id="btnBgmP" style="padding:6px 18px; font-size:14px;">ON</button></div>
     <div class="setRow"><span>全画面表示</span>
@@ -821,12 +854,12 @@ function loadSave(){ try{ const s=localStorage.getItem(SAVE_KEY); if(s) return J
 function writeSave(){
   if(!G.started) return;
   /* A互換：既存項目（money/done/hasGun/assist/scheme）はそのまま維持し、cleared を追加するだけ */
-  const data={ money:G.money, done:G.missionsDone, hasGun:G.hasGun, assist:settings.assist, scheme:settings.scheme, bgm:settings.bgm!==false, diff:settings.diff||'easy', cleared: !!G.cleared || G.missionsDone>=12 };
+  const data={ money:G.money, done:G.missionsDone, hasGun:G.hasGun, assist:settings.assist, scheme:settings.scheme, bgm:settings.bgm!==false, diff:settings.diff||'easy', cleared: !!G.cleared || G.missionsDone>=12, padIndex:(typeof settings.padIndex==='number'? settings.padIndex : -1), padId:settings.padId||'' };
   try{ localStorage.setItem(SAVE_KEY, JSON.stringify(data)); }catch(e){}
 }
 function saveCleared(s){ if(!s) return false; return !!s.cleared || (s.done||0)>=12; }
-let settings = { assist:2, scheme:'screen', bgm:true, diff:'easy' };
-(function(){ const s=loadSave(); if(s){ settings.assist=(s.assist!=null?s.assist:2); settings.scheme=s.scheme||'screen'; settings.bgm=s.bgm!==false; settings.diff=(s.diff==='normal'||s.diff==='hard')? s.diff : 'easy'; /* 難易度項目のない旧セーブはEASY */ } })();
+let settings = { assist:2, scheme:'screen', bgm:true, diff:'easy', padIndex:-1, padId:'' };
+(function(){ const s=loadSave(); if(s){ settings.assist=(s.assist!=null?s.assist:2); settings.scheme=s.scheme||'screen'; settings.bgm=s.bgm!==false; settings.diff=(s.diff==='normal'||s.diff==='hard')? s.diff : 'easy'; /* 難易度項目のない旧セーブはEASY */ settings.padIndex=(typeof s.padIndex==='number'&&s.padIndex>=0)? Math.floor(s.padIndex) : -1; settings.padId=(typeof s.padId==='string')? s.padId : ''; /* パッド項目のない旧セーブは自動選択 */ } })();
 const SNAP=[[10,16],[18,26],[25,32],[32,42]]; // [吸着角, 保持角] 度
 
 /* ---------------- ゲーム状態 ---------------- */
@@ -947,12 +980,197 @@ function syncFsUI(){
     if(b) b.textContent = fs ? '⛶ 全画面を解除' : '⛶ 全画面にする';
   }
 }
+/* ---------------- コントローラー選択（COVERLINEと同等） ----------------
+   padSelectedIndex: -1 = 自動（実際に入力があったパッドを優先）／ 0以上 = そのスロットだけを使う。
+   固定中は他のスロットの入力を運転・UI操作の両方で一切使わない（USBスピーカー等の
+   誤検出機器の切り分けが目的）。readPad() が唯一の入口で、運転・ポーズ・メニュー
+   ナビのすべてがここを通るため、固定は全経路に効く。キーボード・マウス・タッチは
+   この選択の対象外で、従来どおり動く。
+   選択は settings 経由でセーブに保存する。保存した機器が次回接続されていない場合は
+   自動へフォールバックする（下の pollPadChoice 内）。connected フラグは社外パッドで
+   false のままの実装があるため信用せず、「ボタンか軸を持つ実体が居る」ことを接続とみなす。
+   getGamepads() の戻り値は iterable でない環境があるため、必ず添字で回す。 */
+let padSelectedIndex = (typeof settings.padIndex==='number')? settings.padIndex : -1;
+let padSelectedId = settings.padId || '';
+let padRestoredPending = padSelectedIndex>=0; /* セーブから復元した固定が、今セッションでまだ実機確認できていない */
+let padLastActiveIndex = -1, padLastActiveId = '';
+let padEventIndex = -1, padEventId = '';
+let padDiagSlots = [], padDiagErr = '', padBlocked = false;
+let padSelectSig = '';
+let currentPadIndex = -1, currentPadId = '';
+addEventListener('gamepadconnected', e=>{
+  try{ if(e&&e.gamepad){ padEventIndex=e.gamepad.index; padEventId=e.gamepad.id||''; } }catch(err){}
+  padBlocked=false; padSelectSig='';
+});
+addEventListener('gamepaddisconnected', e=>{
+  try{ if(e&&e.gamepad&&padEventIndex===e.gamepad.index){ padEventIndex=-1; padEventId=''; } }catch(err){}
+  padSelectSig='';
+});
+function padHasActivity(g){
+  try{
+    if(g.buttons){ for(let i=0;i<g.buttons.length;i++){ const b=g.buttons[i]; if(b&&(b.pressed||(b.value||0)>0.4)) return true; } }
+    if(g.axes){ for(let i=0;i<g.axes.length;i++){ if(Math.abs(g.axes[i]||0)>0.55) return true; } }
+  }catch(e){}
+  return false;
+}
+function padSnapshotSlot(i,g){
+  const s={ idx:i, present:!!g, id:'', mapping:'', connected:false, nb:0, na:0 };
+  if(!g) return s;
+  try{ s.id=g.id||''; s.mapping=g.mapping||''; s.connected=!!g.connected; s.nb=g.buttons?g.buttons.length:0; s.na=g.axes?g.axes.length:0; }catch(e){}
+  return s;
+}
+function padShortName(id){ return (id||'').replace(/\s*\(.*?\)\s*/g,'').trim().slice(0,44) || '(id不明)'; }
+function persistPadSelection(){
+  settings.padIndex=padSelectedIndex; settings.padId=padSelectedId;
+  /* 既存セーブがあれば pad 項目だけをその場で書き足す（他項目は壊さない）。
+     ゲーム開始後は writeSave() が全項目（pad含む）をまとめて保存する。 */
+  try{ const s=loadSave(); if(s){ s.padIndex=settings.padIndex; s.padId=settings.padId; localStorage.setItem(SAVE_KEY, JSON.stringify(s)); } }catch(e){}
+  writeSave();
+}
+function fallbackPadSelection(){
+  padSelectedIndex=-1; padSelectedId=''; padRestoredPending=false;
+  padSelectSig='';
+  persistPadSelection();
+}
+function setPadSelection(idx){
+  padSelectedIndex=(typeof idx==='number'&&idx>=0)? Math.floor(idx) : -1;
+  padRestoredPending=false;
+  if(padSelectedIndex>=0){
+    const s=padDiagSlots[padSelectedIndex];
+    padSelectedId=(s&&s.present)? (s.id||'') : '';
+    if(!padSelectedId && padLastActiveIndex===padSelectedIndex) padSelectedId=padLastActiveId||'';
+  } else padSelectedId='';
+  padSelectSig=''; /* 次回 sync で必ず再描画 */
+  persistPadSelection();
+  try{ syncPadSelectUI(); }catch(e){}
+}
+/* 全スロットを走査し、選択ルールに従って採用するパッドを1つ決める。
+   戻り値: { g, index } | null。全スロットの活動は固定中でも記録する
+   （「今動かしたパッドに固定する」が、固定先以外を動かした場合にも効くように）。 */
+function pollPadChoice(){
+  let list=null;
+  padDiagErr='';
+  try{
+    if(navigator.getGamepads) list=navigator.getGamepads();
+    else if(navigator.webkitGetGamepads) list=navigator.webkitGetGamepads();
+  }catch(err){
+    padDiagErr=String((err&&err.message)||err);
+    if(/permissions policy|disallowed|not allowed/i.test(padDiagErr)) padBlocked=true;
+    list=null;
+  }
+  if(list) padBlocked=false;
+  padDiagSlots=[];
+  currentPadIndex=-1; currentPadId='';
+  if(!list){ try{ syncPadSelectUI(); }catch(e){} return null; }
+  const byIndex={};
+  let first=null, activeNow=null, eventPad=null, lastActivePad=null;
+  for(let i=0;i<list.length;i++){
+    let g=null;
+    try{ g=list[i]; }catch(e){ padDiagSlots.push(padSnapshotSlot(i,null)); continue; }
+    padDiagSlots.push(padSnapshotSlot(i,g));
+    if(!g) continue;
+    let usable=false;
+    try{ usable=!!((g.buttons&&g.buttons.length)||(g.axes&&g.axes.length>=2)); }catch(e){}
+    if(!usable) continue;
+    byIndex[i]=g;
+    if(!first) first={ g:g, index:i };
+    if(i===padEventIndex) eventPad={ g:g, index:i };
+    if(i===padLastActiveIndex) lastActivePad={ g:g, index:i };
+    if(padHasActivity(g)){
+      padLastActiveIndex=i;
+      try{ padLastActiveId=g.id||''; }catch(e){}
+      if(!activeNow) activeNow={ g:g, index:i };
+    }
+  }
+  let chosen=null;
+  if(padSelectedIndex>=0){
+    const cand=byIndex[padSelectedIndex]||null;
+    if(cand && (!padSelectedId || !(cand.id||'') || cand.id===padSelectedId)){
+      chosen={ g:cand, index:padSelectedIndex };
+      padRestoredPending=false;
+      try{ if(cand.id){ padSelectedId=cand.id; settings.padId=cand.id; } }catch(e){}
+    } else if(cand && padSelectedId && cand.id && cand.id!==padSelectedId){
+      /* 同じスロットに別の機器がいる = 保存した機器はつながっていない → 自動へフォールバック */
+      fallbackPadSelection();
+      chosen=activeNow||lastActivePad||eventPad||first;
+    } else if(!cand && padRestoredPending){
+      /* セーブから復元した固定先がまだ見えていない。他に使える機器があるなら
+         自動へフォールバックし、機器が何も無ければ待機する（後から差される可能性を残す） */
+      if(first){ fallbackPadSelection(); chosen=activeNow||lastActivePad||eventPad||first; }
+    } else {
+      chosen=null; /* セッション中に固定した機器が外れた: 他は使わず待機（COVERLINEと同じ） */
+    }
+  } else {
+    /* 自動: 実際に入力があったパッドを優先し、無ければ直近で動かしたもの／接続イベントのもの／先頭 */
+    chosen=activeNow||lastActivePad||eventPad||first;
+  }
+  if(chosen){ currentPadIndex=chosen.index; try{ currentPadId=chosen.g.id||''; }catch(e){ currentPadId=''; } }
+  try{ syncPadSelectUI(); }catch(e){}
+  return chosen;
+}
+function syncPadSelectUI(){
+  const selects=document.querySelectorAll('.padSelect');
+  if(!selects.length) return;
+  let sig='sel:'+padSelectedIndex+'|blocked:'+padBlocked+'|';
+  for(const s of padDiagSlots) sig+=s.idx+':'+(s.present?1:0)+':'+(s.id||'').slice(0,60)+':'+s.nb+'/'+s.na+';';
+  if(padSelectedIndex>=0 && padSelectedIndex>=padDiagSlots.length) sig+='|extra:'+padSelectedIndex;
+  if(sig!==padSelectSig){
+    padSelectSig=sig;
+    selects.forEach(sel=>{
+      let html='<option value="-1">自動で選ぶ（入力があったパッドを優先）</option>';
+      if(padBlocked){
+        html+='<option value="-1" disabled>（この表示環境では検出できません）</option>';
+      } else if(!padDiagSlots.length){
+        html+='<option value="-1" disabled>（まだ何も検出されていません — パッドのボタンを押してください）</option>';
+      } else {
+        for(const s of padDiagSlots){
+          if(!s.present) html+='<option value="'+s.idx+'">スロット'+s.idx+'：（なし）</option>';
+          else html+='<option value="'+s.idx+'">スロット'+s.idx+'：'+padShortName(s.id).replace(/</g,'&lt;')+' （ボタン'+s.nb+'／軸'+s.na+'）</option>';
+        }
+        if(padSelectedIndex>=0 && padSelectedIndex>=padDiagSlots.length) html+='<option value="'+padSelectedIndex+'">スロット'+padSelectedIndex+'：（現在は未検出）</option>';
+      }
+      sel.innerHTML=html;
+      sel.value=String(padSelectedIndex);
+      sel.disabled=!!padBlocked;
+    });
+  } else {
+    selects.forEach(sel=>{ if(sel.value!==String(padSelectedIndex)) sel.value=String(padSelectedIndex); });
+  }
+  /* 接続状態の表示：選択中／使用中の機器が分かるようにする */
+  let status='', statusCls='';
+  if(padBlocked){ status='🎮 この表示環境では利用不可（キーボード/マウス可）'; statusCls='none'; }
+  else if(currentPadIndex>=0 && padSelectedIndex>=0){ status='🎮 固定中：スロット'+currentPadIndex+' ＝ '+padShortName(currentPadId); }
+  else if(currentPadIndex>=0){ status='🎮 使用中：スロット'+currentPadIndex+' ＝ '+padShortName(currentPadId)+'（自動）'; }
+  else if(padSelectedIndex>=0){ status='🎮 スロット'+padSelectedIndex+' を固定中 — パッドが見えていません（他の機器は無視中）'; statusCls='fixedMissing'; }
+  else if(padDiagSlots.some(s=>s.present)){ status='🎮 検出あり — 使うパッドのボタンを押してください'; statusCls='none'; }
+  else { status='🎮 コントローラー未接続（キーボード/マウス可）'; statusCls='none'; }
+  document.querySelectorAll('.padStatus').forEach(elm=>{
+    if(elm.textContent!==status) elm.textContent=status;
+    const want='padStatus '+statusCls;
+    if(elm.className!==want) elm.className=want;
+  });
+  let meta='';
+  if(padBlocked) meta='この表示環境では Gamepad API がブロックされているため選択できません。ブラウザで直接開くと選べます。';
+  else if(padSelectedIndex>=0){
+    const s=padDiagSlots[padSelectedIndex];
+    if(s&&s.present) meta='固定中：スロット'+padSelectedIndex+' ＝ '+(s.id||'(id不明)').slice(0,56)+'\n他のスロットは無視しています。変えるときは上のプルダウンから選び直してください。';
+    else meta='固定中：スロット'+padSelectedIndex+' — このスロットには今パッドが見えていません。他の機器は無視したまま待機します。使うパッドを差し直すか、「自動に戻す」を押してください。';
+  } else if(currentPadIndex>=0){
+    meta='自動選択中：いま採用しているのは スロット'+currentPadIndex+' ＝ '+padShortName(currentPadId)+' です。\n別の機器（スピーカー等）を掴んでしまうときは、その機器ではないスロットを選んで固定してください。';
+    if(padLastActiveIndex>=0 && padLastActiveIndex!==currentPadIndex) meta+='\n直近で入力があったのは スロット'+padLastActiveIndex+' でした。';
+  } else if(padDiagSlots.some(s=>s.present)){
+    meta='検出されている機器：'+padDiagSlots.filter(s=>s.present).map(s=>'スロット'+s.idx).join('、')+'。使うパッドのボタンを押すか、プルダウンで直接指定してください。';
+  } else meta='まだ機器が検出されていません。パッドを接続してボタンを押すと、ここにスロット一覧が出ます。';
+  document.querySelectorAll('.padSelectMeta').forEach(elm=>{ if(elm.textContent!==meta) elm.textContent=meta; });
+}
 function readPad(){
-  padState={ active:false, x:0, y:0, brake:false, accel:false, act:false, shoot:false, start:false, bBtn:false, dUp:false, dDown:false, dLeft:false, dRight:false };
-  let gp=null;
-  try{ const ps=navigator.getGamepads?navigator.getGamepads():[]; for(const p of ps){ if(p&&p.connected){ gp=p; break; } } }catch(e){}
-  if(!gp) return padState;
+  padState={ active:false, x:0, y:0, brake:false, accel:false, act:false, shoot:false, start:false, bBtn:false, dUp:false, dDown:false, dLeft:false, dRight:false, index:-1, id:'' };
+  const chosen=pollPadChoice();
+  if(!chosen) return padState;
+  const gp=chosen.g;
   padState.active=true;
+  padState.index=chosen.index;
+  try{ padState.id=gp.id||''; }catch(e){}
   let x=gp.axes[0]||0, y=gp.axes[1]||0;
   const m=Math.hypot(x,y);
   if(m<0.38){ x=0; y=0; } else { const s=(m-0.38)/(1-0.38)/m; x*=s; y*=s; }
@@ -1014,7 +1232,7 @@ function crime(type,x,y){
   // 近くの歩行者が通報
   let best=null,bd=300;
   for(const p of peds){
-    if(p.down>0||p.report||p.riding) continue;
+    if(p.down>0||p.report||p.riding||p.passenger) continue; // 送迎の客は通報役にしない（乗車処理が止まるため）
     const d=dist(p.x,p.y,x,y);
     if(d<bd){ bd=d; best=p; }
   }
@@ -1298,6 +1516,42 @@ function updatePeds(dt){
   for(const p of peds){
     if(p.riding) continue;
     if(p.down>0){ p.down-=dt; continue; }
+    /* 送迎の客は最優先で処理する。交通車から逃げる判定より前に置くこと：
+       客は道路際で待つため、目の前を交通車が速度55超で通るたびに逃走判定が
+       成立し、乗車処理に到達できないまま押し流される不具合があった。
+       通報役にも選ばれない（crime 側でも除外）ので、ここで待機・乗車だけを行う。 */
+    const jobNow=G.mission||G.sideJob;
+    if(p.passenger && jobNow && jobNow.stage==='pickupWait'){
+      p.boardT=(p.boardT||0)+dt; // 迎え待ちの経過時間（フェイルセーフ用）
+      const pc=player.car;
+      if(pc && !pc.dead){
+        const d=dist(pc.x,pc.y,p.x,p.y);
+        const spd=speedOf(pc);
+        if(d<26){ p.riding=true; onPassengerAboard(); continue; }
+        /* フェイルセーフ：プレイヤーが近くに停車しているのに一定時間乗れていない
+           （建物や縁石で歩行が詰まった等）場合は、障害物を無視して直線的に寄り、
+           必ず乗車を完了させる。歩行が詰まった場合も同じ経路に入る。 */
+        const direct = (p.boardT>4 && spd<16 && d<380) || ((p._stuckT||0)>1.6 && spd<48 && d<380);
+        if(direct){
+          p.x=lerp(p.x,pc.x,1-Math.exp(-5.5*dt)); p.y=lerp(p.y,pc.y,1-Math.exp(-5.5*dt));
+          if(dist(pc.x,pc.y,p.x,p.y)<26){ p.riding=true; onPassengerAboard(); }
+          continue;
+        }
+        /* 通常の迎え歩行：車が現実的な距離（道路⇔歩道の配置でも届く範囲）にいて
+           徐行以下なら、客が自分から車まで歩いて寄る。当たり判定でほぼ進めない
+           フレームが続いたら詰まりとして数え、上の直線寄せに切り替える。 */
+        if(d<380 && spd<48){
+          const a=Math.atan2(pc.y-p.y,pc.x-p.x);
+          const step=132*dt;
+          const col=collideCircle(p.x+Math.cos(a)*step, p.y+Math.sin(a)*step, 8);
+          const moved=dist(col.x,col.y,p.x,p.y);
+          p.x=col.x; p.y=col.y;
+          if(moved<step*.3) p._stuckT=(p._stuckT||0)+dt; else p._stuckT=Math.max(0,(p._stuckT||0)-dt*2);
+          if(dist(pc.x,pc.y,p.x,p.y)<26){ p.riding=true; onPassengerAboard(); }
+        }
+      }
+      continue; // 客はその場で待つ（逃走・うろつきはしない）
+    }
     if(p.report){ continue; } // 通報中は静止
     p.t-=dt;
     // 車から逃げる
@@ -1312,15 +1566,6 @@ function updatePeds(dt){
       const a=Math.atan2(p.y-flee.y,p.x-flee.x);
       p.angle=a; p.x+=Math.cos(a)*150*dt; p.y+=Math.sin(a)*150*dt;
       const col=collideCircle(p.x,p.y,8); p.x=col.x; p.y=col.y;
-      continue;
-    }
-    if(p.passenger && (G.mission||G.sideJob) && (G.mission||G.sideJob).stage==='pickupWait'){
-      // 車が近くで停まっていたら乗り込む
-      const pc=player.car;
-      if(pc&&speedOf(pc)<14&&dist(pc.x,pc.y,p.x,p.y)<70){
-        p.x=lerp(p.x,pc.x,1-Math.exp(-4*dt)); p.y=lerp(p.y,pc.y,1-Math.exp(-4*dt));
-        if(dist(pc.x,pc.y,p.x,p.y)<24){ p.riding=true; onPassengerAboard(); }
-      }
       continue;
     }
     if(p.t<=0){ p.t=rr(2,6); p.angle=rr(0,TAU); }
@@ -1845,16 +2090,26 @@ function updateMission(dt){
   }
   const px=player.x, py=player.y;
   if(m.stage==='pickup'){
-    if(dist(px,py,m.def.pickup.x,m.def.pickup.y)<46){
-      if(m.def.type==='taxi'){
-        m.stage='pickupWait';
-        let p=peds.find(p=>!p.riding&&p.down<=0&&!p.report);
-        if(!p) p=peds[0];
-        if(p){ p.passenger=true; p.riding=false; p.x=m.def.pickup.x+16; p.y=m.def.pickup.y+10; p.state='wait'; const cc=collideCircle(p.x,p.y,8); p.x=cc.x; p.y=cc.y; }
-        toast('客が近づいてくる。車を止めて待て');
-      } else {
-        m.stage='deliver'; m.stopIdx=0; toast(m.def.type==='multi'?'荷物を積んだ！ 配達先 1/3 へ急げ':'荷物を積んだ！ 配達先へ急げ'); sfx.pickup();
+    if(m.def.type==='taxi'){
+      /* 送迎：迎えの成立は「車で」近づいたときだけ。徒歩で範囲に入っても客を
+         出さない（車なしでは乗車できず詰むため）。範囲は道路上の車と歩道の客
+         という配置でも届くよう、配達系の46より広めに取る。
+         待ち合わせ位置 def.pickup は開始時に resolveMissionPoint で道路際の
+         到達可能点へ寄せ済みで、客はその点ちょうどに立つ（ずらすと建物内へ
+         押し戻されて位置が狂うため、オフセットは付けない）。 */
+      if(dist(px,py,m.def.pickup.x,m.def.pickup.y)<80){
+        if(!player.car){
+          if(m.warnT<=0){ m.warnT=3; toast('客は車に乗る。車で迎えに行け'); }
+        } else {
+          m.stage='pickupWait';
+          let p=peds.find(p=>!p.riding&&p.down<=0&&!p.report&&!p.passenger);
+          if(!p) p=peds.find(p=>!p.riding&&!p.passenger)||peds[0];
+          if(p){ p.passenger=true; p.riding=false; p.report=null; p.boardT=0; p._stuckT=0; p.x=m.def.pickup.x; p.y=m.def.pickup.y; p.state='wait'; const cc=collideCircle(p.x,p.y,8); p.x=cc.x; p.y=cc.y; }
+          toast('客が近づいてくる。近くに車を止めて待て');
+        }
       }
+    } else if(dist(px,py,m.def.pickup.x,m.def.pickup.y)<46){
+      m.stage='deliver'; m.stopIdx=0; toast(m.def.type==='multi'?'荷物を積んだ！ 配達先 1/3 へ急げ':'荷物を積んだ！ 配達先へ急げ'); sfx.pickup();
     }
   } else if(m.stage==='deliver'){
     const dest=currentDest(); if(!dest) return;
@@ -1936,10 +2191,10 @@ function uiItems(ctx){
   let ids=[];
   if(ctx==='ending') ids=['btnFreeRoam','btnEndingTitle'];
   else if(ctx==='call') ids=['btnAccept','btnDecline'];
-  else if(ctx==='pause') ids=['selAssistP','selSchemeP','selDiffP','btnBgmP','btnFsP','btnResume','btnQuitTitle'];
+  else if(ctx==='pause') ids=['selAssistP','selSchemeP','selDiffP','selPadP','btnPadUseActiveP','btnPadAutoP','btnBgmP','btnFsP','btnResume','btnQuitTitle'];
   else if(ctx==='title'){
     if(el('overwriteBox').style.display!=='none') ids=['btnOverwriteYes','btnOverwriteNo'];
-    else ids=['btnContinue','btnNew','selAssistT','selSchemeT','selDiffT','btnBgmT','btnFsT'];
+    else ids=['btnContinue','btnNew','selAssistT','selSchemeT','selDiffT','selPadT','btnPadUseActiveT','btnPadAutoT','btnBgmT','btnFsT'];
   }
   return ids.map(id=>el(id)).filter(e=>e && !e.disabled && e.getClientRects().length>0);
 }
@@ -2010,7 +2265,7 @@ window.addEventListener('keydown', e=>{
     if(!e.repeat){ e.preventDefault(); uiActivate(); }
   }
 });
-['btnAccept','btnDecline','btnContinue','btnNew','btnOverwriteYes','btnOverwriteNo','btnResume','btnQuitTitle','btnFreeRoam','btnEndingTitle','selAssistT','selSchemeT','selDiffT','selAssistP','selSchemeP','selDiffP','btnBgmT','btnBgmP','btnFsT','btnFsP'].forEach(id=>{
+['btnAccept','btnDecline','btnContinue','btnNew','btnOverwriteYes','btnOverwriteNo','btnResume','btnQuitTitle','btnFreeRoam','btnEndingTitle','selAssistT','selSchemeT','selDiffT','selAssistP','selSchemeP','selDiffP','selPadT','selPadP','btnPadUseActiveT','btnPadAutoT','btnPadUseActiveP','btnPadAutoP','btnBgmT','btnBgmP','btnFsT','btnFsP'].forEach(id=>{
   const n=el(id); if(!n) return;
   const sync=()=>{ const items=uiItems(uiContext()); const i=items.indexOf(n); if(i>=0){ uiFocus.index=i; applyUIFocus(); } };
   n.addEventListener('pointerenter', sync);
@@ -2604,6 +2859,7 @@ function syncSettingsUI(){
   for(const id of ['selSchemeT','selSchemeP']) el(id).value=settings.scheme;
   for(const id of ['selDiffT','selDiffP']) el(id).value=settings.diff;
   syncBgmUI();
+  try{ syncPadSelectUI(); }catch(e){}
 }
 function refreshTitle(){
   const s=loadSave();
@@ -2633,6 +2889,18 @@ el('btnEndingTitle').onclick=()=>{ el('endingScr').classList.remove('on'); G.end
 for(const id of ['selAssistT','selAssistP']) el(id).onchange=e=>{ settings.assist=parseInt(e.target.value,10); syncSettingsUI(); writeSave(); };
 for(const id of ['selSchemeT','selSchemeP']) el(id).onchange=e=>{ settings.scheme=e.target.value; syncSettingsUI(); writeSave(); };
 for(const id of ['selDiffT','selDiffP']) el(id).onchange=e=>{ settings.diff=(e.target.value==='normal'||e.target.value==='hard')? e.target.value : 'easy'; syncSettingsUI(); writeSave(); if(G.mode==='play'&&!G.paused) toast('難易度：'+settings.diff.toUpperCase()+' ― 追跡バランスを切り替えた（星の数はそのまま）'); };
+/* コントローラー選択：プルダウンの変更（マウス／キーボード／パッドの左右切替すべて
+   'change' イベントに集約される）と、固定／自動ボタンの配線。タイトル・ポーズ両方の
+   プルダウンは setPadSelection → syncPadSelectUI で常に同期する。 */
+for(const id of ['selPadT','selPadP']){ const s=el(id); if(s) s.addEventListener('change', e=>{ const v=parseInt(e.target.value,10); setPadSelection(isNaN(v)? -1 : v); }); }
+document.querySelectorAll('.btnPadAuto').forEach(b=>b.addEventListener('click', ()=>{ setPadSelection(-1); if(G.mode==='play'&&!G.paused) toast('🎮 コントローラー：自動で選ぶ'); }));
+document.querySelectorAll('.btnPadUseActive').forEach(b=>b.addEventListener('click', ()=>{
+  /* 直近で実際に入力があったパッドへ固定。無ければ現在採用中のパッドを使う */
+  let target=padLastActiveIndex;
+  if(target<0) target=currentPadIndex;
+  if(target>=0){ setPadSelection(target); if(G.mode==='play'&&!G.paused) toast('🎮 スロット'+target+' に固定した'); }
+  else { pollPadChoice(); if(G.mode==='play'&&!G.paused) toast('🎮 まず使うパッドのボタンを押してください'); }
+}));
 refreshTitle();
 
 /* ---------------- タッチ操作 ---------------- */
