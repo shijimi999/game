@@ -423,6 +423,7 @@
         <b>フルスクリーン：</b>画面右の ⛶ ボタン / <kbd>Alt</kbd>+<kbd>Enter</kbd> で切替、<kbd>Esc</kbd> で解除。
         <b>コントローラー選択：</b>タイトル／ポーズ画面の「使うコントローラーを選ぶ」で、使うパッドのスロットだけを指定できます。USBスピーカーなど別の機器がゲームパッドとして検出される場合は、パッドのボタンを押して診断でスロット番号を確認し、そのスロットに固定してください（指定中は他のスロットを無視します）。
         <b>メニューのパッド操作：</b>タイトル・結果（MISSION COMPLETE）・ゲームオーバー・ポーズの各画面でも、十字キー／左スティックで項目を選んでAボタンで決定できます。結果画面とゲームオーバー画面では、Bボタンでミッション選択に戻れます。
+        <b>動物園（作戦3）：</b>展示場の柵は壁と同じ扱いで、中には入れず弾も視線も通しません。動物は檻の中にいる背景の存在で、撃ち合いには巻き込まれません。岩場・植え込み・木の柵がカバーになります。
       </div>
     </div>
 
@@ -1003,12 +1004,18 @@ const MISSIONS = [
     zones:[ {x:940,y:380, foes:["R","R","S","R","S"]},
             {x:720,y:560, foes:["R","S","R","R","S","R"]},
             {x:500,y:740, foes:["S","R","R","S","R","R"]} ] },
-  { id:2, name:"決戦：市庁舎前", diff:"難易度 ★★★", hpMul:1.5, dmgMul:1.3, seed:3303,
+  { id:2, name:"制圧：市立動物園", diff:"難易度 ★★☆", hpMul:1.35, dmgMul:1.22, seed:5505, zoo:true,
+    resSuffix:"園内が少しだけ静かになった。動物たちは檻の中で無事だった。",
+    brief:"占拠された市立動物園を制圧せよ。入口広場からパンダ展示場わきを抜け、奥のメイン舎前で待ち構える敵を排除して帰還せよ。動物たちは檻の中で静かにしている。",
+    zones:[ {x:360,y:780, foes:["R","R","S","R","S"]},
+            {x:1020,y:620, foes:["R","S","R","R","S","R"]},
+            {x:720,y:300, foes:["R","S","R","H","S","R"]} ] },
+  { id:3, name:"決戦：市庁舎前", diff:"難易度 ★★★", hpMul:1.5, dmgMul:1.3, seed:3303,
     brief:"最終防衛線を突破し、重装ターゲットを排除せよ。",
     zones:[ {x:500,y:380, foes:["R","S","R","R","S","R"]},
             {x:940,y:740, foes:["S","R","R","S","R","R","S"]},
             {x:720,y:560, foes:["R","S","R","H","S","R"]} ] },
-  { id:3, name:"制圧：国家記念堂", diff:"難易度 ★★★", hpMul:1.6, dmgMul:1.35, seed:4404, indoor:true,
+  { id:4, name:"制圧：国家記念堂", diff:"難易度 ★★★", hpMul:1.6, dmgMul:1.35, seed:4404, indoor:true,
     brief:"大理石の記念堂に立てこもる敵勢力を制圧せよ。入口の広間から列柱の間を進み、大きな座像の控える奥のエリアを制圧して帰還せよ。室内では音が反響する。",
     zones:[ {x:500,y:800, foes:["R","R","S","R","S"]},
             {x:720,y:540, foes:["R","S","R","R","S","R"]},
@@ -1789,9 +1796,11 @@ let coverSeq = 1;
 function addCover(x,y,w,h,type){ game.covers.push({ id:coverSeq++, x,y,w,h,type }); }
 function addWall(x,y,w,h,sign,roof){ game.walls.push({ x,y,w,h,sign:sign||"", roof:roof||"#3d434c" }); }
 function addWallKind(x,y,w,h,kind,roof){ const wl={ x,y,w,h,sign:"", roof:roof||"#3d434c", kind }; game.walls.push(wl); return wl; }
+function addEnclosure(x,y,w,h,animal,label){ const wl={ x,y,w,h,sign:"", roof:"#5d7050", kind:"enclosure", animal, label }; game.walls.push(wl); return wl; }
 
 function genMap(m){
   if(m.indoor){ genMapIndoor(m); return; }
+  if(m.zoo){ genMapZoo(m); return; }
   game.walls=[]; game.covers=[]; coverSeq=1;
   const rng = mulberry32(m.seed);
   // 外周（建物扱い）
@@ -1841,6 +1850,184 @@ function genMap(m){
   buildGround();
 }
 
+/* ---------- 屋外マップ：市立動物園（獣舎の囲い・岩場・植え込みがカバーになる園内） ----------
+   街マップとは生成を分ける。外周は園のフェンス（kind:"zoofence"）、動物の展示場は
+   柵で囲われた壁（kind:"enclosure"／中には動物がいて入れない・視線も通さない）、
+   飼育棟や売店は通常の建物。カバーは岩（rock）・植え込み（hedge）・木の柵（fence）を中心に置く。
+   入口（帰還ポイント）は南西の入園ゲート前、今までどおり SPAWN / EXTRACT の位置を使う。
+   ゾーンは 入口広場(南西) → 東の園路 → メイン舎前(北) の順に進む配置で、
+   展示場どうしの間に80前後の通路が残るよう置いてある（行き止まりにはならない）。 */
+function genMapZoo(m){
+  game.walls=[]; game.covers=[]; coverSeq=1;
+  const rng = mulberry32(m.seed);
+  // 外周：園のフェンス
+  addWallKind(0,0,WORLD_W,24,"zoofence","#4c5a48"); addWallKind(0,WORLD_H-24,WORLD_W,24,"zoofence","#4c5a48");
+  addWallKind(0,0,24,WORLD_H,"zoofence","#4c5a48"); addWallKind(WORLD_W-24,0,24,WORLD_H,"zoofence","#4c5a48");
+  // 飼育棟・売店などの建物（通常の建物描画＋看板）
+  addWall(56,52,200,104,"爬虫類館","#4f6152");
+  addWall(580,52,280,82,"メイン舎","#6a6250");
+  addWall(1184,52,200,104,"鳥類館","#546a72");
+  addWall(56,380,150,104,"小動物舎","#5d5a44");
+  addWall(1234,380,150,104,"売店","#6e5240");
+  addWall(1030,862,190,104,"飼育棟","#4c554e");
+  addWall(584,884,170,92,"休憩所","#5a5148");
+  addWall(860,962,120,68,"飼料庫","#5a5148");
+  // 展示場：柵の囲い（壁）。動物は囲いの中で背景として描かれ、撃ち合いには巻き込まれない
+  addEnclosure(260,420,220,130,"elephant","ゾウ展示場");
+  addEnclosure(880,300,260,140,"giraffe","キリン展示場");
+  addEnclosure(560,560,240,120,"panda","パンダ展示場");
+  // 飼育員の作業車（数少ない車カバー）
+  addCover(180,640,46,20,"car");
+  addCover(1120,760,20,46,"car");
+  addCover(1240,860,20,46,"car");
+  // 密度追加：園路の合間や展示場の周りの開けた場所に、岩・植え込み・柵を増やす
+  // （通路は塞がないよう、展示場と建物の間の空き地に点在させる）
+  addCover(150,280,44,18,"rock");
+  addCover(330,185,44,18,"rock");
+  addCover(470,180,38,11,"hedge");
+  addCover(920,185,44,18,"rock");
+  addCover(1060,190,38,11,"hedge");
+  addCover(240,340,34,11,"fence");
+  addCover(520,350,38,11,"hedge");
+  addCover(640,470,38,11,"hedge");
+  addCover(790,360,40,17,"rock");
+  addCover(1180,560,34,11,"fence");
+  addCover(320,600,40,17,"rock");
+  addCover(860,520,38,11,"hedge");
+  addCover(1020,540,34,11,"fence");
+  addCover(1130,648,40,17,"rock");
+  addCover(560,700,38,11,"hedge");
+  addCover(240,860,38,11,"hedge");
+  addCover(460,880,44,18,"rock");
+  addCover(820,880,38,11,"hedge");
+  // ゾーン周辺に戦闘用カバーを guaranteed 配置（岩・植え込み・木の柵など園内らしい物で）
+  for(const z of m.zones){
+    addCover(z.x-88, z.y-14, 44,18,"rock");
+    addCover(z.x+56, z.y+34, 38,11,"hedge");
+    addCover(z.x-40, z.y+66, 34,11,"fence");
+    addCover(z.x+64, z.y-64, 20,40,"rock");
+    addCover(z.x-70, z.y-72, 34,11,"barricade");
+    addCover(z.x+6,  z.y-6,  18,18,"crate");
+  }
+  // 散布カバー（岩場・植え込み・柵・飼料箱が園路のあちこちに。密にしつつ、既存カバーとは重ねない）
+  for(let i=0;i<34;i++){
+    const x=60+rng()*(WORLD_W-140), y=60+rng()*(WORLD_H-140);
+    if(game.walls.some(w=>pointInRect(x+15,y+6,w,12))) continue;
+    if(Math.hypot(x-SPAWN.x,y-SPAWN.y)<80) continue;
+    const t=["rock","hedge","fence","crate","barricade"][Math.floor(rng()*5)];
+    const cw = t==="crate"?17 : t==="rock"?40 : 34;
+    const ch = t==="crate"?17 : t==="rock"?17 : 11;
+    if(game.walls.some(w=> x < w.x+w.w+2 && x+cw > w.x-2 && y < w.y+w.h+2 && y+ch > w.y-2)) continue;
+    if(game.covers.some(c=> x < c.x+c.w+8 && x+cw > c.x-8 && y < c.y+c.h+8 && y+ch > c.y-8)) continue;
+    addCover(x,y,cw,ch,t);
+  }
+  buildGroundZoo();
+}
+
+/* 動物園の地面：草地＋砂利の園路＋入口プラザ＋池を1枚の地面キャンバスに焼き込む。
+   曇りの昼・柔らかい影のトーンは街マップと揃える */
+function buildGroundZoo(){
+  const c=document.createElement('canvas'); c.width=WORLD_W*GROUND_SCALE; c.height=WORLD_H*GROUND_SCALE;
+  const g=c.getContext('2d'); g.scale(GROUND_SCALE,GROUND_SCALE); const rng=mulberry32(780);
+  /* --- 草地ベース：曇り空の下の、くすんだ緑。色むらと踏み荒らされた土の斑 --- */
+  g.fillStyle="#79826d"; g.fillRect(0,0,WORLD_W,WORLD_H);
+  for(let i=0;i<170;i++){ g.fillStyle=rng()<0.5?"rgba(255,255,240,.045)":"rgba(46,56,38,.055)"; g.beginPath(); g.ellipse(rng()*WORLD_W,rng()*WORLD_H,16+rng()*36,10+rng()*20,rng()*3,0,Math.PI*2); g.fill(); }
+  for(let i=0;i<40;i++){ g.fillStyle="rgba(133,118,90,.13)"; g.beginPath(); g.ellipse(rng()*WORLD_W,rng()*WORLD_H,8+rng()*18,5+rng()*10,rng()*3,0,Math.PI*2); g.fill(); }
+  for(let i=0;i<420;i++){ g.fillStyle=rng()<0.5?"rgba(210,220,180,.14)":"rgba(52,64,42,.16)"; g.fillRect(rng()*WORLD_W, rng()*WORLD_H, 1.6, 2.6+rng()*2); }
+  /* --- 園路：砂利道（縦の主園路・横の園路・北の園路） --- */
+  const path=(x,y,w,h)=>{
+    g.fillStyle="#9b9687"; g.fillRect(x,y,w,h);
+    g.fillStyle="rgba(70,66,58,.20)"; g.fillRect(x,y,w,2); g.fillRect(x,y+h-2,w,2); g.fillRect(x,y,2,h); g.fillRect(x+w-2,y,2,h);
+    for(let i=0;i<(w*h)/1500;i++){ g.fillStyle=rng()<0.5?"rgba(255,252,240,.12)":"rgba(70,66,58,.12)"; g.beginPath(); g.ellipse(x+rng()*w, y+rng()*h, 2.4+rng()*3, 1.6+rng()*2, rng()*3, 0, Math.PI*2); g.fill(); }
+  };
+  path(680,0,80,WORLD_H);
+  path(0,730,WORLD_W,60);
+  path(200,262,1040,50);
+  path(300,312,52,418);   // 入口広場から北園路への脇道
+  /* --- 入口プラザ（帰還ポイント周辺）：石畳とゲート前の円 --- */
+  g.fillStyle="#8f8d84"; g.fillRect(36,880,268,170);
+  g.strokeStyle="rgba(30,34,40,.14)"; g.lineWidth=1;
+  for(let x=36;x<=304;x+=26){ g.beginPath(); g.moveTo(x,880); g.lineTo(x,1050); g.stroke(); }
+  for(let y=880;y<=1050;y+=26){ g.beginPath(); g.moveTo(36,y); g.lineTo(304,y); g.stroke(); }
+  g.strokeStyle="rgba(255,255,255,.14)"; g.beginPath(); g.arc(120,950,30,0,Math.PI*2); g.stroke();
+  g.fillStyle="rgba(232,230,225,.20)"; g.font="bold 12px 'Hiragino Kaku Gothic ProN',sans-serif"; g.textAlign="center";
+  g.fillText("CITY ZOO", 170, 906);
+  /* --- メイン舎前の広場 --- */
+  g.fillStyle="#8f8d84"; g.fillRect(556,150,328,96);
+  g.strokeStyle="rgba(30,34,40,.12)";
+  for(let x=556;x<=884;x+=26){ g.beginPath(); g.moveTo(x,150); g.lineTo(x,246); g.stroke(); }
+  for(let y=150;y<=246;y+=24){ g.beginPath(); g.moveTo(556,y); g.lineTo(884,y); g.stroke(); }
+  /* --- 池：曇り空を映す水面（東の園路の南） --- */
+  g.fillStyle="rgba(96,110,96,.5)"; g.beginPath(); g.ellipse(900,842,64,30,0,0,Math.PI*2); g.fill();
+  g.fillStyle="rgba(168,192,205,.55)"; g.beginPath(); g.ellipse(900,840,58,26,0,0,Math.PI*2); g.fill();
+  g.strokeStyle="rgba(255,255,255,.4)"; g.beginPath(); g.ellipse(884,834,26,9,-0.2,Math.PI*1.05,Math.PI*1.65); g.stroke();
+  g.strokeStyle="rgba(110,130,145,.35)"; g.beginPath(); g.ellipse(900,840,58,26,0,0,Math.PI*2); g.stroke();
+  g.fillStyle="#5d7355";
+  for(const lp of [[852,826],[946,852],[872,856]]){ g.beginPath(); g.ellipse(lp[0],lp[1],6,2.6,0.4,0,Math.PI*2); g.fill(); }
+  /* --- 花壇：園路わきのくすんだ色どり --- */
+  const flowerbed=(x,y,w)=>{
+    g.fillStyle="#5d4c38"; g.fillRect(x,y,w,14);
+    g.fillStyle="#4e6b46"; g.fillRect(x+1,y+2,w-2,10);
+    const cols=["#c47a7a","#d3b06a","#b08bb8","#e0e0d8"];
+    for(let i=0;i<w/7;i++){ g.fillStyle=cols[(rng()*4)|0]; g.beginPath(); g.arc(x+5+i*7, y+4+rng()*6, 1.7, 0, Math.PI*2); g.fill(); }
+  };
+  flowerbed(500,700,54); flowerbed(816,322,54); flowerbed(286,584,54); flowerbed(1090,700,54); flowerbed(420,268,54);
+  /* --- 園内の木：街路樹と同じ描き方で、開けた草地にだけ植える --- */
+  const drawTree=(x,y)=>{
+    g.fillStyle="rgba(35,40,48,.07)"; g.beginPath(); g.ellipse(x+2,y+5,19,10.5,0,0,Math.PI*2); g.fill();
+    g.fillStyle="rgba(35,40,48,.10)"; g.beginPath(); g.ellipse(x+2,y+4,14,8,0,0,Math.PI*2); g.fill();
+    g.fillStyle="#7a5c3e"; g.beginPath(); if(g.roundRect) g.roundRect(x-1.6,y-1,3.2,5,1.6); else g.rect(x-1.6,y-1,3.2,5); g.fill();
+    g.fillStyle="#4a6b45"; g.beginPath(); g.arc(x,y,13,0,Math.PI*2); g.fill();
+    g.fillStyle="#5a7f52"; g.beginPath(); g.arc(x-5,y-3.5,8.6,0,Math.PI*2); g.fill();
+    g.beginPath(); g.arc(x+5.5,y+2,7.6,0,Math.PI*2); g.fill();
+    g.beginPath(); g.arc(x+1,y-6,6.4,0,Math.PI*2); g.fill();
+    g.fillStyle="#719664";
+    for(let i=0;i<5;i++){ g.beginPath(); g.arc(x-8+rng()*16, y-7+rng()*12, 2.6+rng()*1.4, 0, Math.PI*2); g.fill(); }
+    g.fillStyle="rgba(255,246,220,.20)"; g.beginPath(); g.arc(x-4.5,y-5.5,3.4,0,Math.PI*2); g.fill();
+  };
+  for(const tp of [[180,260],[520,196],[980,180],[1160,224],[420,892],[820,936],[1240,648],[140,584],[1260,980],[540,640]]) drawTree(tp[0],tp[1]);
+  /* --- ベンチと案内板（地面に焼き込む小物） --- */
+  const bench=(x,y)=>{
+    g.fillStyle="rgba(35,40,48,.12)"; g.fillRect(x+1,y+5,26,2);
+    g.fillStyle="#5d4630"; g.fillRect(x,y,26,2); g.fillRect(x,y+3,26,2);
+    g.fillStyle="#20242a"; g.fillRect(x+2,y+5,3,2); g.fillRect(x+21,y+5,3,2);
+  };
+  bench(640,706); bench(790,806); bench(360,330); bench(1160,470);
+  for(const sb of [[330,872],[756,724],[690,256]]){
+    g.fillStyle="#4c4438"; g.fillRect(sb[0],sb[1],16,11);
+    g.fillStyle="#d8d2c2"; g.fillRect(sb[0]+2,sb[1]+2,12,4);
+    g.fillStyle="#7a8a6a"; g.fillRect(sb[0]+2,sb[1]+7,8,2);
+  }
+  /* --- 落ち葉の散らかり --- */
+  for(let i=0;i<80;i++){
+    g.fillStyle = rng()<0.5 ? "rgba(196,164,96,.20)" : "rgba(120,124,74,.22)";
+    g.beginPath(); g.ellipse(rng()*WORLD_W, rng()*WORLD_H, 1.8+rng()*1.8, 1.1+rng()*1, rng()*3, 0, Math.PI*2); g.fill();
+  }
+  /* --- 建物・展示場の土台：周囲の縁と落影（展示場は砂のエプロン、建物は舗装縁） --- */
+  for(const w of game.walls){
+    if(w.w>=60 && w.h>=40){
+      if(w.kind==="enclosure"){ g.fillStyle="#8a8474"; g.fillRect(w.x-6,w.y-6,w.w+12,w.h+12); }
+      else if(w.kind!=="zoofence"){ g.fillStyle="#8b9096"; g.fillRect(w.x-5,w.y-5,w.w+10,w.h+10); }
+    }
+    if(w.kind!=="zoofence"){
+      g.fillStyle="rgba(35,42,52,.07)"; g.fillRect(w.x-7,w.y+2,w.w+16,w.h+12);
+      g.fillStyle="rgba(35,42,52,.09)"; g.fillRect(w.x-4,w.y+1,w.w+10,w.h+8);
+      g.fillStyle="rgba(35,42,52,.13)"; g.fillRect(w.x-2,w.y,w.w+5,w.h+4);
+    }
+  }
+  /* --- 雲の影（街マップと同じ、大きな柔らかい暗部） --- */
+  const cloudShadow=(cx,cy,rx,ry)=>{
+    const layers=[[1.0,0.028],[0.82,0.032],[0.62,0.036],[0.42,0.04]];
+    for(const L of layers){
+      g.fillStyle="rgba(38,48,62,"+L[1]+")";
+      g.beginPath(); g.ellipse(cx,cy,rx*L[0],ry*L[0],0,0,Math.PI*2); g.fill();
+    }
+  };
+  cloudShadow(300,220,330,190); cloudShadow(1050,300,380,210); cloudShadow(720,600,420,240);
+  cloudShadow(240,880,340,200); cloudShadow(1120,900,360,210);
+  game.groundCv=c;
+}
+
 /* ---------- 室内マップ：国家記念堂（大理石の記念堂／列柱の大空間／奥に座像） ----------
    屋外マップとは生成を分ける。外周と座像・側壁は大理石の壁（kind:"marble"/"statue"）、
    カバーは列柱（pillar）・倒れた柱（fallen）・台座（pedestal）を中心に置く。
@@ -1858,12 +2045,26 @@ function genMapIndoor(m){
   // 側壁の張り出し（回廊の区切り）：視線と動線を断つ
   addWallKind(30,452,150,22,"marble","#c3c9d1"); addWallKind(WORLD_W-180,452,150,22,"marble","#c3c9d1");
   addWallKind(30,700,150,22,"marble","#c3c9d1"); addWallKind(WORLD_W-180,700,150,22,"marble","#c3c9d1");
-  // 列柱：左右2列の大理石柱（カバーとして吸着できる）
-  for(const cx of [458, 958]){
+  // 北側の隅の区切り壁（回廊の密度を上げる大理石の袖壁）
+  addWallKind(120,180,110,20,"marble","#c3c9d1"); addWallKind(1210,180,110,20,"marble","#c3c9d1");
+  // 列柱：内側2列＋外側2列の大理石柱（カバーとして吸着できる）。側廊にも柱列を通して密にする
+  for(const cx of [228, 458, 958, 1188]){
     for(const cy of [256, 392, 528, 664, 800, 936]) addCover(cx, cy, 24, 24, "pillar");
   }
   // 座像の手前と入口にも柱のペア
   addCover(548,178,24,24,"pillar"); addCover(868,178,24,24,"pillar");
+  addCover(548,986,24,24,"pillar"); addCover(868,986,24,24,"pillar");
+  // 密度追加：側廊とカーペット脇の開けた場所に、倒れた柱・台座を増やす
+  addCover(320,318,46,16,"fallen");
+  addCover(300,586,34,12,"pedestal");
+  addCover(330,852,46,16,"fallen");
+  addCover(1074,318,46,16,"fallen");
+  addCover(1106,586,34,12,"pedestal");
+  addCover(1064,852,46,16,"fallen");
+  addCover(598,200,34,12,"pedestal");
+  addCover(808,200,34,12,"pedestal");
+  addCover(598,724,34,12,"pedestal");
+  addCover(808,724,34,12,"pedestal");
   // ゾーン周辺に戦闘用カバーを guaranteed 配置（倒れた柱・台座・バリケード等）
   for(const z of m.zones){
     addCover(z.x-92, z.y-12, 46,16,"fallen");
@@ -1873,16 +2074,17 @@ function genMapIndoor(m){
     addCover(z.x-74, z.y-76, 34,11,"sandbag");
     addCover(z.x+8,  z.y-8,  18,18,"crate");
   }
-  // 散布カバー（石の残骸や台座が点在する）
-  for(let i=0;i<14;i++){
+  // 散布カバー（石の残骸や台座が点在する。密にしつつ、既存カバーとは重ねない）
+  for(let i=0;i<22;i++){
     const x=70+rng()*(WORLD_W-180), y=190+rng()*(WORLD_H-280);
     if(game.walls.some(w=>pointInRect(x+15,y+6,w,12))) continue;
     if(Math.hypot(x-SPAWN.x,y-SPAWN.y)<90) continue;
     const t=["pedestal","fallen","barricade","crate","sandbag"][Math.floor(rng()*5)];
-    if(t==="crate") addCover(x,y,17,17,"crate");
-    else if(t==="fallen") addCover(x,y,46,16,"fallen");
-    else if(t==="pedestal") addCover(x,y,34,12,"pedestal");
-    else addCover(x,y,34,11,t);
+    const cw = t==="crate"?17 : t==="fallen"?46 : t==="pedestal"?34 : 34;
+    const ch = t==="crate"?17 : t==="fallen"?16 : t==="pedestal"?12 : 11;
+    if(game.walls.some(w=> x < w.x+w.w+2 && x+cw > w.x-2 && y < w.y+w.h+2 && y+ch > w.y-2)) continue;
+    if(game.covers.some(c=> x < c.x+c.w+8 && x+cw > c.x-8 && y < c.y+c.h+8 && y+ch > c.y-8)) continue;
+    addCover(x,y,cw,ch,t);
   }
   buildGroundIndoor();
 }
@@ -3070,7 +3272,7 @@ function missionComplete(){
   game.unlocked = Math.max(game.unlocked, Math.min(MISSIONS.length-1, game.missionIdx+1));
   document.getElementById('hud').classList.add('hidden');
   document.getElementById('scr-result').classList.remove('hidden');
-  document.getElementById('resMission').textContent = game.mission.name+" ― 制圧完了。街区が少しだけ静かになった。";
+  document.getElementById('resMission').textContent = game.mission.name+" ― 制圧完了。"+(game.mission.resSuffix || "街区が少しだけ静かになった。");
   document.getElementById('resKills').textContent = game.kills;
   document.getElementById('resTime').textContent = fmtTime(game.time);
   document.getElementById('resLoot').textContent = game.player.weapons.length + " / 2";
@@ -3366,6 +3568,40 @@ function drawCoverShape(c){
     g.fillStyle="rgba(255,255,255,.4)"; rr(c.x+3,c.y+2.8,c.w-6,1.8,0.9); g.fill();
     g.strokeStyle="rgba(70,76,84,.35)"; g.lineWidth=1; rr(c.x+0.5,c.y+0.5,c.w-1,c.h-1,2.4); g.stroke();
     g.fillStyle="rgba(96,104,114,.4)"; rr(c.x+c.w/2-4.5,c.y+c.h/2-0.6,9,1.2,0.6); g.fill();
+  } else if(c.type==="rock"){
+    // 岩場：丸みのある岩の集まり（動物園の展示場まわりの岩）
+    const cxp=c.x+c.w/2, cyp=c.y+c.h/2;
+    softShadow(cxp, c.y+c.h-0.5, Math.max(c.w,c.h)*0.55, 3.6);
+    g.fillStyle="#878d94";
+    g.beginPath(); g.ellipse(cxp-c.w*0.26, cyp+c.h*0.14, c.w*0.27, c.h*0.36, 0, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.ellipse(cxp+c.w*0.26, cyp+c.h*0.14, c.w*0.27, c.h*0.36, 0, 0, Math.PI*2); g.fill();
+    g.fillStyle="#9aa0a7";
+    g.beginPath(); g.ellipse(cxp, cyp, c.w*0.34, c.h*0.5, 0, 0, Math.PI*2); g.fill();
+    g.fillStyle="rgba(255,255,255,.34)"; g.beginPath(); g.ellipse(cxp-c.w*0.1, cyp-c.h*0.2, c.w*0.16, c.h*0.18, -0.4, 0, Math.PI*2); g.fill();
+    g.fillStyle="rgba(70,76,84,.25)"; g.beginPath(); g.ellipse(cxp+c.w*0.2, cyp+c.h*0.22, c.w*0.14, c.h*0.13, 0.3, 0, Math.PI*2); g.fill();
+    g.strokeStyle="rgba(70,76,84,.35)"; g.lineWidth=1; g.lineCap="round";
+    g.beginPath(); g.moveTo(cxp-2, cyp-c.h*0.3); g.quadraticCurveTo(cxp+1, cyp, cxp-1, cyp+c.h*0.3); g.stroke();
+  } else if(c.type==="hedge"){
+    // 植え込み：刈り込まれた生け垣。葉の粒でふんわり見せる
+    softShadow(c.x+c.w/2, c.y+c.h-0.5, c.w*0.55, 3.4);
+    g.fillStyle="#47663f"; rr(c.x,c.y,c.w,c.h,4); g.fill();
+    g.fillStyle="#587a4c"; rr(c.x+1.2,c.y+1.2,c.w-2.4,c.h-3.4,3); g.fill();
+    const hrng=mulberry32(c.id*131+7);
+    g.fillStyle="#6d9260";
+    for(let i=0;i<9;i++){ g.beginPath(); g.arc(c.x+3+hrng()*(c.w-6), c.y+2.4+hrng()*(c.h-4.6), 1.3+hrng()*1.1, 0, Math.PI*2); g.fill(); }
+    g.fillStyle="rgba(255,246,220,.20)";
+    for(let i=0;i<4;i++){ g.beginPath(); g.arc(c.x+3+hrng()*(c.w-6), c.y+2+hrng()*3, 1, 0, Math.PI*2); g.fill(); }
+    g.strokeStyle="rgba(38,54,32,.4)"; g.lineWidth=1; rr(c.x+0.5,c.y+0.5,c.w-1,c.h-1,4); g.stroke();
+  } else if(c.type==="fence"){
+    // 木の柵：横桟＋縦の杭。杭の頭は少し尖らせる
+    softShadow(c.x+c.w/2, c.y+c.h-0.5, c.w*0.55, 3.2);
+    g.fillStyle="#7d5f3d"; rr(c.x,c.y+2.6,c.w,2.2,1); g.fill(); rr(c.x,c.y+c.h-4.8,c.w,2.2,1); g.fill();
+    for(let x=c.x+1; x<c.x+c.w-3; x+=6.4){
+      g.fillStyle="#96754f";
+      g.beginPath(); g.moveTo(x,c.y+c.h); g.lineTo(x,c.y+1.8); g.lineTo(x+2,c.y); g.lineTo(x+4,c.y+1.8); g.lineTo(x+4,c.y+c.h); g.closePath(); g.fill();
+      g.fillStyle="rgba(255,255,255,.16)"; g.fillRect(x+0.7,c.y+2.4,1.1,c.h-4);
+    }
+    g.strokeStyle="rgba(52,40,24,.35)"; g.lineWidth=1; rr(c.x+0.5,c.y+0.5,c.w-1,c.h-1,2); g.stroke();
   } else { // crate
     softShadow(c.x+c.w/2, c.y+c.h-0.5, c.w*0.58, 3.4);
     g.fillStyle="#77684c"; rr(c.x,c.y,c.w,c.h,2.6); g.fill();
@@ -3426,10 +3662,102 @@ function drawStatue(w){
   g.fillStyle="#b4bac2"; srr(cx-12,w.y-5,9,13,3.4); srr(cx+3,w.y-5,9,13,3.4);
   g.fillStyle="#9aa1a9"; srr(cx-13,w.y+7,11,3.6,1.8); srr(cx+2,w.y+7,11,3.6,1.8);
 }
+/* 動物園の外周フェンス：濃緑の金網フェンス＋支柱（屋根のない壁として描く） */
+function drawZooFence(w){
+  const g=ctx;
+  g.fillStyle="rgba(35,42,52,.12)"; g.fillRect(w.x-1,w.y+3,w.w+4,w.h+3);
+  g.fillStyle="#4c5a48"; g.fillRect(w.x,w.y,w.w,w.h);
+  g.fillStyle="rgba(255,255,255,.10)";
+  if(w.w>=w.h){ g.fillRect(w.x,w.y+2,w.w,1.4); g.fillRect(w.x,w.y+w.h-3.4,w.w,1.4); }
+  else { g.fillRect(w.x+2,w.y,1.4,w.h); g.fillRect(w.x+w.w-3.4,w.y,1.4,w.h); }
+  g.strokeStyle="rgba(220,228,220,.13)"; g.lineWidth=1;
+  g.beginPath();
+  if(w.w>=w.h){ for(let x=w.x+6;x<w.x+w.w-2;x+=8){ g.moveTo(x,w.y+3); g.lineTo(x+5,w.y+w.h-3); g.moveTo(x+5,w.y+3); g.lineTo(x,w.y+w.h-3); } }
+  else { for(let y=w.y+6;y<w.y+w.h-2;y+=8){ g.moveTo(w.x+3,y); g.lineTo(w.x+w.w-3,y+5); g.moveTo(w.x+w.w-3,y); g.lineTo(w.x+3,y+5); } }
+  g.stroke();
+  g.fillStyle="#39443a";
+  if(w.w>=w.h){ for(let x=w.x+4;x<w.x+w.w;x+=36){ g.fillRect(x,w.y-1,3.4,w.h+2); } }
+  else { for(let y=w.y+4;y<w.y+w.h;y+=36){ g.fillRect(w.x-1,y,w.w+2,3.4); } }
+  g.strokeStyle="rgba(24,30,24,.45)"; g.strokeRect(w.x+0.5,w.y+0.5,w.w-1,w.h-1);
+}
+/* 動物の展示場：木の柵で囲った草地。中では動物が静かにしている（背景の存在で、当たり判定は壁と同じ） */
+function drawEnclosure(w){
+  const g=ctx;
+  const cxp=w.x+w.w/2, cyp=w.y+w.h/2;
+  g.fillStyle="rgba(35,42,52,.10)"; g.fillRect(w.x-2,w.y+3,w.w+6,w.h+5);
+  // 内側の草地と土の寝床
+  g.fillStyle="#6d7c5e"; g.fillRect(w.x,w.y,w.w,w.h);
+  g.fillStyle="rgba(255,255,240,.05)"; g.fillRect(w.x+4,w.y+4,w.w-8,w.h*0.4);
+  g.fillStyle="rgba(133,118,90,.35)"; g.beginPath(); g.ellipse(cxp,cyp+w.h*0.22,w.w*0.3,w.h*0.2,0,0,Math.PI*2); g.fill();
+  g.fillStyle="rgba(90,110,150,.30)"; g.beginPath(); g.ellipse(w.x+w.w*0.78,w.y+w.h*0.24,w.w*0.11,w.h*0.13,0,0,Math.PI*2); g.fill();   // 小さな水飲み場
+  // 動物本体（フラットな丸みのある絵で、檻の中の背景として描く）
+  if(w.animal==="elephant"){
+    g.fillStyle="#9aa3ab";
+    g.beginPath(); g.ellipse(cxp-4,cyp-2,27,15,0,0,Math.PI*2); g.fill();                       // 体
+    g.fillRect(cxp-24,cyp+8,7,11); g.fillRect(cxp-8,cyp+9,7,11); g.fillRect(cxp+8,cyp+9,7,11);  // 脚
+    g.beginPath(); g.arc(cxp+24,cyp-6,11.5,0,Math.PI*2); g.fill();                             // 頭
+    g.fillStyle="#8b949c"; g.beginPath(); g.ellipse(cxp+18,cyp-6,6.4,8,0.2,0,Math.PI*2); g.fill();   // 耳
+    g.strokeStyle="#9aa3ab"; g.lineWidth=4.4; g.lineCap="round";
+    g.beginPath(); g.moveTo(cxp+33,cyp-2); g.quadraticCurveTo(cxp+38,cyp+6,cxp+33,cyp+13); g.stroke();   // 鼻
+    g.strokeStyle="#8b949c"; g.lineWidth=1.6;
+    g.beginPath(); g.moveTo(cxp-30,cyp-6); g.quadraticCurveTo(cxp-36,cyp+2,cxp-33,cyp+10); g.stroke();   // 尾
+    g.fillStyle="#2c3138"; g.beginPath(); g.arc(cxp+27,cyp-8,1.4,0,Math.PI*2); g.fill();       // 目
+    g.fillStyle="rgba(255,255,255,.30)"; g.beginPath(); g.ellipse(cxp-8,cyp-11,11,4.4,-0.15,0,Math.PI*2); g.fill();
+  } else if(w.animal==="giraffe"){
+    g.strokeStyle="#c9a35f"; g.lineWidth=6.4; g.lineCap="round";
+    g.beginPath(); g.moveTo(cxp+12,cyp-6); g.lineTo(cxp+30,cyp-38); g.stroke();                // 首
+    g.fillStyle="#d9b878";
+    g.beginPath(); g.ellipse(cxp-4,cyp+2,24,12.5,0,0,Math.PI*2); g.fill();                     // 体
+    g.fillRect(cxp-22,cyp+9,5.4,14); g.fillRect(cxp-7,cyp+10,5.4,14); g.fillRect(cxp+8,cyp+10,5.4,14);   // 脚
+    g.beginPath(); g.ellipse(cxp+35,cyp-40,8.6,5.2,0.5,0,Math.PI*2); g.fill();                 // 頭
+    g.fillRect(cxp+26,cyp-50,2.6,7); g.fillRect(cxp+32,cyp-49,2.6,7);                         // 角
+    g.fillStyle="#a97e42";
+    for(const sp of [[-16,-2],[-4,4],[6,-4],[14,3],[-10,7],[24,-32],[28,-22]]){ g.beginPath(); g.ellipse(cxp+sp[0],cyp+sp[1],3.6,2.6,0.4,0,Math.PI*2); g.fill(); }   // 斑点
+    g.fillStyle="#2c3138"; g.beginPath(); g.arc(cxp+37,cyp-41,1.3,0,Math.PI*2); g.fill();
+    g.strokeStyle="#a97e42"; g.lineWidth=1.8;
+    g.beginPath(); g.moveTo(cxp-27,cyp-2); g.quadraticCurveTo(cxp-33,cyp+6,cxp-30,cyp+14); g.stroke();
+  } else if(w.animal==="panda"){
+    g.fillStyle="#eceae4";
+    g.beginPath(); g.ellipse(cxp,cyp+4,19,14.5,0,0,Math.PI*2); g.fill();                      // 体
+    g.beginPath(); g.arc(cxp,cyp-13,11.5,0,Math.PI*2); g.fill();                              // 頭
+    g.fillStyle="#33373c";
+    g.beginPath(); g.arc(cxp-9.4,cyp-21,4.4,0,Math.PI*2); g.fill();                           // 耳
+    g.beginPath(); g.arc(cxp+9.4,cyp-21,4.4,0,Math.PI*2); g.fill();
+    g.beginPath(); g.ellipse(cxp-13,cyp+2,5.6,8.6,0.5,0,Math.PI*2); g.fill();                  // 腕
+    g.beginPath(); g.ellipse(cxp+13,cyp+2,5.6,8.6,-0.5,0,Math.PI*2); g.fill();
+    g.beginPath(); g.ellipse(cxp-10,cyp+15,6.4,4.4,0,0,Math.PI*2); g.fill();                  // 足
+    g.beginPath(); g.ellipse(cxp+10,cyp+15,6.4,4.4,0,0,Math.PI*2); g.fill();
+    g.beginPath(); g.ellipse(cxp-4.2,cyp-14,2.7,3.4,0.4,0,Math.PI*2); g.fill();               // 目の周り
+    g.beginPath(); g.ellipse(cxp+4.2,cyp-14,2.7,3.4,-0.4,0,Math.PI*2); g.fill();
+    g.fillStyle="#eceae4"; g.beginPath(); g.arc(cxp-4.2,cyp-14.4,1.15,0,Math.PI*2); g.fill();
+    g.beginPath(); g.arc(cxp+4.2,cyp-14.4,1.15,0,Math.PI*2); g.fill();
+    g.fillStyle="#33373c"; g.beginPath(); g.ellipse(cxp,cyp-10.4,1.7,1.2,0,0,Math.PI*2); g.fill();   // 鼻
+    g.strokeStyle="#6d8a58"; g.lineWidth=2;                                                   // 笹の枝
+    g.beginPath(); g.moveTo(cxp+15,cyp+8); g.lineTo(cxp+24,cyp-2); g.stroke();
+    g.fillStyle="#6d8a58"; g.beginPath(); g.ellipse(cxp+24,cyp-3,3.6,1.9,0.7,0,Math.PI*2); g.fill();
+    g.beginPath(); g.ellipse(cxp+21,cyp+1,3.2,1.7,0.7,0,Math.PI*2); g.fill();
+  }
+  // 柵：木の枠＋縦杭（内側の草地の上に重ねて描く）
+  g.fillStyle="#7d5f3d"; g.fillRect(w.x,w.y,w.w,5); g.fillRect(w.x,w.y+w.h-5,w.w,5); g.fillRect(w.x,w.y,5,w.h); g.fillRect(w.x+w.w-5,w.y,5,w.h);
+  g.fillStyle="#96754f";
+  for(let x=w.x+8;x<w.x+w.w-4;x+=13){ g.fillRect(x,w.y-1.6,3.6,7); g.fillRect(x,w.y+w.h-5.4,3.6,7); }
+  for(let y=w.y+8;y<w.y+w.h-4;y+=13){ g.fillRect(w.x-1.6,y,7,3.6); g.fillRect(w.x+w.w-5.4,y,7,3.6); }
+  g.fillStyle="rgba(255,255,255,.14)"; g.fillRect(w.x,w.y,w.w,1.6);
+  g.strokeStyle="rgba(52,40,24,.5)"; g.lineWidth=1; g.strokeRect(w.x+0.5,w.y+0.5,w.w-1,w.h-1);
+  // 案内板：展示場名のプレート（下辺の中央）
+  if(w.label){
+    const tw=w.label.length*7+10;
+    g.fillStyle="#2f2a24"; g.beginPath(); if(g.roundRect) g.roundRect(cxp-tw/2, w.y+w.h-9, tw, 12, 3); else g.rect(cxp-tw/2, w.y+w.h-9, tw, 12); g.fill();
+    g.fillStyle="#e3d9bd"; g.font="7px 'Hiragino Kaku Gothic ProN',sans-serif"; g.textAlign="center";
+    g.fillText(w.label, cxp, w.y+w.h);
+  }
+}
 function drawBuilding(w){
   const g=ctx;
   if(w.kind==="statue"){ drawStatue(w); return; }
   if(w.kind==="marble"){ drawMarbleWall(w); return; }
+  if(w.kind==="zoofence"){ drawZooFence(w); return; }
+  if(w.kind==="enclosure"){ drawEnclosure(w); return; }
   const rng=mulberry32((w.x*31+w.y*17)|0);
   const big = w.w>=90 && w.h>=60;
   // 落影と屋根本体：曇天の落影は薄く大きくぼける（地面側にも同じ影を焼いてある）
