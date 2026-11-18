@@ -48,7 +48,10 @@
   #bigMsg.show { opacity: 1; }
   #bigTitle { font-size: clamp(26px, 6vw, 44px); font-weight: 900; letter-spacing: .06em; text-shadow: 0 3px 14px rgba(0,0,0,.7); }
   #bigSub { font-size: clamp(14px, 3vw, 19px); color: #ffd35c; font-weight: 700; text-shadow: 0 2px 8px rgba(0,0,0,.8); margin-top: 4px; }
-  #interact { position: absolute; bottom: 108px; left: 50%; transform: translateX(-50%); padding: 7px 14px; font-size: 13px; font-weight: 700; display: none; }
+  /* 目標表示・状況トースト・操作案内をまとめるラッパー（PCでは各要素が個別に絶対配置される） */
+  #topStack { position: absolute; inset: 0; pointer-events: none; }
+  /* 操作案内はトースト（bottom:118px, 高さ約37px）の下に十分な間隔を空けて配置し、同時表示でも重ならない */
+  #interact { position: absolute; bottom: 62px; left: 50%; transform: translateX(-50%); padding: 7px 14px; font-size: 13px; font-weight: 700; display: none; }
   /* phone widget */
   #phone { position: absolute; right: 10px; bottom: max(10px, env(safe-area-inset-bottom)); width: 196px; padding: 10px; pointer-events: auto; }
   #phoneHead { font-size: 11px; color: #9fd08a; letter-spacing: .1em; display: flex; justify-content: space-between; }
@@ -82,10 +85,19 @@
   .note { font-size: 11.5px; color: #8f97a3; margin-top: 12px; line-height: 1.6; }
   h2.ovTitle { margin: 0 0 6px; font-size: 24px; letter-spacing: .05em; }
   /* incoming call — smartphone style */
-  #callScr { align-items: flex-end; justify-content: flex-end; background: rgba(8,10,13,.5); padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) 12px; }
-  #callCard { width: min(360px, calc(100vw - 24px)); max-width: 360px; border-radius: 34px; border: 3px solid #454b55; background: linear-gradient(180deg,#23262d 0%,#171a1f 14%,#171a1f 100%); padding: 12px 16px 18px; box-shadow: 0 24px 60px rgba(0,0,0,.75), inset 0 0 0 2px rgba(0,0,0,.55); position: relative; animation: phoneIn .28s ease-out; max-height: 94vh; }
+  #callScr { align-items: flex-end; justify-content: flex-end; background: rgba(8,10,13,.5); padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) 16px; }
+  #callCard { width: min(360px, calc(100vw - 32px)); max-width: 360px; border-radius: 36px; border: 3px solid #59616c; outline: 1px solid rgba(0,0,0,.85); outline-offset: 1px; background: linear-gradient(180deg,#262a31 0%,#171a1f 13%,#171a1f 100%); padding: 12px 16px 20px; box-shadow: 0 26px 60px rgba(0,0,0,.78), 0 6px 16px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.16), inset 0 -1px 0 rgba(0,0,0,.65), inset 0 0 0 2px rgba(0,0,0,.6); position: relative; animation: phoneIn .28s ease-out; max-height: 94vh; }
   @keyframes phoneIn { from { transform: translateY(26px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-  #callCard::before { content: ""; display: block; width: 104px; height: 20px; margin: 0 auto 10px; background: #0a0b0d; border-radius: 11px; }
+  /* ノッチ／パンチホール：スピーカーのスリット＋前面カメラの点を重ねる */
+  #callCard::before { content: ""; display: block; width: 108px; height: 21px; margin: 0 auto 10px; background: radial-gradient(circle 3.5px at 80% 50%, #4a6076 0 2px, #11161c 3.5px, transparent 4.5px), linear-gradient(90deg, transparent 0 26px, rgba(255,255,255,.14) 26px 58px, transparent 58px), #0a0b0d; border-radius: 11px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), inset 0 1px 2px rgba(0,0,0,.9); }
+  /* 画面のごく薄い映り込み（操作・文字の邪魔をしない範囲） */
+  #callCard::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: linear-gradient(112deg, rgba(255,255,255,.055) 0%, rgba(255,255,255,.015) 26%, transparent 42%); }
+  /* 側面ボタンの小さな出っ張り */
+  .phBtn { position: absolute; background: linear-gradient(90deg,#3d434c,#59616c); border-radius: 2px; pointer-events: none; }
+  .phBtn.vol { left: -5px; top: 118px; width: 3px; height: 56px; box-shadow: 0 66px 0 #4a515b; }
+  .phBtn.power { right: -5px; top: 138px; width: 3px; height: 44px; background: linear-gradient(270deg,#3d434c,#59616c); }
+  /* 下端のホームバー */
+  .phHome { position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); width: 110px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.32); pointer-events: none; }
   .phoneBar { display: flex; justify-content: space-between; font-size: 11px; color: #9aa3ae; padding: 0 4px 10px; letter-spacing: .06em; }
   .phoneCaller { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
   .phoneAvatar { flex: 0 0 auto; width: 52px; height: 52px; border-radius: 50%; background: #8a6420; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; border: 2px solid rgba(255,211,92,.6); }
@@ -123,9 +135,12 @@
     #hudTL { min-width: 132px; padding: 6px 9px; }
     #money { font-size: 18px; }
     #phone { width: 158px; }
-    #hudObj { top: 158px; bottom: auto; }
-    #toast { bottom: auto; top: 216px; }
-    #interact { bottom: auto; top: 262px; }
+    /* スマホ幅：目標表示・状況トースト・操作案内を縦積みフローにして、行数や同時表示によらず重ならないようにする。
+       積み始めは左上の状況パネル（所持金・星・体力・車両・逮捕・通報の全表示時 約166px）とミニマップの下 */
+    #topStack { inset: auto; top: 178px; left: 50%; transform: translateX(-50%); width: min(94vw, 560px); display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    #topStack #hudObj, #topStack #toast, #topStack #interact { position: static; transform: none; }
+    /* トーストは透明でも枠を確保する（.show の付け外しで案内が上下に動かない） */
+    #topStack #toast { flex: 0 0 auto; }
   }
   body.touch #phone { bottom: 296px; }
   body.touch #muteHint { display: none; }
@@ -152,18 +167,20 @@
     </div>
     <div id="reportWarn">📱 通報されている…！</div>
   </div>
+  <div id="topStack">
   <div id="hudObj" class="panel" style="display:none">
     <div id="objTitle"></div>
     <div id="objSub"></div>
     <div id="objTimer"></div>
   </div>
+  <div id="toast" class="panel"></div>
+  <div id="interact" class="panel"></div>
+  </div>
   <div id="minimapBox" class="panel">
     <canvas id="minimap" width="344" height="268"></canvas>
     <div id="districtLab">ロングショア</div>
   </div>
-  <div id="toast" class="panel"></div>
   <div id="bigMsg"><div id="bigTitle"></div><div id="bigSub"></div></div>
-  <div id="interact" class="panel"></div>
   <div id="phone" class="panel">
     <div id="phoneHead"><span>📱 スマホ</span><span id="phoneClock">--:--</span></div>
     <div id="phoneBody">着信待ち…</div>
@@ -172,7 +189,7 @@
       <button class="pbtn" id="btnSide">🧾 小口仕事を受ける（配達／送迎／回収）</button>
     </div>
   </div>
-  <div id="muteHint" class="panel">M：音 ON/OFF　Esc：ポーズ　Alt+Enter：全画面</div>
+  <div id="muteHint" class="panel">M：音 ON/OFF　B：BGM ON/OFF　Esc：ポーズ　Alt+Enter：全画面</div>
 </div>
 
 <div id="touch">
@@ -203,13 +220,19 @@
       <select id="selAssistT"><option value="0">OFF</option><option value="1">弱</option><option value="2">標準</option><option value="3">強</option></select></div>
     <div class="setRow"><span>運転の操作方式</span>
       <select id="selSchemeT"><option value="screen">画面基準（おすすめ）</option><option value="car">車基準（GTA式）</option></select></div>
+    <div class="setRow"><span>難易度</span>
+      <select id="selDiffT"><option value="easy">EASY</option><option value="normal">NORMAL</option><option value="hard">HARD</option></select></div>
+    <div class="setRow"><span>BGM（HIPHOP）</span>
+      <button class="mbtn" id="btnBgmT" style="padding:6px 18px; font-size:14px;">ON</button></div>
     <div class="padHint">🎮 パッド対応：十字キー／左スティックで移動、設定は左右で切替、Aボタンで決定（マウス・タッチ・キーボードでも操作できます）</div>
     <div id="ctrlHelp">
       <b>徒歩：</b>WASD／矢印キー／左スティックで移動、<b>F</b>または<b>E</b>で乗り降り、<b>J</b>で発砲（銃所持時）<br>
       <b>運転（画面基準）：</b>押した方向へ車が回って進む。離すと減速。<b>Space</b>でブレーキ→バック<br>
       <b>運転（車基準）：</b>↑アクセル／↓ブレーキ・バック／←→ハンドル<br>
       <b>パッド：</b>左スティック、<b>A</b>乗り降り、<b>B／LT</b>ブレーキ、<b>RT</b>アクセル（車基準）、<b>X</b>発砲、<b>Start</b>ポーズ<br>
-      <b>その他：</b>Esc／P ポーズ、M 音ON/OFF、Alt+Enter 全画面
+      <b>その他：</b>Esc／P ポーズ、M 音ON/OFF、Alt+Enter 全画面<br>
+      <b>音楽：</b>パーティ寄りHIPHOP風BGM（跳ねるドラム＋うねるシンセリード＋シャウト風スタブの合成ループ、100BPM）。手配★が付くと追跡アレンジに切り替わり、ポーズ中は小さくなる。Bキー／設定のボタンでON・OFF（効果音とは別）<br>
+      <b>難易度：</b>EASY／NORMAL／HARDで変わるのはパトカーの追跡の強さだけ（最高速度・旋回と加速・狙いの正確さ・星が消えるまでの捜索時間・出現と補充の速さ）。星の付き方、ミッション、報酬は同じ。タイトルとポーズで変更でき、その場で反映される（星の数は変わらない）
     </div>
     <div class="note">※ 埋め込み表示（アプリ内プレビュー等）ではGamepad APIがブロックされ、パッドが効かない場合があります。その場合はこのページをブラウザで直接開いて遊んでください。<br>進行状況はミッション完了時などに自動で保存されます（この端末のブラウザ内）。</div>
   </div>
@@ -222,6 +245,10 @@
       <select id="selAssistP"><option value="0">OFF</option><option value="1">弱</option><option value="2">標準</option><option value="3">強</option></select></div>
     <div class="setRow"><span>運転の操作方式</span>
       <select id="selSchemeP"><option value="screen">画面基準</option><option value="car">車基準</option></select></div>
+    <div class="setRow"><span>難易度</span>
+      <select id="selDiffP"><option value="easy">EASY</option><option value="normal">NORMAL</option><option value="hard">HARD</option></select></div>
+    <div class="setRow"><span>BGM（HIPHOP）</span>
+      <button class="mbtn" id="btnBgmP" style="padding:6px 18px; font-size:14px;">ON</button></div>
     <div class="menuBtns" style="margin-top:20px;">
       <button class="mbtn primary" id="btnResume">ゲームに戻る</button>
       <button class="mbtn" id="btnQuitTitle">タイトルへ戻る</button>
@@ -251,6 +278,7 @@
 
 <div class="overlay" id="callScr">
   <div class="card" id="callCard" role="dialog" aria-label="仕事の着信">
+    <span class="phBtn vol" aria-hidden="true"></span><span class="phBtn power" aria-hidden="true"></span><span class="phHome" aria-hidden="true"></span>
     <div class="phoneBar"><span>📶 HOTWIRE</span><span>着信中</span><span>🔋</span></div>
     <div class="phoneCaller">
       <div class="phoneAvatar">V</div>
@@ -335,8 +363,43 @@ function addBuilding(x,y,w,h,o){
   if(rnd()<.7) b.vents.push({dx:rr(.15,.8), dy:rr(.15,.75), s:rr(7,12)});
   if(rnd()<.45) b.skylights.push({dx:rr(.2,.65), dy:rr(.2,.6), w:rr(16,30), h:rr(10,18)});
   b.tank = rnd()<.22;
+  /* --- 見た目の詳細（建物ごとの個性） ---
+     共有の決定的乱数ストリームは消費せず、seedv から独立に生成する。
+     街の配置・当たり判定には一切影響しない、描画専用データ。 */
+  b.district = districtAt(x+w/2, y+h/2);
+  let ls = (b.seedv>>>0) || 1;
+  const lr = ()=>{ ls = (ls*1664525 + 1013904223)>>>0; return ls/4294967296; };
+  const lpick = arr => arr[Math.floor(lr()*arr.length)];
+  b.awningCol = lpick(['#b0403c','#3c6e8a','#4d8a4f','#b08a3a','#7a4d8a','#c96f4a']);
+  b.accentCol = lpick(['#b0563a','#3a6ea5','#4d8a4f','#b08a3a','#7a4d8a','#8a4d3a']);
+  b.grime = [];
+  const ng = 2+Math.floor(lr()*3);
+  for(let i=0;i<ng;i++) b.grime.push({ dx:lr()*.9+.03, w:3+lr()*7, len:.3+lr()*.7 });
+  b.antennas = [];
+  if(b.district==='ダウンタウン' || lr()<.3){ const na=1+Math.floor(lr()*2); for(let i=0;i<na;i++) b.antennas.push({dx:.12+lr()*.7, dy:.1+lr()*.5, h:13+lr()*13}); }
+  b.hut = lr()<.3? { dx:.1+lr()*.55, dy:.12+lr()*.5, w:20+lr()*14, h:14+lr()*8 } : null;
+  b.sign = null;
+  if(b.district==='ダウンタウン' && b.kind==='normal'){
+    const r0=lr();
+    if(b.hgt>=46 && r0<.3) b.sign={ type:'vertical', word:'HOTEL', col:lpick(['#d95757','#3a6ea5','#b08a3a']) };
+    else if(r0<.52) b.sign={ type:'billboard', word:lpick(['SHOP','CAFE','DINER','BAR','HOTEL','MARKET']), col:lpick(['#d95757','#3a6ea5','#4d8a4f','#b08a3a','#7a4d8a']) };
+  }
+  if(b.kind==='warehouse'){ b.shutters = Math.max(1, Math.min(3, Math.floor(w/64))); }
+  if(b.kind==='house'){
+    b.roof = lpick(['#a85f43','#7a5a48','#5d7183','#6d7f57','#8a4d3a','#746a5c','#93624e']);
+    b.houseChimney = lr()<.7? { dx:.15+lr()*.6 } : null;
+    b.solar = lr()<.3? { dx:.12+lr()*.5, dy:.15+lr()*.45, w:26+lr()*14, h:15+lr()*8 } : null;
+  }
+  if(b.kind==='factory'){
+    b.chimneys = [{dx:.13+lr()*.1, h:20+lr()*10, w:12+lr()*4}];
+    if(lr()<.55) b.chimneys.push({dx:.3+lr()*.12, h:15+lr()*9, w:10+lr()*3});
+    b.silo = lr()<.55? { dx:.55+lr()*.25, dy:.18+lr()*.4, r:11+lr()*6 } : null;
+    b.duct = lr()<.6? { dx:.08+lr()*.4, dy:.55+lr()*.25, w:30+lr()*22, h:9+lr()*5 } : null;
+  }
   buildings.push(b); return b;
 }
+/* 描画専用の決定的ハッシュ（窓ごと・設備ごとのばらつき用） */
+function hash2(a,b2,s){ let h=(a*374761393 + b2*668265263 + (s%100000)*974634211)>>>0; h=(h^(h>>13))>>>0; h=(h*1274126177)>>>0; return ((h^(h>>16))>>>0)/4294967296; }
 let policeB=null, hospitalB=null, garagePt={x:2250,y:1470};
 (function buildCity(){
   srand(20261117);
@@ -475,6 +538,7 @@ function initAudio(){
     sirenOsc=AC.createOscillator(); sirenOsc.type='triangle';
     sirenGain=AC.createGain(); sirenGain.gain.value=0;
     sirenOsc.connect(sirenGain); sirenGain.connect(AC.destination); sirenOsc.start();
+    setupMusic();
   }catch(e){ AC=null; }
 }
 function beep(freq,dur,type,vol,when,slideTo){
@@ -503,8 +567,211 @@ const sfx = {
   pickup(){ beep(880,.09,'square',.1); beep(1320,.12,'square',.1,.08); },
   door(){ beep(190,.08,'square',.12,0,120); },
   shot(){ noiseBurst(.12,.35,2400); },
-  sirenSet(v){ if(sirenGain&&AC) sirenGain.gain.setTargetAtTime(muted?0:v, AC.currentTime, .2); }
+  sirenSet(v){ if(sirenGain&&AC) sirenGain.gain.setTargetAtTime((muted||G.paused||(typeof phoneBusy!=='undefined'&&phoneBusy))?0:v, AC.currentTime, .12); }
 };
+
+/* ---------------- BGM：パーティ寄りHIPHOPインスト（WebAudio合成のみ・2層構成） ----------------
+   巡航層＝うねるシンセリード（短く元気なフレーズ）＋跳ねるベース＋太いドラム＋パッド（cruiseBus）
+   追跡層＝さらに厚いドラム＋16分ハット＋スタブ増し（chaseBus）。手配★でクロスフェードし、
+   星が消えたら数秒かけて巡航層へ戻る。テンポ100BPM＋16分スウィング、Gm系4小節ループ。
+   「YO!」の声そのものは合成できないので、フォルマント感のあるシャウト風シンセスタブを
+   小節の合間にコール＆レスポンスで入れ、スクラッチ風ノイズで煽る。 */
+let musMaster=null, cruiseBus=null, chaseBus=null, leadOsc=null, leadOsc2=null, leadGain=null, musTimer=null;
+const MUS = { bpm:100, swing:.16, step:0, nextTime:0, lastBassFreq:98, lastLeadEnd:-1, noiseBuf:null };
+const MROOT = [43, 39, 46, 41];              // 小節ごとのルート（MIDI）：Gm / E♭ / B♭ / F
+const MCHORD = [[55,58,62],[51,55,58],[58,62,65],[53,57,60]]; // パッドのコード音
+const BASS_PAT = [[0,0,2],[3,12,1],[6,0,1],[7,12,1],[8,0,2],[10,12,1],[12,0,1],[14,12,1],[15,7,1]]; // [step, ルートからの半音, 長さ(step)] ― オクターブ跳ねでバウンス
+const LEAD_PHRASE = [ // [絶対step（64step＝4小節）, MIDI, 長さ(step)] ― 短く元気なフレーズ（合間にスタブが応える）
+  [0,79,2],[2,82,1],[4,84,2],[6,82,1],
+  [16,86,2],[18,84,1],[20,82,2],[22,79,1],
+  [32,79,2],[34,81,1],[36,84,2],[38,86,1],
+  [48,84,2],[50,82,1],[52,79,2],[54,77,1]
+];
+const SHOUT_STEPS = [12,28,30,44,60,62]; // シャウト風スタブの位置（28/30・60/62 の連打が「YO! YO!」）
+const mf = m => 440*Math.pow(2,(m-69)/12);
+function setupMusic(){
+  if(musMaster||!AC) return;
+  const comp=AC.createDynamicsCompressor();
+  comp.threshold.value=-16; comp.ratio.value=6; comp.connect(AC.destination);
+  musMaster=AC.createGain(); musMaster.gain.value=0; musMaster.connect(comp);
+  cruiseBus=AC.createGain(); cruiseBus.gain.value=1; cruiseBus.connect(musMaster);
+  chaseBus=AC.createGain(); chaseBus.gain.value=0; chaseBus.connect(musMaster);
+  // ノイズバッファ（ドラム共用）
+  const nlen=AC.sampleRate, nbuf=AC.createBuffer(1,nlen,AC.sampleRate), nd=nbuf.getChannelData(0);
+  for(let i=0;i<nlen;i++) nd[i]=Math.random()*2-1;
+  MUS.noiseBuf=nbuf;
+  // リード：鳴らしっぱなしのシンセをグライド（ポルタメント）させて「うねり」を作る
+  leadOsc=AC.createOscillator(); leadOsc.type='sine'; leadOsc.frequency.value=mf(79);
+  leadOsc2=AC.createOscillator(); leadOsc2.type='triangle'; leadOsc2.frequency.value=mf(79); leadOsc2.detune.value=5;
+  const subG=AC.createGain(); subG.gain.value=.32;
+  const vib=AC.createOscillator(); vib.frequency.value=5.4;
+  const vibG=AC.createGain(); vibG.gain.value=2.6;
+  vib.connect(vibG); vibG.connect(leadOsc.frequency); vibG.connect(leadOsc2.frequency);
+  const lf=AC.createBiquadFilter(); lf.type='lowpass'; lf.frequency.value=3800;
+  leadGain=AC.createGain(); leadGain.gain.value=0;
+  leadOsc.connect(lf); leadOsc2.connect(subG); subG.connect(lf);
+  lf.connect(leadGain); leadGain.connect(cruiseBus);
+  leadOsc.start(); leadOsc2.start(); vib.start();
+  MUS.nextTime=AC.currentTime+.1;
+  musTimer=setInterval(musTick, 25);
+}
+function leadNote(t, midi, lenSteps){
+  const stepDur=60/MUS.bpm/4, dur=lenSteps*stepDur, f=mf(midi);
+  for(const o of [leadOsc, leadOsc2]){
+    if(MUS.lastLeadEnd>0 && t-MUS.lastLeadEnd<.35) o.frequency.setTargetAtTime(f, t, .05); // グライド
+    else o.frequency.setValueAtTime(f, t);
+  }
+  leadGain.gain.setTargetAtTime(.15, t, .03);
+  leadGain.gain.setTargetAtTime(0, t+Math.max(.06, dur-.07), .06);
+  MUS.lastLeadEnd=t+dur;
+}
+function bassNote(t, midi, lenSteps){
+  const stepDur=60/MUS.bpm/4, dur=lenSteps*stepDur, f=mf(midi);
+  const o=AC.createOscillator(); o.type='sine';
+  const o2=AC.createOscillator(); o2.type='triangle';
+  // 前の音から滑るスライド感
+  o.frequency.setValueAtTime(MUS.lastBassFreq, t);
+  o.frequency.exponentialRampToValueAtTime(f, t+Math.min(.09, dur*.7));
+  o2.frequency.setValueAtTime(MUS.lastBassFreq, t);
+  o2.frequency.exponentialRampToValueAtTime(f, t+Math.min(.09, dur*.7));
+  const g2=AC.createGain(); g2.gain.value=.35;
+  const flt=AC.createBiquadFilter(); flt.type='lowpass'; flt.frequency.value=520;
+  const g=AC.createGain();
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(.5, t+.012);
+  g.gain.exponentialRampToValueAtTime(.001, t+Math.max(.1, dur));
+  o.connect(flt); o2.connect(g2); g2.connect(flt);
+  flt.connect(g); g.connect(cruiseBus);
+  o.start(t); o2.start(t); o.stop(t+dur+.05); o2.stop(t+dur+.05);
+  MUS.lastBassFreq=f;
+}
+function padChord(t, midis){
+  const dur=60/MUS.bpm*4; // 1小節
+  for(const m of midis) for(const det of [-6,6]){
+    const o=AC.createOscillator(); o.type='triangle'; o.frequency.value=mf(m); o.detune.value=det;
+    const flt=AC.createBiquadFilter(); flt.type='lowpass'; flt.frequency.value=900;
+    const g=AC.createGain();
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(.026, t+.4);
+    g.gain.setValueAtTime(.026, t+dur-.5);
+    g.gain.linearRampToValueAtTime(0, t+dur);
+    o.connect(flt); flt.connect(g); g.connect(cruiseBus);
+    o.start(t); o.stop(t+dur+.05);
+  }
+}
+function kickHit(t, dest, vol){
+  const o=AC.createOscillator(); o.type='sine';
+  o.frequency.setValueAtTime(165, t); o.frequency.exponentialRampToValueAtTime(43, t+.1);
+  const g=AC.createGain(); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t+.3);
+  o.connect(g); g.connect(dest); o.start(t); o.stop(t+.32);
+  // アタックのクリックを重ねて前に出る太さにする
+  const s=AC.createBufferSource(); s.buffer=MUS.noiseBuf;
+  const hp=AC.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=2500;
+  const g2=AC.createGain(); g2.gain.setValueAtTime(vol*.22, t); g2.gain.exponentialRampToValueAtTime(.001, t+.03);
+  s.connect(hp); hp.connect(g2); g2.connect(dest); s.start(t); s.stop(t+.04);
+}
+function snareHit(t, dest, vol){
+  const s=AC.createBufferSource(); s.buffer=MUS.noiseBuf; s.playbackRate.value=.9+Math.random()*.2;
+  const bp=AC.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1800; bp.Q.value=.8;
+  const g=AC.createGain(); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t+.13);
+  s.connect(bp); bp.connect(g); g.connect(dest); s.start(t); s.stop(t+.15);
+  const o=AC.createOscillator(); o.type='triangle'; o.frequency.value=190;
+  const g2=AC.createGain(); g2.gain.setValueAtTime(vol*.5, t); g2.gain.exponentialRampToValueAtTime(.001, t+.06);
+  o.connect(g2); g2.connect(dest); o.start(t); o.stop(t+.08);
+}
+function hatHit(t, dest, vol, open){
+  const s=AC.createBufferSource(); s.buffer=MUS.noiseBuf; s.playbackRate.value=1.4;
+  const hp=AC.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=8200;
+  const g=AC.createGain(); const d=open? .26 : .045;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t+d);
+  s.connect(hp); hp.connect(g); g.connect(dest); s.start(t); s.stop(t+d+.02);
+}
+function clapHit(t, dest, vol){
+  // クラップ：短いノイズバースト3連＋尾で作る
+  for(const off of [0,.011,.023]){
+    const s=AC.createBufferSource(); s.buffer=MUS.noiseBuf; s.playbackRate.value=1.1;
+    const bp=AC.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1300; bp.Q.value=1.4;
+    const g=AC.createGain(); g.gain.setValueAtTime(vol, t+off); g.gain.exponentialRampToValueAtTime(.001, t+off+.03);
+    s.connect(bp); bp.connect(g); g.connect(dest); s.start(t+off); s.stop(t+off+.05);
+  }
+  const s2=AC.createBufferSource(); s2.buffer=MUS.noiseBuf;
+  const bp2=AC.createBiquadFilter(); bp2.type='bandpass'; bp2.frequency.value=1300; bp2.Q.value=1.4;
+  const g3=AC.createGain(); g3.gain.setValueAtTime(vol*.55, t+.023); g3.gain.exponentialRampToValueAtTime(.001, t+.16);
+  s2.connect(bp2); bp2.connect(g3); g3.connect(dest); s2.start(t+.023); s2.stop(t+.18);
+}
+function stabHit(t, dest, root, vol){
+  // シャウト風スタブ：デチューンしたノコギリ波をフォルマント風バンドパスで短く鳴らす（声っぽい「YO!」の代用）
+  const bp=AC.createBiquadFilter(); bp.type='bandpass'; bp.Q.value=1.1;
+  bp.frequency.setValueAtTime(650, t);
+  bp.frequency.exponentialRampToValueAtTime(1500, t+.05);
+  bp.frequency.exponentialRampToValueAtTime(800, t+.16);
+  const g=AC.createGain();
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(vol, t+.012);
+  g.gain.exponentialRampToValueAtTime(.001, t+.17);
+  bp.connect(g); g.connect(dest);
+  for(const semi of [24,31,36]) for(const det of [-7,7]){
+    const o=AC.createOscillator(); o.type='sawtooth'; o.frequency.value=mf(root+semi); o.detune.value=det;
+    o.connect(bp); o.start(t); o.stop(t+.19);
+  }
+}
+function scratchHit(t, dest, vol){
+  // スクラッチ風アクセント：ノイズの再生速度とバンドパスを往復させる
+  const s=AC.createBufferSource(); s.buffer=MUS.noiseBuf; s.loop=true;
+  s.playbackRate.setValueAtTime(.7, t);
+  s.playbackRate.exponentialRampToValueAtTime(1.9, t+.07);
+  s.playbackRate.exponentialRampToValueAtTime(.6, t+.16);
+  const bp=AC.createBiquadFilter(); bp.type='bandpass'; bp.Q.value=2.2;
+  bp.frequency.setValueAtTime(750, t);
+  bp.frequency.exponentialRampToValueAtTime(2700, t+.07);
+  bp.frequency.exponentialRampToValueAtTime(600, t+.16);
+  const g=AC.createGain();
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(vol, t+.02);
+  g.gain.setValueAtTime(vol, t+.11);
+  g.gain.linearRampToValueAtTime(0, t+.17);
+  s.connect(bp); bp.connect(g); g.connect(dest); s.start(t); s.stop(t+.19);
+}
+function scheduleStep(s, t){
+  const bar=(s/16)|0, st=s%16, root=MROOT[bar];
+  if(st===0) padChord(t, MCHORD[bar]);
+  for(const p of BASS_PAT) if(p[0]===st) bassNote(t, root+p[1], p[2]);
+  // 巡航ドラム（太いキック前に＋スネア＆クラップ＋刻むハット）
+  if(st===0||st===7||st===8||st===10) kickHit(t, cruiseBus, 1.0);
+  if(st===4||st===12){ snareHit(t, cruiseBus, .55); clapHit(t, cruiseBus, .38); }
+  if(st%2===0) hatHit(t, cruiseBus, st%4===0? .16 : .11, false);
+  if(st===14) hatHit(t, cruiseBus, .15, true);
+  if(st===15) hatHit(t, cruiseBus, .07, false);
+  // シャウト風スタブ（コール＆レスポンス）とスクラッチで煽る
+  if(SHOUT_STEPS.includes(s)){ stabHit(t, cruiseBus, root, .34); stabHit(t, chaseBus, root, .26); }
+  if(s===48) scratchHit(t, cruiseBus, .28);
+  // 追跡レイヤー（さらに厚いドラム＋16分ハット＋スタブ増し）
+  if(st===3||st===6||st===11||st===14) kickHit(t, chaseBus, .85);
+  if(st===4||st===12){ snareHit(t, chaseBus, .3); clapHit(t, chaseBus, .3); }
+  if(st%2===1) hatHit(t, chaseBus, .13, false);
+  if(st===15) snareHit(t, chaseBus, .18);
+  if(s===56) scratchHit(t, chaseBus, .3);
+  // シンセリードのフレーズ（うねるグライドはそのまま、短く元気に）
+  for(const p of LEAD_PHRASE) if(p[0]===s) leadNote(t, p[1], p[2]);
+}
+function musTick(){
+  if(!AC||!musMaster) return;
+  const now=AC.currentTime;
+  if(MUS.nextTime<now-.08) MUS.nextTime=now+.05; // タブ復帰時などの遅れを捨てる
+  const stepDur=60/MUS.bpm/4;
+  while(MUS.nextTime<now+.14){
+    const stp=MUS.step;
+    scheduleStep(stp, MUS.nextTime + (stp%2===1? stepDur*MUS.swing : 0)); // 裏の16分を遅らせるスウィングで跳ねを作る
+    MUS.step=(MUS.step+1)%64;
+    MUS.nextTime+=stepDur;
+  }
+  const on=settings.bgm && !muted;
+  const ducked=G.paused || (typeof phoneBusy!=='undefined'&&phoneBusy); // 着信中もポーズ同様にデュック
+  const base=on? (ducked? .3 : (G.mode==='play'? .95 : .7)) : 0; // ポーズ／着信中は音量を下げる
+  musMaster.gain.setTargetAtTime(base, now, .12);
+  const want=(G.mode==='play' && !ducked && G.wanted>0)? 1 : 0; // 着信中は追跡層を出さずサイレンとも競合させない
+  chaseBus.gain.setTargetAtTime(want, now, want? .45 : 2.0); // 戻りは数秒かけて
+}
 
 /* ---------------- セーブ ---------------- */
 const SAVE_KEY='hotwire_save_v1';
@@ -513,12 +780,12 @@ function loadSave(){ try{ const s=localStorage.getItem(SAVE_KEY); if(s) return J
 function writeSave(){
   if(!G.started) return;
   /* A互換：既存項目（money/done/hasGun/assist/scheme）はそのまま維持し、cleared を追加するだけ */
-  const data={ money:G.money, done:G.missionsDone, hasGun:G.hasGun, assist:settings.assist, scheme:settings.scheme, cleared: !!G.cleared || G.missionsDone>=12 };
+  const data={ money:G.money, done:G.missionsDone, hasGun:G.hasGun, assist:settings.assist, scheme:settings.scheme, bgm:settings.bgm!==false, diff:settings.diff||'easy', cleared: !!G.cleared || G.missionsDone>=12 };
   try{ localStorage.setItem(SAVE_KEY, JSON.stringify(data)); }catch(e){}
 }
 function saveCleared(s){ if(!s) return false; return !!s.cleared || (s.done||0)>=12; }
-let settings = { assist:2, scheme:'screen' };
-(function(){ const s=loadSave(); if(s){ settings.assist=(s.assist!=null?s.assist:2); settings.scheme=s.scheme||'screen'; } })();
+let settings = { assist:2, scheme:'screen', bgm:true, diff:'easy' };
+(function(){ const s=loadSave(); if(s){ settings.assist=(s.assist!=null?s.assist:2); settings.scheme=s.scheme||'screen'; settings.bgm=s.bgm!==false; settings.diff=(s.diff==='normal'||s.diff==='hard')? s.diff : 'easy'; /* 難易度項目のない旧セーブはEASY */ } })();
 const SNAP=[[10,16],[18,26],[25,32],[32,42]]; // [吸着角, 保持角] 度
 
 /* ---------------- ゲーム状態 ---------------- */
@@ -526,6 +793,7 @@ const G = {
   mode:'title', started:false, paused:false,
   money:0, missionsDone:0, hasGun:true, cleared:false, ending:false,
   wanted:0, hideTimer:0, starFlash:0,
+  lastSeenX:0, lastSeenY:0, lastSeenValid:false, seenAgo:99,
   time:0, trafficPhase:0,
   mission:null, sideJob:null, pendingCall:false, callTimer:4,
   arrest:0, dead:false,
@@ -545,9 +813,20 @@ function makeCar(type,x,y,angle,o){
   const t=CAR_TYPES[type];
   const c={ id:++carId, type, x, y, angle:angle||0, vx:0, vy:0, hp:t.hp, maxHp:t.hp,
     col:o.col||t.cols[Math.floor(Math.random()*t.cols.length)], parked:!!o.parked,
-    ai:o.ai||null, stolen:false, dead:false, smoke:0, stuckT:0, revT:0, targetCar:o.targetCar||false,
-    leaveMode:false, brakeLight:0 };
+    ai:o.ai||null, stolen:false, dead:false, deadT:0, smoke:0, stuckT:0, revT:0, targetCar:o.targetCar||false,
+    leaveMode:false, brakeLight:0, aimX:0, aimY:0, aimT:0 };
   return c;
+}
+/* 駐車スポット（拠点近くを含む）：壊れたり持ち去られたりしても時間で復活させる */
+const PARK_SPOTS=[[234,1180,'v'],[966,640,'h'],[1534,1180,'v'],[2166,640,'h'],[2734,1180,'v'],[3366,640,'h'],[700,234,'h'],[1300,916,'h'],[2400,1466,'h']];
+const parkRespawnT={}; PARK_SPOTS.forEach((s,i)=>{ parkRespawnT[i]=0; });
+let guaranteeT=0, bestBlockers=null;
+function spawnParkedAtSpot(i){
+  const sp=PARK_SPOTS[i]; if(!sp) return null;
+  const [x,y,o]=sp;
+  const ang = o==='v'? (Math.random()<.5? Math.PI/2 : -Math.PI/2) : (Math.random()<.5? 0 : Math.PI);
+  const c=makeCar(pick(['compact','sport','van']), x, y, ang, {ai:'parked', parked:true});
+  cars.push(c); parkRespawnT[i]=0; return c;
 }
 let cars=[], peds=[], cops=[];
 function speedOf(c){ return Math.hypot(c.vx,c.vy); }
@@ -571,13 +850,7 @@ function spawnTraffic(){
     cars.push(c);
   }
   // 駐車車両（路肩寄せ：縦道路沿いは縦向き、横道路沿いは横向き）
-  const spots=[[234,1180,'v'],[966,640,'h'],[1534,1180,'v'],[2166,640,'h'],[2734,1180,'v'],[3366,640,'h'],[700,234,'h'],[1300,916,'h'],[2400,1466,'h']];
-  for(const [x,y,o] of spots){
-    if(cars.some(c=>dist(c.x,c.y,x,y)<70)) continue;
-    const ang = o==='v'? (Math.random()<.5? Math.PI/2 : -Math.PI/2) : (Math.random()<.5? 0 : Math.PI);
-    const c=makeCar(pick(['compact','sport','van']), x, y, ang, {ai:'parked', parked:true});
-    cars.push(c);
-  }
+  PARK_SPOTS.forEach((sp,i)=>{ parkRespawnT[i]=0; if(!cars.some(c=>dist(c.x,c.y,sp[0],sp[1])<70)) spawnParkedAtSpot(i); });
 }
 function spawnPeds(){
   peds=[];
@@ -598,6 +871,7 @@ window.addEventListener('keydown', e=>{
   if(e.code==='AltLeft'||e.code==='AltRight'){ /* Alt+Enter handled below */ }
   if(e.code==='Enter' && e.altKey){ toggleFullscreen(); }
   if(e.code==='KeyM'){ muted=!muted; toast(muted?'🔇 音 OFF':'🔊 音 ON'); }
+  if(e.code==='KeyB'){ toggleBgm(); }
   if((e.code==='Escape'||e.code==='KeyP') && G.mode==='play'){ togglePause(); }
   if((e.code==='KeyF'||e.code==='KeyE') && G.mode==='play' && !G.paused && !phoneBusy) tryEnterExit();
   if(e.code==='KeyJ' && G.mode==='play' && !G.paused && !phoneBusy) shoot();
@@ -650,6 +924,7 @@ const reports=[]; // {ped, t, dur, type, x, y}
 function copSees(x,y,range,halfDeg){
   range=range||430;
   for(const cp of cops){
+    if(cp.dead) continue; // 大破したパトカーは目撃しない
     const d=dist(cp.x,cp.y,x,y);
     if(d<78) return true;
     if(d<range){
@@ -662,7 +937,7 @@ function copSees(x,y,range,halfDeg){
 function addStar(n){
   const before=G.wanted;
   G.wanted=clamp(G.wanted+n,0,3);
-  if(G.wanted>before){ G.hideTimer=0; toast('★ 手配度が上がった！ ★'+G.wanted); }
+  if(G.wanted>before){ G.hideTimer=0; G.lastSeenX=player.x; G.lastSeenY=player.y; G.lastSeenValid=true; G.seenAgo=0; toast('★ 手配度が上がった！ ★'+G.wanted); }
 }
 function crime(type,x,y){
   // type: 'light' 軽い衝突 / 'theft' 盗難 / 'hitrun' ひき逃げ / 'copcrash' パトカー衝突 / 'gun' 発砲・傷害
@@ -696,6 +971,30 @@ function updateReports(dt){
   }
 }
 const COP_CAP=[0,1,3,5];
+/* ---------------- 難易度：追跡バランスだけを切り替える ----------------
+   EASY   ＝ 評価済みの現行バランスそのまま。最高速度210/232/252（小型車300・スポーツ430より遅く、
+            バン255でも★3とほぼ互角＋曲がり角で逃げ切れる）、星1つ5.5秒、出現は★2約11秒・★3約16.8秒で
+            上限まで揃い、補充は残骸9秒＋クールダウン6秒。狙いは遅れて更新され誤差も大きい。
+   NORMAL ＝ 緩和前の版（v8）の定数を復元。最高速度265一律、旋回2.6／加速1.6、星1つ11秒
+            （★2全解除22秒・★3は33秒）、出現間隔2.2秒一律（★2約4.4秒・★3約8.8秒）、補充CD3秒。
+            狙いの遅れ・誤差はEASYの半分程度、捜索も速い。
+   HARD   ＝ NORMALの土台からさらに上。最高速度285/305/325（小型車と同等以上、スポーツなら直線で逃げ切れる）、
+            星1つ15秒、出現・補充は最速、旋回・加速と狙いの精度も最大。ただし捜索の仕組み自体は同じで、
+            視界を切り続ければ必ず逃げ切れる余地は残す。
+   どの難易度でも、目撃＝即星・通報ラグ・画面外出現という手配ルール自体は変えない。 */
+const DIFFS={
+  easy:  { speed:[0,210,232,252], spawnGap:[0,7,5.5,4.2],   replaceCd:6, wreckT:9, hideNeed:5.5,
+           turn:1.85, accel:1.05, aimBase:.55, aimSpan:.35, aimErr:34, predict:.22,
+           searchSpd:.68, nearD:64, nearSpd:138, tgtNearD:58, tgtNearSpd:135, vision:320, visionFov:66 },
+  normal:{ speed:[0,265,265,265], spawnGap:[0,2.2,2.2,2.2], replaceCd:3, wreckT:9, hideNeed:11,
+           turn:2.6,  accel:1.6,  aimBase:.30, aimSpan:.20, aimErr:16, predict:.40,
+           searchSpd:.85, nearD:48, nearSpd:195, tgtNearD:40, tgtNearSpd:205, vision:380, visionFov:70 },
+  hard:  { speed:[0,285,305,325], spawnGap:[0,1.6,1.4,1.2], replaceCd:1, wreckT:5, hideNeed:15,
+           turn:3.0,  accel:2.2,  aimBase:.16, aimSpan:.12, aimErr:8,  predict:.55,
+           searchSpd:.95, nearD:36, nearSpd:235, tgtNearD:30, tgtNearSpd:255, vision:430, visionFov:74 },
+};
+function curDiff(){ return DIFFS[settings.diff]||DIFFS.easy; }
+const SEARCH_NEAR=78; // 捜索視界の至近距離（この内側は向き不問で視認）― 難易度共通。捜索視界の距離・角度は難易度ごと（vision/visionFov）
 function copSpawnPos(){
   const diag=Math.hypot(VW,VH)/2;
   const need=Math.max(diag+220, 850);
@@ -708,42 +1007,102 @@ function copSpawnPos(){
   }
   return null;
 }
+/* 交通補充専用の出現位置：画面外だが、遠すぎて即消去される範囲（>1500）には出さない */
+function trafficSpawnPos(){
+  for(let t=0;t<40;t++){
+    const vert=Math.random()<.5; let x,y;
+    if(vert){ x=pick(VX); y=rr(120,WATER_Y-120); } else { y=pick(HZ); x=rr(120,3480); }
+    const d=dist(x,y,player.x,player.y);
+    const onScr = Math.abs(x-cam.x)<VW/2+40 && Math.abs(y-cam.y)<VH/2+40;
+    if(d>=880 && d<=1450 && !onScr) return {x,y};
+  }
+  return null;
+}
 let copSpawnT=0;
+function copSeesPlayer(cp,px,py){
+  if(cp.dead) return false;
+  const D=curDiff();
+  const d=dist(cp.x,cp.y,px,py);
+  if(d<SEARCH_NEAR) return true;
+  if(d>=D.vision) return false;
+  const a=Math.atan2(py-cp.y,px-cp.x);
+  return Math.abs(angDiff(a,cp.angle))<D.visionFov*DEG;
+}
 function updateCops(dt){
+  const D=curDiff();
   const cap=COP_CAP[G.wanted];
+  const px = player.car? player.car.x : player.x, py = player.car? player.car.y : player.y;
+  // 大破したパトカーはしばらく残骸として残り、片付いてから補充クールダウンに入る
+  for(let i=cops.length-1;i>=0;i--){
+    const cp=cops[i];
+    if(!cp.dead) continue;
+    cp.deadT=(cp.deadT||0)+dt; cp.vx=0; cp.vy=0;
+    if(cp.deadT>D.wreckT){ cops.splice(i,1); copSpawnT=Math.max(copSpawnT, D.replaceCd); }
+  }
   // 離脱処理
   for(const cp of cops){ cp.leaveMode = cops.length>cap && !cp.near; }
   cops.sort((a,b)=>dist(b.x,b.y,player.x,player.y)-dist(a.x,a.y,player.x,player.y));
   for(let i=cops.length-1;i>=0;i--){
     const cp=cops[i];
+    if(cp.dead) continue;
     cp.near = dist(cp.x,cp.y,player.x,player.y)<430;
     if(cops.length>cap && i< cops.length-cap){ cp.leaveMode=true; }
-    if(cp.leaveMode && dist(cp.x,cp.y,player.x,player.y)>950){ cops.splice(i,1); continue; }
+    if(cp.leaveMode && dist(cp.x,cp.y,player.x,player.y)>950){ cops.splice(i,1); copSpawnT=Math.max(copSpawnT, D.replaceCd*.8); continue; }
   }
-  // 新規出現
+  // 新規出現（上限まで間隔を空ける。置いていかれた分の補充もすぐには湧かない）
   copSpawnT-=dt;
   if(G.wanted>0 && cops.length<cap && copSpawnT<=0){
-    copSpawnT=2.2;
     const pos=copSpawnPos();
-    if(pos){ const c=makeCar('compact',pos.x,pos.y,rr(0,TAU),{ai:'cop',col:'#2b3442'}); c.cop=true; cops.push(c); }
+    if(pos){ const c=makeCar('compact',pos.x,pos.y,rr(0,TAU),{ai:'cop',col:'#2b3442'}); c.cop=true; c.aimX=pos.x; c.aimY=pos.y; cops.push(c); copSpawnT=D.spawnGap[G.wanted]; }
+    else copSpawnT=1.2; // 置ける場所がなければ少し待って再試行
   }
   if(G.wanted===0 && cops.length){ for(const cp of cops) cp.leaveMode=true; }
+  // 視認判定（捜索用の狭い視界）。見えている間は「最後に見た場所」を更新する
+  const seenNow = G.wanted>0 && cops.some(cp=>copSeesPlayer(cp,px,py));
+  if(seenNow){ G.lastSeenX=px; G.lastSeenY=py; G.lastSeenValid=true; G.seenAgo=0; }
+  else G.seenAgo+=dt;
+  const pvx = player.car? player.car.vx : 0, pvy = player.car? player.car.vy : 0;
+  const topSpd = D.speed[G.wanted]||D.speed[1];
   // 追跡AI
   for(const cp of cops){
-    const tgt = cp.leaveMode? {x:cp.x+Math.cos(cp.angle)*300, y:cp.y+Math.sin(cp.angle)*300} : {x:player.x, y:player.y};
-    driveAI(cp, tgt, cp.leaveMode?150:265, dt, true);
+    if(cp.dead) continue;
+    let tgt, spd;
+    if(cp.leaveMode){
+      tgt={x:cp.x+Math.cos(cp.angle)*300, y:cp.y+Math.sin(cp.angle)*300}; spd=140;
+    } else if(copSeesPlayer(cp,px,py) || (seenNow && G.seenAgo<0.5)){
+      // 追跡中：狙いは少し遅れて更新され、先読み＋誤差つき（完璧には追尾しない）。遅れ・誤差・先読みは難易度で変わる
+      cp.aimT-=dt;
+      if(cp.aimT<=0){
+        cp.aimT=D.aimBase+Math.random()*D.aimSpan;
+        cp.aimX=px + pvx*D.predict + (Math.random()*2-1)*D.aimErr;
+        cp.aimY=py + pvy*D.predict + (Math.random()*2-1)*D.aimErr;
+      }
+      tgt={x:cp.aimX, y:cp.aimY}; spd=topSpd;
+    } else if(G.lastSeenValid){
+      // 捜索中：最後に見た場所へ向かい、その周辺を探す（プレイヤーの現在地は知らない）。捜索速度は難易度で変わる
+      const wa=G.time*.7 + cp.id*2.3;
+      tgt={x:G.lastSeenX+Math.cos(wa)*70, y:G.lastSeenY+Math.sin(wa)*70};
+      spd=topSpd*D.searchSpd;
+    } else {
+      tgt={x:cp.x, y:cp.y}; spd=60;
+    }
+    // 至近距離では速度を落として、体当たりの連打にならないようにする（難易度が高いほど落とし幅は小さい）
+    if(!cp.leaveMode && dist(cp.x,cp.y,px,py)<D.nearD) spd=Math.min(spd,D.nearSpd);
+    driveAI(cp, tgt, spd, dt, true);
   }
-  // サイレン音量
+  // サイレン音量（着信・ポーズ中は sirenSet 側で 0 にデュックされる）
   let near=0; for(const cp of cops) near=Math.max(near, 1-clamp(dist(cp.x,cp.y,player.x,player.y)/700,0,1));
   sfx.sirenSet(G.wanted>0? near*.06 : 0);
-  if(sirenOsc&&AC){ const t=AC.currentTime; sirenOsc.frequency.setValueAtTime(720+Math.sin(t*5.2)*180, t); }
-  // 逃げ切り判定
-  const px = player.car? player.car.x : player.x, py = player.car? player.car.y : player.y;
+  if(sirenOsc&&AC&&!phoneBusy&&!G.paused){ const t=AC.currentTime; sirenOsc.frequency.setTargetAtTime(720+Math.sin(t*5.2)*180, t, .03); }
+  // 逃げ切り判定：捜索の視界から外れ続けたら hideNeed 秒（難易度ごと）で星が1つ消える
   if(G.wanted>0){
-    if(!copSees(px,py,430,70) && !cops.some(c=>dist(c.x,c.y,px,py)<110)){
+    if(!seenNow){
       G.hideTimer+=dt;
-      const need = 11;
-      if(G.hideTimer>=need){ G.wanted--; G.hideTimer=0; toast(G.wanted>0?'やり過ごした… ★'+G.wanted:'★ 手配解除！ 逃げ切った'); if(G.wanted===0) onWantedCleared(); }
+      if(G.hideTimer>=D.hideNeed){
+        G.wanted--; G.hideTimer=0;
+        if(G.wanted===0){ G.lastSeenValid=false; toast('★ 手配解除！ 逃げ切った'); onWantedCleared(); }
+        else toast('やり過ごした… ★'+G.wanted);
+      }
     } else G.hideTimer=0;
   }
 }
@@ -754,6 +1113,7 @@ function onWantedCleared(){
 
 /* 汎用AI運転（交通・パトカー） */
 function driveAI(c, target, maxSpd, dt, isCop){
+  if(c.dead){ c.vx=0; c.vy=0; return; }
   const t=CAR_TYPES[c.type];
   let desA=Math.atan2(target.y-c.y, target.x-c.x);
   // 建物回避：正面が塞がれていたら道路軸方向へ寄せる
@@ -764,13 +1124,15 @@ function driveAI(c, target, maxSpd, dt, isCop){
     if(dist(rp.x,rp.y,c.x,c.y)<14) desA=Math.atan2(target.y-c.y,target.x-c.x);
   }
   const dA=angDiff(desA,c.angle);
-  const turnRate=isCop?2.6:2.0;
+  const CD=isCop? curDiff() : null;
+  const turnRate=isCop? CD.turn : 2.0; // パトカーの旋回は難易度で変わる（EASYでは鈍く：曲がり角・路地で振り切れる）
   c.angle += clamp(dA, -turnRate*dt, turnRate*dt);
   let sp=speedOf(c);
   const f=forwardOf(c);
   let vf=c.vx*f.x+c.vy*f.y;
-  const want = Math.abs(dA)>1.9? maxSpd*.25 : maxSpd;
-  vf = lerp(vf, (c.revT>0? -90 : want), 1-Math.exp(-(c.revT>0?3:1.6)*dt));
+  let want = Math.abs(dA)>1.9? maxSpd*.25 : maxSpd;
+  if(isCop && dist(c.x,c.y,target.x,target.y)<CD.tgtNearD) want=Math.min(want,CD.tgtNearSpd); // 目標至近では詰めすぎない（難易度が高いほど詰める）
+  vf = lerp(vf, (c.revT>0? -90 : want), 1-Math.exp(-(c.revT>0?3:(isCop?CD.accel:1.6))*dt)); // パトカーの加速も難易度で変わる
   if(c.revT>0) c.revT-=dt;
   // 横滑り消去（一般車グリップ）
   let lx=-f.y, ly=f.x;
@@ -793,7 +1155,7 @@ function signalFor(axis){ // axis 'ns' or 'ew' → true=青
 }
 function updateTraffic(dt){
   for(const c of cars){
-    if(c.ai!=='traffic'||c===player.car) continue;
+    if(c.ai!=='traffic'||c===player.car||c.dead) continue;
     const f=forwardOf(c);
     let stop=false;
     // 信号：交差点手前
@@ -850,9 +1212,9 @@ function updateTraffic(dt){
     const c=cars[i];
     if(c.ai==='traffic'&&c!==player.car&&dist(c.x,c.y,player.x,player.y)>1500){ cars.splice(i,1); }
   }
-  const trafficCount=cars.filter(c=>c.ai==='traffic').length;
-  if(trafficCount<13 && Math.random()<dt*.7){
-    const pos=copSpawnPos();
+  const trafficCount=cars.filter(c=>c.ai==='traffic'&&!c.dead).length; // 廃車は補充の上限に数えない
+  if(trafficCount<13 && Math.random()<dt*1.4){
+    const pos=trafficSpawnPos()||copSpawnPos();
     if(pos){
       const vert=VX.includes(pos.x);
       const dir=Math.random()<.5?-1:1;
@@ -1027,10 +1389,54 @@ function updatePlayerCar(dt){
 }
 function damageCar(c, dmg, hard){
   if(c.dead) return;
+  /* 回収対象車は確保するまで交通の混乱や接触で壊れない（開始時は常に新品） */
+  if(c.targetCar && !c.stolen) return;
   c.hp-=dmg;
   if(hard) sfx.crash(true); else if(dmg>0) sfx.crash(false);
-  if(c.hp<=0){ c.hp=0; c.dead=true; c.smoke=1; }
+  if(c.hp<=0){ c.hp=0; c.dead=true; c.deadT=0; c.smoke=1; }
   else if(c.hp<c.maxHp*.35) c.smoke=.5;
+}
+/* ---- 車両ライフサイクル：廃車の消去・駐車の復活・近くの乗れる車の保証 ----
+   廃車は交通の補充カウントに入れない。画面外の廃車は短時間で、画面内でも
+   一定時間で消去する（プレイヤー搭乗中とミッション対象車は除く）。
+   駐車スポットは空いてから一定時間＋プレイヤーが離れたら新品で復活する。 */
+function updateCarLifecycle(dt){
+  const viewR=Math.hypot(VW,VH)/2+90;
+  for(let i=cars.length-1;i>=0;i--){
+    const c=cars[i];
+    if(!c.dead) continue;
+    if(c===player.car || c.targetCar) continue;
+    c.deadT=(c.deadT||0)+dt; c.vx=0; c.vy=0;
+    const d=dist(c.x,c.y,player.x,player.y);
+    if((d>viewR && c.deadT>4) || (d>200 && c.deadT>12) || c.deadT>28) cars.splice(i,1);
+  }
+  for(let i=cops.length-1;i>=0;i--){ const cp=cops[i]; if(cp.dead){ cp.vx=0; cp.vy=0; } }
+  // 駐車スポットの復活
+  PARK_SPOTS.forEach((sp,i)=>{
+    const occupied=cars.some(c=>dist(c.x,c.y,sp[0],sp[1])<70) || (player.car&&dist(player.car.x,player.car.y,sp[0],sp[1])<70);
+    if(occupied){ parkRespawnT[i]=0; return; }
+    parkRespawnT[i]=(parkRespawnT[i]||0)+dt;
+    if(parkRespawnT[i]>18 && dist(sp[0],sp[1],player.x,player.y)>360) spawnParkedAtSpot(i);
+  });
+  // 保証：徒歩で周囲に乗れる生きている車が1台もなければ、最寄りの空きスポットへ即補充する
+  guaranteeT-=dt;
+  if(!player.car && guaranteeT<=0){
+    guaranteeT=1.5;
+    const drivableNear=cars.some(c=>!c.dead && !c.cop && dist(c.x,c.y,player.x,player.y)<500);
+    if(!drivableNear){
+      let bestI=-1,bd=1e9;
+      PARK_SPOTS.forEach((sp,i)=>{
+        const blockers=cars.filter(c=>dist(c.x,c.y,sp[0],sp[1])<70);
+        if(blockers.some(c=>!c.dead)) return; // 生きている車がいるスポットは空きではない
+        const d=dist(sp[0],sp[1],player.x,player.y); if(d<bd){bd=d;bestI=i;bestBlockers=blockers;}
+      });
+      if(bestI>=0){
+        // スポットを塞いでいるのが廃車だけなら、その場で片付けて新品を置く
+        for(const b of (bestBlockers||[])){ const ix=cars.indexOf(b); if(ix>=0) cars.splice(ix,1); }
+        spawnParkedAtSpot(bestI);
+      }
+    }
+  }
 }
 function carCarCollisions(c, dt, isPlayerCar){
   const all=cars.concat(cops);
@@ -1118,6 +1524,7 @@ function tryEnterExit(){
     // 回収ミッション：対象車に乗った（本編・小口共通）
     const m=G.mission||G.sideJob;
     if(m&&(m.def.type==='recover'||m.def.type==='final')&&m.stage==='steal'&&best===m.targetCar){
+      best.hp=best.maxHp; best.dead=false; best.deadT=0; best.smoke=0; // 確保時点では新品として数える
       m.stage='deliver'; m.dmgPct=0;
       sfx.pickup();
       if(m.def.type==='final'){
@@ -1150,7 +1557,7 @@ function updateArrest(dt){
   let nearCop=false;
   if(G.wanted>0){
     const sp = player.car? speedOf(player.car):0;
-    for(const cp of cops){ if(dist(cp.x,cp.y,player.x,player.y)<58){ nearCop=true; break; } }
+    for(const cp of cops){ if(cp.dead) continue; if(dist(cp.x,cp.y,player.x,player.y)<58){ nearCop=true; break; } }
     if(nearCop && sp<26){ G.arrest+=dt/2.3; } else G.arrest=Math.max(0,G.arrest-dt*.7);
   } else G.arrest=0;
   if(G.arrest>=1) doArrest();
@@ -1440,11 +1847,12 @@ function showCall(){
   el('callMeta').textContent=meta;
   el('callCard').classList.add('ringing');
   el('callScr').classList.add('on');
-  sfx.ring();
   phoneBusy=true;
+  sfx.sirenSet(0); // 着信が出た瞬間にサイレンを絞る（固定音程で鳴り続けるのを防ぐ）
+  sfx.ring();
   uiFocus.index=0; uiFocus.sig=''; syncUIFocus();
 }
-function hideCall(){ el('callScr').classList.remove('on'); el('callCard').classList.remove('ringing'); phoneBusy=false; }
+function hideCall(){ el('callScr').classList.remove('on'); el('callCard').classList.remove('ringing'); phoneBusy=false; /* サイレンは次の updateCops で通常へ戻る */ }
 
 /* ---------------- パッド／キーボード UIフォーカス（着信・タイトル・ポーズ共通） ---------------- */
 const uiFocus={ ctx:null, index:0, sig:'' };
@@ -1460,10 +1868,10 @@ function uiItems(ctx){
   let ids=[];
   if(ctx==='ending') ids=['btnFreeRoam','btnEndingTitle'];
   else if(ctx==='call') ids=['btnAccept','btnDecline'];
-  else if(ctx==='pause') ids=['selAssistP','selSchemeP','btnResume','btnQuitTitle'];
+  else if(ctx==='pause') ids=['selAssistP','selSchemeP','selDiffP','btnBgmP','btnResume','btnQuitTitle'];
   else if(ctx==='title'){
     if(el('overwriteBox').style.display!=='none') ids=['btnOverwriteYes','btnOverwriteNo'];
-    else ids=['btnContinue','btnNew','selAssistT','selSchemeT'];
+    else ids=['btnContinue','btnNew','selAssistT','selSchemeT','selDiffT','btnBgmT'];
   }
   return ids.map(id=>el(id)).filter(e=>e && !e.disabled && e.getClientRects().length>0);
 }
@@ -1534,7 +1942,7 @@ window.addEventListener('keydown', e=>{
     if(!e.repeat){ e.preventDefault(); uiActivate(); }
   }
 });
-['btnAccept','btnDecline','btnContinue','btnNew','btnOverwriteYes','btnOverwriteNo','btnResume','btnQuitTitle','btnFreeRoam','btnEndingTitle','selAssistT','selSchemeT','selAssistP','selSchemeP'].forEach(id=>{
+['btnAccept','btnDecline','btnContinue','btnNew','btnOverwriteYes','btnOverwriteNo','btnResume','btnQuitTitle','btnFreeRoam','btnEndingTitle','selAssistT','selSchemeT','selDiffT','selAssistP','selSchemeP','selDiffP','btnBgmT','btnBgmP'].forEach(id=>{
   const n=el(id); if(!n) return;
   const sync=()=>{ const items=uiItems(uiContext()); const i=items.indexOf(n); if(i>=0){ uiFocus.index=i; applyUIFocus(); } };
   n.addEventListener('pointerenter', sync);
@@ -1542,21 +1950,28 @@ window.addEventListener('keydown', e=>{
 });
 
 /* ---------------- 描画 ---------------- */
-function drawBuilding(b){
-  const sx=b.x-cam.x, sy=b.y-cam.y;
-  if(sx+b.w<-80||sy+b.h+b.hgt<-80||sx>VW+80||sy>VH+80) return;
+/* 建物の絵は静的なので、建物ごとにオフスクリーンへ事前描画してキャッシュし、
+   毎フレームは drawImage だけにする（描き込みを増やしても描画負荷はほぼ増えない）。
+   paintBuilding 内では屋根の左上を (0,0) とし、ctx はオフスクリーンの context を指す。 */
+function paintBuilding(g, b){
+  const ctx=g; const sx=0, sy=0;
   // 柔らかい影
   ctx.fillStyle='rgba(30,32,36,.28)';
   ctx.fillRect(sx+10, sy+14, b.w, b.h);
   // 南側の壁面
   ctx.fillStyle=b.wall;
   ctx.fillRect(sx, sy+b.hgt*.45, b.w, b.h);
-  // 壁面の窓
-  ctx.fillStyle='rgba(220,232,240,.5)';
+  // 壁面の窓（明かりがついた窓・カーテン窓・通常窓を窓ごとに変える）
   const rows=Math.max(1,Math.floor(b.h/26)), colsW=Math.max(1,Math.floor(b.w/24));
   for(let r2=0;r2<rows;r2++) for(let c2=0;c2<colsW;c2++){
     if(((r2*7+c2*13+b.seedv)%5)===0) continue;
-    ctx.fillRect(sx+6+c2*24, sy+b.hgt*.45+8+r2*24, 11, 13);
+    const wx=sx+6+c2*24, wy=sy+b.hgt*.45+8+r2*24, hv=hash2(r2,c2,b.seedv);
+    if(hv<.16){ ctx.fillStyle='rgba(255,214,130,.85)'; ctx.fillRect(wx, wy, 11, 13); } // 明かり
+    else if(hv<.42){ // カーテン（上下2分割）
+      ctx.fillStyle='rgba(220,232,240,.5)'; ctx.fillRect(wx, wy, 11, 13);
+      ctx.fillStyle='rgba(240,244,246,.75)'; ctx.fillRect(wx, wy, 11, 5);
+    }
+    else { ctx.fillStyle='rgba(220,232,240,.5)'; ctx.fillRect(wx, wy, 11, 13); }
   }
   // 屋根
   ctx.fillStyle=b.roof;
@@ -1576,6 +1991,9 @@ function drawBuilding(b){
   for(const u of b.units){ ctx.fillRect(sx+u.dx*b.w+2, sy+u.dy*b.h+2, u.s, u.s*.7); }
   ctx.fillStyle='#a7adb5';
   for(const u of b.units){ ctx.fillRect(sx+u.dx*b.w, sy+u.dy*b.h, u.s, u.s*.7); }
+  // 室外機のファン（あるものだけ円を描く）
+  ctx.strokeStyle='rgba(70,76,84,.55)'; ctx.lineWidth=1;
+  b.units.forEach((u,i)=>{ if(hash2(i,7,b.seedv)<.5){ ctx.beginPath(); ctx.arc(sx+u.dx*b.w+u.s/2, sy+u.dy*b.h+u.s*.35, Math.min(4,u.s*.28), 0, TAU); ctx.stroke(); } });
   ctx.fillStyle='#8d939b';
   for(const v of b.vents){ ctx.beginPath(); ctx.arc(sx+v.dx*b.w, sy+v.dy*b.h, v.s/2, 0, TAU); ctx.fill(); }
   ctx.fillStyle='rgba(180,215,235,.65)';
@@ -1585,11 +2003,114 @@ function drawBuilding(b){
     ctx.fillStyle='rgba(0,0,0,.18)'; ctx.fillRect(tx+3,ty+3,22,22);
     ctx.fillStyle='#9a7d55'; ctx.beginPath(); ctx.arc(tx+11,ty+11,11,0,TAU); ctx.fill();
     ctx.strokeStyle='#6e5836'; ctx.stroke();
+    ctx.strokeStyle='rgba(110,88,54,.6)'; ctx.beginPath(); ctx.moveTo(tx+2,ty+8); ctx.lineTo(tx+20,ty+8); ctx.moveTo(tx+2,ty+15); ctx.lineTo(tx+20,ty+15); ctx.stroke();
   }
-  // 入口：縞ひさし＋ドア（南側中央）
+  // 屋上小屋
+  if(b.hut){
+    const hx=sx+b.hut.dx*b.w, hy=sy+b.hut.dy*b.h;
+    ctx.fillStyle='rgba(0,0,0,.16)'; ctx.fillRect(hx+2, hy+2, b.hut.w, b.hut.h);
+    ctx.fillStyle='#969ca4'; ctx.fillRect(hx, hy, b.hut.w, b.hut.h);
+    ctx.fillStyle='#7c828a'; ctx.fillRect(hx, hy, b.hut.w, 4);
+    ctx.fillStyle='#4a4f57'; ctx.fillRect(hx+b.hut.w/2-3, hy+5, 6, b.hut.h-5);
+  }
+  // アンテナ（細いポール＋横バー＋赤い先端）
+  for(const a of (b.antennas||[])){
+    const ax=sx+a.dx*b.w, ay=sy+a.dy*b.h;
+    ctx.strokeStyle='#5a6068'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax, ay-a.h); ctx.stroke();
+    ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(ax-5, ay-a.h+4); ctx.lineTo(ax+5, ay-a.h+4); ctx.moveTo(ax-3.5, ay-a.h+8); ctx.lineTo(ax+3.5, ay-a.h+8); ctx.stroke();
+    ctx.fillStyle='#d95757'; ctx.beginPath(); ctx.arc(ax, ay-a.h-1.5, 1.8, 0, TAU); ctx.fill();
+  }
+  // 地区別の屋根まわり
+  if(b.kind==='warehouse'){
+    // 波板の縦縞と錆びの染み
+    ctx.fillStyle='rgba(0,0,0,.055)';
+    for(let lx=sx+6; lx<sx+b.w-3; lx+=9) ctx.fillRect(lx, sy+3, 3, b.h-6);
+    ctx.fillStyle='rgba(165,90,45,.13)';
+    for(let i=0;i<3;i++){ const rx=sx+hash2(i,21,b.seedv)*b.w*.85+6, ry=sy+hash2(i,22,b.seedv)*b.h*.8+6; ctx.beginPath(); ctx.ellipse(rx, ry, 9+hash2(i,23,b.seedv)*13, 5+hash2(i,24,b.seedv)*6, 0, 0, TAU); ctx.fill(); }
+  }
+  if(b.kind==='house'){
+    // 棟ライン＋煙突＋ソーラーパネル
+    ctx.strokeStyle='rgba(0,0,0,.16)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(sx+6, sy+b.h/2); ctx.lineTo(sx+b.w-6, sy+b.h/2); ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,.18)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(sx+6, sy+b.h/2+2); ctx.lineTo(sx+b.w-6, sy+b.h/2+2); ctx.stroke();
+    if(b.houseChimney){
+      const cx2=sx+b.houseChimney.dx*b.w;
+      ctx.fillStyle='rgba(0,0,0,.15)'; ctx.fillRect(cx2+2, sy+b.h*.18+2, 9, 12);
+      ctx.fillStyle='#8a6a58'; ctx.fillRect(cx2, sy+b.h*.18, 9, 12);
+      ctx.fillStyle='#6e5546'; ctx.fillRect(cx2-1, sy+b.h*.18-2, 11, 4);
+    }
+    if(b.solar){
+      const px2=sx+b.solar.dx*b.w, py2=sy+b.solar.dy*b.h;
+      ctx.fillStyle='#31435f'; ctx.fillRect(px2, py2, b.solar.w, b.solar.h);
+      ctx.strokeStyle='rgba(190,215,235,.4)'; ctx.lineWidth=1;
+      for(let i=1;i<4;i++){ ctx.beginPath(); ctx.moveTo(px2+i*b.solar.w/4, py2+1); ctx.lineTo(px2+i*b.solar.w/4, py2+b.solar.h-1); ctx.stroke(); }
+      ctx.beginPath(); ctx.moveTo(px2+1, py2+b.solar.h/2); ctx.lineTo(px2+b.solar.w-1, py2+b.solar.h/2); ctx.stroke();
+    }
+  }
+  if(b.kind==='factory'){
+    // サイロ（円筒タンク）＋換気ダクト＋配管
+    if(b.silo){
+      const gx=sx+b.silo.dx*b.w, gy=sy+b.silo.dy*b.h;
+      ctx.fillStyle='rgba(0,0,0,.18)'; ctx.beginPath(); ctx.arc(gx+3, gy+3, b.silo.r, 0, TAU); ctx.fill();
+      ctx.fillStyle='#a8adb3'; ctx.beginPath(); ctx.arc(gx, gy, b.silo.r, 0, TAU); ctx.fill();
+      ctx.strokeStyle='#7e858d'; ctx.lineWidth=2; ctx.stroke();
+      ctx.strokeStyle='rgba(110,116,124,.7)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(gx-b.silo.r+2, gy-3); ctx.lineTo(gx+b.silo.r-2, gy-3); ctx.moveTo(gx-b.silo.r+2, gy+4); ctx.lineTo(gx+b.silo.r-2, gy+4); ctx.stroke();
+    }
+    if(b.duct){
+      const ux=sx+b.duct.dx*b.w, uy=sy+b.duct.dy*b.h;
+      ctx.fillStyle='#8d939b'; ctx.fillRect(ux, uy, b.duct.w, b.duct.h);
+      ctx.strokeStyle='rgba(0,0,0,.22)';
+      for(let i=1;i<4;i++){ ctx.beginPath(); ctx.moveTo(ux+i*b.duct.w/4, uy+1); ctx.lineTo(ux+i*b.duct.w/4, uy+b.duct.h-1); ctx.stroke(); }
+      ctx.strokeStyle='#7e858d'; ctx.lineWidth=4;
+      ctx.beginPath(); ctx.moveTo(ux+b.duct.w, uy+b.duct.h/2); ctx.lineTo(Math.min(ux+b.duct.w+34, sx+b.w-8), uy+b.duct.h/2); ctx.stroke();
+    }
+  }
+  // 南面の描き込み（壁の継ぎ目・汚れ・地区別の顔）
+  const wallTop=b.hgt*.45;
+  ctx.fillStyle='rgba(0,0,0,.10)';
+  for(let lx=sx+26; lx<sx+b.w-8; lx+=52) ctx.fillRect(lx, sy+b.h, 1.5, wallTop);
+  for(const gr of (b.grime||[])){
+    ctx.fillStyle = b.kind==='warehouse'? 'rgba(160,85,40,.20)' : 'rgba(45,40,34,.12)';
+    ctx.fillRect(sx+gr.dx*b.w, sy+b.h-2, gr.w, (wallTop+2)*gr.len+2);
+  }
+  if(b.district==='ダウンタウン' && b.kind==='normal'){
+    // ガラスっぽい南面バンド（桟＋斜めの映り込み）
+    ctx.fillStyle='rgba(118,164,196,.45)'; ctx.fillRect(sx+3, sy+b.h-16, b.w-6, 15);
+    ctx.fillStyle='rgba(255,255,255,.30)';
+    for(let lx=sx+10; lx<sx+b.w-6; lx+=14) ctx.fillRect(lx, sy+b.h-16, 2, 15);
+    ctx.strokeStyle='rgba(255,255,255,.4)'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(sx+b.w*.2, sy+b.h-1); ctx.lineTo(sx+b.w*.42, sy+b.h-15); ctx.stroke();
+  }
+  if(b.kind==='warehouse'){
+    // コンテナ色の差し色ストライプ＋大きなシャッター
+    ctx.fillStyle=b.accentCol; ctx.globalAlpha=.85; ctx.fillRect(sx, sy+b.h-27, b.w, 5); ctx.globalAlpha=1;
+    const nsh=b.shutters||1, dw=Math.min(46,(b.w-24)/nsh-10);
+    for(let i=0;i<nsh;i++){
+      const shx=sx + (i+.5)*(b.w/nsh) - dw/2, shy=sy+b.h-20, shh=20+wallTop-1;
+      ctx.fillStyle='#979da4'; ctx.fillRect(shx, shy, dw, shh);
+      ctx.strokeStyle='rgba(0,0,0,.28)'; ctx.lineWidth=1;
+      for(let ly=shy+4; ly<shy+shh-1; ly+=4){ ctx.beginPath(); ctx.moveTo(shx+1, ly); ctx.lineTo(shx+dw-1, ly); ctx.stroke(); }
+      ctx.strokeStyle='rgba(0,0,0,.4)'; ctx.strokeRect(shx+.5, shy+.5, dw-1, shh-1);
+    }
+  }
+  if(b.kind==='house'){
+    // 庭木（南の両隅）＋フェンス
+    for(const bx2 of [9, b.w-9]){
+      ctx.fillStyle='#55703f'; ctx.beginPath(); ctx.arc(sx+bx2, sy+b.h+3, 6.5, 0, TAU); ctx.fill();
+      ctx.fillStyle='#6d8f57'; ctx.beginPath(); ctx.arc(sx+bx2-2, sy+b.h+1, 4, 0, TAU); ctx.fill();
+    }
+    ctx.fillStyle='#cbb99a';
+    ctx.fillRect(sx+2, sy+b.h+1, b.w-4, 1.6); ctx.fillRect(sx+2, sy+b.h+wallTop-1.5, b.w-4, 1.6);
+    for(let lx=sx+5; lx<sx+b.w-3; lx+=12) ctx.fillRect(lx, sy+b.h-1, 2, wallTop+2);
+  }
+  // 入口：縞ひさし（色は建物ごと）＋ドア（南側中央）
   const dx=sx+b.w/2-13, dy=sy+b.h-4;
   ctx.fillStyle='#3c4148'; ctx.fillRect(dx, dy-12, 26, 14);
-  for(let i=0;i<4;i++){ ctx.fillStyle=i%2?'#e8e8e8':'#b0403c'; ctx.fillRect(dx-4+i*8.5, dy-19, 8.5, 6); }
+  for(let i=0;i<4;i++){ ctx.fillStyle=i%2?'#e8e8e8':b.awningCol; ctx.fillRect(dx-4+i*8.5, dy-19, 8.5, 6); }
   // 種別マーク
   if(b.kind==='police'){
     ctx.fillStyle='#2c4a7c'; ctx.fillRect(sx, sy+b.h-30, b.w, 16);
@@ -1613,9 +2134,61 @@ function drawBuilding(b){
     ctx.fillText('WAREHOUSE', sx+10, sy+20);
   }
   if(b.kind==='factory'){
-    ctx.fillStyle='#6d7278';
-    ctx.fillRect(sx+b.w*.15, sy-14, 14, 18); ctx.fillRect(sx+b.w*.3, sy-10, 11, 14);
+    // 煙突（高さ・太さ・本数は建物ごと）
+    for(const ch of (b.chimneys||[{dx:.15,h:18,w:14},{dx:.3,h:14,w:11}])){
+      const cx3=sx+ch.dx*b.w;
+      ctx.fillStyle='#787d84'; ctx.fillRect(cx3, sy-ch.h+4, ch.w, ch.h);
+      ctx.fillStyle='#5d6167'; ctx.fillRect(cx3, sy-ch.h+4, ch.w, 4);
+      ctx.fillStyle='rgba(255,255,255,.35)'; ctx.fillRect(cx3, sy-ch.h+11, ch.w, 3);
+    }
   }
+  // ランドマーク看板（ダウンタウンの一部）
+  if(b.sign && b.sign.type==='billboard'){
+    const bw2=Math.min(b.w*.72, 128), bh2=21, bx3=sx+b.w/2-bw2/2, by3=sy-31;
+    ctx.fillStyle='#4a4f57';
+    ctx.fillRect(bx3+8, by3+bh2, 4, 9); ctx.fillRect(bx3+bw2-12, by3+bh2, 4, 9);
+    ctx.save();
+    ctx.shadowColor=b.sign.col; ctx.shadowBlur=7;
+    ctx.fillStyle=b.sign.col; ctx.fillRect(bx3, by3, bw2, bh2);
+    ctx.restore();
+    ctx.strokeStyle='rgba(255,255,255,.5)'; ctx.lineWidth=1.5; ctx.strokeRect(bx3+1, by3+1, bw2-2, bh2-2);
+    ctx.fillStyle='#fff'; ctx.font='bold 13px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(b.sign.word, sx+b.w/2, by3+15);
+  }
+  if(b.sign && b.sign.type==='vertical'){
+    // ホテル風の縦サイン（南西の角から下がる）
+    const bx4=sx+7, by4=sy+b.h-2, bw4=16, bh4=56;
+    ctx.fillStyle='#3c4148'; ctx.fillRect(bx4+3, by4-4, 9, 5);
+    ctx.save();
+    ctx.shadowColor=b.sign.col; ctx.shadowBlur=6;
+    ctx.fillStyle=b.sign.col; ctx.fillRect(bx4, by4, bw4, bh4);
+    ctx.restore();
+    ctx.strokeStyle='rgba(255,255,255,.5)'; ctx.lineWidth=1.2; ctx.strokeRect(bx4+.6, by4+.6, bw4-1.2, bh4-1.2);
+    ctx.fillStyle='#fff'; ctx.font='bold 10px sans-serif'; ctx.textAlign='center';
+    const word=b.sign.word;
+    for(let i=0;i<word.length;i++) ctx.fillText(word[i], bx4+bw4/2, by4+13+i*10.5);
+  }
+}
+const BLD_MX=18, BLD_TOP=36; // 事前描画キャンバスの余白（左/右/上）。下は建物ごとに確保
+function buildingCanvas(b){
+  if(b._cv) return b._cv;
+  const bot=(b.sign&&b.sign.type==='vertical')? 64 : Math.ceil(b.hgt*.45)+18;
+  const PR=2; // 解像度2倍で描いて等倍表示（にじみ防止）
+  const cv=document.createElement('canvas');
+  cv.width=Math.ceil((b.w+BLD_MX*2)*PR); cv.height=Math.ceil((BLD_TOP+b.h+bot)*PR);
+  const g=cv.getContext('2d');
+  g.scale(PR,PR); g.translate(BLD_MX, BLD_TOP);
+  paintBuilding(g, b);
+  b._cv=cv;
+  return cv;
+}
+function drawBuilding(b){
+  // 画面外はキャンバス生成もしない
+  const approxBot=(b.sign&&b.sign.type==='vertical')? 64 : Math.ceil(b.hgt*.45)+18;
+  const sx0=b.x-cam.x, sy0=b.y-cam.y;
+  if(sx0+b.w+BLD_MX<-40||sy0+approxBot+BLD_TOP<-40||sx0-BLD_MX>VW+40||sy0-BLD_TOP>VH+40) return;
+  const cv=buildingCanvas(b);
+  ctx.drawImage(cv, sx0-BLD_MX, sy0-BLD_TOP, cv.width/2, cv.height/2);
 }
 function drawCar(c){
   const sx=c.x-cam.x, sy=c.y-cam.y;
@@ -1864,7 +2437,7 @@ function loop(ts){
   requestAnimationFrame(loop);
   const dt=Math.min(.05,(ts-lastT)/1000||0.016); lastT=ts;
   handleUINav();
-  if(G.mode!=='play'||G.paused||phoneBusy||G.ending){ if(G.mode==='play'&&cam.lx!==undefined) drawFrame(); return; }
+  if(G.mode!=='play'||G.paused||phoneBusy||G.ending){ sfx.sirenSet(0); if(G.mode==='play'&&cam.lx!==undefined) drawFrame(); return; }
   G.time+=dt;
   const pad=readPad();
   if(pad.start&&!prevPad.start) togglePause();
@@ -1873,6 +2446,7 @@ function loop(ts){
   prevPad={ act:pad.act, start:pad.start, shoot:pad.shoot };
 
   if(player.car) updatePlayerCar(dt); else updateOnFoot(dt);
+  updateCarLifecycle(dt);
   updateTraffic(dt);
   updatePeds(dt);
   updateReports(dt);
@@ -1909,7 +2483,7 @@ requestAnimationFrame(loop);
 function resetWorld(newGame){
   cars=[]; cops=[]; reports.length=0;
   player.car=null; player.hp=100; player.x=640; player.y=1180; player.face=-Math.PI/2;
-  G.wanted=0; G.arrest=0; G.hideTimer=0; G.mission=null; G.sideJob=null; G.time=0; G.ending=false;
+  G.wanted=0; G.arrest=0; G.hideTimer=0; G.lastSeenValid=false; G.seenAgo=99; copSpawnT=0; G.mission=null; G.sideJob=null; G.time=0; G.ending=false;
   el('endingScr').classList.remove('on');
   spawnTraffic(); spawnPeds();
   cam.x=player.x; cam.y=player.y; cam.lx=cam.x-VW/2; cam.ly=cam.y-VH/2;
@@ -1934,13 +2508,28 @@ function startGame(fromSave){
 function togglePause(){
   if(G.mode!=='play') return;
   G.paused=!G.paused;
+  if(G.paused) sfx.sirenSet(0);
   el('pauseScr').classList.toggle('on', G.paused);
   syncSettingsUI();
   if(!G.paused) writeSave();
 }
+function syncBgmUI(){
+  const label=settings.bgm? 'ON':'OFF';
+  for(const id of ['btnBgmT','btnBgmP']){ const b=el(id); if(b) b.textContent=label; }
+}
+function toggleBgm(){
+  settings.bgm=!settings.bgm;
+  syncBgmUI();
+  /* 既存セーブがあれば bgm 項目だけをその場で更新（他項目は壊さない） */
+  try{ const s=loadSave(); if(s){ s.bgm=settings.bgm; localStorage.setItem(SAVE_KEY, JSON.stringify(s)); } }catch(e){}
+  writeSave();
+  if(G.mode==='play') toast(settings.bgm? '🎵 BGM ON（HIPHOP）':'🎵 BGM OFF');
+}
 function syncSettingsUI(){
   for(const id of ['selAssistT','selAssistP']) el(id).value=String(settings.assist);
   for(const id of ['selSchemeT','selSchemeP']) el(id).value=settings.scheme;
+  for(const id of ['selDiffT','selDiffP']) el(id).value=settings.diff;
+  syncBgmUI();
 }
 function refreshTitle(){
   const s=loadSave();
@@ -1953,6 +2542,8 @@ el('btnNew').onclick=()=>{ initAudio(); const s=loadSave(); if(s){ el('overwrite
 el('btnOverwriteYes').onclick=()=>startGame(false);
 el('btnOverwriteNo').onclick=()=>{ el('overwriteBox').style.display='none'; };
 el('btnContinue').onclick=()=>startGame(true);
+el('btnBgmT').onclick=()=>toggleBgm();
+el('btnBgmP').onclick=()=>toggleBgm();
 el('btnResume').onclick=()=>togglePause();
 el('btnQuitTitle').onclick=()=>{ G.paused=false; el('pauseScr').classList.remove('on'); G.mode='title'; el('hud').classList.remove('on'); el('titleScr').classList.add('on'); refreshTitle(); };
 el('btnAccept').onclick=()=>{ hideCall(); startMission(G.missionsDone); updatePhoneUI(); };
@@ -1963,6 +2554,7 @@ el('btnFreeRoam').onclick=()=>{ el('endingScr').classList.remove('on'); G.ending
 el('btnEndingTitle').onclick=()=>{ el('endingScr').classList.remove('on'); G.ending=false; G.mode='title'; el('hud').classList.remove('on'); el('titleScr').classList.add('on'); refreshTitle(); };
 for(const id of ['selAssistT','selAssistP']) el(id).onchange=e=>{ settings.assist=parseInt(e.target.value,10); syncSettingsUI(); writeSave(); };
 for(const id of ['selSchemeT','selSchemeP']) el(id).onchange=e=>{ settings.scheme=e.target.value; syncSettingsUI(); writeSave(); };
+for(const id of ['selDiffT','selDiffP']) el(id).onchange=e=>{ settings.diff=(e.target.value==='normal'||e.target.value==='hard')? e.target.value : 'easy'; syncSettingsUI(); writeSave(); if(G.mode==='play'&&!G.paused) toast('難易度：'+settings.diff.toUpperCase()+' ― 追跡バランスを切り替えた（星の数はそのまま）'); };
 refreshTitle();
 
 /* ---------------- タッチ操作 ---------------- */
