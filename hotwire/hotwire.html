@@ -63,6 +63,11 @@
   .pbtn.gold:hover { background: #a87b28; }
   .pbtn:disabled { opacity: .4; cursor: default; }
   #muteHint { position: absolute; left: 10px; bottom: max(10px, env(safe-area-inset-bottom)); font-size: 11px; color: rgba(255,255,255,.55); padding: 5px 9px; }
+  /* 全画面ボタン（ミニマップ直下：HUD・タッチボタンと重ならない位置） */
+  #btnFsHud { pointer-events: auto; cursor: pointer; display: block; width: 100%; margin-top: 5px; padding: 5px 6px; min-height: 30px; font-size: 12px; font-weight: 700; color: #fff; background: #2c313a; border: 1px solid rgba(255,255,255,.22); border-radius: 7px; }
+  #btnFsHud:hover { background: #3a4150; }
+  /* フルスクリーン中は余白背景を黒にして画面へ集中させる（キャンバス自体は常に画面いっぱいに追従） */
+  :fullscreen body, :-webkit-full-screen body { background: #000; }
   /* ---------- overlays ---------- */
   .overlay { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(10,12,15,.72); z-index: 30; padding: 14px; }
   .overlay.on { display: flex; }
@@ -179,6 +184,7 @@
   <div id="minimapBox" class="panel">
     <canvas id="minimap" width="344" height="268"></canvas>
     <div id="districtLab">ロングショア</div>
+    <button id="btnFsHud" type="button">⛶ 全画面</button>
   </div>
   <div id="bigMsg"><div id="bigTitle"></div><div id="bigSub"></div></div>
   <div id="phone" class="panel">
@@ -189,7 +195,7 @@
       <button class="pbtn" id="btnSide">🧾 小口仕事を受ける（配達／送迎／回収）</button>
     </div>
   </div>
-  <div id="muteHint" class="panel">M：音 ON/OFF　B：BGM ON/OFF　Esc：ポーズ　Alt+Enter：全画面</div>
+  <div id="muteHint" class="panel">M：音 ON/OFF　B：BGM ON/OFF　Esc：ポーズ　Alt+Enter／⛶ボタン：全画面</div>
 </div>
 
 <div id="touch">
@@ -224,17 +230,19 @@
       <select id="selDiffT"><option value="easy">EASY</option><option value="normal">NORMAL</option><option value="hard">HARD</option></select></div>
     <div class="setRow"><span>BGM（HIPHOP）</span>
       <button class="mbtn" id="btnBgmT" style="padding:6px 18px; font-size:14px;">ON</button></div>
+    <div class="setRow"><span>全画面表示</span>
+      <button class="mbtn" id="btnFsT" style="padding:6px 18px; font-size:14px;">⛶ 全画面にする</button></div>
     <div class="padHint">🎮 パッド対応：十字キー／左スティックで移動、設定は左右で切替、Aボタンで決定（マウス・タッチ・キーボードでも操作できます）</div>
     <div id="ctrlHelp">
       <b>徒歩：</b>WASD／矢印キー／左スティックで移動、<b>F</b>または<b>E</b>で乗り降り、<b>J</b>で発砲（銃所持時）<br>
       <b>運転（画面基準）：</b>押した方向へ車が回って進む。離すと減速。<b>Space</b>でブレーキ→バック<br>
       <b>運転（車基準）：</b>↑アクセル／↓ブレーキ・バック／←→ハンドル<br>
       <b>パッド：</b>左スティック、<b>A</b>乗り降り、<b>B／LT</b>ブレーキ、<b>RT</b>アクセル（車基準）、<b>X</b>発砲、<b>Start</b>ポーズ<br>
-      <b>その他：</b>Esc／P ポーズ、M 音ON/OFF、Alt+Enter 全画面<br>
+      <b>その他：</b>Esc／P ポーズ、M 音ON/OFF、Alt+Enter／⛶ボタン 全画面（解除はEscまたは同じボタン）<br>
       <b>音楽：</b>パーティ寄りHIPHOP風BGM（跳ねるドラム＋うねるシンセリード＋シャウト風スタブの合成ループ、100BPM）。手配★が付くと追跡アレンジに切り替わり、ポーズ中は小さくなる。Bキー／設定のボタンでON・OFF（効果音とは別）<br>
       <b>難易度：</b>EASY／NORMAL／HARDで変わるのはパトカーの追跡の強さだけ（最高速度・旋回と加速・狙いの正確さ・星が消えるまでの捜索時間・出現と補充の速さ）。星の付き方、ミッション、報酬は同じ。タイトルとポーズで変更でき、その場で反映される（星の数は変わらない）
     </div>
-    <div class="note">※ 埋め込み表示（アプリ内プレビュー等）ではGamepad APIがブロックされ、パッドが効かない場合があります。その場合はこのページをブラウザで直接開いて遊んでください。<br>進行状況はミッション完了時などに自動で保存されます（この端末のブラウザ内）。</div>
+    <div class="note">※ 埋め込み表示（アプリ内プレビュー等）ではGamepad APIや全画面表示が制限される場合があります。その場合はこのページをブラウザで直接開いて遊んでください。<br>進行状況はミッション完了時などに自動で保存されます（この端末のブラウザ内）。</div>
   </div>
 </div>
 
@@ -249,6 +257,8 @@
       <select id="selDiffP"><option value="easy">EASY</option><option value="normal">NORMAL</option><option value="hard">HARD</option></select></div>
     <div class="setRow"><span>BGM（HIPHOP）</span>
       <button class="mbtn" id="btnBgmP" style="padding:6px 18px; font-size:14px;">ON</button></div>
+    <div class="setRow"><span>全画面表示</span>
+      <button class="mbtn" id="btnFsP" style="padding:6px 18px; font-size:14px;">⛶ 全画面にする</button></div>
     <div class="menuBtns" style="margin-top:20px;">
       <button class="mbtn primary" id="btnResume">ゲームに戻る</button>
       <button class="mbtn" id="btnQuitTitle">タイトルへ戻る</button>
@@ -303,9 +313,40 @@
    HOTWIRE ― 完成版 ― ロングショア全域 / 章立て全12本 / オートセーブ
    ========================================================= */
 const cv = document.getElementById('game'), ctx = cv.getContext('2d');
+const mmEl = document.getElementById('minimap');
+/* VW/VH は論理（CSSピクセル）サイズで従来通り。DPR は「実効描画スケール」＝
+   backing store のピクセル数 ÷ CSSピクセル数。フルスクリーンでぼやけないよう、
+   表示サイズ×デバイスピクセル密度に追従させ、上限は backing 幅 2560。
+   建物の事前描画キャッシュは bldCacheRegistry に登録し、スケールが変わったら
+   焼き直す（1倍のまま残ると二重にぼけるため）。ミニマップも同じスケールで追従。 */
 let VW = 0, VH = 0, DPR = 1;
-function resize(){ DPR = Math.min(2, window.devicePixelRatio||1); VW = window.innerWidth; VH = window.innerHeight; cv.width = VW*DPR; cv.height = VH*DPR; cv.style.width = VW+'px'; cv.style.height = VH+'px'; }
-window.addEventListener('resize', resize); resize();
+const bldCacheRegistry = [];
+function computeRenderScale(cssW){
+  const raw = window.devicePixelRatio || 1;
+  let s = Math.min(raw, 2);
+  if (cssW * s > 2560) s = 2560 / cssW; // backing 幅の上限
+  return s;
+}
+function resize(){
+  const cssW = window.innerWidth, cssH = window.innerHeight;
+  const s = computeRenderScale(cssW);
+  const scaleChanged = Math.abs(s - DPR) > 0.0005;
+  VW = cssW; VH = cssH; DPR = s;
+  cv.width = Math.max(1, Math.round(cssW * s));
+  cv.height = Math.max(1, Math.round(cssH * s));
+  cv.style.width = cssW + 'px'; cv.style.height = cssH + 'px';
+  // ミニマップ：CSS表示サイズ（PC 172×134／スマホ 118×92、CSSのメディアクエリと一致）× 実効スケール
+  const mmCssW = cssW <= 640 ? 118 : 172, mmCssH = cssW <= 640 ? 92 : 134;
+  mmEl.width = Math.max(1, Math.round(mmCssW * s));
+  mmEl.height = Math.max(1, Math.round(mmCssH * s));
+  // スケールが変わったら建物キャッシュを破棄し、新しい解像度で焼き直させる
+  if (scaleChanged) for (const b of bldCacheRegistry){ b._cv = null; b._pr = 0; }
+}
+window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', ()=>setTimeout(resize, 60));
+document.addEventListener('fullscreenchange', ()=>{ resize(); requestAnimationFrame(resize); syncFsUI(); });
+document.addEventListener('webkitfullscreenchange', ()=>{ resize(); requestAnimationFrame(resize); syncFsUI(); });
+resize();
 
 const TAU = Math.PI*2;
 const clamp=(v,a,b)=>v<a?a:(v>b?b:v);
@@ -878,7 +919,34 @@ window.addEventListener('keydown', e=>{
 });
 window.addEventListener('keyup', e=>{ keys[e.code]=false; });
 window.addEventListener('pointerdown', initAudio, { once:false });
-function toggleFullscreen(){ const el=document.documentElement; if(document.fullscreenElement) document.exitFullscreen().catch(()=>{}); else el.requestFullscreen&&el.requestFullscreen().catch(()=>{}); }
+function isFullscreen(){ return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+function toggleFullscreen(){
+  /* 埋め込み表示など Fullscreen API が制限される環境では、例外・拒否されても
+     静かに何も起きない形にする（ゲームは止めない）。Fキーは乗り降り用なので使わない。 */
+  try{
+    if(isFullscreen()){
+      const ex = document.exitFullscreen || document.webkitExitFullscreen;
+      if(!ex) return;
+      const p = ex.call(document);
+      if(p && p.catch) p.catch(()=>{});
+    } else {
+      const root = document.documentElement;
+      const req = root.requestFullscreen || root.webkitRequestFullscreen;
+      if(!req) return;
+      const p = req.call(root);
+      if(p && p.catch) p.catch(()=>{});
+    }
+  }catch(e){ /* 制限環境では無視 */ }
+}
+function syncFsUI(){
+  const fs = isFullscreen();
+  const hud = document.getElementById('btnFsHud');
+  if(hud) hud.textContent = fs ? '⛶ 解除' : '⛶ 全画面';
+  for(const id of ['btnFsT','btnFsP']){
+    const b = document.getElementById(id);
+    if(b) b.textContent = fs ? '⛶ 全画面を解除' : '⛶ 全画面にする';
+  }
+}
 function readPad(){
   padState={ active:false, x:0, y:0, brake:false, accel:false, act:false, shoot:false, start:false, bBtn:false, dUp:false, dDown:false, dLeft:false, dRight:false };
   let gp=null;
@@ -1868,10 +1936,10 @@ function uiItems(ctx){
   let ids=[];
   if(ctx==='ending') ids=['btnFreeRoam','btnEndingTitle'];
   else if(ctx==='call') ids=['btnAccept','btnDecline'];
-  else if(ctx==='pause') ids=['selAssistP','selSchemeP','selDiffP','btnBgmP','btnResume','btnQuitTitle'];
+  else if(ctx==='pause') ids=['selAssistP','selSchemeP','selDiffP','btnBgmP','btnFsP','btnResume','btnQuitTitle'];
   else if(ctx==='title'){
     if(el('overwriteBox').style.display!=='none') ids=['btnOverwriteYes','btnOverwriteNo'];
-    else ids=['btnContinue','btnNew','selAssistT','selSchemeT','selDiffT','btnBgmT'];
+    else ids=['btnContinue','btnNew','selAssistT','selSchemeT','selDiffT','btnBgmT','btnFsT'];
   }
   return ids.map(id=>el(id)).filter(e=>e && !e.disabled && e.getClientRects().length>0);
 }
@@ -1942,7 +2010,7 @@ window.addEventListener('keydown', e=>{
     if(!e.repeat){ e.preventDefault(); uiActivate(); }
   }
 });
-['btnAccept','btnDecline','btnContinue','btnNew','btnOverwriteYes','btnOverwriteNo','btnResume','btnQuitTitle','btnFreeRoam','btnEndingTitle','selAssistT','selSchemeT','selDiffT','selAssistP','selSchemeP','selDiffP','btnBgmT','btnBgmP'].forEach(id=>{
+['btnAccept','btnDecline','btnContinue','btnNew','btnOverwriteYes','btnOverwriteNo','btnResume','btnQuitTitle','btnFreeRoam','btnEndingTitle','selAssistT','selSchemeT','selDiffT','selAssistP','selSchemeP','selDiffP','btnBgmT','btnBgmP','btnFsT','btnFsP'].forEach(id=>{
   const n=el(id); if(!n) return;
   const sync=()=>{ const items=uiItems(uiContext()); const i=items.indexOf(n); if(i>=0){ uiFocus.index=i; applyUIFocus(); } };
   n.addEventListener('pointerenter', sync);
@@ -2173,13 +2241,16 @@ const BLD_MX=18, BLD_TOP=36; // 事前描画キャンバスの余白（左/右/�
 function buildingCanvas(b){
   if(b._cv) return b._cv;
   const bot=(b.sign&&b.sign.type==='vertical')? 64 : Math.ceil(b.hgt*.45)+18;
-  const PR=2; // 解像度2倍で描いて等倍表示（にじみ防止）
+  /* 事前描画もメインキャンバスと同じ実効スケールで焼く。スケール変更時は
+     resize() が b._cv を破棄するので、ここで新しい解像度に焼き直される。 */
+  const PR=DPR;
   const cv=document.createElement('canvas');
   cv.width=Math.ceil((b.w+BLD_MX*2)*PR); cv.height=Math.ceil((BLD_TOP+b.h+bot)*PR);
   const g=cv.getContext('2d');
   g.scale(PR,PR); g.translate(BLD_MX, BLD_TOP);
   paintBuilding(g, b);
-  b._cv=cv;
+  b._cv=cv; b._pr=PR;
+  if(!b._reg){ b._reg=true; bldCacheRegistry.push(b); }
   return cv;
 }
 function drawBuilding(b){
@@ -2188,7 +2259,7 @@ function drawBuilding(b){
   const sx0=b.x-cam.x, sy0=b.y-cam.y;
   if(sx0+b.w+BLD_MX<-40||sy0+approxBot+BLD_TOP<-40||sx0-BLD_MX>VW+40||sy0-BLD_TOP>VH+40) return;
   const cv=buildingCanvas(b);
-  ctx.drawImage(cv, sx0-BLD_MX, sy0-BLD_TOP, cv.width/2, cv.height/2);
+  ctx.drawImage(cv, sx0-BLD_MX, sy0-BLD_TOP, cv.width/(b._pr||DPR), cv.height/(b._pr||DPR));
 }
 function drawCar(c){
   const sx=c.x-cam.x, sy=c.y-cam.y;
@@ -2365,6 +2436,9 @@ function drawWorld(){
 /* ---------------- HUD・ミニマップ ---------------- */
 const mm=el('minimap').getContext('2d');
 function drawMinimap(){
+  /* 描画座標系は従来の 344×268 のまま。backing store は resize() が
+     CSS表示サイズ×実効スケールに合わせているので、変換でぴったり写す。 */
+  mm.setTransform(mmEl.width/344, 0, 0, mmEl.height/268, 0, 0);
   const W=344,H=268, sx=W/WORLD.w, sy=H/WORLD.h;
   mm.fillStyle='#3a3f45'; mm.fillRect(0,0,W,H);
   mm.fillStyle='#5d7f96'; mm.fillRect(0,WATER_Y*sy,W,(WORLD.h-WATER_Y)*sy);
@@ -2544,6 +2618,10 @@ el('btnOverwriteNo').onclick=()=>{ el('overwriteBox').style.display='none'; };
 el('btnContinue').onclick=()=>startGame(true);
 el('btnBgmT').onclick=()=>toggleBgm();
 el('btnBgmP').onclick=()=>toggleBgm();
+el('btnFsT').onclick=()=>toggleFullscreen();
+el('btnFsP').onclick=()=>toggleFullscreen();
+el('btnFsHud').onclick=()=>toggleFullscreen();
+syncFsUI();
 el('btnResume').onclick=()=>togglePause();
 el('btnQuitTitle').onclick=()=>{ G.paused=false; el('pauseScr').classList.remove('on'); G.mode='title'; el('hud').classList.remove('on'); el('titleScr').classList.add('on'); refreshTitle(); };
 el('btnAccept').onclick=()=>{ hideCall(); startMission(G.missionsDone); updatePhoneUI(); };
