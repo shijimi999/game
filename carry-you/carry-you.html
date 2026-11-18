@@ -311,6 +311,34 @@
 const cv = document.getElementById('game');
 const ctx = cv.getContext('2d');
 const VW = 960, VH = 540, GROUND_Y = 452;
+
+/* ---------- render resolution ----------
+   The canvas backing store follows the displayed size × device pixel
+   ratio (capped at 2560 px wide), so fullscreen and HiDPI displays stay
+   sharp instead of bilinear-upscaling the fixed 960×540 buffer — that
+   upscale was the fullscreen blur. All drawing stays in logical VW×VH
+   coordinates: draw() scales the context by RENDER_SCALE, and the
+   offscreen caches (static gradients & parallax layers) are rebuilt at
+   the same scale whenever it changes. Game logic never sees the scale. */
+let RENDER_SCALE = 1;
+function computeRenderScale(){
+  const cssW = cv.clientWidth || VW;
+  const dpr = window.devicePixelRatio || 1;
+  let s = cssW * dpr / VW;
+  s = Math.max(1, Math.min(s, 2560 / VW));
+  return Math.max(1, Math.round(s * 20) / 20);
+}
+function syncCanvasResolution(){
+  const s = computeRenderScale();
+  const w = Math.round(VW * s), h = Math.round(VH * s);
+  if(s === RENDER_SCALE && cv.width === w && cv.height === h) return;
+  RENDER_SCALE = s;
+  cv.width = w; cv.height = h;
+  buildStaticCaches();
+  for(const L of [hillsCache, farCache, nearCache]){   // force a re-render at the new scale
+    L.c.width = Math.round((VW + 320) * s); L.c.height = Math.round(VH * s); L.key = '';
+  }
+}
 let WORLD_W = 5300;   // set per chapter by loadChapter()
 
 /* ---------- audio (tiny synth) ---------- */
@@ -1140,6 +1168,32 @@ function throwMolotov(){
   state.inv.molotov--;
   state.bottles.push({ x:p.x + p.w/2, y:p.y - 46, vx:p.dir * 5.2, vy:-4.5 });
 }
+/* topmost solid surface at or below a point — where spilled fuel ends up
+   burning when a bottle smashes into the side of something */
+function surfaceBelow(x, y){
+  let best = null;
+  for(const s of solids){
+    if(s.gate && state.gateOpen && state.gateY > 150) continue;
+    if(s.ventDoor && state.ventOpen) continue;
+    if(x > s.x && x < s.x + s.w && s.y >= y - 2 && (best === null || s.y < best)) best = s.y;
+  }
+  return best === null ? GROUND_Y : best;
+}
+/* a broken molotov ALWAYS ignites: a fire patch whose base sits on the
+   surface it broke on (baseY), plus the loud noise and a burst of sparks */
+function igniteMolotov(x, baseY){
+  sfx.shot(); noise(x, baseY - 10, 300, 'loud');
+  state.fires.push({ x: x - 44, y: baseY - 34, w: 88, h: 34, t: 3.2 });
+  for(let i = 0; i < 8; i++) state.parts.push({ x, y: baseY - 8, vx:(Math.random()-.5)*4, vy:-1 - Math.random()*3.2, life:.35 + Math.random()*.3, c: i % 3 === 0 ? '#ffd76e' : (i % 2 ? '#f28c2e' : '#e0451e') });
+}
+function pointInSolid(x, y){
+  for(const s of solids){
+    if(s.gate && state.gateOpen && state.gateY > 150) continue;
+    if(s.ventDoor && state.ventOpen) continue;
+    if(x > s.x && x < s.x + s.w && y > s.y && y < s.y + s.h) return true;
+  }
+  return false;
+}
 function useBandage(){
   const p = state.player;
   if(state.inv.bandage <= 0 || p.hp >= 100) return;
@@ -1438,27 +1492,47 @@ function update(dt){
 
   /* --- molotov bottles & fires --- */
   for(const bo of state.bottles){
+    const prevX = bo.x, prevY = bo.y;
     bo.vy += 0.4; bo.x += bo.vx; bo.y += bo.vy;
     bo.trail = bo.trail || []; bo.trail.push({x:bo.x, y:bo.y}); if(bo.trail.length > 14) bo.trail.shift();
-    // direct hit on an infected (fast type / listener): the bottle bursts on
-    // its body and it burns to death on the spot. Human guards are exempt —
-    // bottles fly past them and break on the ground exactly as before.
-    if(!bo.dead){
+    if(bo.dead) continue;
+    /* The flight path is sampled every few px, so at any frame rate the
+       bottle cannot slip past an enemy or a ledge without breaking — and
+       EVERY contact ignites it:
+       - a direct hit on any enemy, guards included (they used to be
+         exempt, so bottles flew straight through them and the throw
+         looked like a dud). The victim burns to death on the spot and
+         the fire is left at their own feet, whatever surface they
+         stand on (ground, balcony, bridge…);
+       - landing on top of any solid — a platform, the motel balcony,
+         the bridge deck, not just the ground (bottles used to fall
+         through all of those and only ever burn at ground level);
+       - smashing into the side of a cover crate / car body, the fence,
+         the gate or a wall: the fuel spills and burns at its base. */
+    const steps = Math.max(1, Math.ceil(Math.max(Math.abs(bo.x - prevX), Math.abs(bo.y - prevY)) / 3));
+    let hitE = null, landY = null, hitX = bo.x;
+    for(let i = 1; i <= steps && !hitE && landY === null; i++){
+      const sx = prevX + (bo.x - prevX) * i / steps, sy = prevY + (bo.y - prevY) * i / steps;
       for(const e of state.enemies){
-        if(!e.alive || e.type === 'guard') continue;
-        if(bo.x > e.x - 2 && bo.x < e.x + e.w + 2 && bo.y > e.y - e.h - 2 && bo.y < e.y + 2){
-          bo.dead = true; e.burned = true; e.alive = false; state.kills++;
-          sfx.shot(); noise(bo.x, bo.y, 300, 'loud');
-          state.fires.push({ x: e.x + e.w/2 - 44, y: GROUND_Y - 34, w: 88, h: 34, t: 3.2 });
-          for(let i = 0; i < 10; i++) state.parts.push({ x: e.x + e.w/2, y: e.y - 26, vx:(Math.random()-.5)*4, vy:-1 - Math.random()*3.4, life:.4 + Math.random()*.3, c: i % 3 === 0 ? '#ffd76e' : (i % 2 ? '#f28c2e' : '#e0451e') });
-          setMsg('火炎瓶が直撃 ― 感染者は燃え尽きた', 2.2);
-          break;
-        }
+        if(!e.alive) continue;
+        if(sx > e.x - 3 && sx < e.x + e.w + 3 && sy > e.y - e.h - 3 && sy < e.y + 3){ hitE = e; hitX = sx; break; }
+      }
+      if(hitE) break;
+      for(const s of solids){
+        if(s.gate && state.gateOpen && state.gateY > 150) continue;
+        if(s.ventDoor && state.ventOpen) continue;
+        if(sx <= s.x || sx >= s.x + s.w) continue;
+        if(!s.cover && bo.vy > 0 && sy >= s.y && prevY + (bo.y - prevY) * (i - 1) / steps <= s.y){ landY = s.y; hitX = sx; break; }
+        if(sy > s.y && sy < s.y + s.h){ landY = surfaceBelow(sx, sy); hitX = sx; break; }
       }
     }
-    if(!bo.dead && bo.y >= GROUND_Y - 6){
-      bo.dead = true; sfx.shot(); noise(bo.x, GROUND_Y - 10, 300, 'loud');
-      state.fires.push({ x: bo.x - 44, y: GROUND_Y - 34, w: 88, h: 34, t: 3.2 });
+    if(hitE){
+      bo.dead = true; hitE.burned = true; hitE.alive = false; state.kills++;
+      igniteMolotov(hitE.x + hitE.w/2, hitE.y);
+      setMsg(hitE.type === 'guard' ? '火炎瓶が直撃 ― 見張りは燃え尽きた' : '火炎瓶が直撃 ― 感染者は燃え尽きた', 2.2);
+    } else if(landY !== null){
+      bo.dead = true;
+      igniteMolotov(hitX, landY);
     }
   }
   state.bottles = state.bottles.filter(b => !b.dead);
@@ -1484,12 +1558,20 @@ function update(dt){
   state.thrown = state.thrown.filter(t => !t.dead);
   for(const f of state.fires){
     f.t -= dt;
+    /* the fire only burns whoever stands ON its own surface: feet within
+       the patch's vertical span. (The old test had no lower bound tied to
+       the patch, so a fire lit on a platform could never hurt the enemy
+       standing in it, whose feet are far above GROUND_Y.) Anyone caught
+       in it — guard, infected, listener — catches fire and burns. */
     for(const e of state.enemies){
-      if(e.alive && e.x + e.w > f.x && e.x < f.x + f.w && e.y > f.y){ e.hp -= 2.2*dt; if(e.hp <= 0){ e.alive = false; state.kills++; } }
+      if(e.alive && e.x + e.w > f.x && e.x < f.x + f.w && e.y > f.y && e.y <= f.y + f.h + 2){
+        e.hp -= 2.2*dt; e.burned = true;
+        if(e.hp <= 0){ e.alive = false; state.kills++; }
+      }
     }
-    if(p.x + p.w > f.x && p.x < f.x + f.w && p.y > f.y) damagePlayer(16*dt + 2);
+    if(p.x + p.w > f.x && p.x < f.x + f.w && p.y > f.y && p.y <= f.y + f.h + 2) damagePlayer(16*dt + 2);
   }
-  for(const f of state.fires) if(f.t <= 0) state.embers.push({ x:f.x, w:f.w, t:2.6 });
+  for(const f of state.fires) if(f.t <= 0) state.embers.push({ x:f.x, y:f.y, w:f.w, t:2.6 });
   state.fires = state.fires.filter(f => f.t > 0);
   for(const em of state.embers) em.t -= dt;
   state.embers = state.embers.filter(em => em.t > 0);
@@ -1948,50 +2030,33 @@ function hash1(n){ const s = Math.sin(n * 12.9898) * 43758.5453; return s - Math
 let DRAW_DT = 0, DRAW_FRAME = 0;
 let SILHOUETTE = null;   // when set, drawPerson & friends render as one flat glowing colour
 
-/* static sky & warm wash: gradients baked once into offscreen canvases */
-const skyCacheC = document.createElement('canvas'); skyCacheC.width = VW; skyCacheC.height = VH;
-{ const g = skyCacheC.getContext('2d');
-  const sky = g.createLinearGradient(0, 0, 0, VH);
-  sky.addColorStop(0, '#9ec9ee'); sky.addColorStop(.5, '#cfe3c2'); sky.addColorStop(1, '#f2e9c2');
-  g.fillStyle = sky; g.fillRect(0, 0, VW, VH); }
-const washCacheC = document.createElement('canvas'); washCacheC.width = VW; washCacheC.height = VH;
-{ const g = washCacheC.getContext('2d');
-  const wash = g.createLinearGradient(0, 0, 0, VH);
-  wash.addColorStop(0, 'rgba(255,246,196,.12)'); wash.addColorStop(.6, 'rgba(255,246,196,.03)'); wash.addColorStop(1, 'rgba(110,150,80,.06)');
-  g.fillStyle = wash; g.fillRect(0, 0, VW, VH); }
-/* summer variants: harder light, deeper blue sky, hotter horizon */
-const skyCache2C = document.createElement('canvas'); skyCache2C.width = VW; skyCache2C.height = VH;
-{ const g = skyCache2C.getContext('2d');
-  const sky = g.createLinearGradient(0, 0, 0, VH);
-  sky.addColorStop(0, '#5ea9e6'); sky.addColorStop(.45, '#a5d2e6'); sky.addColorStop(.75, '#e6eabd'); sky.addColorStop(1, '#f9ecc0');
-  g.fillStyle = sky; g.fillRect(0, 0, VW, VH); }
-const washCache2C = document.createElement('canvas'); washCache2C.width = VW; washCache2C.height = VH;
-{ const g = washCache2C.getContext('2d');
-  const wash = g.createLinearGradient(0, 0, 0, VH);
-  wash.addColorStop(0, 'rgba(255,250,214,.20)'); wash.addColorStop(.55, 'rgba(255,244,190,.06)'); wash.addColorStop(1, 'rgba(120,160,70,.08)');
-  g.fillStyle = wash; g.fillRect(0, 0, VW, VH); }
-/* autumn variants: dusk over the valley — violet sky melting into orange */
-const skyCache3C = document.createElement('canvas'); skyCache3C.width = VW; skyCache3C.height = VH;
-{ const g = skyCache3C.getContext('2d');
-  const sky = g.createLinearGradient(0, 0, 0, VH);
-  sky.addColorStop(0, '#6b4a7a'); sky.addColorStop(.42, '#c96a3f'); sky.addColorStop(.75, '#ef9a4e'); sky.addColorStop(1, '#f7c873');
-  g.fillStyle = sky; g.fillRect(0, 0, VW, VH); }
-const washCache3C = document.createElement('canvas'); washCache3C.width = VW; washCache3C.height = VH;
-{ const g = washCache3C.getContext('2d');
-  const wash = g.createLinearGradient(0, 0, 0, VH);
-  wash.addColorStop(0, 'rgba(255,170,80,.16)'); wash.addColorStop(.55, 'rgba(255,150,70,.05)'); wash.addColorStop(1, 'rgba(90,50,30,.10)');
-  g.fillStyle = wash; g.fillRect(0, 0, VW, VH); }
-/* winter variants: flat overcast light, everything pale blue-grey */
-const skyCache4C = document.createElement('canvas'); skyCache4C.width = VW; skyCache4C.height = VH;
-{ const g = skyCache4C.getContext('2d');
-  const sky = g.createLinearGradient(0, 0, 0, VH);
-  sky.addColorStop(0, '#9fb4c4'); sky.addColorStop(.5, '#c3d2dc'); sky.addColorStop(1, '#e8eff3');
-  g.fillStyle = sky; g.fillRect(0, 0, VW, VH); }
-const washCache4C = document.createElement('canvas'); washCache4C.width = VW; washCache4C.height = VH;
-{ const g = washCache4C.getContext('2d');
-  const wash = g.createLinearGradient(0, 0, 0, VH);
-  wash.addColorStop(0, 'rgba(220,235,245,.14)'); wash.addColorStop(.6, 'rgba(210,228,240,.05)'); wash.addColorStop(1, 'rgba(120,140,160,.10)');
-  g.fillStyle = wash; g.fillRect(0, 0, VW, VH); }
+/* static sky & warm wash: gradients baked into offscreen canvases.
+   buildStaticCaches() (re)creates them at VW×VH × RENDER_SCALE device
+   pixels, so the drawImage blits in draw() stay 1:1 at any display size. */
+let skyCacheC, washCacheC, skyCache2C, washCache2C, skyCache3C, washCache3C, skyCache4C, washCache4C;
+function gradCache(stops){
+  const c = document.createElement('canvas');
+  c.width = Math.round(VW * RENDER_SCALE); c.height = Math.round(VH * RENDER_SCALE);
+  const g = c.getContext('2d');
+  const gr = g.createLinearGradient(0, 0, 0, c.height);
+  for(const st of stops) gr.addColorStop(st[0], st[1]);
+  g.fillStyle = gr; g.fillRect(0, 0, c.width, c.height);
+  return c;
+}
+function buildStaticCaches(){
+  skyCacheC = gradCache([[0, '#9ec9ee'], [.5, '#cfe3c2'], [1, '#f2e9c2']]);
+  washCacheC = gradCache([[0, 'rgba(255,246,196,.12)'], [.6, 'rgba(255,246,196,.03)'], [1, 'rgba(110,150,80,.06)']]);
+  /* summer variants: harder light, deeper blue sky, hotter horizon */
+  skyCache2C = gradCache([[0, '#5ea9e6'], [.45, '#a5d2e6'], [.75, '#e6eabd'], [1, '#f9ecc0']]);
+  washCache2C = gradCache([[0, 'rgba(255,250,214,.20)'], [.55, 'rgba(255,244,190,.06)'], [1, 'rgba(120,160,70,.08)']]);
+  /* autumn variants: dusk over the valley — violet sky melting into orange */
+  skyCache3C = gradCache([[0, '#6b4a7a'], [.42, '#c96a3f'], [.75, '#ef9a4e'], [1, '#f7c873']]);
+  washCache3C = gradCache([[0, 'rgba(255,170,80,.16)'], [.55, 'rgba(255,150,70,.05)'], [1, 'rgba(90,50,30,.10)']]);
+  /* winter variants: flat overcast light, everything pale blue-grey */
+  skyCache4C = gradCache([[0, '#9fb4c4'], [.5, '#c3d2dc'], [1, '#e8eff3']]);
+  washCache4C = gradCache([[0, 'rgba(220,235,245,.14)'], [.6, 'rgba(210,228,240,.05)'], [1, 'rgba(120,140,160,.10)']]);
+}
+buildStaticCaches();
 const sunGlow = { x: NaN, grad: null };
 
 /* per-season palettes for the shared scenery painters (spring / summer) */
@@ -2017,7 +2082,7 @@ let CURPAL = PAL1;
    offset crosses a step boundary (the step divides the layer's repeat
    period, so the pattern never pops); the leftover fraction shifts the
    cached image. Gradients & hundreds of rects stop running every frame. */
-function makeLayer(){ const c = document.createElement('canvas'); c.width = VW + 320; c.height = VH; return { c, g: c.getContext('2d'), key: '' }; }
+function makeLayer(){ const c = document.createElement('canvas'); c.width = Math.round((VW + 320) * RENDER_SCALE); c.height = Math.round(VH * RENDER_SCALE); return { c, g: c.getContext('2d'), key: '' }; }
 const hillsCache = makeLayer(), farCache = makeLayer(), nearCache = makeLayer();
 function blitLayer(cache, off, step, render){
   const base = Math.floor(off / step) * step;
@@ -2025,10 +2090,14 @@ function blitLayer(cache, off, step, render){
   if(cache.key !== key){
     cache.key = key;
     const g = cache.g;
-    g.clearRect(0, 0, cache.c.width, cache.c.height);
+    // the layer is painted in logical coordinates at RENDER_SCALE, so the
+    // blit below lands on the main canvas at exactly 1 device px per px
+    g.setTransform(RENDER_SCALE, 0, 0, RENDER_SCALE, 0, 0);
+    g.clearRect(0, 0, VW + 320, VH);
     g.save(); g.translate(160, 0); render(g, base); g.restore();
+    g.setTransform(1, 0, 0, 1, 0, 0);
   }
-  ctx.drawImage(cache.c, -160 - (off - base), 0);
+  ctx.drawImage(cache.c, -160 - (off - base), 0, VW + 320, VH);
 }
 function drawHillsInto(g, hillOff){
   g.fillStyle = CURPAL.hills;
@@ -2435,6 +2504,8 @@ function drawWinterScenery(){
   }
 }
 function draw(){
+  syncCanvasResolution();   // backing store tracks display size (fullscreen / DPR changes land here)
+  ctx.setTransform(RENDER_SCALE, 0, 0, RENDER_SCALE, 0, 0);
   const camX = Math.round(state.camX + (Math.random()-.5) * state.shake);
   const T = performance.now() / 1000;
   DRAW_FRAME++;
@@ -2446,7 +2517,7 @@ function draw(){
   const winter = state.chapter === 4;
   ctx.save();
   // sky — soft spring morning / hard summer light / autumn dusk / winter overcast (pre-rendered per chapter)
-  ctx.drawImage(winter ? skyCache4C : (autumn ? skyCache3C : (summer ? skyCache2C : skyCacheC)), 0, 0);
+  ctx.drawImage(winter ? skyCache4C : (autumn ? skyCache3C : (summer ? skyCache2C : skyCacheC)), 0, 0, VW, VH);
   // sun with a soft glow (gradient object cached until the sun drifts)
   const sunX = 800 - (camX * 0.04) % 260, sunY = summer ? 46 : (autumn ? 128 : (winter ? 84 : 62)), sunR = summer ? 155 : (autumn ? 175 : (winter ? 130 : 120));
   if(!sunGlow.grad || Math.abs(sunX - sunGlow.x) >= 2 || sunGlow.ch !== state.chapter){
@@ -2746,10 +2817,10 @@ function draw(){
   }
   // fires — layered flickering flames, ground glow, smoke and rising sparks
   for(const f of state.fires){
-    const fade = Math.min(1, f.t / .8), midX = f.x + f.w/2;
-    const gl = ctx.createRadialGradient(midX, GROUND_Y - 4, 6, midX, GROUND_Y - 4, f.w * .85);
+    const fade = Math.min(1, f.t / .8), midX = f.x + f.w/2, baseY = f.y + f.h;
+    const gl = ctx.createRadialGradient(midX, baseY - 4, 6, midX, baseY - 4, f.w * .85);
     gl.addColorStop(0, 'rgba(255,150,50,' + (.35 * fade) + ')'); gl.addColorStop(1, 'rgba(255,150,50,0)');
-    ctx.fillStyle = gl; ctx.fillRect(f.x - f.w * .4, GROUND_Y - 60, f.w * 1.8, 64);
+    ctx.fillStyle = gl; ctx.fillRect(f.x - f.w * .4, baseY - 60, f.w * 1.8, 64);
     ctx.fillStyle = 'rgba(70,64,60,' + (.3 * fade) + ')';
     for(let i = 0; i < 3; i++){
       const sp = (T * 22 + i * 17) % 44;
@@ -2770,12 +2841,12 @@ function draw(){
   }
   // embers left after a fire dies down (visual only — no damage)
   for(const em of state.embers){
-    const a = Math.min(1, em.t / 1.2);
-    ctx.fillStyle = 'rgba(40,36,32,' + (a * .35) + ')'; ctx.fillRect(em.x + 6, GROUND_Y - 5, em.w - 12, 3);
+    const a = Math.min(1, em.t / 1.2), baseY = (em.y !== undefined ? em.y + 34 : GROUND_Y);
+    ctx.fillStyle = 'rgba(40,36,32,' + (a * .35) + ')'; ctx.fillRect(em.x + 6, baseY - 5, em.w - 12, 3);
     for(let x = em.x + 4; x < em.x + em.w; x += 11){
       const pl = .5 + Math.sin(T * 6 + x) * .5;
       ctx.fillStyle = 'rgba(255,' + Math.floor(90 + pl * 70) + ',40,' + (a * (.35 + pl * .5)) + ')';
-      ctx.fillRect(x, GROUND_Y - 3, 5, 3);
+      ctx.fillRect(x, baseY - 3, 5, 3);
     }
   }
   // pickups
@@ -2825,7 +2896,7 @@ function draw(){
     } else if(state.selItem === 'molotov' && state.inv.molotov > 0){
       let bx = p.x + p.w/2, by = p.y - 46, vx = p.dir * 5.2, vy = -4.5;
       ctx.fillStyle = 'rgba(255,240,190,.85)';
-      for(let i = 0; i < 30; i++){ vy += 0.4; bx += vx; by += vy; if(by >= GROUND_Y - 6) break; if(i % 2 === 0) ctx.fillRect(bx - 2, by - 2, 4, 4); }
+      for(let i = 0; i < 40; i++){ vy += 0.4; bx += vx; by += vy; if(pointInSolid(bx, by)) break; if(i % 2 === 0) ctx.fillRect(bx - 2, by - 2, 4, 4); }
     } else if(state.selItem === 'gun' && state.inv.gun > 0){
       const sx = p.x + p.w/2, sy = p.y - 36;
       let ex = sx + p.dir * 460;
@@ -2899,7 +2970,7 @@ function draw(){
   }
   }
   // soft warm light wash over the whole scene (pre-rendered per chapter)
-  ctx.drawImage(state.chapter === 4 ? washCache4C : (autumn ? washCache3C : (summer ? washCache2C : washCacheC)), 0, 0);
+  ctx.drawImage(state.chapter === 4 ? washCache4C : (autumn ? washCache3C : (summer ? washCache2C : washCacheC)), 0, 0, VW, VH);
   // winter snowfall (screen space): the flow direction & speed ARE the wind
   // readout — a warn phase leans the snow, a gust drives it near-horizontal
   if(state.chapter === 4){
@@ -3463,9 +3534,11 @@ document.getElementById('entrustBtn').addEventListener('click', ()=>{ if(state.m
 document.getElementById('escapeBtn').addEventListener('click', ()=>{ if(state.mode === 'finale' && finaleStage === 1){ finaleSel = 1; chooseEscape(); } });
 document.getElementById('epilogueBtn').addEventListener('click', ()=>{ if(state.mode === 'epilogue') toTitle(); });
 
-/* ---------- fullscreen (display only; internal resolution & game logic untouched) ----------
+/* ---------- fullscreen (display only; game logic untouched) ----------
    The stage element (canvas + HUD + overlays) goes fullscreen; CSS keeps the
-   canvas at 16:9, letterboxed on black. Toggle: the on-screen buttons, or
+   canvas at 16:9, letterboxed on black, and the render-resolution sync at
+   the top of draw() grows the canvas backing store to match, so the image
+   stays sharp instead of upscaling 960×540. Toggle: the on-screen buttons, or
    the F key (captured before the game input handler, so F never reaches the
    game — the throwable throw moved to V). Esc exits natively. */
 function fsActive(){ return !!(document.fullscreenElement || document.webkitFullscreenElement); }
