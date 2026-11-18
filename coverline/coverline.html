@@ -195,6 +195,9 @@
       .ghostbtn{ background:transparent; color:var(--ink); border:1px solid var(--line); padding:10px 18px; border-radius:4px; font-size:14px; }
       .ghostbtn:hover{ border-color:var(--accent); }
       .btnrow{ display:flex; gap:10px; flex-wrap:wrap; margin-top:18px; }
+      /* パッドで選択中の項目（実際のフォーカスと連動して付ける） */
+      .padfocus{ outline:3px solid var(--accent) !important; outline-offset:2px; box-shadow:0 0 0 5px rgba(255,140,26,.30) !important; }
+      .padNavHint{ font-size:12px; color:var(--dim); margin-top:10px; line-height:1.6; }
       #lootList{ font-size:13px; line-height:1.9; }
       #lootList .none{ color:var(--faint); }
       .statgrid{ display:flex; gap:22px; flex-wrap:wrap; font-size:13px; color:var(--dim); margin-top:6px; }
@@ -216,7 +219,7 @@
 
         <div id="hud" class="hidden">
           <div id="objective">—</div>
-          <div id="mmapWrap"><canvas id="minimap" width="144" height="108"></canvas><div class="cap">TACTICAL MAP</div></div>
+          <div id="mmapWrap"><canvas id="minimap" width="288" height="216"></canvas><div class="cap">TACTICAL MAP</div></div>
           <div id="bossWrap" class="hidden"><div class="bn">⚠ 重装ターゲット</div><div id="bossBarOuter"><div id="bossBar"></div></div></div>
           <div id="toast"></div>
           <div id="bl">
@@ -281,6 +284,7 @@
                 <tr><td class="k">LB</td><td>タレット設置</td></tr>
                 <tr><td class="k">RB</td><td>アーマーキット（回復）</td></tr>
                 <tr><td class="k">START</td><td>ポーズ</td></tr>
+                <tr><td class="k">十字キー/左スティック + A</td><td>メニュー画面（タイトル・結果・ポーズ）の項目移動と決定。結果画面ではBでミッション選択に戻る</td></tr>
               </table>
             </div>
             <div id="padstatusTitle">🎮 コントローラー未接続（キーボード/マウス可）</div>
@@ -334,6 +338,7 @@
               <button class="ghostbtn" id="btnBackSelect">ミッション選択に戻る</button>
               <button class="ghostbtn" id="btnRetry2">同じミッションを再挑戦</button>
             </div>
+            <div class="padNavHint">🎮 コントローラーでも選べます：十字キー／左スティックで移動、Aボタンで決定、Bボタンでミッション選択に戻ります。</div>
           </div>
         </div>
 
@@ -349,6 +354,7 @@
               <button class="bigbtn" id="btnRetry">リトライ</button>
               <button class="ghostbtn" id="btnOverSelect">ミッション選択に戻る</button>
             </div>
+            <div class="padNavHint">🎮 コントローラーでも選べます：十字キー／左スティックで移動、Aボタンで決定、Bボタンでミッション選択に戻ります。</div>
           </div>
         </div>
 
@@ -383,6 +389,7 @@
               <button class="ghostbtn btnFsToggle">⛶ フルスクリーン</button>
               <button class="ghostbtn" id="btnQuitMission">ミッションを中断して選択に戻る</button>
             </div>
+            <div class="padNavHint">🎮 コントローラーでも選べます：十字キー／左スティックで移動、Aボタンで決定。プルダウンに合わせているときは、左右で選択肢を切り替えます。</div>
           </div>
         </div>
 
@@ -415,6 +422,7 @@
         <b>敵の動き：</b>敵は見た瞬間に気づくとは限らず、距離やカバー越しだと気づくまで間がある。見失うと最後に見た場所を探しに来て、見つからなければ警戒を解く。発見は仲間に伝わり、同じカバーに固まらず側面へ回る者や、カバーへ制圧射撃をする者もいる。ライフル兵は距離を保って制圧、ラッシャーは味方の制圧中に詰め、重装は撃たれながら前進する。傷ついた敵は後ろのカバーへ下がる。
         <b>フルスクリーン：</b>画面右の ⛶ ボタン / <kbd>Alt</kbd>+<kbd>Enter</kbd> で切替、<kbd>Esc</kbd> で解除。
         <b>コントローラー選択：</b>タイトル／ポーズ画面の「使うコントローラーを選ぶ」で、使うパッドのスロットだけを指定できます。USBスピーカーなど別の機器がゲームパッドとして検出される場合は、パッドのボタンを押して診断でスロット番号を確認し、そのスロットに固定してください（指定中は他のスロットを無視します）。
+        <b>メニューのパッド操作：</b>タイトル・結果（MISSION COMPLETE）・ゲームオーバー・ポーズの各画面でも、十字キー／左スティックで項目を選んでAボタンで決定できます。結果画面とゲームオーバー画面では、Bボタンでミッション選択に戻れます。
       </div>
     </div>
 
@@ -430,8 +438,40 @@ const cv = document.getElementById('game');
 const ctx = cv.getContext('2d');
 ctx.imageSmoothingEnabled = true;
 ctx.imageSmoothingQuality = "high";
-const RENDER_SCALE = 2;   // CARRY YOU風フラットイラスト用：論理座標はそのまま、実描画だけ2倍解像度
+let RENDER_SCALE = 2;   // 論理座標(VW×VH)に対する実描画の倍率。表示サイズに合わせて動的に決める（下記 resizeGameCanvas）
+const GROUND_SCALE = 2; // 地面キャンバスの焼き込み倍率（1倍だと表示時に引き伸ばされてぼやけるため2倍で焼く）
 const mm = document.getElementById('minimap').getContext('2d');
+
+/* ---------- キャンバス実解像度の追従（フルスクリーンでぼやけないための要） ----------
+   以前はキャンバスの実ピクセルが 960×540 固定で、フルスクリーンでは画面いっぱい
+   （例：1920×1080）にブラウザが引き伸ばすため、絵全体がぼやけて見えていた。
+   表示上のCSSサイズ × devicePixelRatio に実解像度を合わせ、拡大表示でも
+   引き伸ばしにならないようにする。論理座標・当たり判定・ゲームロジックは不変。
+   下限は従来の960幅（小さく表示しても従来より粗くしない）、上限は2560幅（描画負荷の抑制）。 */
+function resizeGameCanvas(){
+  try{
+    const r = cv.getBoundingClientRect();
+    if(!r || r.width < 40) return;
+    const dpr = window.devicePixelRatio || 1;
+    let targetW = Math.round(r.width * dpr);
+    targetW = Math.max(960, Math.min(2560, targetW));
+    const targetH = Math.round(targetW * VH / VW);
+    if(cv.width !== targetW || cv.height !== targetH){
+      cv.width = targetW; cv.height = targetH;
+      ctx.imageSmoothingEnabled = true;      // サイズ変更でコンテキスト状態が初期化されるため再設定
+      ctx.imageSmoothingQuality = "high";
+    }
+    RENDER_SCALE = targetW / VW;
+  }catch(e){}
+}
+try{
+  resizeGameCanvas();
+  requestAnimationFrame(()=>{ resizeGameCanvas(); });
+  if(window.ResizeObserver){ new ResizeObserver(()=>{ resizeGameCanvas(); }).observe(cv); }
+  addEventListener('resize', resizeGameCanvas);
+  document.addEventListener('fullscreenchange', ()=>{ resizeGameCanvas(); requestAnimationFrame(()=>resizeGameCanvas()); setTimeout(resizeGameCanvas, 120); setTimeout(resizeGameCanvas, 400); });
+  document.addEventListener('webkitfullscreenchange', ()=>{ resizeGameCanvas(); requestAnimationFrame(()=>resizeGameCanvas()); setTimeout(resizeGameCanvas, 120); setTimeout(resizeGameCanvas, 400); });
+}catch(e){}
 
 /* ---------- ユーティリティ ---------- */
 const clamp = (v,a,b)=> v<a?a : v>b?b : v;
@@ -1513,6 +1553,124 @@ function padDpad(){
   return { x: clamp(x,-1,1), y: clamp(y,-1,1) };
 }
 
+/* ---------- メニュー画面のパッド操作 ----------
+   結果画面（MISSION COMPLETE）・ゲームオーバー・ポーズ・タイトルでは、
+   十字キー／左スティックで項目を移動し、Aで決定できる（Bは結果／ゲームオーバーで
+   ミッション選択へ戻る）。フォーカスは実際のDOMフォーカスと連動させ、
+   選択中の項目には .padfocus でオレンジの枠を付ける。
+   プルダウン（使うコントローラー選択）に合わせているときは、左右で選択肢を
+   切り替え、上下で前後の項目へ移動する。プレイ中は一切介入しない。 */
+let menuFocusEl = null, menuFocusScreenId = "";
+let menuNavDirX = 0, menuNavDirY = 0, menuNavHeldT = 0, menuNavRepeatT = 0;
+function visibleMenuScreen(){
+  const ids = ["scr-title","scr-result","scr-over","scr-pause"];
+  for(const id of ids){
+    const s = document.getElementById(id);
+    if(s && !s.classList.contains('hidden')) return s;
+  }
+  return null;
+}
+function menuFocusableItems(screen){
+  const out = [];
+  const els = screen.querySelectorAll('button, select');
+  for(let i=0;i<els.length;i++){
+    const el = els[i];
+    if(el.disabled) continue;
+    if(!el.getClientRects || el.getClientRects().length===0) continue;   // 非表示（最終ミッション時の「次へ」等）は除く
+    out.push(el);
+  }
+  return out;
+}
+function setMenuFocus(el){
+  if(!el) return;
+  menuFocusEl = el;
+  try{ el.focus({ preventScroll:true }); }catch(err){ try{ el.focus(); }catch(e2){} }
+  try{ el.scrollIntoView({ block:"nearest", inline:"nearest" }); }catch(err){}
+}
+function menuDefaultItem(screen, items){
+  const prefer = { "scr-result":"btnNext", "scr-over":"btnRetry", "scr-pause":"btnResume" }[screen.id];
+  if(prefer){
+    const el = document.getElementById(prefer);
+    if(el && items.indexOf(el)>=0) return el;
+  }
+  return items[0] || null;
+}
+function moveMenuFocus(screen, items, step){
+  if(!items.length) return;
+  let idx = items.indexOf(document.activeElement);
+  if(idx < 0) idx = items.indexOf(menuFocusEl);
+  if(idx < 0){ setMenuFocus(menuDefaultItem(screen, items)); return; }
+  idx = (idx + step + items.length) % items.length;
+  setMenuFocus(items[idx]);
+}
+function adjustMenuSelect(sel, dir){
+  const n = sel.options ? sel.options.length : 0;
+  if(!n) return;
+  const i = Math.max(0, Math.min(n-1, sel.selectedIndex + dir));
+  if(i === sel.selectedIndex) return;
+  sel.selectedIndex = i;
+  try{ sel.dispatchEvent(new Event('change', { bubbles:true })); }catch(err){}
+}
+function handlePadMenuNav(dt){
+  if(!pad){ menuNavDirX = 0; menuNavDirY = 0; return; }
+  if(game.state === "playing"){ menuFocusScreenId = ""; return; }   // 次にメニューが開いたら先頭項目から
+  const screen = visibleMenuScreen();
+  if(!screen){ menuFocusScreenId = ""; return; }
+  const items = menuFocusableItems(screen);
+  if(!items.length) return;
+  /* 画面が切り替わったら、その画面の既定項目（結果画面は「次のミッションへ」）へフォーカスを移す */
+  if(menuFocusScreenId !== screen.id){
+    menuFocusScreenId = screen.id;
+    menuNavDirX = 0; menuNavDirY = 0; menuNavHeldT = 0; menuNavRepeatT = 0;
+    setMenuFocus(menuDefaultItem(screen, items));
+  }
+  const ae = document.activeElement;
+  if(ae && items.indexOf(ae) >= 0) menuFocusEl = ae;
+  const focused = (ae && items.indexOf(ae) >= 0) ? ae : menuFocusEl;
+  /* 選択中の見た目をフォーカスと同期 */
+  document.querySelectorAll('.padfocus').forEach(el=>{ if(el !== focused) el.classList.remove('padfocus'); });
+  if(focused && items.indexOf(focused) >= 0) focused.classList.add('padfocus');
+  /* 方向入力：十字キー優先、無ければ左スティック。押しっぱなしは少し待ってから一定間隔で繰り返す */
+  const dp = padDpad();
+  let dx = dp.x, dy = dp.y;
+  if(dx === 0 && dy === 0){
+    const sx = padAxis(0), sy = padAxis(1);
+    if(Math.abs(sx) > 0.5) dx = sx > 0 ? 1 : -1;
+    if(Math.abs(sy) > 0.5) dy = sy > 0 ? 1 : -1;
+  }
+  const doMove = (mx, my)=>{
+    if(focused && focused.tagName === "SELECT" && mx !== 0 && my === 0){ adjustMenuSelect(focused, mx); return; }
+    const step = (my !== 0 ? my : mx);
+    if(step !== 0) moveMenuFocus(screen, items, step);
+  };
+  if(dx !== menuNavDirX || dy !== menuNavDirY){
+    menuNavDirX = dx; menuNavDirY = dy; menuNavHeldT = 0; menuNavRepeatT = 0;
+    if(dx !== 0 || dy !== 0) doMove(dx, dy);
+  } else if(dx !== 0 || dy !== 0){
+    menuNavHeldT += dt;
+    if(menuNavHeldT > 0.38){
+      menuNavRepeatT += dt;
+      if(menuNavRepeatT > 0.13){ menuNavRepeatT = 0; doMove(dx, dy); }
+    }
+  }
+  /* Aで決定（プルダウン上では次の項目へ進む） */
+  if(padBtnEdge(BM.A)){
+    if(focused && items.indexOf(focused) >= 0){
+      try{ audio(); }catch(err){}
+      if(focused.tagName === "SELECT") moveMenuFocus(screen, items, 1);
+      else focused.click();
+    }
+  }
+  /* Bで戻る（結果／ゲームオーバー画面ではミッション選択へ） */
+  if(padBtnEdge(BM.B)){
+    const backId = screen.id === "scr-result" ? "btnBackSelect" : screen.id === "scr-over" ? "btnOverSelect" : "";
+    if(backId){
+      const b = document.getElementById(backId);
+      if(b) b.click();
+    }
+  }
+}
+
 /* ゲーム内キー押下イベント（ポーズ等） */
 function onKeyPress(code){
   if(code==="KeyM"){ toggleAmbMute(); return; }
@@ -1732,8 +1890,8 @@ function genMapIndoor(m){
 /* 室内の地面：大理石の石床（大きな石畳＋石目）、中央の通路カーペット、
    座像の壇と入口の玄関広間を1枚の地面キャンバスに焼き込む */
 function buildGroundIndoor(){
-  const c=document.createElement('canvas'); c.width=WORLD_W; c.height=WORLD_H;
-  const g=c.getContext('2d'); const rng=mulberry32(778);
+  const c=document.createElement('canvas'); c.width=WORLD_W*GROUND_SCALE; c.height=WORLD_H*GROUND_SCALE;
+  const g=c.getContext('2d'); g.scale(GROUND_SCALE,GROUND_SCALE); const rng=mulberry32(778);
   /* --- 石床ベース：大きな大理石畳と目地、色むら --- */
   g.fillStyle="#a3a49c"; g.fillRect(0,0,WORLD_W,WORLD_H);
   for(let ty=0;ty<WORLD_H;ty+=72){
@@ -1791,8 +1949,8 @@ function buildGroundIndoor(){
    マンホール、排水口、水たまり、街灯、街路樹、プラザの植栽までを
    1枚の地面キャンバスに焼き込む（毎フレームの描画コストは増えない） */
 function buildGround(){
-  const c=document.createElement('canvas'); c.width=WORLD_W; c.height=WORLD_H;
-  const g=c.getContext('2d'); const rng=mulberry32(777);
+  const c=document.createElement('canvas'); c.width=WORLD_W*GROUND_SCALE; c.height=WORLD_H*GROUND_SCALE;
+  const g=c.getContext('2d'); g.scale(GROUND_SCALE,GROUND_SCALE); const rng=mulberry32(777);
   /* --- 歩道ベース：コンクリートタイルの目地と色むら（曇りの昼：全体を明るいグレーへ） --- */
   g.fillStyle="#8f8d86"; g.fillRect(0,0,WORLD_W,WORLD_H);
   for(let ty=0;ty<WORLD_H;ty+=26){
@@ -3043,6 +3201,8 @@ function stepFrame(ts){
   lastT = ts;
   pollPad();
   if((game.state==="playing"||game.state==="paused") && pad && (padBtnEdge(BM.START) || padBtnEdge(BM.BACK))) togglePause();
+  /* メニュー表示中はパッドで項目を選べる（結果画面・ポーズ・タイトル等。プレイ中は無効） */
+  try{ handlePadMenuNav(dt); }catch(err){}
   const ps = document.getElementById('padstatus');
   const pst = document.getElementById('padstatusTitle');
   const psp = document.getElementById('padstatusPause');
@@ -3437,8 +3597,8 @@ function render(){
   const camX = Math.round(game.camX+shx), camY = Math.round(game.camY+shy);
   g.save();
   g.translate(-camX,-camY);
-  // 地面
-  g.drawImage(game.groundCv,0,0);
+  // 地面（焼き込みキャンバスは GROUND_SCALE 倍で作ってあるので、ワールド寸法を指定して描く）
+  g.drawImage(game.groundCv,0,0,WORLD_W,WORLD_H);
   // ゾーン表示
   if(game.state==="playing"||game.state==="paused"){
     if(game.phase==="zones"){
@@ -3695,6 +3855,7 @@ function updateHUD(){
 }
 function drawMinimap(){
   const g=mm, sx=144/WORLD_W, sy=108/WORLD_H;
+  g.setTransform(2,0,0,2,0,0);   // 実解像度は表示の2倍（288×216）で描き、引き伸ばしのぼやけを防ぐ
   g.fillStyle="#14171c"; g.fillRect(0,0,144,108);
   g.fillStyle="#3a4048";
   for(const w of game.walls) g.fillRect(w.x*sx, w.y*sy, Math.max(1,w.w*sx), Math.max(1,w.h*sy));
