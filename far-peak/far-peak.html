@@ -154,6 +154,7 @@
       #tLeft{ left:86px; bottom:18px; } #tRight{ left:154px; bottom:18px; }
       #tFire{ right:18px; bottom:86px; width:68px; height:68px; background:rgba(140,40,20,.55); }
       #tAct{ right:96px; bottom:18px; } #tWep{ right:18px; bottom:18px; }
+      #tCrouch{ left:86px; bottom:86px; font-size:12px; }
       /* ---------- Overlays ---------- */
       .overlay{
         position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
@@ -207,6 +208,13 @@
       .skillrow .sdesc{ color:var(--muted); font-size:12px; margin-top:1px; line-height:1.45; }
       .skillrow.owned{ opacity:.85; } .skillrow.locked{ opacity:.55; }
       .skillInfo{ font-size:13.5px; line-height:1.6; background:var(--chip); border:1px solid var(--line); border-radius:8px; padding:8px 12px; margin-top:6px; }
+      .quicknav{ background:var(--chip); border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin:8px 0 2px; }
+      .quickStatus{ font-size:14px; font-weight:700; line-height:1.65; }
+      #pauseScreen .padFocus{ outline:3px solid var(--accent); outline-offset:2px; }
+      #pauseScreen button:focus-visible, #pauseScreen select:focus-visible{ outline:3px solid var(--accent); outline-offset:2px; }
+      #craftScreen .padFocus{ outline:3px solid var(--accent); outline-offset:2px; }
+      #craftScreen button:focus-visible{ outline:3px solid var(--accent); outline-offset:2px; }
+      #craftScreen .card{ max-width:520px; }
       #skillHud{ font-size:12.5px; margin-top:3px; color:#bfe6ff; letter-spacing:.04em; }
       .saveNote{ font-size:12.5px; color:var(--muted); margin-top:10px; line-height:1.6; }
       .resultBig{ font-size:27px; font-weight:900; letter-spacing:.08em; margin:2px 0 4px; }
@@ -300,6 +308,7 @@
           <button id="tRight" aria-label="右を向く">▶</button>
           <button id="tFire" aria-label="撃つ">撃</button>
           <button id="tAct" aria-label="調べる・テイクダウン">F</button>
+          <button id="tCrouch" aria-label="しゃがむ切替">しゃがむ</button>
           <button id="tWep" aria-label="武器切替">替</button>
           <button id="tCam" aria-label="カメラ切替" style="right:96px;bottom:86px;width:58px;height:58px;font-size:12px;">カメラ</button>
           <button id="tThrow" aria-label="投げる" style="right:174px;bottom:86px;width:58px;height:58px;font-size:15px;">投</button>
@@ -310,29 +319,30 @@
         <div class="overlay" id="titleScreen">
           <div class="card titleCard">
             <h1>FAR <span class="isle">PEAK</span></h1>
-            <p class="tagline">― 本番 ―　エリア1：山地の西半分 ＋ エリア2：北部高地 ＋ 最終要塞「放送本部」</p>
+            <p class="tagline">― 本番 ―　エリア1：島の西半分 ＋ エリア2：島の北部 ＋ 最終要塞「放送本部」</p>
             <div class="titleGrid">
             <div>
             <p class="story">
-              旅行で訪れた山岳地帯は、独裁者バルガス将軍の私兵軍に支配されていた。
-              レジスタンスと手を組んだあなたの作戦は、山地の解放。
+              旅行で訪れたカリブ海の島は、独裁者バルガス将軍の私兵軍に支配されていた。
+              レジスタンスと手を組んだあなたの作戦は、島の解放。
               まず西半分「エリア1」（拠点3つ＋要塞、鐘の塔2基）を解放すると北の関所が開き、
-              雪と氷の「エリア2：北部高地」（拠点5つ、鐘の塔2基）へ進めるようになる。
+              海と緑の「エリア2：島の北部」（拠点5つ、鐘の塔2基）へ進めるようになる。
             </p>
             <div class="mission">
               <b>作戦目標</b>：エリア1の3拠点（山道の関所／山の村／岩山の砦）と東端の<b>要塞</b>を解放し、
               鐘の塔2基を止めればエリア1制覇。要塞は兵士が多く警報装置も2つある難所だが、最初から挑める（報酬は大きい）。
-              <b>要塞を解放すると北の関所が開き、エリア2（北部高地）へ進める。</b>エリア2は雪原・凍った湖・高地の村・鉱山・寺院の寒く険しい地で、
-              拠点5つ（雪の村／鉱山の拠点／高地の寺院／凍湖の関所／放送本部の前哨）と鐘の塔2基がある。足の速い<b>雪豹</b>（皮2枚・XP高め）も棲んでいる。
+              <b>要塞を解放すると北の関所が開き、エリア2（島の北部）へ進める。</b>エリア2は砂と草の開けた土地・浅瀬のラグーン・海辺の村・鉱山・岬の教会がある南国の地で、
+              拠点5つ（海辺の村／鉱山の拠点／岬の教会／ラグーンの関所／放送本部の前哨）と鐘の塔2基がある。足の速い<b>雪豹</b>（皮2枚・XP高め）も棲んでいる。
               解放した拠点・要塞では補給とファストトラベルが使える。
-              山には狼（群れで襲う）とヤク（普段は大人しいが、近づきすぎると突進する大型）がいる。
+              島には狼（群れで襲う）とヤク（普段は大人しいが、近づきすぎると突進する大型）がいる。
               倒せば「皮」（時々「肉」も）が手に入り、装備の拡張に使える。敵を倒す・拠点を解放するとXPが入り、
-              貯まるとスキルポイントで虎（攻撃）／象（防御）のスキルを取れる（ポーズ画面）。
+              貯まるとスキルポイントで虎（攻撃）／象（防御）のスキルを取れる（ポーズ画面の上のほう「スキルツリー」で割り振る）。
               道中では人質救出などの小事件が起きることがあり、解決すると<b>カルマ</b>が上がって特典がつく。
-              色の目立つ薬草を摘むと注射（狩猟／回復）が作れる。将軍のポスターは見つけたら剥がそう（全12枚）。
+              色の目立つ薬草を摘むと注射（狩猟／回復）が作れる（作り方は、プレイ中に <b>Back（View）</b>／<kbd>Tab</kbd> で開くクラフトパネル ― CARRY YOUと同じ形。ポーズ画面の「注射（シリンジ）― 薬草クラフト」からも作れる）。将軍のポスターは見つけたら剥がそう（全12枚）。
               弓持ちの<b>ハンター</b>は気配が薄く、動物をけしかけてくるので注意。
-              隠れ場所として、野原や拠点の周りには<b>草むら</b>（エリア2では雪をかぶった低木）が点々と生えていて、中でしゃがむと敵からほぼ見つからなくなる。
-              開けた雪原には<b>岩</b>と<b>雪のこぶ</b>もあり、松の木の幹とあわせて視線を遮る遮蔽になる（岩・雪のこぶは通り抜け不可）。
+              隠れ場所として、野原や拠点の周りには<b>熱帯の茂み</b>（ハイビスカスの咲く草むら）が点々と生えていて、中でしゃがむと敵からほぼ見つからなくなる。
+              <b>ステルスも有効</b>：しゃがんで敵の背後に回り込めば、案内が出たところで <b>R3（右スティック押し込み）</b>／ <kbd>F</kbd> で<b>テイクダウン</b>（音もなく一撃。ファークライ4と同じ割り当て）。弓は静音で、石ころは音で敵を誘導できる。拠点の<b>警報装置</b>は先に近づいて無効化したり撃って壊したりでき、一度も発見されずに拠点を解放すると<b>未発見ボーナス（+50XP）</b>が入る。
+              開けた土地には<b>砂岩の岩</b>と<b>砂のこぶ</b>もあり、ヤシの木の幹とあわせて視線を遮る遮蔽になる（岩・砂のこぶは通り抜け不可）。
               <b>武器は全5種</b>（ピストル／アサルトライフル／ショットガン／スナイパー／弓）。最初はピストル・AR・弓を所持。
               <b>ショットガンは要塞の解放で、スナイパーはエリア2で最初の鐘の塔を止めると入手</b>できる。
               <b>投擲物</b>は4種（石ころ＝音で注意逸らし／手榴弾＝範囲爆発／火炎瓶＝数秒燃える／肉＝ベイト）を使い分けられる。
@@ -345,11 +355,19 @@
               <button class="btn sub" id="continueBtn" hidden>続きから（セーブあり）</button>
               <button class="btn sub" id="fsBtnTitle" type="button">フルスクリーン</button>
             </div>
-            <div><span id="clearedBadge" hidden>制圧完了 ― 山は解放された</span></div>
+            <div><span id="clearedBadge" hidden>制圧完了 ― 島は解放された</span></div>
             <div class="setrow" style="max-width:360px;">
-              <label for="snowSelTitle">降雪の演出</label>
+              <label for="diffSelTitle">難易度</label>
+              <select id="diffSelTitle">
+                <option value="easy">EASY（やさしい）</option>
+                <option value="normal" selected>NORMAL（標準）</option>
+              </select>
+            </div>
+            <p class="setnote" style="max-width:360px;">EASYでは、受けるダメージが約6割になり、敵に発見されにくく、敵の射撃も間隔が長めで当たりにくくなります。敵の人数や配置、動物の強さは変わりません。プレイ途中でもポーズ画面からいつでも切り替えられます（セーブに保存されます）。</p>
+            <div class="setrow" style="max-width:360px;">
+              <label for="snowSelTitle">日差しの埃</label>
               <select id="snowSelTitle">
-                <option value="on" selected>ON（ゆっくり少量）</option>
+                <option value="on" selected>ON（薄くゆっくり舞う）</option>
                 <option value="off">OFF</option>
               </select>
             </div>
@@ -363,26 +381,28 @@
               <tr><td>撃つ</td><td>RT ／ 左クリック（弓は長押しで溜めて離す。スナイパーは構え中のズームで遠くを狙える）</td></tr>
               <tr><td>カメラ（マーキング）</td><td>十字キー上 ／ <kbd>C</kbd> ― 出し入れ（トグル）。構えたまま照準を合わせ続けると約0.6秒で自動マーク。マークは壁越し・ミニマップでも見える</td></tr>
               <tr><td>カメラ中：ズーム</td><td>RT：ズームイン ／ LT：ズームアウト（1回押し＝1段階、瞬間切替）／ <kbd>E</kbd> イン ・ <kbd>Q</kbd> アウト ・ マウスホイール ― 段階が上がるほど遠くまでマークできる。カメラを下ろすと初期段階に戻る</td></tr>
-              <tr><td>武器切替</td><td>十字キー右で順送り（左で逆順）／ Y ／ <kbd>1</kbd>〜<kbd>5</kbd> 直接選択 ― 未入手の武器はスキップされる</td></tr>
+              <tr><td>武器切替</td><td>十字キー右で順送り（左で逆順）／ <kbd>1</kbd>〜<kbd>5</kbd> 直接選択 ― 未入手の武器はスキップされる（Yは注射用になりました。下の「注射を使う」参照）</td></tr>
               <tr><td>ピストル（初期所持）</td><td>威力は低めだが連射が速く、音が小さめで敵に気づかれにくい。弾は専用枠</td></tr>
               <tr><td>ショットガン（要塞解放で入手）</td><td>近距離で6ペレットが拡散し大ダメージ、遠距離では弱い。音は大きい。弾はシェル枠</td></tr>
               <tr><td>スナイパー（エリア2の最初の鐘の塔で入手）</td><td>超長射程・一発大ダメージ（重装にも有効）、連射は遅い。構え中（LT／右クリック）は <kbd>E</kbd>／<kbd>Q</kbd>・ホイール・十字キー左右でステップ式ズーム（4段階・瞬間切替）</td></tr>
-              <tr><td>テイクダウン／調べる</td><td>X ／ <kbd>F</kbd>（敵の背後に近づくと表示）</td></tr>
+              <tr><td>テイクダウン</td><td>R3（右スティック押し込み）／ <kbd>F</kbd> ― 敵の背後に近づくと案内が表示される（ファークライ4と同じ割り当て）</td></tr>
+              <tr><td>調べる</td><td>X ／ <kbd>F</kbd> ― 薬草採取・ポスター剥がし・警報装置の無効化・補給など。テイクダウンとはボタンが別なので誤爆しない</td></tr>
               <tr><td>回復（包帯を使う）</td><td>A ／ <kbd>H</kbd>（体力＋45）</td></tr>
               <tr><td>しゃがむ</td><td>B ／ <kbd>Ctrl</kbd>（遅くなるが見つかりにくい）</td></tr>
-              <tr><td>隠れる（草むら）</td><td>草むら（エリア2では雪をかぶった低木）の中に入ってしゃがむと、敵からほぼ見つからなくなる（至近距離は除く）。立ったままだと効果は弱い。隠れている間は画面左下に「隠れている」と出る</td></tr>
-              <tr><td>遮蔽物</td><td>岩・雪のこぶ（吹きだまり）・松の木の幹は敵の視線を遮る。陰に回れば視線が切れて発見メーターが下がる。岩と雪のこぶは通り抜けできない</td></tr>
-              <tr><td>ポーズ・設定</td><td>Start ／ <kbd>Esc</kbd>（クラフト・スキルツリー・ファストトラベル・回転方式・環境音）</td></tr>
+              <tr><td>隠れる（草むら）</td><td>熱帯の茂み（草むら）の中に入ってしゃがむと、敵からほぼ見つからなくなる（至近距離は除く）。立ったままだと効果は弱い。隠れている間は画面左下に「隠れている」と出る</td></tr>
+              <tr><td>遮蔽物</td><td>砂岩の岩・砂のこぶ・ヤシの木の幹は敵の視線を遮る。陰に回れば視線が切れて発見メーターが下がる。岩と砂のこぶは通り抜けできない</td></tr>
+              <tr><td>ポーズ・設定</td><td>Start ／ <kbd>Esc</kbd>（開いてすぐ上にスキル割り振りと注射クラフト。装備クラフト・ファストトラベル・難易度・回転方式・環境音もここ。パッドは十字キー／スティックで選択、Aで決定）</td></tr>
               <tr><td>フルスクリーン</td><td>画面右上の <b>⛶</b> ボタン ／ <kbd>Alt</kbd>＋<kbd>Enter</kbd>（解除は <kbd>Esc</kbd>）。16:9のまま黒帯つきで広がる</td></tr>
-              <tr><td>スキル</td><td>XPを貯めるとスキルポイントが入る。ポーズ画面で虎（攻撃）6種／象（防御）6種を段階式に取得</td></tr>
+              <tr><td>スキル</td><td>XPを貯めるとスキルポイントが入る。割り振りはポーズ画面の上のほう「スキルツリー」で、虎（攻撃）6種／象（防御）6種を段階式に取得</td></tr>
               <tr><td>投擲物の選択</td><td>十字キー下 ／ <kbd>V</kbd> ― 石ころ→手榴弾→火炎瓶→肉（ベイト）の順に切り替える。選択中の投擲物と残数は画面右下に常時表示</td></tr>
               <tr><td>投げる</td><td>RB ／ <kbd>G</kbd> ― 選択中の投擲物を放物線で投げる（壁に当たるとその場に落ちる）</td></tr>
               <tr><td>石ころ</td><td>無制限。着地点で音がして、近くの敵が音に気づいて見に行く（注意逸らし・ダメージなし）</td></tr>
               <tr><td>手榴弾</td><td>着弾後まもなく爆発。範囲内の敵・動物に大ダメージ、警報装置も壊せる。音が大きく周囲の敵が警戒・発見状態になる。所持上限3個（敵ドロップと補給箱で補充）</td></tr>
               <tr><td>火炎瓶</td><td>着弾で割れて数秒間その場が燃える。炎の中の敵・動物は継続ダメージ。所持上限3個（敵ドロップと補給箱で補充）</td></tr>
               <tr><td>肉（ベイト）</td><td>投擲枠の1つ。前方に肉を投げる。近くの野生動物が集まり、そばの敵を襲う。肉は動物を倒すと時々手に入る</td></tr>
-              <tr><td>狩猟の注射</td><td>LB ／ <kbd>T</kbd> ― 25秒間、敵と動物が壁越しでも見える（ポーズ画面で薬草から作る）</td></tr>
-              <tr><td>回復の注射</td><td><kbd>R</kbd> ― 体力を大きく即回復（ポーズ画面で薬草から作る）</td></tr>
+              <tr><td>クラフト（注射作成）</td><td>Back（View）／ <kbd>Tab</kbd> ― プレイ中に注射作成パネルを開く（CARRY YOUと同じ割り当て。開いている間はゲームが止まる。中は十字キー／左スティックで選択、Aで作成、BまたはBackで閉じる。キーボードの <kbd>C</kbd> はカメラで使用中のため、開閉キーは <kbd>Tab</kbd>）。ポーズ画面の注射クラフト欄からも同じ作成ができる</td></tr>
+              <tr><td>狩猟の注射</td><td><b>Y長押し</b>（0.4秒以上）／ LB ／ <kbd>T</kbd> ― 25秒間、敵と動物が壁越しでも見える（作り方はクラフトパネル（Back／<kbd>Tab</kbd>）で薬草2。ポーズ画面でも作れる）</td></tr>
+              <tr><td>回復の注射</td><td><b>Y短押し</b> ／ L3（左スティック押し込み）／ <kbd>R</kbd> ― 体力を大きく即回復（作り方はクラフトパネル（Back／<kbd>Tab</kbd>）で薬草1。ポーズ画面でも作れる）。※Yはもともと武器切替でしたが、武器切替は十字キー左右でもできるため、Yは注射用にしました。回復の注射が使えないとき（所持なし・体力満タン）のY短押しは、従来通り武器切替として働きます</td></tr>
               <tr><td>薬草・ポスター</td><td>色の目立つ薬草と、壁の将軍ポスターは近づいて <kbd>F</kbd> ／ X で採取・剥がし</td></tr>
             </table>
             </div>
@@ -393,7 +413,25 @@
         <!-- Pause -->
         <div class="overlay" id="pauseScreen" hidden>
           <div class="card">
-            <h2>ポーズ ― 設定・クラフト・移動</h2>
+            <h2>ポーズ ― スキル・注射・設定・移動</h2>
+            <div class="quicknav">
+              <div class="quickStatus" id="quickStatus">スキルポイント 0 ／ 薬草 ×0 ／ 注射 狩猟0・回復0</div>
+              <div class="btnrow" style="margin-top:8px;">
+                <button class="btn small" id="jumpSkillBtn" type="button">スキルを割り振る</button>
+                <button class="btn small" id="jumpSyrBtn" type="button">注射（シリンジ）を作る</button>
+                <button class="btn small sub" id="jumpCraftBtn" type="button">クラフト（装備拡張）</button>
+                <button class="btn small sub" id="jumpTravelBtn" type="button">ファストトラベル</button>
+              </div>
+              <p class="setnote">スキルツリーと注射クラフトは、このすぐ下にもあります。パッドでは十字キー／左スティックの上下左右で、見た目の並び通りに項目を選び、<b>A</b>で決定、<b>B</b>で再開できます（プルダウンに合わせているときだけ、左右は値の変更になります）。</p>
+            </div>
+            <div class="setrow">
+              <label for="diffSel">難易度</label>
+              <select id="diffSel">
+                <option value="easy">EASY（やさしい）</option>
+                <option value="normal" selected>NORMAL（標準）</option>
+              </select>
+            </div>
+            <p class="setnote">EASY：受けるダメージが約6割／敵の察知メーターの上昇がゆっくり／敵の射撃の間隔が長めで命中も甘めになります。切り替えはその場で即時反映され、セーブにも保存されます。敵の人数・配置・動物の強さはNORMALと同じです。</p>
             <div class="setrow">
               <label for="rotMode">回転方式</label>
               <select id="rotMode">
@@ -414,13 +452,47 @@
               </select>
             </div>
             <div class="setrow">
-              <label for="snowSel">降雪の演出</label>
+              <label for="snowSel">日差しの埃</label>
               <select id="snowSel">
-                <option value="on" selected>ON（ゆっくり少量）</option>
+                <option value="on" selected>ON（薄くゆっくり舞う）</option>
                 <option value="off">OFF</option>
               </select>
             </div>
-            <p class="setnote">雪は演出だけの軽い降雪です。気になるときはOFFにできます（タイトル画面でも切り替えられます）。</p>
+            <p class="setnote">日差しの中で埃が薄く舞う演出だけです。気になるときはOFFにできます（タイトル画面でも切り替えられます）。島全域で共通の演出です。</p>
+
+            <h3 id="secSkill">スキルツリー ― 虎（攻撃）／象（防御）【スキルポイントの割り振りはここ】</h3>
+            <div class="skillInfo" id="skillInfo">XP 0 ／ スキルポイント 0</div>
+            <p class="setnote">敵を倒す（通常25XP／テイクダウン50XP／重装40XP）、動物を倒す（狼15XP／ヤク30XP）、拠点解放（100XP）、鐘の塔停止（80XP）でXPが入ります。各系統は段階式で、前の段を取ると次が解放されます。各スキルはポイント1消費。</p>
+            <div class="skillCols">
+              <div class="skillCol"><h4 class="tiger">虎 ― 攻撃</h4><div id="tigerList"></div></div>
+              <div class="skillCol"><h4 class="ele">象 ― 防御</h4><div id="eleList"></div></div>
+            </div>
+
+            <h3 id="secSyringe">注射（シリンジ）― 薬草クラフト【作るのはここ】</h3>
+            <p class="setnote" style="margin-top:0;">プレイ中は <b>Back（View）</b>／<kbd>Tab</kbd> でも、同じ注射作成パネルがその場で開けます（開いている間はゲームが止まります）。作成処理はパネルと共通です。</p>
+            <p class="setnote" style="margin-top:0;">素材：<b id="herbCount">薬草 ×0</b>（野原の目立つ花を摘むと手に入る。時間でまた生える）</p>
+            <div class="craftrow">
+              <div>
+                <span class="cname">狩猟の注射</span> <span class="pips" id="syrHuntPips"></span>
+                <div class="cdesc">使う（<b>Y長押し</b>／LB／<kbd>T</kbd>）と25秒間、敵と動物が壁越しでも見える。所持 <span id="syrHuntCount">0</span> 本</div>
+              </div>
+              <button class="btn small" id="syrHuntBtn">作る（薬草2）</button>
+            </div>
+            <div class="craftrow">
+              <div>
+                <span class="cname">回復の注射</span> <span class="pips" id="syrHealPips"></span>
+                <div class="cdesc">使う（<b>Y短押し</b>／L3／<kbd>R</kbd>）と体力を70即回復。所持 <span id="syrHealCount">0</span> 本</div>
+              </div>
+              <button class="btn small" id="syrHealBtn">作る（薬草1）</button>
+            </div>
+            <p class="setnote" id="posterInfo">将軍のポスター：0 / 12 枚剥がした</p>
+
+            <h3>操作 ― テイクダウン／調べる</h3>
+            <table class="controls">
+              <tr><td>テイクダウン</td><td>R3（右スティック押し込み）／ <kbd>F</kbd> ― 敵の背後・至近距離で案内が出ているときに発動（ファークライ4と同じ割り当て）</td></tr>
+              <tr><td>調べる</td><td>X ／ <kbd>F</kbd> ― 薬草採取・ポスター剥がし・警報装置の無効化・補給・鐘の塔／送信設備の操作（長押し）</td></tr>
+            </table>
+            <p class="setnote">パッドではテイクダウン（R3）と調べる（X）が別ボタンです。敵のそばで薬草やポスターを調べたいときに、誤ってテイクダウンすることはありません。キーボードの <kbd>F</kbd> とタッチボタンは従来通り両方に使えます。</p>
 
             <h3>操作 ― カメラ</h3>
             <table class="controls">
@@ -452,7 +524,7 @@
             </table>
             <p class="setnote">弾薬は武器ごとに別枠で、補給箱と敵ドロップで補充できます。クラフトの弾薬上限拡張は全武器の弾に効きます。ズームはすべてステップ式の瞬間切替で、滑らかなズームや画面シェイクはありません（酔い対策）。</p>
 
-            <h3>クラフト ― 装備の拡張</h3>
+            <h3 id="secCraft">クラフト ― 装備の拡張</h3>
             <p class="setnote" style="margin-top:0;">素材：<b id="craftHides">皮 ×0</b>（狼・ヤクを倒すと手に入る。ヤクは皮×3）</p>
             <div class="craftrow">
               <div>
@@ -469,37 +541,11 @@
               <button class="btn small" id="craftMedBtn">拡張する</button>
             </div>
 
-            <h3>スキルツリー ― 虎（攻撃）／象（防御）</h3>
-            <div class="skillInfo" id="skillInfo">XP 0 ／ スキルポイント 0</div>
-            <p class="setnote">敵を倒す（通常25XP／テイクダウン50XP／重装40XP）、動物を倒す（狼15XP／ヤク30XP）、拠点解放（100XP）、鐘の塔停止（80XP）でXPが入ります。各系統は段階式で、前の段を取ると次が解放されます。各スキルはポイント1消費。</p>
-            <div class="skillCols">
-              <div class="skillCol"><h4 class="tiger">虎 ― 攻撃</h4><div id="tigerList"></div></div>
-              <div class="skillCol"><h4 class="ele">象 ― 防御</h4><div id="eleList"></div></div>
-            </div>
-
             <h3>カルマ ― 村人との信頼</h3>
             <div class="skillInfo" id="karmaInfo">カルマ Lv 0 / 6</div>
             <p class="setnote">道中の小事件（人質救出／味方の救援／輸送小隊の襲撃）を解決するとカルマが上がります。発生するとミニマップに紫の印が出ます。特典：Lv1 クラフトの皮が少し安く／Lv2 補給箱で謝礼の皮+1／Lv3 注射の所持上限+1／Lv4 クラフトがさらに安く／Lv5 テイクダウンXP増／Lv6 包帯の回復量増。</p>
 
-            <h3>注射（シリンジ）― 薬草クラフト</h3>
-            <p class="setnote" style="margin-top:0;">素材：<b id="herbCount">薬草 ×0</b>（野原の目立つ花を摘むと手に入る。時間でまた生える）</p>
-            <div class="craftrow">
-              <div>
-                <span class="cname">狩猟の注射</span> <span class="pips" id="syrHuntPips"></span>
-                <div class="cdesc">使う（<kbd>T</kbd>／LB）と25秒間、敵と動物が壁越しでも見える。所持 <span id="syrHuntCount">0</span> 本</div>
-              </div>
-              <button class="btn small" id="syrHuntBtn">作る（薬草2）</button>
-            </div>
-            <div class="craftrow">
-              <div>
-                <span class="cname">回復の注射</span> <span class="pips" id="syrHealPips"></span>
-                <div class="cdesc">使う（<kbd>R</kbd>）と体力を70即回復。所持 <span id="syrHealCount">0</span> 本</div>
-              </div>
-              <button class="btn small" id="syrHealBtn">作る（薬草1）</button>
-            </div>
-            <p class="setnote" id="posterInfo">将軍のポスター：0 / 12 枚剥がした</p>
-
-            <h3>ファストトラベル</h3>
+            <h3 id="secTravel">ファストトラベル</h3>
             <p class="setnote" style="margin-top:0;">解放した拠点と、止めた鐘の塔へ移動できる。拠点に着くと弾薬と包帯が満タンになる。</p>
             <div class="travelGrid" id="travelGrid"></div>
 
@@ -509,7 +555,35 @@
               <button class="btn sub" id="restartBtn">セーブを消して最初から</button>
               <button class="btn sub" id="toTitleBtn">タイトルへ</button>
             </div>
-            <p class="saveNote" id="saveNote">進行状況（拠点・要塞の解放・鐘の塔・クラフト・皮・XP・スキル・カルマ・ポスター・薬草・制圧状況）はこのブラウザに自動で保存されます。</p>
+            <p class="saveNote" id="saveNote">進行状況（難易度・拠点・要塞の解放・鐘の塔・クラフト・皮・XP・スキル・カルマ・ポスター・薬草・制圧状況）はこのブラウザに自動で保存されます。</p>
+          </div>
+        </div>
+
+        <!-- Craft panel（注射作成専用）― CARRY YOUのクラフト画面と同じ形：
+             プレイ中に専用ボタンで開き、開いている間はゲームが止まる -->
+        <div class="overlay" id="craftScreen" hidden>
+          <div class="card">
+            <h2>クラフト ― 注射（シリンジ）を作る</h2>
+            <p class="setnote" style="margin-top:2px;">十字キー／左スティックで選択 ― <b>A</b>で作成 ― <b>B</b>または<b>Back（View）</b>で閉じる。キーボードは ↑↓で選択・<b>Enter</b>で作成・<b>Tab</b>／<b>Esc</b>で閉じる。開いている間、ゲームは止まります。</p>
+            <p class="setnote">素材：<b id="craftHerbCount">薬草 ×0</b>（野原の目立つ花を摘むと手に入る。時間でまた生える）</p>
+            <div class="craftrow">
+              <div>
+                <span class="cname">狩猟の注射</span> <span class="pips" id="cpSyrHuntPips"></span>
+                <div class="cdesc">使う（<b>Y長押し</b>／LB／<kbd>T</kbd>）と25秒間、敵と動物が壁越しでも見える。所持 <span id="cpSyrHuntCount">0</span> 本</div>
+              </div>
+              <button class="btn small" id="cpSyrHuntBtn" type="button">作る（薬草2）</button>
+            </div>
+            <div class="craftrow">
+              <div>
+                <span class="cname">回復の注射</span> <span class="pips" id="cpSyrHealPips"></span>
+                <div class="cdesc">使う（<b>Y短押し</b>／L3／<kbd>R</kbd>）と体力を70即回復。所持 <span id="cpSyrHealCount">0</span> 本</div>
+              </div>
+              <button class="btn small" id="cpSyrHealBtn" type="button">作る（薬草1）</button>
+            </div>
+            <p class="setnote">ボタンの割り当てについて：View（Back）はCARRY YOUとそろえて、このクラフトパネル専用にしました。注射を「使う」操作は<b>Yボタンが主</b>です（<b>Y短押し＝回復の注射／Y長押し＝狩猟の注射</b>）。従来のL3（回復）／LB（狩猟）／キーボード <kbd>R</kbd>・<kbd>T</kbd> も併用できます。Yはもともと武器切替でしたが、武器切替は十字キー左右でもできるため注射用にし、回復の注射が使えないときのY短押しだけ従来通り武器切替として残しています。ポーズ画面の注射クラフト欄からも、同じ作成ができます（作成処理は共通です）。</p>
+            <div class="btnrow">
+              <button class="btn" id="craftCloseBtn" type="button">閉じる（B／Back）</button>
+            </div>
           </div>
         </div>
 
@@ -519,7 +593,7 @@
             <h2 id="resultTitle">エリア1制覇</h2>
             <div class="resultBig" id="resultBig">全拠点解放</div>
             <p class="story" id="resultStory" style="margin-top:4px;"></p>
-            <div class="bonus" id="bonusBox">未発見解放 ― 誰にも気づかれずに制圧した拠点がある</div>
+            <div class="bonus" id="bonusBox">未発見解放 ― 誰にも気づかれずに制圧した拠点がある（解放時にボーナス +50XP）</div>
             <table class="stats">
               <tr><td>解放した拠点・要塞</td><td id="stOutposts">0 / 4</td></tr>
               <tr><td>カルマ／剥がしたポスター</td><td id="stKarma">Lv 0 ／ 0 枚</td></tr>
@@ -535,7 +609,7 @@
             <canvas id="resultMap" width="216" height="216"></canvas>
             <p class="setnote" style="text-align:center;">エリア1の地図</p>
             <div class="btnrow">
-              <button class="btn" id="exploreBtn">山の探索を続ける</button>
+              <button class="btn" id="exploreBtn">島の探索を続ける</button>
               <button class="btn sub" id="againBtn">セーブを消して最初から</button>
               <button class="btn sub" id="resultTitleBtn">タイトルへ</button>
             </div>
@@ -547,15 +621,15 @@
           <div class="endingBox">
             <p class="endingLine" id="endL1">送信設備の主電源を、切った。</p>
             <p class="endingLine" id="endL2">スピーカーから、将軍の最後の放送が流れ出す――</p>
-            <p class="endingLine bcast" id="endL3">― 山内放送：「……秩序こそ、山の……」</p>
+            <p class="endingLine bcast" id="endL3">― 島内放送：「……秩序こそ、島の……」</p>
             <p class="endingLine" id="endL4">ブツッ、という音とともに、声が途切れた。</p>
-            <p class="endingLine last" id="endL5">山に、静けさが戻る。</p>
+            <p class="endingLine last" id="endL5">島に、静けさが戻る。</p>
           </div>
         </div>
       </div>
 
       <div class="underbar">
-        <span>操作：<kbd>WASD</kbd> 移動 ／ <kbd>←→</kbd> 振り向き ／ <kbd>1</kbd>〜<kbd>5</kbd> 武器選択 ／ 左クリック 射撃 ／ 右クリック長押し 狙う ／ <kbd>C</kbd> カメラで自動マーク（カメラ中は <kbd>E</kbd>／<kbd>Q</kbd>・ホイールで段階ズーム）／ <kbd>F</kbd> テイクダウン・調べる ／ <kbd>H</kbd> 回復 ／ <kbd>V</kbd> 投擲物の選択 ／ <kbd>G</kbd> 投げる ／ <kbd>T</kbd> 狩猟の注射 ／ <kbd>R</kbd> 回復の注射 ／ <kbd>Esc</kbd> ポーズ</span>
+        <span>操作：<kbd>WASD</kbd> 移動 ／ <kbd>←→</kbd> 振り向き ／ <kbd>1</kbd>〜<kbd>5</kbd> 武器選択 ／ 左クリック 射撃 ／ 右クリック長押し 狙う ／ <kbd>C</kbd> カメラで自動マーク（カメラ中は <kbd>E</kbd>／<kbd>Q</kbd>・ホイールで段階ズーム）／ <kbd>F</kbd> テイクダウン・調べる ／ <kbd>Ctrl</kbd> しゃがむ ／ <kbd>H</kbd> 回復 ／ <kbd>V</kbd> 投擲物の選択 ／ <kbd>G</kbd> 投げる ／ <kbd>Tab</kbd> クラフト（注射作成）／ パッド：Y短押し 回復の注射・Y長押し 狩猟の注射（LB／L3・<kbd>T</kbd>／<kbd>R</kbd> でも可）／ <kbd>Esc</kbd> ポーズ</span>
         <span>画面をクリックするとマウスで振り向けます（ポインターロック対応ブラウザのみ）／ <kbd>Alt</kbd>＋<kbd>Enter</kbd> でフルスクリーン</span>
       </div>
     </div>
@@ -564,7 +638,8 @@
 "use strict";
 /* ============================================================
    FAR PEAK ― 本番 ―  レイキャスティング疑似3D
-   エリア1＋エリア2（北部高地）＋最終要塞「放送本部」：拠点9つ／鐘の塔4基／狼・ヤク・雪豹／武器5種／クラフト／ファストトラベル／スキルツリー
+   エリア1＋エリア2（島の北部）＋最終要塞「放送本部」：拠点9つ／鐘の塔4基／狼・ヤク・雪豹／武器5種／クラフト／ファストトラベル／スキルツリー
+   グラフィックは全面南国（カリブ海・コロニアル）展開済み：判定・配置・セーブは従来と共通
    酔い対策（第1弾と同一）：等速移動・慣性なし／回転速度上限／
    ヘッドボブなし／画面シェイクなし／視野角固定90度／照準常時表示
    ============================================================ */
@@ -600,10 +675,10 @@ var OUTPOSTS = [
   { id: 'B', name: '山の村', cx: 34.5, cy: 26.5, travelX: 34.5, travelY: 27.5, supply: null },
   { id: 'C', name: '岩山の砦',     cx: 35.5, cy: 6.5,  travelX: 33.5, travelY: 6.5,  supply: null },
   { id: 'D', name: '要塞',         cx: 48.5, cy: 16.5, travelX: 46.5, travelY: 16.5, supply: null },
-  { id: 'E', name: '雪の村',       cx: 10.5, cy: 8.5,  travelX: 10.5, travelY: 11.5, supply: null },
+  { id: 'E', name: '海辺の村',     cx: 10.5, cy: 8.5,  travelX: 10.5, travelY: 11.5, supply: null },
   { id: 'F', name: '鉱山の拠点',   cx: 26.5, cy: 6.5,  travelX: 26.5, travelY: 11.5, supply: null },
-  { id: 'G', name: '高地の寺院',   cx: 42.5, cy: 9.5,  travelX: 42.5, travelY: 16.5, supply: null },
-  { id: 'H', name: '凍湖の関所',   cx: 16.5, cy: 21.5, travelX: 16.5, travelY: 26.5, supply: null },
+  { id: 'G', name: '岬の教会',     cx: 42.5, cy: 9.5,  travelX: 42.5, travelY: 16.5, supply: null },
+  { id: 'H', name: 'ラグーンの関所', cx: 16.5, cy: 21.5, travelX: 16.5, travelY: 26.5, supply: null },
   { id: 'I', name: '放送本部の前哨', cx: 40.5, cy: 22.5, travelX: 41.5, travelY: 27.5, supply: null }
 ];
 var TOWERS = [
@@ -733,7 +808,7 @@ var REINFORCE = {
   hWall(1, MW - 2, GATE_Y, 1);
   set(GATE_X, GATE_Y, 4); set(GATE_X + 1, GATE_Y, 4);
   OY = A2_SHIFT;
-  /* E：雪の村（石の家＋柵） */
+  /* E：海辺の村（コロニアルな家＋柵。見た目は南国壁で描かれる） */
   rect(7, 6, 11, 9, 1); set(9, 9, 0);
   hWall(6, 16, 12, 2); set(10, 12, 0); set(11, 12, 0);
   /* F：鉱山の拠点（石壁＋見張り台＋内部に木箱） */
@@ -741,7 +816,7 @@ var REINFORCE = {
   /* G：高地の寺院（石の外壁＋木の祠） */
   rect(38, 6, 47, 12, 1); set(42, 12, 0); set(43, 12, 0);
   rect(41, 8, 44, 10, 2); set(42, 10, 0);
-  /* H：凍湖の関所（柵の囲い） */
+  /* H：ラグーンの関所（柵の囲い） */
   rect(13, 19, 20, 24, 2); set(16, 24, 0); set(17, 24, 0); set(13, 21, 0);
   /* I：放送本部の前哨（石壁の大囲い＋見張り台2つ＋内部の兵舎） */
   rect(36, 19, 46, 26, 1); set(36, 22, 0); set(41, 26, 0); set(42, 26, 0); set(45, 19, 3); set(37, 26, 3);
@@ -769,7 +844,7 @@ var REINFORCE = {
     posts.push({ x: qx + .5, y: 14.5 + A2_SHIFT, kind: 'post' });
     spriteCells[qx + ',' + (14 + A2_SHIFT)] = 'post';
   }
-  /* 凍った湖（通行は妨げない装飾） */
+  /* 浅瀬のラグーン（通行は妨げない装飾。旧・凍った湖の位置） */
   [[6.5,20.5],[8.5,22.5],[5.5,23.5],[9.5,19.5],[7.5,25.5],[10.5,24.5]].forEach(function(p){
     ices.push({ x: p[0], y: p[1] + A2_SHIFT, kind: 'ice' });
   });
@@ -790,7 +865,7 @@ var REINFORCE = {
     crates.push(c3);
     spriteCells[p.x + ',' + p.y] = 'crate';
   });
-  /* 本部南の開けた雪原の松 */
+  /* 本部南の開けた土地の木（ヤシとして描かれる） */
   [[28,3],[28,8],[20,6],[14,2],[8,8],[24,10]].forEach(function(p){
     if (grid[p[1]][p[0]] === 0 && !spriteCells[p[0] + ',' + p[1]]){
       trees.push({ x: p[0] + .5, y: p[1] + .5, kind: 'tree' });
@@ -1044,6 +1119,145 @@ function makeWallTexture(kind){
 }
 var wallTex = [null, makeWallTexture(1), makeWallTexture(2), makeWallTexture(3), makeWallTexture(4)];
 
+/* ============================================================
+   南国（カリブ海・コロニアル風）テクスチャ ― 全面展開で全域に使用
+   壁の見た目だけを差し替える。タイル番号・当たり判定・視線判定は従来と共通で、
+   全面展開では全域で wallTexA1（南国）を使う。旧 wallTex（山岳）は互換のため残置。
+   雪は一切描かない。タッチは従来のなめらかフラット絵にそろえる。 */
+function makeWallTextureTropic(kind){
+  var S = 256;
+  var c = mkCanvas(S, S), g = ctx2(c);
+  var x, y, i;
+  var seed = kind * 104729 + 733;
+  function rnd(){ seed = (seed * 16807) % 2147483647; return (seed % 1000) / 1000; }
+  function terraBand(){
+    /* テラコッタ屋根瓦の帯（上部）：丸瓦の列をアーチで描く */
+    fillRR(g, -4, -6, S + 8, 40, 7, '#c4673a');
+    g.strokeStyle = 'rgba(122,52,22,.55)'; g.lineWidth = 3; g.lineCap = 'round';
+    for (x = 8; x < S; x += 24){
+      g.beginPath(); g.arc(x, 32, 11, Math.PI, 0); g.stroke();
+      g.beginPath(); g.moveTo(x - 11, 32); g.lineTo(x - 11, 6); g.stroke();
+    }
+    fillRR(g, -4, 32, S + 8, 6, 3, 'rgba(255,220,180,.35)');
+    fillRR(g, -4, -6, S + 8, 8, 4, 'rgba(255,235,200,.28)');
+  }
+  function plasterMottle(base){
+    g.fillStyle = base; g.fillRect(0, 0, S, S);
+    for (i = 0; i < 26; i++)
+      ellF(g, rnd() * S, rnd() * S, 12 + rnd() * 26, 8 + rnd() * 16, rnd() > 0.5 ? '#ffffff' : '#8a5a30', 0.045);
+    for (i = 0; i < 7; i++)
+      ellF(g, 14 + rnd() * 228, 226 + rnd() * 24, 15 + rnd() * 18, 7 + rnd() * 6, '#7a8a4a', 0.13);
+  }
+  if (kind === 1){
+    /* 石壁 → パステル漆喰のコロニアル壁（鎧戸つき窓＋テラコッタ帯） */
+    plasterMottle('#eec09a');
+    terraBand();
+    fillRR(g, -4, S - 22, S + 8, 26, 4, '#f6eeda');
+    /* 窓：白枠＋ターコイズの鎧戸（ルーバー） */
+    fillRR(g, 84, 78, 88, 104, 8, '#f8f2e2');
+    fillRR(g, 92, 86, 72, 88, 5, '#79b8c4');
+    ellF(g, 116, 108, 20, 12, 'rgba(255,255,255,.4)');
+    fillRR(g, 62, 78, 22, 104, 6, '#2e8f86');
+    fillRR(g, 172, 78, 22, 104, 6, '#2e8f86');
+    g.strokeStyle = 'rgba(16,70,64,.55)'; g.lineWidth = 3; g.lineCap = 'round';
+    for (y = 88; y <= 172; y += 12){
+      g.beginPath(); g.moveTo(65, y); g.lineTo(81, y + 4); g.stroke();
+      g.beginPath(); g.moveTo(175, y); g.lineTo(191, y + 4); g.stroke();
+    }
+    fillRR(g, 84, 124, 88, 6, 3, '#f8f2e2');
+    /* 漆喰のひび（柔らかく1本だけ） */
+    g.strokeStyle = 'rgba(120,80,50,.3)'; g.lineWidth = 2.2;
+    g.beginPath(); g.moveTo(216, 70); g.quadraticCurveTo(208, 96, 214, 122); g.stroke();
+  } else if (kind === 2){
+    /* 木柵 → 色あせたターコイズ塗りの板柵＋木の横梁 */
+    g.fillStyle = '#1f5a54'; g.fillRect(0, 0, S, S);
+    for (x = 0; x < 4; x++){
+      var px = x * 64, ptone = 0.9 + rnd() * 0.22;
+      g.fillStyle = 'rgb(' + Math.round(56 * ptone) + ',' + Math.round(143 * ptone) + ',' + Math.round(133 * ptone) + ')';
+      g.fillRect(px, 0, 64, S);
+      g.fillStyle = 'rgba(0,0,0,.22)'; g.fillRect(px + 61, 0, 3, S);
+      g.fillStyle = 'rgba(255,255,255,.20)'; g.fillRect(px + 3, 0, 9, S);
+      g.fillStyle = 'rgba(255,255,255,.13)'; g.fillRect(px + 30, 0, 16, S);
+      g.strokeStyle = 'rgba(14,64,58,.4)'; g.lineWidth = 3; g.lineCap = 'round';
+      for (i = 0; i < 3; i++){
+        var gx = px + 12 + rnd() * 38;
+        g.beginPath(); g.moveTo(gx, -4);
+        g.bezierCurveTo(gx + (rnd() * 10 - 5), 84, gx + (rnd() * 10 - 5), 170, gx + (rnd() * 6 - 3), 260);
+        g.stroke();
+      }
+      var kx = px + 16 + rnd() * 30, ky = 30 + rnd() * 190;
+      ellF(g, kx, ky, 8, 11, 'rgba(16,54,48,.5)');
+      ellF(g, kx, ky, 4.6, 6.6, 'rgba(10,36,32,.55)');
+    }
+    fillRR(g, -4, 38, S + 8, 30, 7, '#7d5a34');
+    fillRR(g, -4, 180, S + 8, 30, 7, '#7d5a34');
+    fillRR(g, -4, 40, S + 8, 7, 3, 'rgba(255,235,200,.16)');
+    fillRR(g, -4, 182, S + 8, 7, 3, 'rgba(255,235,200,.16)');
+    [[26, 53], [230, 53], [26, 195], [230, 195]].forEach(function(p){
+      circF(g, p[0], p[1], 5, '#4a341e'); circF(g, p[0] - 1.6, p[1] - 1.6, 1.8, 'rgba(255,240,210,.5)');
+    });
+  } else if (kind === 4){
+    /* 北の関所の鉄の門 → ティール塗りの鉄格子（錆は控えめに） */
+    var bg = g.createLinearGradient(0, 0, 0, S);
+    bg.addColorStop(0, '#2b6f6a'); bg.addColorStop(1, '#1e4f4c');
+    g.fillStyle = bg; g.fillRect(0, 0, S, S);
+    var barGrad = g.createLinearGradient(0, 0, S, 0);
+    barGrad.addColorStop(0, '#4faea4'); barGrad.addColorStop(0.25, '#2f7f78'); barGrad.addColorStop(0.5, '#4aa79d');
+    barGrad.addColorStop(0.75, '#2a726b'); barGrad.addColorStop(1, '#3d968c');
+    g.fillStyle = barGrad;
+    for (x = 0; x < 6; x++) fillRR(g, x * 43 + 7, -6, 29, S + 12, 9, barGrad);
+    for (i = 0; i < 8; i++)
+      ellF(g, 14 + rnd() * 228, 50 + rnd() * 180, 5 + rnd() * 9, 9 + rnd() * 18, '#c97a35', 0.15);
+    fillRR(g, -4, 30, S + 8, 34, 7, '#173f3c');
+    fillRR(g, -4, 188, S + 8, 34, 7, '#173f3c');
+    fillRR(g, -4, 32, S + 8, 6, 3, 'rgba(255,255,255,.14)');
+    fillRR(g, -4, 190, S + 8, 6, 3, 'rgba(255,255,255,.14)');
+    for (x = 0; x < 4; x++){
+      [47, 205].forEach(function(ry){
+        circF(g, 32 + x * 64, ry, 5.5, '#8fd0c8');
+        circF(g, 30.4, ry - 1.6, 1.9, 'rgba(255,255,255,.6)');
+      });
+    }
+  } else {
+    /* 見張り台・祠の壁 → クリーム漆喰＋テラコッタ帯＋青い扉＋色旗のバナー */
+    plasterMottle('#f0dfba');
+    terraBand();
+    /* 窓（暖かい明かり＋白枠＋鎧戸） */
+    fillRR(g, 20, 84, 72, 86, 9, '#f8f2e2');
+    var wg = g.createRadialGradient(56, 120, 6, 56, 127, 46);
+    wg.addColorStop(0, '#ffd98a'); wg.addColorStop(0.6, '#eda94e'); wg.addColorStop(1, '#d98a34');
+    g.fillStyle = wg; rrPath(g, 28, 92, 56, 70, 6); g.fill();
+    g.strokeStyle = '#8a6a42'; g.lineWidth = 5; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(56, 94); g.lineTo(56, 160); g.moveTo(30, 127); g.lineTo(82, 127); g.stroke();
+    fillRR(g, 94, 84, 15, 86, 5, '#2e8f86'); fillRR(g, 3, 84, 15, 86, 5, '#2e8f86');
+    /* 扉（鮮やかな青の板扉） */
+    fillRR(g, 166, 68, 68, 188, 9, '#2b7f9e');
+    fillRR(g, 174, 78, 52, 74, 6, '#3593b3');
+    fillRR(g, 174, 162, 52, 84, 6, '#3593b3');
+    fillRR(g, 166, 88, 18, 10, 4, '#173f3c'); fillRR(g, 166, 208, 18, 10, 4, '#173f3c');
+    circF(g, 222, 168, 7, '#e8c832'); circF(g, 220, 166, 2.4, 'rgba(255,255,255,.65)');
+    /* 色旗のバナー（祈祷旗の代わり）：たるんだ紐に三角旗 */
+    g.strokeStyle = '#f4ead2'; g.lineWidth = 3.4; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(104, 44); g.quadraticCurveTo(128, 66, 152, 44); g.stroke();
+    var flagCols = ['#e5484d', '#f2b63c', '#2fa8a0', '#e86aa8', '#f4f1e6'];
+    for (i = 0; i < 3; i++){
+      var fx = 110 + i * 15, fy = 52 + Math.sin(i / 2 * Math.PI) * 4;
+      g.fillStyle = flagCols[i * 2 % 5];
+      g.beginPath(); g.moveTo(fx, fy); g.lineTo(fx + 12, fy + 1); g.lineTo(fx + 6, fy + 15); g.closePath(); g.fill();
+    }
+    /* 垂れ幕（マゼンタの布＋黄の帯） */
+    g.fillStyle = '#c23a6e';
+    g.beginPath();
+    g.moveTo(112, 76); g.lineTo(146, 76); g.lineTo(146, 128);
+    g.quadraticCurveTo(137, 136, 129, 130); g.quadraticCurveTo(120, 136, 112, 128);
+    g.closePath(); g.fill();
+    g.fillStyle = '#f2b63c'; g.fillRect(112, 112, 34, 7);
+    circF(g, 129, 94, 8, '#f4ead2'); circF(g, 129, 94, 4, '#c23a6e');
+  }
+  return c;
+}
+var wallTexA1 = [null, makeWallTextureTropic(1), makeWallTextureTropic(2), makeWallTextureTropic(3), makeWallTextureTropic(4)];
+
 function makeTreeSprite(){
   /* 松の木：柔らかい幹＋丸い樹冠の重なり＋雪 */
   var c = mkCanvas(256, 256), g = ctx2(c); g.scale(2, 2);
@@ -1157,19 +1371,20 @@ function personBase(g, o){
 function makeSoldierSprite(kind){
   var c = mkCanvas(192, 256), g = ctx2(c); g.scale(2, 2);
   if (kind === 'dead'){
-    ellF(g, 40, 108, 34, 12, '#4c5548');
-    ellF(g, 34, 104, 24, 8, '#5d6357', 0.8);
+    ellF(g, 40, 108, 34, 12, '#7a7a52');
+    ellF(g, 34, 104, 24, 8, '#8a8a68', 0.8);
     circF(g, 84, 106, 7.4, '#c9a184');
     fillRR(g, 16, 88, 28, 7, 3.5, '#2e2e2e');
     return c;
   }
   if (kind === 'heavy'){
-    personBase(g, { leg: '#2c2f2c', boot: '#1d1f1d', coat: '#4a4f45', belt: '#33362f' });
-    fillRR(g, 24, 42, 48, 55, 10, '#4a4f45');
-    fillRR(g, 30, 48, 15, 24, 5, '#5d6357'); fillRR(g, 51, 48, 15, 24, 5, '#5d6357');
+    /* 南国仕様：重装でも防寒ではなく、砂色の重装甲＋茶系パンツに色替え（体型・装備の形は不変） */
+    personBase(g, { leg: '#4a4238', boot: '#2b241c', coat: '#6e5c42', belt: '#3d3428' });
+    fillRR(g, 24, 42, 48, 55, 10, '#6e5c42');
+    fillRR(g, 30, 48, 15, 24, 5, '#857252'); fillRR(g, 51, 48, 15, 24, 5, '#857252');
     fillRR(g, 20, 42, 56, 8, 4, '#8c2f23');
-    ellF(g, 21, 46, 10, 7, '#3a3f36'); ellF(g, 75, 46, 10, 7, '#3a3f36');
-    ellF(g, 21, 43.4, 9, 3.4, '#6a7060', 0.9); ellF(g, 75, 43.4, 9, 3.4, '#6a7060', 0.9);
+    ellF(g, 21, 46, 10, 7, '#574a36'); ellF(g, 75, 46, 10, 7, '#574a36');
+    ellF(g, 21, 43.4, 9, 3.4, '#9a8a6a', 0.9); ellF(g, 75, 43.4, 9, 3.4, '#9a8a6a', 0.9);
     [[32, 56], [64, 56], [32, 82], [64, 82]].forEach(function(p){ circF(g, p[0], p[1], 1.9, '#22251f'); });
     g.save(); g.translate(48, 63); g.rotate(0.6); fillRR(g, -35, -4.5, 70, 9, 4, '#6e5133'); g.restore();
     g.fillStyle = '#c9a23a';
@@ -1180,25 +1395,27 @@ function makeSoldierSprite(kind){
     circF(g, 48, 31, 11.5, '#c9a184');
     g.fillStyle = '#8c2f23'; g.beginPath(); g.arc(48, 29, 12.4, Math.PI, 0); g.quadraticCurveTo(60, 33, 48, 31); g.quadraticCurveTo(36, 33, 35.6, 29); g.closePath(); g.fill();
     fillRR(g, 35, 24.6, 26, 5.4, 2.7, '#8c2f23');
-    fillRR(g, 41, 15, 14, 6.4, 3, '#5d6357');
+    fillRR(g, 41, 15, 14, 6.4, 3, '#857252');
     fillRR(g, 39, 33.4, 18, 3.6, 1.8, '#1c1c1c');
     ellF(g, 48, 39, 7, 1.8, 'rgba(20,16,12,.5)');
     return c;
   }
-  personBase(g, { leg: '#333a33', boot: '#22261f', coat: '#59624f', belt: '#2e2e2e' });
-  fillRR(g, 30, 60, 36, 9, 4, '#49523f');
-  fillRR(g, 41, 47, 14, 21, 4, '#6b7460');
+  /* 南国仕様：明るいカーキの軍装＋半袖（前腕は肌色で上描き）。形・装備は不変、色と袖だけ熱帯化 */
+  personBase(g, { leg: '#5c5a44', boot: '#2e2a22', coat: '#8a8a5e', belt: '#3a382c' });
+  fillRR(g, 17, 66, 13, 17, 6, '#c9a184'); fillRR(g, 66, 66, 13, 17, 6, '#c9a184');
+  fillRR(g, 30, 60, 36, 9, 4, '#6e6e4c');
+  fillRR(g, 41, 47, 14, 21, 4, '#9a9a72');
   fillRR(g, 30, 42, 36, 7, 3.5, '#c23a2e');
-  fillRR(g, 33, 51, 11, 13, 3, '#414b38'); fillRR(g, 52, 51, 11, 13, 3, '#414b38');
+  fillRR(g, 33, 51, 11, 13, 3, '#747452'); fillRR(g, 52, 51, 11, 13, 3, '#747452');
   fillRR(g, 33, 51, 11, 3, 1.5, 'rgba(0,0,0,.25)'); fillRR(g, 52, 51, 11, 3, 1.5, 'rgba(0,0,0,.25)');
-  fillRR(g, 55, 43, 5.4, 27, 2.7, '#39412f');
-  fillRR(g, 32, 102, 13, 11, 4, '#41493c'); fillRR(g, 51, 102, 13, 11, 4, '#41493c');
-  fillRR(g, 21, 80, 9, 7, 3, '#59624f'); fillRR(g, 66, 80, 9, 7, 3, '#59624f');
+  fillRR(g, 55, 43, 5.4, 27, 2.7, '#666648');
+  fillRR(g, 32, 102, 13, 11, 4, '#747452'); fillRR(g, 51, 102, 13, 11, 4, '#747452');
+  fillRR(g, 21, 80, 9, 7, 3, '#8a8a5e'); fillRR(g, 66, 80, 9, 7, 3, '#8a8a5e');
   /* 武器（ライフル） */
   g.save(); g.translate(79, 62); g.rotate(-0.05); fillRR(g, -13, -4, 27, 8, 4, '#232323'); fillRR(g, 12, -3, 9, 5, 2.5, '#3a3a3a'); g.restore();
-  /* 頭：ヘルメット */
-  g.fillStyle = '#46503e'; g.beginPath(); g.arc(48, 29, 12.4, Math.PI, 0); g.quadraticCurveTo(59, 32, 48, 30.4); g.quadraticCurveTo(37, 32, 35.6, 29); g.closePath(); g.fill();
-  fillRR(g, 35, 24.8, 26, 4.6, 2.3, '#46503e');
+  /* 頭：ヘルメット（明るいカーキ） */
+  g.fillStyle = '#747452'; g.beginPath(); g.arc(48, 29, 12.4, Math.PI, 0); g.quadraticCurveTo(59, 32, 48, 30.4); g.quadraticCurveTo(37, 32, 35.6, 29); g.closePath(); g.fill();
+  fillRR(g, 35, 24.8, 26, 4.6, 2.3, '#747452');
   return c;
 }
 function makeWolfSprite(dead){
@@ -1259,11 +1476,11 @@ function makeYakSprite(dead){
   return c;
 }
 function makeHunterSprite(){
-  /* ハンター：深いフード＋弓＋矢筒＋赤いスカーフ */
+  /* ハンター：ジャングル色のフード＋弓＋矢筒＋赤いスカーフ（南国仕様に色替え） */
   var c = mkCanvas(192, 256), g = ctx2(c); g.scale(2, 2);
-  personBase(g, { leg: '#2e2a33', boot: '#1d1a21', coat: '#4a4258', belt: null });
-  fillRR(g, 30, 60, 36, 9, 4, '#3a3347');
-  fillRR(g, 41, 47, 14, 21, 4, '#5d5470');
+  personBase(g, { leg: '#3a3f35', boot: '#22251f', coat: '#4a6b52', belt: null });
+  fillRR(g, 30, 60, 36, 9, 4, '#3d5a44');
+  fillRR(g, 41, 47, 14, 21, 4, '#5d8266');
   /* 矢筒と矢 */
   g.save(); g.translate(16.5, 52); g.rotate(0.1); fillRR(g, -4.5, -13, 9, 27, 4, '#5d4020'); fillRR(g, -4.5, -13, 9, 6, 3, '#4a3319'); g.restore();
   g.strokeStyle = '#c8b490'; g.lineWidth = 2.1; g.lineCap = 'round';
@@ -1282,14 +1499,180 @@ function makeHunterSprite(){
   /* フードと顔の影（目は光る点ではなく柔らかい影の中の目） */
   circF(g, 48, 33, 10.5, '#c9a184');
   ellF(g, 44.8, 34, 1.6, 2.1, '#241d16'); ellF(g, 51.2, 34, 1.6, 2.1, '#241d16');
-  g.fillStyle = '#38304a';
+  g.fillStyle = '#2f4a38';
   g.beginPath();
   g.moveTo(32.6, 39); g.quadraticCurveTo(35, 12, 48, 10.6); g.quadraticCurveTo(61, 12, 63.4, 39);
   g.quadraticCurveTo(57, 43, 55.4, 37); g.quadraticCurveTo(52, 24, 48, 23.4);
   g.quadraticCurveTo(44, 24, 40.6, 37); g.quadraticCurveTo(39, 43, 32.6, 39);
   g.closePath(); g.fill();
-  g.strokeStyle = '#6a5f85'; g.lineWidth = 2.1;
+  g.strokeStyle = '#5d8266'; g.lineWidth = 2.1;
   g.beginPath(); g.moveTo(35.4, 37.4); g.quadraticCurveTo(48, 15.4, 60.6, 37.4); g.stroke();
+  return c;
+}
+/* ---------- 向き別スプライト（背面／側面） ----------
+   敵兵は正面1枚だけだったため、背後から近づいても正面の絵が見えていた。
+   ステルスで敵の向きが読めるよう、背面と側面を用意する（左右は反転で流用）。
+   テイスト・色・サイズは正面絵に合わせ、事前生成して使い回す（描画負荷は増やさない）。 */
+function personBackBase(g, o){
+  /* 後ろ姿の土台：脚・腕・胴は正面と同じ配置。顔（目・眉）は描かず、後頭部だけにする */
+  fillRR(g, 33, 90, 11, 36, 5, o.leg); fillRR(g, 52, 90, 11, 36, 5, o.leg);
+  fillRR(g, 30, 121, 16, 7, 3.5, o.boot); fillRR(g, 50, 121, 16, 7, 3.5, o.boot);
+  fillRR(g, 17, 47, 13, 36, 6, o.coat); fillRR(g, 66, 47, 13, 36, 6, o.coat);
+  circF(g, 23.5, 85, 5.6, '#c9a184'); circF(g, 72.5, 85, 5.6, '#c9a184');
+  fillRR(g, 29, 42, 38, 55, 9, o.coat);
+  if (o.belt){ fillRR(g, 29, 90, 38, 6, 3, o.belt); circF(g, 48, 93, 3, 'rgba(0,0,0,.35)'); }
+  circF(g, 48, 31, 11.5, '#c9a184');
+  ellF(g, 48, 41, 5.5, 2.6, 'rgba(0,0,0,.14)');
+}
+function personSideBase(g, o){
+  /* 横向き（右向き）の土台：脚は前後にずれ、胴は細く、腕と目は1つだけ見える */
+  fillRR(g, 39, 90, 10, 36, 5, o.legDark || o.leg);
+  fillRR(g, 50, 90, 10, 36, 5, o.leg);
+  fillRR(g, 36, 121, 16, 7, 3.5, o.boot); fillRR(g, 48, 121, 17, 7, 3.5, o.boot);
+  fillRR(g, 38, 42, 23, 55, 8, o.coat);
+  if (o.belt){ fillRR(g, 38, 90, 23, 6, 3, o.belt); }
+  fillRR(g, 51, 47, 11, 34, 5, o.coat);
+  circF(g, 56.5, 83, 5.2, '#c9a184');
+  circF(g, 48, 31, 10.8, '#c9a184');
+  ellF(g, 57.5, 34.5, 3.2, 2.4, '#c9a184');
+  ellF(g, 51.5, 31.5, 1.6, 2.1, '#241d16');
+}
+function helmetDome(g, cx){
+  g.fillStyle = '#747452'; g.beginPath(); g.arc(cx, 29, 12.4, Math.PI, 0);
+  g.quadraticCurveTo(cx + 11, 32, cx, 30.4); g.quadraticCurveTo(cx - 11, 32, cx - 12.4, 29); g.closePath(); g.fill();
+}
+function makeSoldierBackSprite(kind){
+  var c = mkCanvas(192, 256), g = ctx2(c); g.scale(2, 2);
+  if (kind === 'heavy'){
+    personBackBase(g, { leg: '#4a4238', boot: '#2b241c', coat: '#6e5c42', belt: '#3d3428' });
+    fillRR(g, 24, 42, 48, 55, 10, '#6e5c42');
+    /* 背中の防弾プレート（背面だと分かる要） */
+    fillRR(g, 29, 47, 38, 44, 8, '#574a36');
+    fillRR(g, 29, 47, 38, 7, 3.5, 'rgba(255,255,255,.10)');
+    [[33, 56], [63, 56], [33, 84], [63, 84]].forEach(function(p){ circF(g, p[0], p[1], 1.9, '#22251f'); });
+    ellF(g, 21, 46, 10, 7, '#574a36'); ellF(g, 75, 46, 10, 7, '#574a36');
+    /* 斜めに背負った太い散弾銃 */
+    g.save(); g.translate(48, 68); g.rotate(0.55); fillRR(g, -32, -5.5, 64, 11, 5, '#1c1c1c'); fillRR(g, 30, -4, 9, 7, 3, '#333333'); g.restore();
+    fillRR(g, 40, 92, 16, 10, 4, '#262824');
+    /* バンダナ背面：頭を覆い、後ろで結び目と垂れを作る */
+    g.fillStyle = '#8c2f23'; g.beginPath(); g.arc(48, 29, 12.4, Math.PI, 0);
+    g.quadraticCurveTo(60, 33, 48, 31); g.quadraticCurveTo(36, 33, 35.6, 29); g.closePath(); g.fill();
+    fillRR(g, 35, 24.6, 26, 9.6, 2.7, '#8c2f23');
+    triF(g, 43, 36, 47, 52, 50, 37, '#8c2f23');
+    triF(g, 49, 37, 55, 50, 53, 35, '#7a281d');
+    circF(g, 48, 36.5, 4, '#7a281d');
+    return c;
+  }
+  personBackBase(g, { leg: '#5c5a44', boot: '#2e2a22', coat: '#8a8a5e', belt: '#3a382c' });
+  fillRR(g, 17, 66, 13, 17, 6, '#c9a184'); fillRR(g, 66, 66, 13, 17, 6, '#c9a184');
+  /* バックパック（背面の目印）＋上に巻いたマット */
+  fillRR(g, 33, 43.5, 30, 8.6, 4, '#9a9a72');
+  fillRR(g, 34, 52, 28, 33, 6, '#6e6e4c');
+  fillRR(g, 34, 52, 28, 9, 4, '#7a7a58');
+  fillRR(g, 44, 68, 8, 10, 3, '#5d5d42');
+  circF(g, 48, 61, 2.1, '#c9a23a');
+  fillRR(g, 30, 94, 8, 11, 3, '#747452');
+  /* 斜めに背負ったライフル（バックパックの上から銃身が見える） */
+  g.save(); g.translate(48, 66); g.rotate(-0.55); fillRR(g, -31, -3.5, 62, 7, 3.5, '#232323'); fillRR(g, 29, -2.5, 8, 5, 2.5, '#3a3a3a'); g.restore();
+  /* ヘルメット背面：ドーム＋後ろのつば＋首当て */
+  helmetDome(g, 48);
+  fillRR(g, 35, 24.8, 26, 4.6, 2.3, '#747452');
+  fillRR(g, 39, 33.5, 18, 8, 3, '#666648');
+  return c;
+}
+function makeSoldierSideSprite(kind){
+  var c = mkCanvas(192, 256), g = ctx2(c); g.scale(2, 2);
+  if (kind === 'heavy'){
+    personSideBase(g, { leg: '#4a4238', legDark: '#3d362c', boot: '#2b241c', coat: '#6e5c42', belt: '#3d3428' });
+    fillRR(g, 36, 42, 27, 55, 9, '#6e5c42');
+    fillRR(g, 41, 48, 13, 24, 5, '#857252');
+    fillRR(g, 36, 42, 27, 7, 3.5, '#8c2f23');
+    ellF(g, 58, 45, 9, 6.5, '#574a36');
+    /* 前腕を伸ばして散弾銃を前方（右）へ構える */
+    fillRR(g, 54, 55, 14, 9, 4, '#6e5c42');
+    g.save(); g.translate(68, 61); g.rotate(-0.04); fillRR(g, -6, -5.5, 30, 11, 5, '#1c1c1c'); fillRR(g, 22, -4, 10, 6, 3, '#333333'); g.restore();
+    circF(g, 66, 62, 4.6, '#c9a184');
+    /* バンダナ横顔：結び目は後ろ（左）、バイザーは前方（右） */
+    g.fillStyle = '#8c2f23'; g.beginPath(); g.arc(48, 29, 11.8, Math.PI, 0);
+    g.quadraticCurveTo(59, 32, 48, 30.4); g.quadraticCurveTo(37, 32, 36.2, 29); g.closePath(); g.fill();
+    fillRR(g, 36.5, 24.6, 25, 5.4, 2.7, '#8c2f23');
+    triF(g, 37.5, 33, 32.5, 45, 41, 37, '#8c2f23');
+    fillRR(g, 50, 33.4, 11, 3.6, 1.8, '#1c1c1c');
+    return c;
+  }
+  personSideBase(g, { leg: '#5c5a44', legDark: '#4c4a38', boot: '#2e2a22', coat: '#8a8a5e', belt: '#3a382c' });
+  fillRR(g, 51, 64, 11, 17, 5, '#c9a184');
+  /* 背中側（左）に膨らむバックパック */
+  fillRR(g, 29, 50, 12, 30, 5, '#6e6e4c');
+  fillRR(g, 29, 50, 12, 6, 3, '#7a7a58');
+  fillRR(g, 44, 51, 11, 13, 3, '#747452');
+  fillRR(g, 38, 42, 23, 7, 3.5, '#c23a2e');
+  /* 前腕を伸ばしてライフルを前方（右）へ構える */
+  fillRR(g, 54, 55, 13, 9, 4, '#8a8a5e');
+  g.save(); g.translate(66, 60); g.rotate(-0.04); fillRR(g, -8, -4, 28, 8, 4, '#232323'); fillRR(g, 18, -3, 10, 5, 2.5, '#3a3a3a'); g.restore();
+  circF(g, 64, 61, 4.4, '#c9a184');
+  /* ヘルメット横向き：つばは前方（右）に長く */
+  helmetDome(g, 48);
+  fillRR(g, 36.5, 24.8, 27, 4.6, 2.3, '#747452');
+  return c;
+}
+function makeHunterBackSprite(){
+  /* ハンター後ろ姿：フード背面＋背中の矢筒と矢＋斜めに背負った弓＋スカーフの垂れ */
+  var c = mkCanvas(192, 256), g = ctx2(c); g.scale(2, 2);
+  personBackBase(g, { leg: '#3a3f35', boot: '#22251f', coat: '#4a6b52', belt: null });
+  fillRR(g, 30, 60, 36, 9, 4, '#3d5a44');
+  /* 肩口から覗く矢（フードの両脇） */
+  g.strokeStyle = '#c8b490'; g.lineWidth = 2.1; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(36, 48); g.lineTo(30.5, 29); g.moveTo(60, 48); g.lineTo(65.5, 29); g.stroke();
+  triF(g, 30.5, 29, 26.5, 22, 34, 24.5, '#e8e4da');
+  triF(g, 65.5, 29, 61.5, 24.5, 69, 22, '#e8e4da');
+  /* 背中の矢筒 */
+  g.save(); g.translate(48, 63); g.rotate(0.07); fillRR(g, -6.5, -17, 13, 34, 5, '#5d4020'); fillRR(g, -6.5, -17, 13, 7, 3, '#4a3319'); g.restore();
+  /* 斜めに背負った弓 */
+  g.strokeStyle = '#5d4020'; g.lineWidth = 4.2; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(27, 47); g.quadraticCurveTo(43, 66, 33, 93); g.stroke();
+  g.strokeStyle = 'rgba(240,240,230,.85)'; g.lineWidth = 1.4;
+  g.beginPath(); g.moveTo(27, 47); g.lineTo(33, 93); g.stroke();
+  /* スカーフ：首の後ろの巻きと垂れ */
+  fillRR(g, 37, 40, 22, 6.4, 3.2, '#a33327');
+  triF(g, 42, 45, 46.5, 59, 49, 45, '#a33327');
+  triF(g, 49, 45, 55.5, 57, 54, 44, '#8c2f23');
+  fillRR(g, 57, 65, 11, 10, 4, '#6d5133'); circF(g, 62.5, 69, 2, '#c9a23a');
+  /* フード背面：頭全体を覆う（顔は出ない）。てっぺんのとんがり付き */
+  triF(g, 40, 21, 56, 21, 49.5, 7.5, '#2f4a38');
+  circF(g, 48, 31, 12.6, '#2f4a38');
+  g.strokeStyle = '#5d8266'; g.lineWidth = 2.1; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(37.5, 36); g.quadraticCurveTo(48, 17, 58.5, 36); g.stroke();
+  return c;
+}
+function makeHunterSideSprite(){
+  /* ハンター横向き（右向き）：フードの横顔＋前方に構えた弓＋背中の矢筒 */
+  var c = mkCanvas(192, 256), g = ctx2(c); g.scale(2, 2);
+  personSideBase(g, { leg: '#3a3f35', legDark: '#2f342c', boot: '#22251f', coat: '#4a6b52', belt: null });
+  /* 背中側（左）の矢筒と矢 */
+  g.strokeStyle = '#c8b490'; g.lineWidth = 2; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(35, 44); g.lineTo(32, 28); g.moveTo(38.4, 44); g.lineTo(37.6, 27); g.stroke();
+  triF(g, 32, 28, 28.6, 21.6, 35.2, 24, '#e8e4da');
+  triF(g, 37.6, 27, 34.6, 20.4, 40.6, 23.2, '#e8e4da');
+  g.save(); g.translate(33, 57); g.rotate(0.1); fillRR(g, -4.5, -13, 9, 27, 4, '#5d4020'); fillRR(g, -4.5, -13, 9, 6, 3, '#4a3319'); g.restore();
+  fillRR(g, 44, 47, 13, 20, 4, '#5d8266');
+  /* スカーフ：首元から後ろ（左）へ流れる */
+  fillRR(g, 40, 40, 20, 7, 3.5, '#a33327');
+  triF(g, 41, 44, 29.5, 52, 42, 52.5, '#a33327');
+  /* 前腕を伸ばして弓を前方（右）に構える */
+  fillRR(g, 55, 55, 13, 9, 4, '#4a6b52');
+  g.strokeStyle = '#5d4020'; g.lineWidth = 4.4; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(71, 29); g.quadraticCurveTo(88, 62, 71, 95); g.stroke();
+  g.strokeStyle = 'rgba(240,240,230,.85)'; g.lineWidth = 1.5;
+  g.beginPath(); g.moveTo(71, 29); g.lineTo(71, 95); g.stroke();
+  circF(g, 69, 60, 4.6, '#c9a184');
+  /* フードの横顔：顔は前下に少しだけ覗く */
+  triF(g, 37, 23, 45, 9.5, 52, 21, '#2f4a38');
+  circF(g, 48, 31, 12, '#2f4a38');
+  ellF(g, 53.5, 35, 5, 6.5, '#c9a184');
+  ellF(g, 55, 33.5, 1.4, 1.9, '#241d16');
+  g.strokeStyle = '#5d8266'; g.lineWidth = 2; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(58, 22); g.quadraticCurveTo(61, 31, 58.5, 40); g.stroke();
   return c;
 }
 function makePlantSprite(){
@@ -1543,17 +1926,246 @@ function makeTransmitterSprite(){
   fillRR(g, 9, 107, 78, 7, 3.5, '#1d2329');
   return c;
 }
+/* ---------- 南国スプライト（見た目だけ差し替え・全面展開で全域に使用） ---------- */
+function makePalmSprite(){
+  /* ヤシの木：ゆるく曲がる幹＋垂れる葉＋ココナッツ。松と同じ 256×256 枠 */
+  var c = mkCanvas(256, 256), g = ctx2(c); g.scale(2, 2);
+  ellF(g, 62, 126, 26, 4.5, 'rgba(0,0,0,.16)');
+  /* 幹（少し右へしなる） */
+  g.strokeStyle = '#8a6844'; g.lineWidth = 11; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(52, 128); g.quadraticCurveTo(56, 84, 76, 45); g.stroke();
+  g.strokeStyle = 'rgba(90,64,36,.55)'; g.lineWidth = 2.4;
+  [[55, 112, -0.5], [57, 95, -0.42], [61, 79, -0.3], [66, 64, -0.16]].forEach(function(r){
+    g.beginPath(); g.moveTo(r[0] - 5, r[1]); g.quadraticCurveTo(r[0], r[1] + 3, r[0] + 5, r[1] + r[2] * 4); g.stroke();
+  });
+  ellF(g, 58, 96, 3, 16, 'rgba(255,235,200,.18)');
+  /* 葉：中心から放射し、先が垂れる細長い葉を2層 */
+  var topX = 78, topY = 42;
+  function frond(ang, len, col, wdt){
+    g.save(); g.translate(topX, topY); g.rotate(ang);
+    g.fillStyle = col;
+    g.beginPath();
+    g.moveTo(0, 0);
+    g.quadraticCurveTo(len * 0.5, -wdt, len, len * 0.22);
+    g.quadraticCurveTo(len * 0.5, wdt * 0.4, 0, wdt * 0.5);
+    g.closePath(); g.fill();
+    g.restore();
+  }
+  frond(-2.85, 42, '#256b31', 7); frond(-2.35, 47, '#2e7d3f', 7.5); frond(-1.95, 44, '#256b31', 7);
+  frond(-1.5, 46, '#35924a', 7.5); frond(-1.05, 43, '#2e7d3f', 7); frond(-0.6, 45, '#256b31', 7.5);
+  frond(-0.2, 40, '#35924a', 7); frond(0.25, 34, '#2e7d3f', 6.5);
+  frond(-1.75, 34, '#43a047', 6); frond(-0.85, 33, '#43a047', 6);
+  /* ココナッツ */
+  circF(g, topX - 5, topY + 7, 4.6, '#6d4c2a'); circF(g, topX + 5, topY + 8, 4.1, '#7a5630'); circF(g, topX, topY + 12, 3.7, '#5d4020');
+  /* 足元の草 */
+  g.strokeStyle = '#3f7a3a'; g.lineWidth = 3;
+  [[38, 0.5], [46, 0.9], [88, -0.6], [96, -1]].forEach(function(t){
+    g.beginPath(); g.moveTo(t[0], 128); g.quadraticCurveTo(t[0] + t[1] * 6, 118, t[0] + t[1] * 11, 112); g.stroke();
+  });
+  return c;
+}
+function makeBannerSprite(){
+  /* 色旗バナーの柱（祈祷旗の柱の南国版）：柱＋横木＋三角旗＋垂れ布 */
+  var c = mkCanvas(96, 192), g = ctx2(c); g.scale(2, 2);
+  fillRR(g, 21, 4, 6, 92, 3, '#7a5a34');
+  circF(g, 24, 6, 4.6, '#e8c832');
+  fillRR(g, 4, 11, 40, 4.5, 2, '#7a5a34');
+  g.strokeStyle = '#f4ead2'; g.lineWidth = 1.8; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(5, 17); g.quadraticCurveTo(24, 25, 43, 17); g.stroke();
+  var cols = ['#e5484d', '#f2b63c', '#2fa8a0', '#e86aa8', '#f4f1e6'];
+  for (var i = 0; i < 5; i++){
+    var fx = 7 + i * 7.4, fy = 19.5 + Math.sin(i / 4 * Math.PI) * 3.4;
+    g.fillStyle = cols[i];
+    g.beginPath(); g.moveTo(fx, fy); g.lineTo(fx + 6.4, fy + 0.6); g.lineTo(fx + 3.2, fy + 8.6); g.closePath(); g.fill();
+  }
+  /* 垂れ布（マゼンタとティールの2枚） */
+  g.fillStyle = '#c23a6e';
+  g.beginPath(); g.moveTo(31, 16); g.lineTo(43, 16); g.lineTo(43, 42); g.quadraticCurveTo(37, 46, 31, 42); g.closePath(); g.fill();
+  g.fillStyle = '#f2b63c'; g.fillRect(31, 34, 12, 3.4);
+  g.fillStyle = '#2fa8a0';
+  g.beginPath(); g.moveTo(6, 16); g.lineTo(16, 16); g.lineTo(16, 36); g.quadraticCurveTo(11, 39.4, 6, 36); g.closePath(); g.fill();
+  return c;
+}
+function makeBushTropicSprite(){
+  /* 熱帯の茂み（草むらの南国版）：明るい緑の房＋ハイビスカス。隠れ性能は従来と同じ */
+  var c = mkCanvas(256, 192), g = ctx2(c); g.scale(2, 2);
+  ellF(g, 64, 90, 47, 5.5, 'rgba(0,0,0,.18)');
+  g.strokeStyle = '#5d4630'; g.lineWidth = 4.4; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(52, 92); g.quadraticCurveTo(54, 76, 48, 64); g.stroke();
+  g.beginPath(); g.moveTo(76, 92); g.quadraticCurveTo(74, 76, 80, 64); g.stroke();
+  function blob(x, y, rx, ry, col){ ellF(g, x, y, rx, ry, col); }
+  blob(64, 68, 45, 24, '#1f6b34');
+  blob(38, 74, 24, 16, '#2e8b3f'); blob(90, 74, 24, 16, '#2e8b3f');
+  blob(50, 56, 26, 17, '#35924a'); blob(78, 56, 26, 17, '#35924a');
+  blob(64, 47, 24, 14, '#43a047');
+  ellF(g, 52, 41, 13, 5, 'rgba(205,255,180,.35)');
+  ellF(g, 78, 50, 13, 5, 'rgba(205,255,180,.28)');
+  /* 大きめの葉 */
+  ellF(g, 34, 58, 11, 5, '#43a047'); ellF(g, 96, 62, 11, 5, '#35924a'); ellF(g, 64, 62, 12, 5.4, '#2e8b3f');
+  /* ハイビスカス */
+  function hib(x, y, col){
+    for (var p = 0; p < 5; p++){
+      var a = p / 5 * Math.PI * 2 - 0.6;
+      circF(g, x + Math.cos(a) * 2.8, y + Math.sin(a) * 2.8, 2.7, col);
+    }
+    circF(g, x, y, 1.7, '#ffd23c');
+  }
+  hib(44, 52, '#e5484d'); hib(84, 58, '#ff8a5c'); hib(62, 68, '#e86aa8'); hib(96, 46, '#e5484d'); hib(30, 68, '#ff8a5c');
+  return c;
+}
+function makeRockTropicSprite(){
+  /* 砂岩の岩（岩の南国版）：暖かい砂色、雪なし、足元に草 */
+  var c = mkCanvas(256, 192), g = ctx2(c); g.scale(2, 2);
+  ellF(g, 64, 90, 48, 5.5, 'rgba(0,0,0,.2)');
+  g.fillStyle = '#b39b6d';
+  g.beginPath();
+  g.moveTo(20, 90);
+  g.quadraticCurveTo(16, 62, 30, 44);
+  g.quadraticCurveTo(44, 24, 66, 22);
+  g.quadraticCurveTo(90, 20, 100, 42);
+  g.quadraticCurveTo(110, 62, 106, 90);
+  g.closePath(); g.fill();
+  g.fillStyle = 'rgba(110,84,44,.3)';
+  g.beginPath();
+  g.moveTo(66, 22);
+  g.quadraticCurveTo(90, 20, 100, 42);
+  g.quadraticCurveTo(110, 62, 106, 90);
+  g.lineTo(64, 90);
+  g.quadraticCurveTo(84, 62, 78, 40);
+  g.quadraticCurveTo(74, 28, 66, 22);
+  g.closePath(); g.fill();
+  ellF(g, 46, 40, 17, 10, 'rgba(255,240,200,.2)');
+  g.strokeStyle = 'rgba(90,70,40,.4)'; g.lineWidth = 2.4; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(58, 52); g.quadraticCurveTo(64, 62, 60, 74); g.stroke();
+  g.beginPath(); g.moveTo(86, 58); g.quadraticCurveTo(82, 66, 85, 76); g.stroke();
+  /* 層理（砂岩の縞） */
+  g.strokeStyle = 'rgba(140,110,60,.35)';
+  g.beginPath(); g.moveTo(24, 66); g.quadraticCurveTo(60, 60, 104, 68); g.stroke();
+  /* 足元の小石と草 */
+  ellF(g, 14, 88, 9, 5, '#a08b5e'); ellF(g, 114, 89, 7, 4, '#a08b5e');
+  g.strokeStyle = '#4c8a3f'; g.lineWidth = 2.8;
+  [[24, -1], [30, -0.4], [100, 0.6], [106, 1]].forEach(function(t){
+    g.beginPath(); g.moveTo(t[0], 91); g.quadraticCurveTo(t[0] + t[1] * 4, 84, t[0] + t[1] * 8, 79); g.stroke();
+  });
+  return c;
+}
+function makeTowerTropicSprite(){
+  /* 鐘の塔の南国版：構造は同じ。白壁＋テラコッタ屋根＋青い扉に材質だけ差し替え */
+  var c = mkCanvas(256, 512), g = ctx2(c); g.scale(2, 2);
+  g.fillStyle = '#eadfc6';
+  g.beginPath();
+  g.moveTo(36, 256); g.lineTo(38, 78); g.quadraticCurveTo(64, 70, 90, 78); g.lineTo(92, 256); g.closePath(); g.fill();
+  ellF(g, 43, 160, 4, 82, 'rgba(120,90,50,.16)');
+  g.strokeStyle = 'rgba(160,130,90,.3)'; g.lineWidth = 3; g.lineCap = 'round';
+  for (var y = 98; y < 250; y += 24){ g.beginPath(); g.moveTo(38, y); g.quadraticCurveTo(64, y + 3, 90, y); g.stroke(); }
+  fillRR(g, 34, 74, 60, 9, 4, '#f8f2e2');
+  /* テラコッタ屋根 */
+  g.fillStyle = '#c4673a';
+  g.beginPath(); g.moveTo(64, 6); g.quadraticCurveTo(84, 30, 103, 63); g.quadraticCurveTo(64, 56, 25, 63); g.quadraticCurveTo(44, 30, 64, 6); g.closePath(); g.fill();
+  g.strokeStyle = 'rgba(122,52,22,.4)'; g.lineWidth = 2.4;
+  for (var rx = 40; rx <= 88; rx += 12){ g.beginPath(); g.moveTo(rx, 58); g.quadraticCurveTo(rx + 3, 34, 64 + (rx - 64) * 0.3, 12); g.stroke(); }
+  fillRR(g, 23, 59, 82, 9, 4, '#8a4a26');
+  /* 鐘楼の開口と鐘 */
+  fillRR(g, 45, 69, 38, 46, 9, '#33241a');
+  g.fillStyle = '#c9a23a';
+  g.beginPath();
+  g.moveTo(57, 80); g.quadraticCurveTo(56, 92, 52, 102); g.lineTo(76, 102); g.quadraticCurveTo(72, 92, 71, 80); g.quadraticCurveTo(64, 76, 57, 80); g.closePath(); g.fill();
+  fillRR(g, 50, 101, 28, 6, 3, '#a8832a');
+  circF(g, 64, 111, 4.2, '#6d5516');
+  /* 拡声ホーン（放送設備） */
+  g.fillStyle = '#39424a';
+  g.beginPath();
+  g.moveTo(93, 127); g.quadraticCurveTo(104, 120, 115, 117); g.lineTo(115, 141); g.quadraticCurveTo(104, 137, 93, 135); g.closePath(); g.fill();
+  fillRR(g, 87, 125, 9, 10, 3, '#39424a');
+  /* 入口（青い扉）と窓 */
+  g.fillStyle = '#2b7f9e';
+  g.beginPath(); g.moveTo(54, 256); g.lineTo(54, 226); g.quadraticCurveTo(64, 214, 74, 226); g.lineTo(74, 256); g.closePath(); g.fill();
+  fillRR(g, 58, 148, 12, 16, 5, '#ffd98a');
+  fillRR(g, 55, 145, 18, 4, 2, '#2e8f86');
+  circF(g, 64, 19, 4.2, '#e5482e'); circF(g, 62.6, 17.6, 1.5, 'rgba(255,255,255,.6)');
+  return c;
+}
+function makeLagoonSprite(){
+  /* 浅瀬／ラグーン（旧・凍った湖の南国版）：砂の縁＋ターコイズの浅い水。平たく、歩ける浅瀬に見えるようにする。通行は従来通り妨げない */
+  var c = mkCanvas(256, 96), g = ctx2(c); g.scale(2, 2);
+  ellF(g, 64, 28, 62, 19, '#d9c08a');
+  ellF(g, 64, 27, 57, 16.5, '#8fd8dc');
+  ellF(g, 62, 25, 48, 13, '#5ec2cc');
+  ellF(g, 58, 22, 34, 9, '#7fd4de');
+  ellF(g, 44, 19, 16, 4.5, 'rgba(255,255,255,.75)');
+  ellF(g, 84, 30, 18, 4, 'rgba(255,255,255,.4)');
+  g.strokeStyle = 'rgba(255,255,255,.65)'; g.lineWidth = 1.8; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(30, 30); g.quadraticCurveTo(48, 26, 66, 30); g.stroke();
+  g.beginPath(); g.moveTo(58, 34); g.quadraticCurveTo(74, 31, 92, 33); g.stroke();
+  circF(g, 104, 20, 2.2, '#e86aa8'); circF(g, 22, 34, 1.9, '#f4f1e6'); circF(g, 98, 36, 1.7, '#e5484d');
+  return c;
+}
+function makeSandMoundSprite(){
+  /* 砂のこぶ（旧・雪のこぶの南国版）：低く丸い砂の盛り上がり＋草＋小石。遮蔽性能は従来と同じ */
+  var c = mkCanvas(256, 160), g = ctx2(c); g.scale(2, 2);
+  ellF(g, 64, 74, 52, 5, 'rgba(90,70,30,.25)');
+  g.fillStyle = '#d9c08a';
+  g.beginPath();
+  g.moveTo(8, 74);
+  g.quadraticCurveTo(14, 44, 44, 32);
+  g.quadraticCurveTo(66, 22, 88, 32);
+  g.quadraticCurveTo(114, 42, 120, 74);
+  g.closePath(); g.fill();
+  g.fillStyle = '#c9ae72';
+  g.beginPath();
+  g.moveTo(78, 74);
+  g.quadraticCurveTo(96, 50, 108, 48);
+  g.quadraticCurveTo(118, 56, 120, 74);
+  g.closePath(); g.fill();
+  ellF(g, 64, 70, 46, 6, 'rgba(150,120,60,.3)');
+  ellF(g, 52, 34, 20, 6, 'rgba(255,246,210,.8)');
+  g.strokeStyle = '#4c8a3f'; g.lineWidth = 2.8; g.lineCap = 'round';
+  [[30, -1], [36, -0.4], [92, 0.6], [99, 1]].forEach(function(t){
+    g.beginPath(); g.moveTo(t[0], 62); g.quadraticCurveTo(t[0] + t[1] * 4, 54, t[0] + t[1] * 8, 49); g.stroke();
+  });
+  ellF(g, 20, 68, 7, 4, '#b39b6d'); ellF(g, 110, 69, 6, 3.6, '#b39b6d');
+  return c;
+}
 var sprTree = makeTreeSprite(), sprCrate = makeCrateSprite(false), sprCrateSupply = makeCrateSprite(true),
     sprPost = makePostSprite(), sprTower = makeTowerSprite(), sprAlarm = makeAlarmSprite(),
     sprSoldier = makeSoldierSprite('normal'), sprHeavy = makeSoldierSprite('heavy'), sprCorpse = makeSoldierSprite('dead'),
     sprWolf = makeWolfSprite(false), sprWolfDead = makeWolfSprite(true),
     sprYak = makeYakSprite(false), sprYakDead = makeYakSprite(true),
     sprHunter = makeHunterSprite(), sprPlant = makePlantSprite(), sprPoster = makePosterSprite(),
+    sprSoldierB = makeSoldierBackSprite('normal'), sprSoldierS = makeSoldierSideSprite('normal'),
+    sprHeavyB = makeSoldierBackSprite('heavy'), sprHeavyS = makeSoldierSideSprite('heavy'),
+    sprHunterB = makeHunterBackSprite(), sprHunterS = makeHunterSideSprite(),
     sprMeat = makeMeatSprite(), sprVillager = makePersonSprite('villager'), sprAlly = makePersonSprite('ally'),
     sprCart = makeCartSprite(), sprLeopard = makeLeopardSprite(false), sprLeopardDead = makeLeopardSprite(true),
     sprIce = makeIceSprite(), sprTransmitter = makeTransmitterSprite(),
     sprBush = makeBushSprite(false), sprBushSnow = makeBushSprite(true),
-    sprRock = makeRockSprite(), sprSnowMound = makeSnowMoundSprite();
+    sprRock = makeRockSprite(), sprSnowMound = makeSnowMoundSprite(),
+    sprPalm = makePalmSprite(), sprBanner = makeBannerSprite(), sprBushTropic = makeBushTropicSprite(),
+    sprRockTropic = makeRockTropicSprite(), sprTowerTropic = makeTowerTropicSprite(),
+    sprLagoon = makeLagoonSprite(), sprSandMound = makeSandMoundSprite();
+/* 敵兵の向き別スプライト表と選択ロジック。
+   diff = 「敵→プレイヤー方向」−「敵の向き」の正規化角度。
+   |diff| が小さい＝敵がこちらを向いている（正面絵）／ πに近い＝背を向けている（背面絵）／
+   その間は側面絵。区切りは正面±45°・背面±45°で素直に分ける。
+   側面の左右は、敵の向きベクトルとカメラ右方向の内積の符号で反転を決める。 */
+var ENEMY_VIEWS = {
+  normal: { front: sprSoldier, back: sprSoldierB, side: sprSoldierS },
+  heavy: { front: sprHeavy, back: sprHeavyB, side: sprHeavyS },
+  hunter: { front: sprHunter, back: sprHunterB, side: sprHunterS }
+};
+function enemyViewFor(en){
+  var set = en.heavy ? ENEMY_VIEWS.heavy : en.hunter ? ENEMY_VIEWS.hunter : ENEMY_VIEWS.normal;
+  var toP = Math.atan2(player.y - en.y, player.x - en.x);
+  var diff = ((toP - en.angle) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI;
+  var ad = Math.abs(diff);
+  if (ad >= Math.PI * 0.75) return { img: set.back, flip: false, view: 'back' };
+  if (ad > Math.PI * 0.25){
+    var plX = -Math.sin(player.angle), plY = Math.cos(player.angle);
+    var flip = (Math.cos(en.angle) * plX + Math.sin(en.angle) * plY) < 0;
+    return { img: set.side, flip: flip, view: 'side' };
+  }
+  return { img: set.front, flip: false, view: 'front' };
+}
 </script>
 <script>
 "use strict";
@@ -1597,10 +2209,10 @@ function setVolume(v){
   if (masterGain) masterGain.gain.setTargetAtTime(v, AC.currentTime, 0.1);
 }
 var broadcastLines = [
-  '― 山内放送：「……秩序こそ、山の……」',
-  '― 山内放送：「……将軍の言葉に……」',
-  '― 山内放送：「……不審者を見かけたら……」',
-  '― 山内放送：「……放送は真実のみを……」'
+  '― 島内放送：「……秩序こそ、島の……」',
+  '― 島内放送：「……将軍の言葉に……」',
+  '― 島内放送：「……不審者を見かけたら……」',
+  '― 島内放送：「……放送は真実のみを……」'
 ];
 function scheduleBroadcast(){
   if (broadcastTimer) clearTimeout(broadcastTimer);
@@ -1731,6 +2343,7 @@ function writeSave(){
       grenades: player ? player.grenades : GRENADE_CAP,
       molotovs: player ? player.molotovs : MOLOTOV_CAP,
       owned: prog.owned,
+      difficulty: difficulty,
       cleared: gameCleared,
       gateOpen: !!liberated['D'],
       ammo: player ? { pis: player.pistolAmmo, ar: player.arAmmo, sg: player.shells, sn: player.sniperAmmo, arw: player.arrows } : null
@@ -1748,7 +2361,7 @@ var liberated = {};               /* outpostId -> true */
 /* ---------------- Skills（虎＝攻撃／象＝防御） ---------------- */
 var SKILLS = {
   tiger: [
-    { name: '虎の牙', desc: 'テイクダウンできる距離が広がる（1.3→2.0）' },
+    { name: '虎の牙', desc: 'テイクダウンできる距離が広がる（1.45→2.15）' },
     { name: '連射改修', desc: '銃（ピストル／AR／ショットガン／スナイパー）の連射間隔が短くなる' },
     { name: '速引き', desc: '弓のチャージが速くなる' },
     { name: '鷹の目', desc: '狙っている間、命中判定が広がる（ブレ減少）' },
@@ -1790,7 +2403,7 @@ function gainXP(n){
     prog.xp -= xpForNext();
     prog.pointsEarned++; prog.sp++; leveled = true;
   }
-  if (leveled){ sfxTone(880, 1320, 0.25, 0.12, 'triangle'); showMsg('スキルポイント +1！ ポーズ画面でスキルを取れる', 2.6); }
+  if (leveled){ sfxTone(880, 1320, 0.25, 0.12, 'triangle'); showMsg('スキルポイント +1！ ポーズ画面の上の「スキルを割り振る」から取れる', 2.6); }
   writeSave();
 }
 var detectedOutposts = {};        /* outpostId -> 発見されたことがある */
@@ -1862,6 +2475,18 @@ function markedCount(){
   return n;
 }
 var rotMode = 'smooth';
+/* ---------------- 難易度（EASY／NORMAL） ----------------
+   今までのバランスが NORMAL。EASY はプレイヤー側の耐えやすさだけを上げる：
+   被ダメージ約6割／敵の察知メーターの上昇がゆっくり／敵の対プレイヤー射撃の
+   間隔が長めで命中も甘め。敵の人数・配置・動物の強さ（HPや攻撃力）は変えない。
+   セーブ対象（旧セーブに項目が無ければ NORMAL）。タイトル／ポーズ両方から変更可。 */
+var difficulty = 'normal';
+function isEasy(){ return difficulty === 'easy'; }
+function syncDifficultyUI(){
+  var a = document.getElementById('diffSel'), b = document.getElementById('diffSelTitle');
+  if (a) a.value = difficulty;
+  if (b) b.value = difficulty;
+}
 var gridStep = null;
 var towerHold = 0, towerHoldTarget = null;
 
@@ -2013,7 +2638,7 @@ ANIMAL_DEFS.forEach(function(d){ if (d.a2) d.y += A2_SHIFT; else d.y += AREA_SHI
     rocks.push({ x: x + .5, y: y + .5, kind: kind, cx: x, cy: y });
     spriteCells[key(x, y)] = kind;
   });
-  /* 草むら（エリア2＝y < GATE_Y は雪をかぶった低木） */
+  /* 草むら（全域で熱帯の茂みとして描く。snow フラグは互換のため残すが常に false） */
   var BUSH_DEFS = [
     /* エリア1 */
     [4,47],[5,47],[9,44],[10,44],[13,50],[13,51],[18,60],[19,60],[21,54],[24,54],
@@ -2032,7 +2657,7 @@ ANIMAL_DEFS.forEach(function(d){ if (d.a2) d.y += A2_SHIFT; else d.y += AREA_SHI
   BUSH_DEFS.forEach(function(p){
     var x = p[0], y = p[1];
     if (!cellFree(x, y) || resBush[key(x, y)] || bushCells[key(x, y)]) return;
-    bushes.push({ x: x + .5, y: y + .5, snow: y < GATE_Y, cx: x, cy: y });
+    bushes.push({ x: x + .5, y: y + .5, snow: false, cx: x, cy: y });
     bushCells[key(x, y)] = true;
   });
 })();
@@ -2055,7 +2680,7 @@ function makeEnemy(def){
     marked: false,
     state: 'patrol', targetX: 0, targetY: 0, waitT: 0,
     fireCd: 1 + Math.random(), windup: 0, loseT: 0,
-    goingAlarm: null, alarmTouchT: 0, scanPhase: Math.random() * 6,
+    goingAlarm: null, alarmTouchT: 0, animalFoe: null, scanPhase: Math.random() * 6,
     baseFace: def.face != null ? def.face : 0,
     stuckT: 0, lastX: def.x, lastY: def.y, strafeT: 0, strafeDir: 1
   };
@@ -2103,6 +2728,7 @@ function resetGame(continued){
     if (sv){
       liberated = sv.liberated || {};
       gameCleared = !!sv.cleared;
+      if (sv.difficulty === 'easy' || sv.difficulty === 'normal') difficulty = sv.difficulty;
       prog.hides = sv.hides | 0;
       prog.craftAmmo = Math.min(2, sv.craftAmmo | 0);
       prog.craftMed = Math.min(2, sv.craftMed | 0);
@@ -2165,6 +2791,7 @@ function resetGame(continued){
   cameraMode = false; zoomLevel = 0; sniperZoom = 0; markProgress = 0; markTargetRef = null; markTargetKind = null;
   game.time = 0;
   towerHold = 0; towerHoldTarget = null;
+  syncDifficultyUI();
   markRevealed();
   updateHUDStatic();
 }
@@ -2176,7 +2803,7 @@ function latestLiberatedSpot(){
   return spot;
 }
 function nearestSafeSpot(){
-  var cands = [{ x: playerSpawn.x, y: playerSpawn.y, name: '登山口' }];
+  var cands = [{ x: playerSpawn.x, y: playerSpawn.y, name: '出発地点' }];
   OUTPOSTS.forEach(function(o){ if (liberated[o.id]) cands.push({ x: o.travelX, y: o.travelY, name: o.name }); });
   TOWERS.forEach(function(t){ if (t.stopped) cands.push({ x: t.travelX, y: t.travelY, name: t.name }); });
   var best = cands[0], bd = 1e9;
@@ -2219,8 +2846,17 @@ document.addEventListener('keydown', function(e){
   if (e.code === 'Escape' && (document.fullscreenElement || document.webkitFullscreenElement)) return;
   if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space'].indexOf(e.key) >= 0) e.preventDefault();
   if (e.key === 'Control') e.preventDefault();
+  if (e.code === 'Tab') e.preventDefault(); /* Tabはクラフトパネルの開閉専用（フォーカス移動に使わない） */
   keys[e.code] = true;
+  if (game.state === 'craft'){
+    /* クラフトパネル表示中：Tab／Escで閉じる、↑↓／WSで項目移動。作成はフォーカス中のボタンをEnter（標準動作） */
+    if ((e.code === 'Tab' || e.code === 'Escape') && !e.repeat){ closeCraftPanel(); return; }
+    if (!e.repeat && (e.code === 'ArrowDown' || e.code === 'KeyS')) moveCraftFocus(1);
+    if (!e.repeat && (e.code === 'ArrowUp' || e.code === 'KeyW')) moveCraftFocus(-1);
+    return;
+  }
   if (game.state === 'play'){
+    if (e.code === 'Tab' && !e.repeat){ openCraftPanel(); return; }
     if (e.code === 'Digit1') setWeapon(0);
     if (e.code === 'Digit2') setWeapon(1);
     if (e.code === 'Digit3') setWeapon(2);
@@ -2381,6 +3017,10 @@ function updatePadDebug(gp){
     ' ／ mapping: ' + (gp.mapping || 'なし（非標準）') +
     ' ／ 右スティック横軸：' + (rx >= 0 ? 'axes[' + rx + ']' : '検出中（右スティックを左右に倒すと自動で合わせます）') +
     ' ／ 横入力：' + padRightStickX(gp).toFixed(2) +
+    ' ／ R3（テイクダウン）：' + (padBtn(gp, 11) ? '押下中' : '―') +
+    ' ／ Back（クラフト）：' + (padBtn(gp, 8) ? '押下中' : '―') +
+    ' ／ L3（回復の注射）：' + (padBtn(gp, 10) ? '押下中' : '―') +
+    ' ／ Y（注射：短押し回復／長押し狩猟）：' + (padBtn(gp, 3) ? '押下中' : '―') +
     ' ／ axes: ' + parts.join(' ');
 }
 
@@ -2417,6 +3057,12 @@ document.getElementById('tSel').addEventListener('touchstart', function(e){
 }, { passive: false });
 document.getElementById('tSel').addEventListener('mousedown', function(e){
   e.preventDefault(); if (game.state === 'play') cycleThrowable();
+});
+document.getElementById('tCrouch').addEventListener('touchstart', function(e){
+  e.preventDefault(); if (game.state === 'play' && player) player.crouch = !player.crouch;
+}, { passive: false });
+document.getElementById('tCrouch').addEventListener('mousedown', function(e){
+  e.preventDefault(); if (game.state === 'play' && player) player.crouch = !player.crouch;
 });
 
 /* ---------------- Weapons & items ---------------- */
@@ -2680,7 +3326,7 @@ function applyHit(t, dmg){
   else if (t.kind === 'boar' || t.kind === 'wolf' || t.kind === 'yak') damageBoar(t.ref, dmg * mult);
   else damageAlarm(t.ref, dmg);
 }
-function damageEnemy(en, dmg){
+function damageEnemy(en, dmg, srcAnimal){
   if (!en.alive || en.isPerson) return;
   en.hp -= dmg;
   if (en.hp <= 0){
@@ -2709,11 +3355,17 @@ function damageEnemy(en, dmg){
     checkOutpostClear(en.outpost);
     checkEventProgress();
   } else {
-    if (!en.alert){ en.awareness = 100; makeAlert(en); }
-    en.targetX = player.x; en.targetY = player.y;
+    if (!en.alert){ en.awareness = 100; makeAlert(en, !srcAnimal); }
+    if (srcAnimal){
+      /* 動物に襲われた場合は、プレイヤーではなくその動物に反撃する */
+      en.animalFoe = srcAnimal;
+      en.targetX = srcAnimal.x; en.targetY = srcAnimal.y;
+    } else {
+      en.targetX = player.x; en.targetY = player.y;
+    }
   }
 }
-function damageBoar(b, dmg){
+function damageBoar(b, dmg, src){
   if (!b.alive) return;
   b.hp -= dmg;
   b.provoked = true;
@@ -2732,7 +3384,8 @@ function damageBoar(b, dmg){
     showMsg((isYak ? 'ヤク' : isLeo ? '雪豹' : '狼') + 'を倒した ― 皮 ×' + got + '（合計 ' + prog.hides + '）' + (meatGot ? ' ＋肉 ×1（投擲枠のベイト用）' : ''), 2.2);
     checkEventProgress();
   } else {
-    b.state = 'charge'; b.target = player;
+    /* 撃ってきた相手に突進する（敵に撃たれたら敵へ、プレイヤーならプレイヤーへ） */
+    b.state = 'charge'; b.target = (src && src !== player) ? src : player;
   }
 }
 function damageAlarm(al, dmg){
@@ -2745,18 +3398,22 @@ function damageAlarm(al, dmg){
     showMsg('警報装置を破壊した', 2);
   }
 }
-function makeAlert(en){
+function makeAlert(en, byPlayer){
   if (!en.alert){
     en.alert = true; en.state = 'combat';
-    if (en.outpost) detectedOutposts[en.outpost] = true;
-    showMsg('発見された！', 1.6);
+    /* 「発見された」記録・表示・警報ランナーは、プレイヤーが原因の警戒にだけ付ける。
+       動物に襲われて警戒しただけでは、未発見ボーナスが消えたり増援が呼ばれたりしない */
+    if (byPlayer !== false){
+      if (en.outpost) detectedOutposts[en.outpost] = true;
+      showMsg('発見された！', 1.6);
+    }
     enemies.forEach(function(o){
       if (o !== en && o.alive && !o.alert && o.outpost === en.outpost && Math.hypot(o.x - en.x, o.y - en.y) < 6){
         o.awareness = Math.max(o.awareness, 70);
         o.targetX = player.x; o.targetY = player.y;
       }
     });
-    if (!en.goingAlarm && en.outpost){
+    if (byPlayer !== false && !en.goingAlarm && en.outpost){
       var al = nearestActiveAlarm(en);
       if (al){
         var runner = null, best = 1e9;
@@ -2829,6 +3486,9 @@ function liberateOutpost(outpostId, how){
   }
   var isFort = outpostId === 'D';
   gainXP(isFort ? 250 : 100);
+  /* 未発見解放ボーナス：その拠点で一度も発見されず（警報も鳴らさず）に解放したら +50XP */
+  var stealthLib = !detectedOutposts[outpostId];
+  if (stealthLib) gainXP(50);
   if (isFort){ prog.hides += 3; showMsg('要塞解放の報酬 ― 皮 ×3', 2.6); }
   var o = outpostById(outpostId);
   enemies.forEach(function(e){
@@ -2837,13 +3497,13 @@ function liberateOutpost(outpostId, how){
   player.medkits = Math.min(medCap(), player.medkits + 1);
   writeSave();
   sfxJingle(true);
-  showMsg('拠点解放 ― ' + (o ? o.name : outpostId), 3);
+  showMsg('拠点解放 ― ' + (o ? o.name : outpostId) + (stealthLib ? '（未発見ボーナス +50XP）' : ''), 3);
   if (outpostId === 'D'){
     syncGate();
     var gotShotgun = unlockWeapon('shotgun');
     setTimeout(function(){
       if (game.state !== 'play') return;
-      showMsg((gotShotgun ? '要塞の武器庫でショットガンを入手！ ' : '') + '北の関所が開いた ― エリア2（北部高地）へ進める', 3.6);
+      showMsg((gotShotgun ? '要塞の武器庫でショットガンを入手！ ' : '') + '北の関所が開いた ― エリア2（島の北部）へ進める', 3.6);
       sfxJingle(true);
     }, 3400);
   }
@@ -2872,7 +3532,7 @@ function stopTower(t){
     }, 2800);
   }
   if (t.id === 'T1') liberateOutpost('A', 'tower');
-  if (!anyTowerActive()) showMsg('将軍の放送が山から消えた', 3);
+  if (!anyTowerActive()) showMsg('将軍の放送が島から消えた', 3);
 }
 
 /* ---------------- カルマイベント（ランダム小事件） ---------------- */
@@ -3018,7 +3678,7 @@ function updateEvents(dt){
 function useHuntSyringe(){
   if (game.state !== 'play' || player.dead) return;
   if (huntT > 0){ showMsg('狩猟の注射はまだ効いている', 1.2); return; }
-  if (player.syrHunt <= 0){ showMsg('狩猟の注射がない（ポーズ画面で薬草から作れる）', 1.6); return; }
+  if (player.syrHunt <= 0){ showMsg('狩猟の注射がない（クラフト：Back／Tabで薬草2から作れる。ポーズ画面でも可）', 1.6); return; }
   player.syrHunt--;
   huntT = 25;
   sfxTone(980, 1400, 0.2, 0.1, 'sine');
@@ -3028,12 +3688,44 @@ function useHuntSyringe(){
 function useHealSyringe(){
   if (game.state !== 'play' || player.dead) return;
   if (player.hp >= maxHp()){ showMsg('体力は満タンだ', 1.2); return; }
-  if (player.syrHeal <= 0){ showMsg('回復の注射がない（ポーズ画面で薬草から作れる）', 1.6); return; }
+  if (player.syrHeal <= 0){ showMsg('回復の注射がない（クラフト：Back／Tabで薬草1から作れる。ポーズ画面でも可）', 1.6); return; }
   player.syrHeal--;
   player.hp = Math.min(maxHp(), player.hp + 70);
   sfxTone(620, 940, 0.22, 0.11, 'sine');
   showMsg('回復の注射 ― 体力が大きく回復した', 1.6);
   updateHUDStatic();
+}
+/* ---------------- Yボタン：注射（短押し／長押し） ----------------
+   Y（buttons[3]）は従来「武器切替（順送り）」だったが、武器切替は
+   十字キー右／左・ホイール・1〜5キーでも行える重複割り当てのため、
+   ユーザー要望によりYを注射の主ボタンにする。
+   ・短押し（離すまで0.4秒未満）：回復の注射を使う。
+     ただし回復の注射が使えない場面（所持なし／体力満タン）では、
+     従来通り武器切替（順送り）にフォールバックし、旧操作を残す。
+   ・長押し（0.4秒以上保持した瞬間に発動）：狩猟の注射を使う。
+   従来の LB（狩猟）／L3（回復）／キーボード T・R は併用として残す。 */
+var Y_LONG_PRESS = 0.4;
+var yBtnDown = false, yHoldTime = 0, yLongFired = false;
+function resetYBtn(){ yBtnDown = false; yHoldTime = 0; yLongFired = false; }
+function updateYSyringe(gp, dt){
+  if (!gp || game.state !== 'play' || !player || player.dead){ resetYBtn(); return; }
+  var down = padBtn(gp, 3);
+  if (down && !yBtnDown){
+    yBtnDown = true; yHoldTime = 0; yLongFired = false;
+  } else if (down && yBtnDown){
+    yHoldTime += dt;
+    if (!yLongFired && yHoldTime >= Y_LONG_PRESS){
+      yLongFired = true;
+      useHuntSyringe();
+    }
+  } else if (!down && yBtnDown){
+    var wasLong = yLongFired;
+    resetYBtn();
+    if (!wasLong){
+      if (player.syrHeal > 0 && player.hp < maxHp()) useHealSyringe();
+      else cycleWeapon(1); /* 回復注射が使えない場面では従来のY＝武器切替 */
+    }
+  }
 }
 function craftSyringe(kind){
   var isHunt = kind === 'hunt';
@@ -3062,12 +3754,31 @@ function refreshSyrUI(){
   var bh = document.getElementById('syrHuntBtn'), bl = document.getElementById('syrHealBtn');
   if (bh) bh.disabled = prog.herbs < 2 || player.syrHunt >= syrCap();
   if (bl) bl.disabled = prog.herbs < 1 || player.syrHeal >= syrCap();
+  /* クラフトパネル側も同じ表示に同期する（作成処理・表示更新はポーズ画面と共通。
+     二重管理にしないため、数値の出どころは prog.herbs / player.syrHunt / player.syrHeal のみ） */
+  var chc = document.getElementById('craftHerbCount');
+  if (chc) chc.textContent = '薬草 ×' + prog.herbs;
+  var csh = document.getElementById('cpSyrHuntCount'), csl = document.getElementById('cpSyrHealCount');
+  if (csh) csh.textContent = player.syrHunt;
+  if (csl) csl.textContent = player.syrHeal;
+  var cph = document.getElementById('cpSyrHuntPips'), cpl = document.getElementById('cpSyrHealPips');
+  if (cph) cph.textContent = pipFor(player.syrHunt);
+  if (cpl) cpl.textContent = pipFor(player.syrHeal);
+  var cbh = document.getElementById('cpSyrHuntBtn'), cbl = document.getElementById('cpSyrHealBtn');
+  if (cbh) cbh.disabled = prog.herbs < 2 || player.syrHunt >= syrCap();
+  if (cbl) cbl.disabled = prog.herbs < 1 || player.syrHeal >= syrCap();
+  /* パネル表示中に、フォーカス中のボタンが作成で無効化されたら「閉じる」へ逃がす */
+  if (typeof game !== 'undefined' && game.state === 'craft' && document.activeElement && document.activeElement.disabled){
+    var cb = document.getElementById('craftCloseBtn');
+    if (cb) setCraftFocus(cb);
+  }
   var ki = document.getElementById('karmaInfo');
   if (ki) ki.innerHTML = 'カルマ Lv：<b>' + prog.karma + ' / 6</b>　' +
     (prog.karma >= 6 ? '（最大 ― 村人みんなの信頼を得ている）' : '次の特典まで：事件をあと1件解決');
   var pi = document.getElementById('posterInfo');
   if (pi) pi.textContent = '将軍のポスター：' + posterCount() + ' / ' + POSTER_DEFS.length + ' 枚剥がした' +
     (posterCount() >= POSTER_DEFS.length ? '（全部剥がした！）' : '');
+  refreshQuickStatus();
 }
 function pipFor(n){
   var s = '';
@@ -3226,7 +3937,7 @@ function updateThrowables(dt){
 "use strict";
 /* ---------------- Update ---------------- */
 var zbuf = new Float32Array(W);
-var actPrev = false, firePrev = false, healPrevPad = false;
+var actPrev = false, tdPrev = false, firePrev = false, healPrevPad = false;
 
 function lerpAngle(a, b, t){
   var d = (b - a) % (Math.PI * 2);
@@ -3338,7 +4049,7 @@ function updateGridMove(dt, mx, mz){
 /* --- interaction --- */
 function currentInteract(){
   var td = null;
-  var tdRange = hasSkill('tiger', 0) ? 2.0 : 1.3;
+  var tdRange = hasSkill('tiger', 0) ? 2.15 : 1.45;
   enemies.forEach(function(en){
     if (!en.alive || en.alert || en.awareness >= 60) return;
     var d = Math.hypot(en.x - player.x, en.y - player.y);
@@ -3384,15 +4095,22 @@ function updateInteract(dt, gp){
   var actHeld = !!keys['KeyF'] || (gp && padBtn(gp, 2)) || touchFlags.act;
   var actEdge = actHeld && !actPrev;
   actPrev = actHeld;
+  /* テイクダウン専用入力：パッドはファークライ4と同じR3（右スティック押し込み＝buttons[11]）。
+     X（buttons[2]）は「調べる」専用に分離し、敵のそばで薬草・ポスター・警報装置を
+     調べたいときの誤爆（逆も含む）を防ぐ。キーボードFとタッチボタンは従来通り両方に効く。 */
+  var tdHeld = !!keys['KeyF'] || (gp && padBtn(gp, 11)) || touchFlags.act;
+  var tdEdge = tdHeld && !tdPrev;
+  tdPrev = tdHeld;
   if (!it){
     el.style.display = 'none';
     towerHold = 0; towerHoldTarget = null;
     return;
   }
   el.style.display = 'block';
+  document.getElementById('promptKey').textContent = (it.kind === 'takedown') ? 'R3／F' : 'X／F';
   document.getElementById('promptText').textContent = it.label;
   document.getElementById('holdWrap').style.display = it.hold ? 'block' : 'none';
-  if (it.kind === 'takedown' && actEdge){
+  if (it.kind === 'takedown' && tdEdge){
     var en = it.ref;
     en.alive = false; stats.kills++; stats.takedowns++;
     gainXP(50 + (prog.karma >= 5 ? 25 : 0));
@@ -3418,7 +4136,7 @@ function updateInteract(dt, gp){
     prog.herbs++;
     writeSave();
     sfxTone(760, 1120, 0.14, 0.1, 'sine');
-    showMsg('薬草を摘んだ（合計 ' + prog.herbs + '）― ポーズ画面で注射が作れる', 1.8);
+    showMsg('薬草を摘んだ（合計 ' + prog.herbs + '）― クラフト（Back／Tab）で注射にできる', 1.8);
   } else if (it.kind === 'poster' && actEdge){
     postersPeeled[it.ref.id] = true;
     var pc = posterCount();
@@ -3468,7 +4186,7 @@ function canSee(en, distP){
   /* 草むらに立ったままでは効果は弱い：視認距離だけ少し縮む（上昇率の鈍化は updateEnemy 側） */
   if (inBush && !player.crouch) vis = Math.min(vis, 8);
   if (distP > vis) return false;
-  if (distP > 1.35){
+  if (distP > 1.05){
     var toP = Math.atan2(player.y - en.y, player.x - en.x);
     var diff = Math.abs(((toP - en.angle) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI);
     if (diff > 1.0) return false;
@@ -3500,6 +4218,7 @@ function enemyMoveToward(en, tx, ty, speed, dt){
 }
 function hurtPlayer(dmg){
   if (player.dead || game.state !== 'play') return;
+  if (isEasy()) dmg *= 0.6; /* EASY：受けるダメージを約6割に軽減（全ての被ダメージはここを通る） */
   if (hasSkill('elephant', 3)) dmg *= 0.8;
   player.hp -= dmg;
   dmgFlash = 0.85;
@@ -3514,6 +4233,7 @@ function enemyShoot(en, distP){
     /* ハンターの矢：静かで単発、そこそこ痛い */
     sfxBow(0.65);
     var hChance = 0.5 - (player.crouch ? 0.14 : 0) - Math.max(0, distP - 5) * 0.03;
+    if (isEasy()) hChance *= 0.7; /* EASY：命中を甘くする */
     if (Math.random() < hChance) hurtPlayer(11);
     return;
   }
@@ -3521,14 +4241,35 @@ function enemyShoot(en, distP){
     /* 重装兵の散弾：近距離ほど痛い */
     sfxShot('heavy');
     var pellets = 3, hitP = 0;
+    var heavyChance = 0.62 - distP * 0.055;
+    if (isEasy()) heavyChance *= 0.7; /* EASY：命中を甘くする */
     for (var i = 0; i < pellets; i++)
-      if (Math.random() < 0.62 - distP * 0.055) hitP++;
+      if (Math.random() < heavyChance) hitP++;
     if (hitP > 0) hurtPlayer(hitP * (8 - Math.min(4, distP * 0.6)));
     return;
   }
   sfxShot('enemy');
   var chance = 0.52 - (player.crouch ? 0.16 : 0) - Math.max(0, distP - 4) * 0.03;
+  if (isEasy()) chance *= 0.7; /* EASY：命中を甘くする */
   if (Math.random() < chance) hurtPlayer(7 + Math.random() * 6);
+}
+/* 動物への射撃（襲ってくる動物への反撃。命中率・間隔は対プレイヤーと同水準） */
+function enemyShootAnimal(en, b, distA){
+  if (en.hunter){
+    sfxBow(0.65);
+    if (Math.random() < 0.45) damageBoar(b, 16, en);
+    return;
+  }
+  if (en.heavy && distA < 6){
+    sfxShot('heavy');
+    var hitP = 0;
+    for (var i = 0; i < 3; i++)
+      if (Math.random() < 0.62 - distA * 0.055) hitP++;
+    if (hitP > 0) damageBoar(b, hitP * 7, en);
+    return;
+  }
+  sfxShot('enemy');
+  if (Math.random() < 0.5 - Math.max(0, distA - 4) * 0.03) damageBoar(b, 10 + Math.random() * 6, en);
 }
 function updateEnemy(en, dt){
   if (!en.alive) return;
@@ -3537,22 +4278,45 @@ function updateEnemy(en, dt){
   if (seen){
     en.loseT = 0;
     en.targetX = player.x; en.targetY = player.y;
+    if (en.alert && en.outpost) detectedOutposts[en.outpost] = true; /* 動物相手に警戒中でも、プレイヤーを目視したら発見扱い */
     if (!en.alert){
-      var rate = distP < 3 ? 130 : distP < 6.5 ? 62 : 30;
+      var rate = distP < 3 ? 90 : distP < 6.5 ? 42 : 22;
       if (player.crouch) rate *= 0.55;
       if (playerInBush() && !player.crouch) rate *= 0.55; /* 草むらに立っていると気づかれにくい（弱い効果） */
       if (en.hunter) rate *= 0.35; /* ハンターは気配が薄く、こちらの発見メーターが上がりにくい */
+      if (isEasy()) rate *= 0.55; /* EASY：察知メーターの上昇を遅くする（発見されにくい） */
       en.awareness += rate * dt;
       if (en.awareness >= 100) makeAlert(en);
     }
   } else if (!en.alert){
     /* 草むらに隠れている間は、上がっていた発見メーターも速く下がる */
-    en.awareness = Math.max(0, en.awareness - (playerHidden() ? 34 : 11) * dt);
+    en.awareness = Math.max(0, en.awareness - (playerHidden() ? 34 : 16) * dt);
   } else {
     en.loseT += dt;
   }
 
   if (en.alert){
+    /* 襲ってくる動物への反撃：動物が射程内にいて、プレイヤーより近い／見失っている間は動物と戦う */
+    var af = en.animalFoe;
+    if (af && (!af.alive || Math.hypot(af.x - en.x, af.y - en.y) > 13)){ en.animalFoe = null; af = null; }
+    if (af){
+      var dA = Math.hypot(af.x - en.x, af.y - en.y);
+      var rangeA = en.heavy ? 7.5 : en.hunter ? 12.5 : 10.5;
+      if (dA < rangeA && losClear(en.x, en.y, af.x, af.y) && (!seen || dA < distP)){
+        var keepA = en.heavy ? 3.2 : en.hunter ? 5.5 : 3.4;
+        if (dA > keepA) enemyMoveToward(en, af.x, af.y, en.heavy ? 1.8 : en.hunter ? 2.4 : 2.15, dt);
+        else en.angle = lerpAngle(en.angle, Math.atan2(af.y - en.y, af.x - en.x), dt * 6);
+        en.windup += dt;
+        en.fireCd -= dt;
+        var windNeedA = en.heavy ? 0.6 : en.hunter ? 0.7 : 0.45;
+        if (en.windup > windNeedA && en.fireCd <= 0){
+          enemyShootAnimal(en, af, dA);
+          en.fireCd = en.heavy ? 1.7 + Math.random() * 0.5 : en.hunter ? 1.6 + Math.random() * 0.4 : 0.95 + Math.random() * 0.55;
+          en.windup = 0.1;
+        }
+        return;
+      }
+    }
     if (en.goingAlarm && en.goingAlarm.active){
       var al = en.goingAlarm;
       if (Math.hypot(al.x - en.x, al.y - en.y) < 1.35){
@@ -3577,6 +4341,7 @@ function updateEnemy(en, dt){
         if (en.windup > windNeed && en.fireCd <= 0){
           enemyShoot(en, distP);
           en.fireCd = en.heavy ? 1.7 + Math.random() * 0.5 : en.hunter ? 1.6 + Math.random() * 0.4 : 0.95 + Math.random() * 0.55;
+          if (isEasy()) en.fireCd *= 1.5; /* EASY：対プレイヤーの射撃間隔を長めに（動物への射撃間隔は不変） */
           en.windup = 0.1;
         }
       } else en.windup = Math.max(0, en.windup - dt);
@@ -3644,52 +4409,69 @@ function updateBoar(b, dt){
   }
   b.atkCd -= dt;
   var isYak = b.kind === 'yak', isLeo = b.kind === 'leopard';
-  /* ベイト（投げた肉）：近くの動物が集まり、そばに敵がいれば襲う */
+  /* ベイト（投げた肉）：近くの動物が集まる。肉食動物（狼・雪豹）は、
+     着地点のそばにいる敵を優先して襲う（本家式）。ヤクは食べに来るだけ */
   if (b.state !== 'charge' && baits.length){
     for (var bi = 0; bi < baits.length; bi++){
       var bt = baits[bi];
       var bd = Math.hypot(bt.x - b.x, bt.y - b.y);
       if (bd < 9){
-        var foe = null, fd = 1e9;
-        enemies.forEach(function(en){
-          if (!en.alive) return;
-          var d = Math.hypot(en.x - bt.x, en.y - bt.y);
-          if (d < fd){ fd = d; foe = en; }
-        });
-        if (foe && fd < 2.6){ b.state = 'charge'; b.target = foe; b.provoked = true; }
-        else if (bd > 0.7){
+        if (!isYak){
+          var foe = null, fd = 1e9;
+          enemies.forEach(function(en){
+            if (!en.alive) return;
+            var d = Math.hypot(en.x - bt.x, en.y - bt.y);
+            if (d < fd){ fd = d; foe = en; }
+          });
+          if (foe && fd < 4.2){ b.state = 'charge'; b.target = foe; b.provoked = true; return; }
+        }
+        if (bd > 0.7){
           b.angle = lerpAngle(b.angle, Math.atan2(bt.y - b.y, bt.x - b.x), dt * 6);
           moveEntity(b, (bt.x - b.x) / bd * (isYak ? 2.2 : isLeo ? 4.4 : 3.4) * dt, (bt.y - b.y) / bd * (isYak ? 2.2 : isLeo ? 4.4 : 3.4) * dt, 0.3);
+          return;
+        }
+        /* 肉にたどり着いた：その場で食べる。肉食動物は至近にいる人間にも牙をむく */
+        if (!isYak){
+          var np = null, nd = 1e9;
+          var dpB = Math.hypot(player.x - b.x, player.y - b.y);
+          if (dpB < 2.8){ np = player; nd = dpB; }
+          enemies.forEach(function(en){
+            if (!en.alive) return;
+            var d = Math.hypot(en.x - b.x, en.y - b.y);
+            if (d < 2.8 && d < nd){ np = en; nd = d; }
+          });
+          if (np){ b.state = 'charge'; b.target = np; b.provoked = true; }
         }
         return;
       }
     }
   }
   var quiet = hasSkill('elephant', 4);
-  /* 標的判定：狼は近づくと襲い、戦闘中の兵士にも襲いかかる（拠点戦への乱入）。
-     ヤクは普段大人しく、近づきすぎ／攻撃された時だけ突進する */
+  /* 標的判定：狼・雪豹は、近くにいる人間を敵味方問わず近いほうから襲う（拠点戦への乱入も含む）。
+     ヤクは普段大人しく、近づきすぎ／攻撃された時だけ突進する。ただし近くで戦闘中の兵士には驚いて向かう */
   var tgt = null, td = 1e9;
   var dp = Math.hypot(player.x - b.x, player.y - b.y);
   if (isYak){
     var yakRange = quiet ? 1.1 : 1.7;
     if (b.provoked || dp < yakRange){ tgt = player; td = dp; }
-  } else if (isLeo){
-    /* 雪豹：単独行動。気づかれにくく近づき、射程に入ると一気に襲う。兵士は襲わない */
-    var leoRange = quiet ? 4.6 : 5.5;
-    if (b.provoked || dp < leoRange){ tgt = player; td = dp; }
-  } else {
-    var wolfRange = quiet ? 2.7 : 4.2;
-    if (dp < wolfRange){ tgt = player; td = dp; }
     enemies.forEach(function(en){
       if (!en.alive || !en.alert) return;
       var d = Math.hypot(en.x - b.x, en.y - b.y);
-      if (d < 3.0 && d < td){ tgt = en; td = d; }
+      if (d < 2.2 && d < td){ tgt = en; td = d; }
+    });
+  } else {
+    var huntRange = isLeo ? (quiet ? 4.6 : 5.5) : (quiet ? 2.7 : 4.2);
+    if (dp < huntRange){ tgt = player; td = dp; }
+    enemies.forEach(function(en){
+      if (!en.alive) return;
+      var d = Math.hypot(en.x - b.x, en.y - b.y);
+      if (d < huntRange && d < td){ tgt = en; td = d; }
     });
   }
   if (b.state !== 'charge' && tgt){ b.state = 'charge'; b.target = tgt; }
   if (b.state === 'charge'){
     var cur = b.target;
-    if (!cur || (cur !== player && !cur.alive) || Math.hypot(cur.x - b.x, cur.y - b.y) > (isYak ? 6 : 8)){
+    if (!cur || (cur !== player && !cur.alive) || Math.hypot(cur.x - b.x, cur.y - b.y) > (isYak ? 6 : b.provoked ? 11 : 8)){
       b.state = 'wander'; b.target = null; b.waitT = 0.5; if (cur === player && !b.provoked) {} 
     } else {
       var dx = cur.x - b.x, dy = cur.y - b.y, d = Math.hypot(dx, dy);
@@ -3701,7 +4483,7 @@ function updateBoar(b, dt){
         b.atkCd = isYak ? 1.5 : isLeo ? 0.8 : 0.95;
         sfxBoarHit();
         if (cur === player) hurtPlayer(isYak ? 20 : isLeo ? 14 : 8);
-        else damageEnemy(cur, isYak ? 45 : 22);
+        else damageEnemy(cur, isYak ? 45 : 22, b);
         moveEntity(b, -dx * 0.5, -dy * 0.5, 0.3);
       }
       return;
@@ -3724,14 +4506,19 @@ function updateBoar(b, dt){
 <script>
 "use strict";
 /* ---------------- Rendering ---------------- */
-var skyGrad = null, floorGrad = null, snowSkyGrad = null, snowFloorGrad = null;
+var skyGrad = null, floorGrad = null, snowSkyGrad = null, snowFloorGrad = null, tropSkyGrad = null, tropFloorGrad = null;
 function buildGradients(){
   /* 薄い青の空／高山の草原と岩・雪まじりの地面 */
   skyGrad = ctx.createLinearGradient(0, 0, 0, H / 2);
   skyGrad.addColorStop(0, '#8fb8d8'); skyGrad.addColorStop(0.7, '#c3dcee'); skyGrad.addColorStop(1, '#ddeaf2');
   floorGrad = ctx.createLinearGradient(0, H / 2, 0, H);
   floorGrad.addColorStop(0, '#969c88'); floorGrad.addColorStop(0.45, '#7e8468'); floorGrad.addColorStop(1, '#626851');
-  /* エリア2（北部高地）：白く冷たい空と雪原 */
+  /* 南国（全面展開）：強い青空と、砂まじりの明るい草地（模様は入れない） */
+  tropSkyGrad = ctx.createLinearGradient(0, 0, 0, H / 2);
+  tropSkyGrad.addColorStop(0, '#2a7cd6'); tropSkyGrad.addColorStop(0.55, '#63b4ec'); tropSkyGrad.addColorStop(1, '#d8f4fa');
+  tropFloorGrad = ctx.createLinearGradient(0, H / 2, 0, H);
+  tropFloorGrad.addColorStop(0, '#b3a06e'); tropFloorGrad.addColorStop(0.35, '#8aa653'); tropFloorGrad.addColorStop(1, '#5f8438');
+  /* 旧エリア2用の雪原グラデーション（全面南国化で未使用。互換のため残置） */
   snowSkyGrad = ctx.createLinearGradient(0, 0, 0, H / 2);
   snowSkyGrad.addColorStop(0, '#a8c4de'); snowSkyGrad.addColorStop(0.7, '#d3e4f2'); snowSkyGrad.addColorStop(1, '#eef4f9');
   snowFloorGrad = ctx.createLinearGradient(0, H / 2, 0, H);
@@ -3772,13 +4559,47 @@ function drawPeaks(){
   }
   ctx.lineTo(W, H / 2 + 2); ctx.closePath(); ctx.fill();
 }
+function drawTropicHillLayer(off, hMul, wMul, colMain, colShade){
+  /* 遠景の島影：丸い緑の丘を地平線に並べる */
+  PEAKS.forEach(function(p){
+    var rel = ((p.a + off - player.angle) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI;
+    if (Math.abs(rel) > 1.25) return;
+    var sx = W / 2 * (1 + Math.tan(rel));
+    var ph = p.h * hMul * 0.6, pw = p.w * wMul;
+    var base = H / 2 + 2;
+    ctx.fillStyle = colMain;
+    ctx.beginPath(); ctx.ellipse(sx, base, pw / 2, ph, 0, Math.PI, 0); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = colShade;
+    ctx.beginPath(); ctx.ellipse(sx + pw * 0.2, base, pw * 0.3, ph * 0.78, 0, Math.PI, 0); ctx.closePath(); ctx.fill();
+  });
+}
+function drawTropicBackdrop(){
+  /* 南国の遠景（全域共通）。地平線の海＋緑の島影＋手前の低い稜線＋日差しのグレア */
+  var sea = ctx.createLinearGradient(0, H / 2 - 10, 0, H / 2 + 3);
+  sea.addColorStop(0, '#7fd4de'); sea.addColorStop(1, '#2fa8c4');
+  ctx.fillStyle = sea; ctx.fillRect(0, H / 2 - 9, W, 12);
+  drawTropicHillLayer(0.55, 1.3, 1.5, '#6fae8f', '#5b9a7c');
+  drawTropicHillLayer(0, 0.85, 1.1, '#4c9464', '#3c7d52');
+  ctx.fillStyle = 'rgba(84,140,80,.55)';
+  ctx.beginPath();
+  ctx.moveTo(0, H / 2 + 2);
+  for (var rx = 0; rx <= W; rx += 24){
+    var ra = player.angle + (rx / W - 0.5) * 2.2;
+    ctx.lineTo(rx, H / 2 + 2 - (Math.sin(ra * 3.1) * 3 + Math.sin(ra * 7.3) * 2 + 4));
+  }
+  ctx.lineTo(W, H / 2 + 2); ctx.closePath(); ctx.fill();
+  /* 強い日差し：右上の柔らかいグレア（画面固定の光。揺らさない） */
+  var sg = ctx.createRadialGradient(W * 0.8, -12, 8, W * 0.8, -12, 130);
+  sg.addColorStop(0, 'rgba(255,246,200,.5)'); sg.addColorStop(1, 'rgba(255,246,200,0)');
+  ctx.fillStyle = sg; ctx.fillRect(0, 0, W, H / 2);
+}
 function render(){
   ctx.setTransform(RENDER_SCALE, 0, 0, RENDER_SCALE, 0, 0);
   ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
-  var inA2 = player.y < GATE_Y;
-  ctx.fillStyle = inA2 ? snowSkyGrad : skyGrad; ctx.fillRect(0, 0, W, H / 2);
-  ctx.fillStyle = inA2 ? snowFloorGrad : floorGrad; ctx.fillRect(0, H / 2, W, H / 2);
-  drawPeaks();
+  /* 全面展開：島全域が南国テイスト。空・地面・遠景は場所で切り替えず常に南国 */
+  ctx.fillStyle = tropSkyGrad; ctx.fillRect(0, 0, W, H / 2);
+  ctx.fillStyle = tropFloorGrad; ctx.fillRect(0, H / 2, W, H / 2);
+  drawTropicBackdrop();
   var dirX = Math.cos(player.angle), dirY = Math.sin(player.angle);
   var ps = planeScale();
   var planeX = -dirY * ps, planeY = dirX * ps;
@@ -3793,7 +4614,7 @@ function render(){
     ctx.ellipse(sx, sy + 4, s, s * 0.3, 0, 0, 7);
     ctx.ellipse(sx + s * 0.5, sy + 6, s * 0.6, s * 0.22, 0, 0, 7);
     ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,.62)';
+    ctx.fillStyle = 'rgba(255,255,255,.9)';
     ctx.beginPath();
     ctx.ellipse(sx, sy, s, s * 0.32, 0, 0, 7);
     ctx.ellipse(sx + s * 0.5, sy + 3, s * 0.6, s * 0.24, 0, 0, 7);
@@ -3826,29 +4647,38 @@ function render(){
     var texX = Math.floor(wallX * 256);
     if (side === 0 && rdx > 0) texX = 255 - texX;
     if (side === 1 && rdy < 0) texX = 255 - texX;
-    ctx.drawImage(wallTex[tile] || wallTex[1], texX, 0, 1, 256, x, y0, 1, lineH);
+    /* 壁テクスチャは全域で南国（コロニアル）セット。関所をまたいでも表示は切り替わらず混ざらない */
+    var texSet = wallTexA1;
+    ctx.drawImage(texSet[tile] || texSet[1], texX, 0, 1, 256, x, y0, 1, lineH);
     if (side === 1){ ctx.fillStyle = 'rgba(10,20,15,.28)'; ctx.fillRect(x, y0, 1, lineH); }
-    /* 距離の減衰＋軽い霧：遠い壁ほど地平線の色に霞ませる */
+    /* 距離の減衰＋軽い霧：遠い壁ほど暖かい地平線の色に霞ませる */
     if (dist > 4.5){
       var fogA = Math.min(0.52, (dist - 4.5) / 22);
-      ctx.fillStyle = 'rgba(223,235,244,' + fogA.toFixed(3) + ')';
+      ctx.fillStyle = 'rgba(255,240,205,' + fogA.toFixed(3) + ')';
       ctx.fillRect(x, y0, 1, lineH);
     }
   }
   var list = [];
-  trees.forEach(function(t){ list.push({ img: sprTree, x: t.x, y: t.y, hS: 1.3, wS: 1.05 }); });
+  /* スプライトも全域で南国版。旧 kind='snow' の遮蔽物は砂のこぶとして出す。
+     当たり判定・視線遮断・隠れ性能はスプライトに紐づかないので従来通り */
+  trees.forEach(function(t){ list.push({ img: sprPalm, x: t.x, y: t.y, hS: 1.3, wS: 1.05 }); });
   crates.forEach(function(t){ list.push({ img: t.outpost ? sprCrateSupply : sprCrate, x: t.x, y: t.y, hS: 0.6, wS: 0.85, low: true }); });
-  bushes.forEach(function(t){ list.push({ img: t.snow ? sprBushSnow : sprBush, x: t.x, y: t.y, hS: 0.55, wS: 1.05, low: true }); });
-  rocks.forEach(function(t){ list.push({ img: t.kind === 'snow' ? sprSnowMound : sprRock, x: t.x, y: t.y, hS: t.kind === 'snow' ? 0.5 : 0.72, wS: 1.0, low: true }); });
-  posts.forEach(function(t){ list.push({ img: sprPost, x: t.x, y: t.y, hS: 0.85, wS: 0.45, low: true }); });
-  ices.forEach(function(t){ list.push({ img: sprIce, x: t.x, y: t.y, hS: 0.24, wS: 1.6, low: true }); });
-  TOWERS.forEach(function(t){ list.push({ img: sprTower, x: t.x, y: t.y, hS: 2.35, wS: 1.0, dim: t.stopped }); });
+  bushes.forEach(function(t){ list.push({ img: sprBushTropic, x: t.x, y: t.y, hS: 0.55, wS: 1.05, low: true }); });
+  rocks.forEach(function(t){ list.push({ img: t.kind === 'snow' ? sprSandMound : sprRockTropic, x: t.x, y: t.y, hS: t.kind === 'snow' ? 0.5 : 0.72, wS: 1.0, low: true }); });
+  posts.forEach(function(t){ list.push({ img: sprBanner, x: t.x, y: t.y, hS: 0.85, wS: 0.45, low: true }); });
+  ices.forEach(function(t){ list.push({ img: sprLagoon, x: t.x, y: t.y, hS: 0.24, wS: 1.6, low: true }); });
+  TOWERS.forEach(function(t){ list.push({ img: sprTowerTropic, x: t.x, y: t.y, hS: 2.35, wS: 1.0, dim: t.stopped }); });
   list.push({ img: sprTransmitter, x: TRANSMITTER.x, y: TRANSMITTER.y, hS: 1.05, wS: 0.8, dim: gameCleared });
   alarms.forEach(function(al){ list.push({ img: sprAlarm, x: al.x, y: al.y, hS: 0.8, wS: 0.55, low: true, dim: !al.active }); });
   enemies.forEach(function(en){
     if (en.fled) return;
-    list.push({ img: en.alive ? (en.heavy ? sprHeavy : en.hunter ? sprHunter : sprSoldier) : sprCorpse, x: en.x, y: en.y,
-                hS: en.alive ? (en.heavy ? 1.02 : 0.95) : 0.3, wS: en.heavy ? 0.92 : 0.72, low: !en.alive, ref: en });
+    if (!en.alive){
+      list.push({ img: sprCorpse, x: en.x, y: en.y, hS: 0.3, wS: en.heavy ? 0.92 : 0.72, low: true, ref: en });
+      return;
+    }
+    var vw = enemyViewFor(en);
+    list.push({ img: vw.img, flip: vw.flip, x: en.x, y: en.y,
+                hS: en.heavy ? 1.02 : 0.95, wS: en.heavy ? 0.92 : 0.72, ref: en });
   });
   plants.forEach(function(p){
     if (p.active) list.push({ img: sprPlant, x: p.x, y: p.y, hS: 0.5, wS: 0.55, low: true });
@@ -3888,8 +4718,10 @@ function render(){
     for (var stripe = x0; stripe < x1; stripe += 2){
       if (stripe < 0 || stripe >= W) continue;
       if (ty >= zbuf[stripe]) continue;
+      var srcW = Math.max(1, s.img.width / sw * 2);
       var texX = (stripe - x0) / sw * s.img.width;
-      ctx.drawImage(s.img, texX, 0, Math.max(1, s.img.width / sw * 2), s.img.height, stripe, yTop, 2, sh);
+      if (s.flip) texX = s.img.width - texX - srcW;
+      ctx.drawImage(s.img, texX, 0, srcW, s.img.height, stripe, yTop, 2, sh);
     }
     ctx.globalAlpha = 1;
     s.screen = { sx: sxC, size: size, depth: ty, top: yTop };
@@ -3940,9 +4772,10 @@ function render(){
     ctx.strokeText('マーク中', W / 2, H / 2 + 34); ctx.fillText('マーク中', W / 2, H / 2 + 34);
     ctx.restore();
   }
-  drawSnowfall();
+  /* 天候パーティクル：全域で日差しの埃だけ（降雪は全面展開で廃止） */
+  drawSunDust();
 }
-/* ---------------- 降雪（演出のみ。設定でON/OFF、既定ON。ゆっくり少量だけ舞う） ---------------- */
+/* ---------------- 日差しの埃（演出のみ。設定でON/OFF、既定ON） ---------------- */
 var snowfallOn = true;
 var snowFlakes = [];
 for (var sfi = 0; sfi < 80; sfi++){
@@ -3964,6 +4797,26 @@ function drawSnowfall(){
     if (f.x > W + 3) f.x = -3; else if (f.x < -3) f.x = W + 3;
     ctx.globalAlpha = 0.32 + (f.r - 0.8) / 1.7 * 0.5;
     ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, 7); ctx.fill();
+  }
+  ctx.restore();
+}
+function drawSunDust(){
+  /* 島全域の日差しの埃：粒を流用し、金色・ごく薄く・ゆっくり。
+     設定OFFのときは出さない（天候パーティクルのスイッチとして共通。内部名 snowfallOn は設定保存の互換のため維持） */
+  if (!snowfallOn) { snowLastT = performance.now(); return; }
+  var now = performance.now();
+  var dt = Math.min(0.05, (now - snowLastT) / 1000);
+  snowLastT = now;
+  ctx.save();
+  ctx.fillStyle = '#ffedb8';
+  for (var i = 0; i < snowFlakes.length; i += 2){
+    var f = snowFlakes[i];
+    f.y += f.s * 0.32 * dt;
+    f.x += Math.sin(now / 1900 + f.ph) * f.sw * 0.7 * dt;
+    if (f.y > H + 3){ f.y = -3; f.x = Math.random() * W; }
+    if (f.x > W + 3) f.x = -3; else if (f.x < -3) f.x = W + 3;
+    ctx.globalAlpha = 0.05 + (f.r - 0.8) / 1.7 * 0.13;
+    ctx.beginPath(); ctx.arc(f.x, f.y, f.r * 1.15, 0, 7); ctx.fill();
   }
   ctx.restore();
 }
@@ -4240,30 +5093,32 @@ function drawMapOn(g, S, full){
   for (var y = 0; y < MH; y++) for (var x = 0; x < MW; x++){
     if (!full && !cellRevealed(x, y)) continue;
     var t = grid[y][x];
-    if (t === 1) g.fillStyle = '#8d9291';
-    else if (t === 2) g.fillStyle = '#7d5c39';
+    if (t === 1) g.fillStyle = '#e2cda1';
+    else if (t === 2) g.fillStyle = '#3f9a92';
     else if (t === 3) g.fillStyle = '#a3854f';
-    else if (t === 4) g.fillStyle = '#4a545e';
-    else g.fillStyle = y < GATE_Y ? '#5f7d88' : '#2c4433';
+    else if (t === 4) g.fillStyle = '#2f7f78';
+    else g.fillStyle = '#7d9a4e';
     g.fillRect(x * cw, y * chh, Math.ceil(cw), Math.ceil(chh));
     var sc = spriteCells[x + ',' + y];
     if (sc === 'tower'){ g.fillStyle = '#ffd23c'; g.fillRect(x * cw + 1, y * chh + 1, cw - 2, chh - 2); }
-    if (sc === 'tree'){ g.fillStyle = '#3f9e57'; g.beginPath(); g.arc(x * cw + cw / 2, y * chh + chh / 2, cw * 0.32, 0, 7); g.fill(); }
+    if (sc === 'tree'){ g.fillStyle = '#57b84e'; g.beginPath(); g.arc(x * cw + cw / 2, y * chh + chh / 2, cw * 0.32, 0, 7); g.fill(); }
   }
   ices.forEach(function(ic){
     if (!full && !cellRevealed(Math.floor(ic.x), Math.floor(ic.y))) return;
-    g.fillStyle = '#bfe0ea';
-    g.beginPath(); g.ellipse(ic.x * cw, ic.y * chh, cw * 0.8, chh * 0.5, 0, 0, 7); g.fill();
+    g.fillStyle = '#d9c08a';
+    g.beginPath(); g.ellipse(ic.x * cw, ic.y * chh, cw * 0.85, chh * 0.55, 0, 0, 7); g.fill();
+    g.fillStyle = '#5ec2cc';
+    g.beginPath(); g.ellipse(ic.x * cw, ic.y * chh, cw * 0.72, chh * 0.42, 0, 0, 7); g.fill();
   });
-  /* 草むら（薄い緑／雪原は薄い白緑）と岩・雪のこぶ（薄いグレー／白）を薄く表示 */
+  /* 草むら（薄い緑）と岩・砂のこぶ（砂色）を薄く表示 */
   bushes.forEach(function(b){
     if (!full && !cellRevealed(b.cx, b.cy)) return;
-    g.fillStyle = b.snow ? 'rgba(196,220,200,.6)' : 'rgba(96,178,110,.55)';
+    g.fillStyle = 'rgba(96,178,110,.55)';
     g.beginPath(); g.ellipse(b.x * cw, b.y * chh, cw * 0.55, chh * 0.4, 0, 0, 7); g.fill();
   });
   rocks.forEach(function(r){
     if (!full && !cellRevealed(r.cx, r.cy)) return;
-    g.fillStyle = r.kind === 'snow' ? 'rgba(226,238,246,.75)' : 'rgba(168,172,172,.8)';
+    g.fillStyle = r.kind === 'snow' ? 'rgba(217,192,138,.85)' : 'rgba(179,155,109,.85)';
     g.fillRect(r.cx * cw + 0.5, r.cy * chh + 0.5, cw - 1, chh - 1);
   });
   /* 拠点マーカー */
@@ -4424,7 +5279,7 @@ function updateHUD(){
   var evLine = activeEvent ? '<br><span style="color:#e3b3ff;">事件：' + activeEvent.label + '（紫の印へ）</span>' : '';
   var gateLine = gateOpen ? '' : '<br>北の関所：閉（要塞を解放すると開く）';
   var obj = gameCleared
-    ? '<b>山は解放された</b> ― 将軍の放送は止んだ。自由に探索を続けられる' + evLine
+    ? '<b>島は解放された</b> ― 将軍の放送は止んだ。自由に探索を続けられる' + evLine
     : libN >= OUTPOSTS.length
     ? '<b>最終目標</b>：エリア2最奥の放送本部へ ― 最奥の放送室で送信設備を操作し、将軍の放送を止めよ' + evLine
     : '<b>目標</b>：拠点 ' + libN + '/' + OUTPOSTS.length + ' 解放 ・ 鐘の塔 ' + towN + '/' + TOWERS.length + ' 停止<br>次の拠点：' + (next ? next.name : '―') + gateLine + evLine;
@@ -4436,10 +5291,11 @@ function updateHUD(){
 var titleEl = document.getElementById('titleScreen'),
     pauseEl = document.getElementById('pauseScreen'),
     resultEl = document.getElementById('resultScreen'),
-    endingEl = document.getElementById('endingScreen');
+    endingEl = document.getElementById('endingScreen'),
+    craftEl = document.getElementById('craftScreen');
 function showOnly(el){
-  [titleEl, pauseEl, resultEl, endingEl].forEach(function(o){ o.hidden = o !== el; });
-  if (!el) [titleEl, pauseEl, resultEl, endingEl].forEach(function(o){ o.hidden = true; });
+  [titleEl, pauseEl, resultEl, endingEl, craftEl].forEach(function(o){ o.hidden = o !== el; });
+  if (!el) [titleEl, pauseEl, resultEl, endingEl, craftEl].forEach(function(o){ o.hidden = true; });
 }
 function refreshContinueBtn(){
   var sv = loadSave();
@@ -4476,10 +5332,219 @@ function openPause(){
   refreshSyrUI();
   buildTravelUI();
   showOnly(pauseEl);
+  var jb = document.getElementById('jumpSkillBtn');
+  if (jb) setPauseFocus(jb);
 }
 function closePause(){
   game.state = 'play';
   showOnly(null);
+}
+/* ---------------- クラフトパネル（注射作成専用） ----------------
+   CARRY YOUのクラフト画面と同じ形：プレイ中に専用ボタンで開き、
+   開いている間は game.state = 'craft' にしてワールド更新を止める。
+   パッド：Back（View, buttons[8]）で開閉（CARRY YOUと同じ割り当て）。
+   Viewは従来「回復の注射を使う」だったが、そちらは空いていた
+   L3（buttons[10]）へ移した（キーボード R は変更なし）。
+   キーボード：CARRY YOUの相当キーは C だが、FAR PEAKでは C がカメラで
+   使用中のため、開閉は Tab に割り当てた。
+   作成そのものはポーズ画面と共通の craftSyringe() を使う。 */
+function openCraftPanel(){
+  if (game.state !== 'play' || !player || player.dead) return;
+  game.state = 'craft';
+  if (document.pointerLockElement) document.exitPointerLock();
+  mouseFire = false;
+  refreshSyrUI();
+  showOnly(craftEl);
+  var bh = document.getElementById('cpSyrHuntBtn'), bl = document.getElementById('cpSyrHealBtn');
+  var cb = document.getElementById('craftCloseBtn');
+  setCraftFocus(bh && !bh.disabled ? bh : (bl && !bl.disabled ? bl : cb));
+}
+function closeCraftPanel(){
+  if (game.state !== 'craft') return;
+  game.state = 'play';
+  showOnly(null);
+}
+function craftFocusables(){
+  var els = craftEl.querySelectorAll('button');
+  var out = [];
+  for (var i = 0; i < els.length; i++){
+    if (!els[i].disabled) out.push(els[i]);
+  }
+  return out;
+}
+function setCraftFocus(el){
+  var all = craftEl.querySelectorAll('.padFocus');
+  for (var i = 0; i < all.length; i++) all[i].classList.remove('padFocus');
+  if (!el) return;
+  el.focus();
+  el.classList.add('padFocus');
+  if (el.scrollIntoView) el.scrollIntoView({ block: 'nearest' });
+}
+function moveCraftFocus(dir){
+  var list = craftFocusables();
+  if (!list.length) return;
+  var idx = list.indexOf(document.activeElement);
+  var next = idx < 0 ? (dir > 0 ? 0 : list.length - 1) : (idx + dir + list.length) % list.length;
+  setCraftFocus(list[next]);
+}
+var craftStickAt = 0;
+function updateCraftPadNav(gp, now){
+  /* Back（同じボタン）または B で閉じる */
+  if (padEdge(gp, 8) || padEdge(gp, 1)){ closeCraftPanel(); return; }
+  var list = craftFocusables();
+  if (!list.length) return;
+  var move = 0;
+  if (padEdge(gp, 13)) move = 1;
+  else if (padEdge(gp, 12)) move = -1;
+  var ay = gp.axes && gp.axes[1] ? gp.axes[1] : 0;
+  if (!move && Math.abs(ay) > 0.6 && now - craftStickAt > 280){
+    move = ay > 0 ? 1 : -1;
+    craftStickAt = now;
+  }
+  if (move){ moveCraftFocus(move); return; }
+  if (padEdge(gp, 0)){
+    var active = document.activeElement;
+    if (active && craftEl.contains(active) && !active.disabled) active.click();
+    else setCraftFocus(list[0]);
+  }
+}
+/* ポーズ画面先頭のクイックメニュー：残ポイント・素材・注射の所持をひと目で出す */
+function refreshQuickStatus(){
+  var q = document.getElementById('quickStatus');
+  if (!q) return;
+  q.innerHTML = 'スキルポイント：<b>' + prog.sp + '</b>（XP ' + prog.xp + ' / ' + xpForNext() + '）　薬草：<b>×' + prog.herbs + '</b>　注射：狩猟 <b>' + (player ? player.syrHunt : 0) + '</b> 本・回復 <b>' + (player ? player.syrHeal : 0) + '</b> 本　皮：<b>×' + prog.hides + '</b>';
+}
+function jumpToSection(id, focusEl){
+  var t = document.getElementById(id);
+  if (t && t.scrollIntoView) t.scrollIntoView({ block: 'start' });
+  if (focusEl && !focusEl.disabled) setPauseFocus(focusEl);
+}
+/* ---------------- ポーズ画面のパッド操作 ----------------
+   十字キー／左スティックの上下左右で、画面上の見た目の並びに沿って
+   項目移動（横並びのボタン列は左右で移動、上下は行をまたぐ）、
+   Aで決定（ボタンはクリック、プルダウンは次へ送る）、Bで再開。
+   プルダウンにフォーカスがあるときだけ、左右は従来通り値の変更。 */
+var pauseStickAt = 0;
+function pauseFocusables(){
+  var els = pauseEl.querySelectorAll('button, select');
+  var out = [];
+  for (var i = 0; i < els.length; i++){
+    if (!els[i].disabled) out.push(els[i]);
+  }
+  return out;
+}
+/* フォーカス可能要素を、画面上の中心Yが近いもの同士で「行」にまとめ、
+   各行の中は中心Xの昇順に並べたグリッドを返す */
+function pauseGridRows(list){
+  var items = [];
+  for (var i = 0; i < list.length; i++){
+    var r = list[i].getBoundingClientRect();
+    if (!r.width && !r.height) continue;
+    items.push({ el: list[i], cx: r.left + r.width / 2, cy: r.top + r.height / 2, h: r.height || 1 });
+  }
+  items.sort(function(a, b){ return (a.cy - b.cy) || (a.cx - b.cx); });
+  var rows = [];
+  for (var j = 0; j < items.length; j++){
+    var it = items[j], row = rows[rows.length - 1];
+    if (row && Math.abs(it.cy - row.cy) <= Math.max(10, Math.min(it.h, row.h) * 0.55)){
+      row.items.push(it);
+      row.cy += (it.cy - row.cy) / row.items.length;
+    } else {
+      rows.push({ cy: it.cy, h: it.h, items: [it] });
+    }
+  }
+  for (var k = 0; k < rows.length; k++){
+    rows[k].items.sort(function(a, b){ return a.cx - b.cx; });
+  }
+  return rows;
+}
+function movePauseFocusGrid(dir){
+  var rows = pauseGridRows(pauseFocusables());
+  if (!rows.length) return;
+  var active = document.activeElement;
+  var ri = -1, ci = -1, cur = null;
+  for (var i = 0; i < rows.length; i++){
+    for (var j = 0; j < rows[i].items.length; j++){
+      if (rows[i].items[j].el === active){ ri = i; ci = j; cur = rows[i].items[j]; }
+    }
+  }
+  if (ri < 0){ setPauseFocus(rows[0].items[0].el); return; }
+  var target = null;
+  if (dir === 'left' || dir === 'right'){
+    var rowItems = rows[ri].items;
+    var nci = ci + (dir === 'right' ? 1 : -1);
+    if (nci >= 0 && nci < rowItems.length){
+      target = rowItems[nci];
+    } else if (dir === 'right'){
+      target = rows[(ri + 1) % rows.length].items[0];
+    } else {
+      var prow = rows[(ri - 1 + rows.length) % rows.length];
+      target = prow.items[prow.items.length - 1];
+    }
+  } else {
+    var nri = (ri + (dir === 'down' ? 1 : -1) + rows.length) % rows.length;
+    var cand = rows[nri].items, bestD = Infinity;
+    for (var m = 0; m < cand.length; m++){
+      var d = Math.abs(cand[m].cx - cur.cx);
+      if (d < bestD){ bestD = d; target = cand[m]; }
+    }
+  }
+  if (target) setPauseFocus(target.el);
+}
+function setPauseFocus(el){
+  var all = pauseEl.querySelectorAll('.padFocus');
+  for (var i = 0; i < all.length; i++) all[i].classList.remove('padFocus');
+  if (!el) return;
+  el.focus();
+  el.classList.add('padFocus');
+  if (el.scrollIntoView) el.scrollIntoView({ block: 'nearest' });
+}
+function cycleSelect(sel, dir){
+  var n = sel.options.length;
+  if (!n) return;
+  sel.selectedIndex = (sel.selectedIndex + dir + n) % n;
+  var ev = document.createEvent('HTMLEvents');
+  ev.initEvent('change', true, false);
+  sel.dispatchEvent(ev);
+}
+function updatePausePadNav(gp, now){
+  var list = pauseFocusables();
+  if (!list.length) return;
+  var active = document.activeElement;
+  var inPause = active && pauseEl.contains(active);
+  var dir = null;
+  if (padEdge(gp, 15)) dir = 'right';
+  else if (padEdge(gp, 14)) dir = 'left';
+  else if (padEdge(gp, 13)) dir = 'down';
+  else if (padEdge(gp, 12)) dir = 'up';
+  if (!dir){
+    var ax = gp.axes && gp.axes[0] ? gp.axes[0] : 0;
+    var ay = gp.axes && gp.axes[1] ? gp.axes[1] : 0;
+    if ((Math.abs(ax) > 0.6 || Math.abs(ay) > 0.6) && now - pauseStickAt > 280){
+      if (Math.abs(ax) >= Math.abs(ay)) dir = ax > 0 ? 'right' : 'left';
+      else dir = ay > 0 ? 'down' : 'up';
+      pauseStickAt = now;
+    }
+  }
+  if (dir){
+    /* プルダウンにフォーカスがあるときの左右は、従来通り値の変更 */
+    if (inPause && active.tagName === 'SELECT' && (dir === 'left' || dir === 'right')){
+      cycleSelect(active, dir === 'right' ? 1 : -1);
+      return;
+    }
+    movePauseFocusGrid(dir);
+    return;
+  }
+  if (padEdge(gp, 0)){
+    if (inPause){
+      if (active.tagName === 'SELECT') cycleSelect(active, 1);
+      else active.click();
+    } else {
+      setPauseFocus(list[0]);
+    }
+    return;
+  }
+  if (padEdge(gp, 1)) closePause();
 }
 function fmtTime(s){
   var m = Math.floor(s / 60), ss = Math.floor(s % 60);
@@ -4510,6 +5575,7 @@ function refreshCraftUI(){
     mb.textContent = '拡張する（皮 ' + craftCostFor(prog.craftMed) + '）';
     mb.disabled = prog.hides < craftCostFor(prog.craftMed);
   }
+  refreshQuickStatus();
 }
 function refreshSkillUI(){
   var info = document.getElementById('skillInfo');
@@ -4537,6 +5603,7 @@ function refreshSkillUI(){
   }
   build('tiger', 'tigerList');
   build('elephant', 'eleList');
+  refreshQuickStatus();
 }
 function buySkill(tree, idx){
   if (prog.skills[tree][idx]) return;
@@ -4657,20 +5724,20 @@ function showResult(mode){
   if (mode === 'all'){
     title.textContent = 'エリア1制覇';
     big.textContent = 'エリア1 全拠点解放';
-    story.textContent = '山道の関所・山の村・岩山の砦、そして要塞はレジスタンスの手に戻った。要塞の武器庫でショットガンを手に入れ、北の関所も開いた。次は雪と氷のエリア2（北部高地）だ。鐘の塔が残っていれば止めて、将軍の声を消そう。';
+    story.textContent = '山道の関所・山の村・岩山の砦、そして要塞はレジスタンスの手に戻った。要塞の武器庫でショットガンを手に入れ、北の関所も開いた。次は海と緑のエリア2（島の北部）だ。鐘の塔が残っていれば止めて、将軍の声を消そう。';
     exploreBtn.textContent = '探索を続ける（エリア2へ）';
     exploreBtn.onclick = function(){ game.state = 'play'; showOnly(null); };
   } else if (mode === 'all2'){
     title.textContent = 'エリア2制覇';
     big.textContent = '全拠点解放';
-    story.textContent = '雪の村・鉱山・寺院・凍湖の関所、そして放送本部の前哨まで、北部高地も解放された。放送本部の警備も手薄になっているはずだ。残るはエリア2最奥の本拠地「放送本部」――最奥の放送室で送信設備を止めれば、将軍の支配は終わる。';
-    exploreBtn.textContent = '山の探索を続ける';
+    story.textContent = '海辺の村・鉱山・岬の教会・ラグーンの関所、そして放送本部の前哨まで、島の北部も解放された。放送本部の警備も手薄になっているはずだ。残るはエリア2最奥の本拠地「放送本部」――最奥の放送室で送信設備を止めれば、将軍の支配は終わる。';
+    exploreBtn.textContent = '島の探索を続ける';
     exploreBtn.onclick = function(){ game.state = 'play'; showOnly(null); };
   } else if (mode === 'clear'){
     title.textContent = '作戦完了';
-    big.textContent = '山は解放された';
-    story.textContent = '将軍の放送は止み、山に静けさが戻った。鐘の塔はもう何も告げず、拠点の明かりは人々のものになった。独裁者の支配は終わり、山の暮らしが少しずつ元に戻っていくだろう。――作戦は完了したが、山の探索はこのまま続けられる。';
-    exploreBtn.textContent = '山の探索を続ける（フリーローム）';
+    big.textContent = '島は解放された';
+    story.textContent = '将軍の放送は止み、島に静けさが戻った。鐘の塔はもう何も告げず、拠点の明かりは人々のものになった。独裁者の支配は終わり、島の暮らしが少しずつ元に戻っていくだろう。――作戦は完了したが、島の探索はこのまま続けられる。';
+    exploreBtn.textContent = '島の探索を続ける（フリーローム）';
     exploreBtn.onclick = function(){ game.state = 'play'; showOnly(null); };
   } else {
     title.textContent = '作戦失敗';
@@ -4730,6 +5797,26 @@ document.getElementById('craftAmmoBtn').addEventListener('click', function(){ do
 document.getElementById('craftMedBtn').addEventListener('click', function(){ doCraft('med'); });
 document.getElementById('syrHuntBtn').addEventListener('click', function(){ craftSyringe('hunt'); });
 document.getElementById('syrHealBtn').addEventListener('click', function(){ craftSyringe('heal'); });
+/* クラフトパネル側も同じ craftSyringe() を使う（作成処理は共通） */
+document.getElementById('cpSyrHuntBtn').addEventListener('click', function(){ craftSyringe('hunt'); });
+document.getElementById('cpSyrHealBtn').addEventListener('click', function(){ craftSyringe('heal'); });
+document.getElementById('craftCloseBtn').addEventListener('click', function(){ closeCraftPanel(); });
+document.getElementById('jumpSkillBtn').addEventListener('click', function(){
+  var b = document.querySelector('#tigerList button:not([disabled]), #eleList button:not([disabled])');
+  jumpToSection('secSkill', b);
+});
+document.getElementById('jumpSyrBtn').addEventListener('click', function(){
+  var bh = document.getElementById('syrHuntBtn'), bl = document.getElementById('syrHealBtn');
+  jumpToSection('secSyringe', !bh.disabled ? bh : bl);
+});
+document.getElementById('jumpCraftBtn').addEventListener('click', function(){
+  var ab = document.getElementById('craftAmmoBtn'), mb = document.getElementById('craftMedBtn');
+  jumpToSection('secCraft', !ab.disabled ? ab : mb);
+});
+document.getElementById('jumpTravelBtn').addEventListener('click', function(){
+  var b = document.querySelector('#travelGrid button');
+  jumpToSection('secTravel', b);
+});
 document.getElementById('restartBtn').addEventListener('click', function(){ startGame(false); });
 document.getElementById('againBtn').addEventListener('click', function(){ startGame(false); });
 function backToTitle(){
@@ -4740,6 +5827,15 @@ function backToTitle(){
 }
 document.getElementById('toTitleBtn').addEventListener('click', backToTitle);
 document.getElementById('resultTitleBtn').addEventListener('click', backToTitle);
+function setDifficulty(v){
+  difficulty = (v === 'easy') ? 'easy' : 'normal';
+  syncDifficultyUI();
+  /* プレイ中・ポーズ中の切替は即時反映し、そのままセーブにも残す。
+     タイトルでの変更は開始後の自動セーブで保存される（ここで書くと空のセーブができてしまうため書かない） */
+  if (game.state === 'play' || game.state === 'pause') writeSave();
+}
+document.getElementById('diffSel').addEventListener('change', function(e){ setDifficulty(e.target.value); });
+document.getElementById('diffSelTitle').addEventListener('change', function(e){ setDifficulty(e.target.value); });
 document.getElementById('rotMode').addEventListener('change', function(e){
   rotMode = e.target.value;
   if (rotMode === 'grid'){
@@ -4864,14 +5960,15 @@ function loop(now){
           if (dRight) cycleWeapon(1);
           if (dLeft) cycleWeapon(-1);
         }
-        if (padEdge(gp, 3)) cycleWeapon(1);
+        updateYSyringe(gp, dt); /* Y（buttons[3]）：短押し＝回復の注射／長押し＝狩猟の注射。従来のY武器切替は「回復注射が使えない場面の短押し」に温存（武器切替自体は十字キー左右でも可能） */
         if (padEdge(gp, 1)){ player.crouch = !player.crouch; }
         if (padEdge(gp, 0)) useMedkit();
         if (padEdge(gp, 13)) cycleThrowable(); /* 十字キー下：投擲物の選択 */
         if (padEdge(gp, 5)) throwSelected();   /* RB：投げる */
         if (padEdge(gp, 4)) useHuntSyringe();  /* LB：狩猟の注射 */
-        if (padEdge(gp, 8)) useHealSyringe();  /* View：回復の注射 */
-        updatePlayer(dt, gp);
+        if (padEdge(gp, 10)) useHealSyringe(); /* L3：回復の注射（Viewはクラフト専用になったため、空いていたL3へ移設） */
+        if (padEdge(gp, 8)) openCraftPanel();  /* View（Back）：クラフトパネルを開く（CARRY YOUと同じ割り当て） */
+        if (game.state === 'play') updatePlayer(dt, gp);
       }
     } else {
       padAim = false;
@@ -4896,7 +5993,13 @@ function loop(now){
     updateHUD();
     drawMinimap();
   } else if (game.state === 'pause'){
-    if (gp && padEdge(gp, 9)) closePause();
+    if (gp){
+      if (padEdge(gp, 9)) closePause();
+      else if (game.state === 'pause') updatePausePadNav(gp, now);
+    }
+  } else if (game.state === 'craft'){
+    /* クラフトパネル表示中はワールドを更新しない（CARRY YOU式にゲームが止まる） */
+    if (gp) updateCraftPadNav(gp, now);
   } else if (game.state === 'title'){
     if (gp && (padEdge(gp, 0) || padEdge(gp, 9))) startGame(!!loadSave());
     player.angle += dt * 0.05;
@@ -4906,7 +6009,7 @@ function loop(now){
   } else if (game.state === 'ending'){
     render();
   }
-  if (game.state === 'play' || game.state === 'pause') render();
+  if (game.state === 'play' || game.state === 'pause' || game.state === 'craft') render();
 }
 resetGame(!!loadSave());
 game.state = 'title';
