@@ -124,6 +124,24 @@
         clip-path:polygon(0 0,32% 0,32% 100%,0 100%, 68% 0,100% 0,100% 100%,68% 100%); }
       #crosshair.cam{ width:30px; height:30px; }
       #crosshair.cam::before,#crosshair.cam::after{ background:#ffe9a8; }
+      /* ---------- 進行方向マーカー（目標マーカー。静止表示のみ：点滅・上下動・拡大縮小なし） ---------- */
+      #objectiveMarker{
+        position:absolute; z-index:4; transform:translate(-50%,-50%);
+        text-align:center; pointer-events:none; display:none;
+      }
+      #objectiveMarker .objDiamond{
+        width:15px; height:15px; margin:0 auto; transform:rotate(45deg);
+        background:#ffd23c; border:2px solid rgba(18,24,20,.88); border-radius:2px;
+        box-shadow:0 1px 4px rgba(0,0,0,.55);
+      }
+      #objectiveMarker .objLabel{
+        display:inline-block; margin-top:7px; padding:2px 9px; border-radius:999px;
+        background:rgba(8,14,11,.74); border:1px solid rgba(255,210,60,.55);
+        color:#fff; font-size:12px; font-weight:700; letter-spacing:.04em; white-space:nowrap;
+        text-shadow:0 1px 2px rgba(0,0,0,.8);
+      }
+      #objectiveMarker .objDist{ color:#ffd98a; margin-left:5px; }
+      #objectiveMarker .objArrow{ color:#ffd23c; }
       /* ---------- Camera marking ---------- */
       #cameraFrame{ position:absolute; inset:10px; pointer-events:none; display:none; z-index:5; }
       #cameraFrame.on{ display:block; }
@@ -232,6 +250,18 @@
       table.stats td{ padding:6px 8px; border-bottom:1px solid var(--line); }
       table.stats td:last-child{ text-align:right; font-weight:700; }
       #resultMap{ display:block; margin:14px auto 2px; width:216px; height:216px; border-radius:8px; border:1px solid var(--line); background:#0d1712; }
+      /* ---------- 大きいマップ（島全体。静止画のみ：アニメーションなし） ---------- */
+      #mapScreen .card{ max-width:720px; }
+      #mapScreen .padFocus{ outline:3px solid var(--accent); outline-offset:2px; }
+      #mapScreen button:focus-visible{ outline:3px solid var(--accent); outline-offset:2px; }
+      #bigMapCanvas{
+        display:block; width:100%; max-width:600px; aspect-ratio:1/1; margin:8px auto 2px;
+        border-radius:8px; border:1px solid var(--line); background:#0d1712; cursor:pointer;
+      }
+      .mapInfo{ font-size:14px; font-weight:700; line-height:1.6; margin-top:8px; }
+      .mapInfo .mapSub{ color:var(--muted); font-weight:400; font-size:12.5px; }
+      .mapLegend{ font-size:12.5px; color:var(--muted); line-height:1.7; margin-top:4px; }
+      .mapLegend .lg{ display:inline-block; width:11px; height:11px; border-radius:3px; margin:0 3px 0 8px; vertical-align:-1px; border:1px solid rgba(0,0,0,.35); }
       .underbar{ display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-top:10px; color:var(--muted); font-size:12.5px; line-height:1.6; }
       kbd{ background:var(--chip); border:1px solid var(--line); border-bottom-width:2px; border-radius:4px; padding:0 5px; font-family:inherit; font-size:12px; }
       @media (max-width:640px){
@@ -273,6 +303,7 @@
         <div id="dmgVeil"></div>
         <div id="cameraFrame"><div class="cVig"></div><span class="cf tl"></span><span class="cf tr"></span><span class="cf bl"></span><span class="cf br"></span><span class="cLabel" id="cameraLabel">カメラ ― ズーム 1/4 ・ 合わせ続けると自動マーク</span></div>
         <div id="crosshair"></div>
+        <div id="objectiveMarker" aria-hidden="true"><div class="objDiamond"></div><div class="objLabel"><span class="objArrow" id="objArrowL"></span><span id="objName">要塞</span><span class="objDist" id="objDist">0m</span><span class="objArrow" id="objArrowR"></span></div></div>
 
         <div class="hud" id="hudObjective"><b>目標</b>：エリア1を解放せよ。</div>
         <div class="hud" id="hudDetect">
@@ -389,6 +420,8 @@
               <tr><td>調べる</td><td>X ／ <kbd>F</kbd> ― 薬草採取・ポスター剥がし・警報装置の無効化・補給など。テイクダウンとはボタンが別なので誤爆しない</td></tr>
               <tr><td>回復（包帯を使う）</td><td>A ／ <kbd>H</kbd>（体力＋45）</td></tr>
               <tr><td>しゃがむ</td><td>B ／ <kbd>Ctrl</kbd>（遅くなるが見つかりにくい）</td></tr>
+              <tr><td>ダッシュ</td><td>L3（左スティック押し込み）／ <kbd>Shift</kbd> ― 押すとダッシュ状態になり、スティック（移動キー）を倒している間は通常の1.5倍の速さで走る。もう一度押すか、スティック（移動キー）を戻すと解除。スタミナ制限はない</td></tr>
+              <tr><td>大きいマップ／目的地</td><td>ポーズ画面のクイックメニュー先頭「大きいマップ」／ <kbd>M</kbd> ― 全体の地図で行き先を選ぶと目的地になり、進行方向マーカー（ダイヤ＋目標名＋距離）がそこを指す。囲いのある目標では外にいる間は一番近い入口を指す。到達で自動解除</td></tr>
               <tr><td>隠れる（草むら）</td><td>草むら（エリア2では雪をかぶった低木）の中に入ってしゃがむと、敵からほぼ見つからなくなる（至近距離は除く）。立ったままだと効果は弱い。隠れている間は画面左下に「隠れている」と出る</td></tr>
               <tr><td>遮蔽物</td><td>岩・雪のこぶ（吹きだまり）・松の木の幹は敵の視線を遮る。陰に回れば視線が切れて発見メーターが下がる。岩と雪のこぶは通り抜けできない</td></tr>
               <tr><td>ポーズ・設定</td><td>Start ／ <kbd>Esc</kbd>（開いてすぐ上にスキル割り振りと注射クラフト。装備クラフト・ファストトラベル・難易度・回転方式・環境音もここ。パッドは十字キー／スティックで選択、Aで決定）</td></tr>
@@ -402,7 +435,7 @@
               <tr><td>肉（ベイト）</td><td>投擲枠の1つ。前方に肉を投げる。近くの野生動物が集まり、そばの敵を襲う。肉は動物を倒すと時々手に入る</td></tr>
               <tr><td>クラフト（注射作成）</td><td>Back（View）／ <kbd>Tab</kbd> ― プレイ中に注射作成パネルを開く（CARRY YOUと同じ割り当て。開いている間はゲームが止まる。中は十字キー／左スティックで選択、Aで作成、BまたはBackで閉じる。キーボードの <kbd>C</kbd> はカメラで使用中のため、開閉キーは <kbd>Tab</kbd>）。ポーズ画面の注射クラフト欄からも同じ作成ができる</td></tr>
               <tr><td>狩猟の注射</td><td><b>Y長押し</b>（0.4秒以上）／ LB ／ <kbd>T</kbd> ― 25秒間、敵と動物が壁越しでも見える（作り方はクラフトパネル（Back／<kbd>Tab</kbd>）で薬草2。ポーズ画面でも作れる）</td></tr>
-              <tr><td>回復の注射</td><td><b>Y短押し</b> ／ L3（左スティック押し込み）／ <kbd>R</kbd> ― 体力を大きく即回復（作り方はクラフトパネル（Back／<kbd>Tab</kbd>）で薬草1。ポーズ画面でも作れる）。※Yはもともと武器切替でしたが、武器切替は十字キー左右でもできるため、Yは注射用にしました。回復の注射が使えないとき（所持なし・体力満タン）のY短押しは、従来通り武器切替として働きます</td></tr>
+              <tr><td>回復の注射</td><td><b>Y短押し</b> ／ <kbd>R</kbd> ― 体力を大きく即回復（作り方はクラフトパネル（Back／<kbd>Tab</kbd>）で薬草1。ポーズ画面でも作れる）。※Yは注射専用で、武器切替にはなりません（武器切替は十字キー左右と数字キー）。回復の注射が使えない場面で押しても何も起きません</td></tr>
               <tr><td>薬草・ポスター</td><td>色の目立つ薬草と、壁の将軍ポスターは近づいて <kbd>F</kbd> ／ X で採取・剥がし</td></tr>
             </table>
             </div>
@@ -413,16 +446,16 @@
         <!-- Pause -->
         <div class="overlay" id="pauseScreen" hidden>
           <div class="card">
-            <h2>ポーズ ― スキル・注射・設定・移動</h2>
+            <h2>ポーズ</h2>
             <div class="quicknav">
               <div class="quickStatus" id="quickStatus">スキルポイント 0 ／ 薬草 ×0 ／ 注射 狩猟0・回復0</div>
               <div class="btnrow" style="margin-top:8px;">
+                <button class="btn small" id="openMapBtn" type="button">大きいマップ（全体）</button>
                 <button class="btn small" id="jumpSkillBtn" type="button">スキルを割り振る</button>
                 <button class="btn small" id="jumpSyrBtn" type="button">注射（シリンジ）を作る</button>
                 <button class="btn small sub" id="jumpCraftBtn" type="button">クラフト（装備拡張）</button>
                 <button class="btn small sub" id="jumpTravelBtn" type="button">ファストトラベル</button>
               </div>
-              <p class="setnote">スキルツリーと注射クラフトは、このすぐ下にもあります。パッドでは十字キー／左スティックの上下左右で、見た目の並び通りに項目を選び、<b>A</b>で決定、<b>B</b>で再開できます（プルダウンに合わせているときだけ、左右は値の変更になります）。</p>
             </div>
             <div class="setrow">
               <label for="diffSel">難易度</label>
@@ -431,7 +464,6 @@
                 <option value="normal" selected>NORMAL（標準）</option>
               </select>
             </div>
-            <p class="setnote">EASY：受けるダメージが約6割／敵の察知メーターの上昇がゆっくり／敵の射撃の間隔が長めで命中も甘めになります。切り替えはその場で即時反映され、セーブにも保存されます。敵の人数・配置・動物の強さはNORMALと同じです。</p>
             <div class="setrow">
               <label for="rotMode">回転方式</label>
               <select id="rotMode">
@@ -440,7 +472,6 @@
                 <option value="grid">グリッド移動＋90度ターン</option>
               </select>
             </div>
-            <p class="setnote">既定は「なめらか」（速度上限つきの等速回転）です。スナップターンは一定角度ずつカクッと回り、右スティック（←→キー）を倒し続けると連続で回ります。狙う（LT／右クリック）間は、どの方式でもゆっくり微調整できます。</p>
             <p class="setnote" id="padDebug">パッド診断：コントローラー未接続</p>
             <div class="setrow">
               <label for="volSel">環境音の音量</label>
@@ -458,19 +489,22 @@
                 <option value="off">OFF</option>
               </select>
             </div>
-            <p class="setnote">雪は演出だけの軽い降雪です。気になるときはOFFにできます（タイトル画面でも切り替えられます）。</p>
-
-            <h3 id="secSkill">スキルツリー ― 虎（攻撃）／象（防御）【スキルポイントの割り振りはここ】</h3>
+            <div class="setrow">
+              <label for="objMarkerSel">進行方向マーカー</label>
+              <select id="objMarkerSel">
+                <option value="on" selected>ON（目標の方向を表示）</option>
+                <option value="off">OFF</option>
+              </select>
+            </div>
+            <h3 id="secSkill">スキルツリー</h3>
             <div class="skillInfo" id="skillInfo">XP 0 ／ スキルポイント 0</div>
-            <p class="setnote">敵を倒す（通常25XP／テイクダウン50XP／重装40XP）、動物を倒す（狼15XP／ヤク30XP）、拠点解放（100XP）、鐘の塔停止（80XP）でXPが入ります。各系統は段階式で、前の段を取ると次が解放されます。各スキルはポイント1消費。</p>
             <div class="skillCols">
               <div class="skillCol"><h4 class="tiger">虎 ― 攻撃</h4><div id="tigerList"></div></div>
               <div class="skillCol"><h4 class="ele">象 ― 防御</h4><div id="eleList"></div></div>
             </div>
 
-            <h3 id="secSyringe">注射（シリンジ）― 薬草クラフト【作るのはここ】</h3>
-            <p class="setnote" style="margin-top:0;">プレイ中は <b>Back（View）</b>／<kbd>Tab</kbd> でも、同じ注射作成パネルがその場で開けます（開いている間はゲームが止まります）。作成処理はパネルと共通です。</p>
-            <p class="setnote" style="margin-top:0;">素材：<b id="herbCount">薬草 ×0</b>（野原の目立つ花を摘むと手に入る。時間でまた生える）</p>
+            <h3 id="secSyringe">注射（シリンジ）</h3>
+            <p class="setnote" style="margin-top:0;">素材：<b id="herbCount">薬草 ×0</b></p>
             <div class="craftrow">
               <div>
                 <span class="cname">狩猟の注射</span> <span class="pips" id="syrHuntPips"></span>
@@ -481,51 +515,18 @@
             <div class="craftrow">
               <div>
                 <span class="cname">回復の注射</span> <span class="pips" id="syrHealPips"></span>
-                <div class="cdesc">使う（<b>Y短押し</b>／L3／<kbd>R</kbd>）と体力を70即回復。所持 <span id="syrHealCount">0</span> 本</div>
+                <div class="cdesc">使う（<b>Y短押し</b>／<kbd>R</kbd>）と体力を70即回復。所持 <span id="syrHealCount">0</span> 本</div>
               </div>
               <button class="btn small" id="syrHealBtn">作る（薬草1）</button>
             </div>
             <p class="setnote" id="posterInfo">将軍のポスター：0 / 12 枚剥がした</p>
 
-            <h3>操作 ― テイクダウン／調べる</h3>
-            <table class="controls">
-              <tr><td>テイクダウン</td><td>R3（右スティック押し込み）／ <kbd>F</kbd> ― 敵の背後・至近距離で案内が出ているときに発動（ファークライ4と同じ割り当て）</td></tr>
-              <tr><td>調べる</td><td>X ／ <kbd>F</kbd> ― 薬草採取・ポスター剥がし・警報装置の無効化・補給・鐘の塔／送信設備の操作（長押し）</td></tr>
-            </table>
-            <p class="setnote">パッドではテイクダウン（R3）と調べる（X）が別ボタンです。敵のそばで薬草やポスターを調べたいときに、誤ってテイクダウンすることはありません。キーボードの <kbd>F</kbd> とタッチボタンは従来通り両方に使えます。</p>
-
-            <h3>操作 ― カメラ</h3>
-            <table class="controls">
-              <tr><td>カメラの出し入れ</td><td>十字キー上 ／ <kbd>C</kbd>（トグル）― 構えている間は武器を下ろし、射撃できない</td></tr>
-              <tr><td>カメラ中：ズームイン</td><td>RT ／ <kbd>E</kbd> ／ マウスホイール上（1回＝1段階、瞬間切替）</td></tr>
-              <tr><td>カメラ中：ズームアウト</td><td>LT ／ <kbd>Q</kbd> ／ マウスホイール下（1回＝1段階、瞬間切替）</td></tr>
-            </table>
-            <p class="setnote">ズームは全4段階で、段階が上がるほどマークできる距離が伸びます。カメラを下ろすとズームは初期段階（1段階目）にリセットされます。通常時の LT＝照準の微調整、RT＝射撃は変わりません。</p>
-
-            <h3>操作 ― 投擲</h3>
-            <table class="controls">
-              <tr><td>投擲物の選択</td><td>十字キー下 ／ <kbd>V</kbd> ― 石ころ→手榴弾→火炎瓶→肉（ベイト）の順送り。選択中と残数は画面右下に常時表示（選択はセーブされません）</td></tr>
-              <tr><td>投げる</td><td>RB ／ <kbd>G</kbd> ― 放物線で投げる。壁に当たるとその場に落ちる</td></tr>
-              <tr><td>石ころ</td><td>無制限。着地点の音で近くの敵が様子を見に行く。ダメージなし</td></tr>
-              <tr><td>手榴弾（上限3）</td><td>着弾後に短い遅延で爆発。範囲内の敵・動物に大ダメージ、警報装置も破壊可。大きな音で周囲の敵が警戒・発見状態になる</td></tr>
-              <tr><td>火炎瓶（上限3）</td><td>着弾で割れて数秒燃え続ける。炎の中の敵・動物は継続ダメージ。中くらいの音で近くの敵が気づく</td></tr>
-              <tr><td>肉（ベイト）</td><td>近くの野生動物が集まり、そばの敵を襲う。肉は動物を倒すと時々手に入る</td></tr>
-            </table>
-            <p class="setnote">手榴弾と火炎瓶は、敵がたまに落とすほか、解放拠点の補給箱で満タンまで補充できます。所持数はセーブされます。爆発や炎上でも画面は揺れません（酔い対策）。</p>
-            <p class="setnote" id="throwInfo">投擲物の所持：手榴弾 3/3 ・ 火炎瓶 3/3</p>
-
             <h3>武器 ― 所持と弾薬</h3>
             <p class="setnote" id="weaponInfo">武器情報を読み込み中…</p>
-            <table class="controls">
-              <tr><td>武器切替</td><td>十字キー右で順送り（左で逆順）／ <kbd>1</kbd>〜<kbd>5</kbd> 直接選択。未入手はスキップ</td></tr>
-              <tr><td>ピストル</td><td>初期所持。速射・静かめ・威力低め。専用の弾枠</td></tr>
-              <tr><td>ショットガン</td><td>エリア1の<b>要塞を解放</b>すると入手。近距離で拡散・大ダメージ、遠距離は弱い</td></tr>
-              <tr><td>スナイパー</td><td>エリア2で<b>最初の鐘の塔を止める</b>と入手。超長射程・大威力・連射は遅い。構え中は <kbd>E</kbd>／<kbd>Q</kbd>・ホイール・十字キー左右でステップ式ズーム（4段階）</td></tr>
-            </table>
-            <p class="setnote">弾薬は武器ごとに別枠で、補給箱と敵ドロップで補充できます。クラフトの弾薬上限拡張は全武器の弾に効きます。ズームはすべてステップ式の瞬間切替で、滑らかなズームや画面シェイクはありません（酔い対策）。</p>
+            <p class="setnote" id="throwInfo">投擲物の所持：手榴弾 3/3 ・ 火炎瓶 3/3</p>
 
-            <h3 id="secCraft">クラフト ― 装備の拡張</h3>
-            <p class="setnote" style="margin-top:0;">素材：<b id="craftHides">皮 ×0</b>（狼・ヤクを倒すと手に入る。ヤクは皮×3）</p>
+            <h3 id="secCraft">クラフト</h3>
+            <p class="setnote" style="margin-top:0;">素材：<b id="craftHides">皮 ×0</b></p>
             <div class="craftrow">
               <div>
                 <span class="cname">弾薬ポーチ＆矢筒</span> <span class="pips" id="ammoPips">○○</span>
@@ -541,12 +542,10 @@
               <button class="btn small" id="craftMedBtn">拡張する</button>
             </div>
 
-            <h3>カルマ ― 村人との信頼</h3>
+            <h3>カルマ</h3>
             <div class="skillInfo" id="karmaInfo">カルマ Lv 0 / 6</div>
-            <p class="setnote">道中の小事件（人質救出／味方の救援／輸送小隊の襲撃）を解決するとカルマが上がります。発生するとミニマップに紫の印が出ます。特典：Lv1 クラフトの皮が少し安く／Lv2 補給箱で謝礼の皮+1／Lv3 注射の所持上限+1／Lv4 クラフトがさらに安く／Lv5 テイクダウンXP増／Lv6 包帯の回復量増。</p>
 
             <h3 id="secTravel">ファストトラベル</h3>
-            <p class="setnote" style="margin-top:0;">解放した拠点と、止めた鐘の塔へ移動できる。拠点に着くと弾薬と包帯が満タンになる。</p>
             <div class="travelGrid" id="travelGrid"></div>
 
             <div class="btnrow">
@@ -555,7 +554,6 @@
               <button class="btn sub" id="restartBtn">セーブを消して最初から</button>
               <button class="btn sub" id="toTitleBtn">タイトルへ</button>
             </div>
-            <p class="saveNote" id="saveNote">進行状況（難易度・拠点・要塞の解放・鐘の塔・クラフト・皮・XP・スキル・カルマ・ポスター・薬草・制圧状況）はこのブラウザに自動で保存されます。</p>
           </div>
         </div>
 
@@ -576,13 +574,40 @@
             <div class="craftrow">
               <div>
                 <span class="cname">回復の注射</span> <span class="pips" id="cpSyrHealPips"></span>
-                <div class="cdesc">使う（<b>Y短押し</b>／L3／<kbd>R</kbd>）と体力を70即回復。所持 <span id="cpSyrHealCount">0</span> 本</div>
+                <div class="cdesc">使う（<b>Y短押し</b>／<kbd>R</kbd>）と体力を70即回復。所持 <span id="cpSyrHealCount">0</span> 本</div>
               </div>
               <button class="btn small" id="cpSyrHealBtn" type="button">作る（薬草1）</button>
             </div>
-            <p class="setnote">ボタンの割り当てについて：View（Back）はCARRY YOUとそろえて、このクラフトパネル専用にしました。注射を「使う」操作は<b>Yボタンが主</b>です（<b>Y短押し＝回復の注射／Y長押し＝狩猟の注射</b>）。従来のL3（回復）／LB（狩猟）／キーボード <kbd>R</kbd>・<kbd>T</kbd> も併用できます。Yはもともと武器切替でしたが、武器切替は十字キー左右でもできるため注射用にし、回復の注射が使えないときのY短押しだけ従来通り武器切替として残しています。ポーズ画面の注射クラフト欄からも、同じ作成ができます（作成処理は共通です）。</p>
+            <p class="setnote">ボタンの割り当てについて：View（Back）はCARRY YOUとそろえて、このクラフトパネル専用にしました。注射を「使う」操作は<b>Yボタンが主</b>です（<b>Y短押し＝回復の注射／Y長押し＝狩猟の注射</b>）。LB（狩猟）／キーボード <kbd>R</kbd>・<kbd>T</kbd> も併用できます。L3（左スティック押し込み）はダッシュ専用で、注射には使いません。Yは注射専用で、武器切替にはなりません。武器切替は十字キー右（順送り）／左（逆順）と数字キーで行います。ポーズ画面の注射クラフト欄からも、同じ作成ができます（作成処理は共通です）。</p>
             <div class="btnrow">
               <button class="btn" id="craftCloseBtn" type="button">閉じる（B／Back）</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Big map（全体の大きいマップ）― ポーズ画面のクイックメニュー先頭から開く（キーボードはMキー）。
+             開いている間は game.state = 'bigmap' にしてワールド更新を止める（ポーズと同じ扱い）。
+             閉じるとポーズ画面に戻る。マップは静止画（開いたときと選択・目的地の変更時だけ描き直す） -->
+        <div class="overlay" id="mapScreen" hidden>
+          <div class="card">
+            <h2>マップ ― 全体</h2>
+            <p class="setnote" style="margin-top:2px;">行き先のマークを選ぶと<b>目的地</b>に設定でき、進行方向マーカーがその場所を指すようになります。目的地に着くと自動で解除され、本筋の目標（要塞→放送本部）に戻ります。拠点・要塞・放送本部の<b>入口</b>は門の印＋「入口」で常時表示され、目的地が囲いの中にあるときは、囲いの外にいる間マーカーが一番近い入口を指します（中に入ると目的地に戻ります）。本筋の目標のマークを選んでも、いつでも手動で戻せます。発生中の<b>事件（カルマイベント）</b>も紫の印で出て目的地にでき、その場合は事件が終わった時点で自動で解除されます。パッドは十字キー／左スティックでマークを選び <b>A</b>で決定、<b>B</b>でポーズに戻ります。キーボードは矢印キーで選び <b>Enter</b>で決定、<kbd>Esc</kbd>／<kbd>M</kbd>でポーズに戻ります。マウスはクリック、タッチはタップでも選べます。</p>
+            <canvas id="bigMapCanvas" width="560" height="560" tabindex="0" aria-label="全体のマップ"></canvas>
+            <div class="mapInfo" id="bigMapInfo">―</div>
+            <div class="mapLegend">
+              <span class="lg" style="background:#e5482e;"></span>未解放の拠点
+              <span class="lg" style="background:#58b06a;"></span>解放済みの拠点（ファストトラベル可）
+              <span class="lg" style="background:#f2b63c;"></span>鐘の塔（稼働中）
+              <span class="lg" style="background:#57b8a2;"></span>鐘の塔（停止済み・ファストトラベル可）
+              <span class="lg" style="background:#ffd23c;"></span>いま指している目標／目的地
+              <span class="lg" style="background:#ffe9a8;"></span>囲いの入口（門の印＋「入口」）
+              <span class="lg" style="background:#b45ae0;"></span>発生中の事件（カルマ・目的地にできる）
+              <span class="lg" style="background:#ffffff;"></span>自分（三角の向きが正面）
+            </div>
+            <div class="btnrow">
+              <button class="btn" id="bigMapSetBtn" type="button">目的地に設定する</button>
+              <button class="btn sub" id="bigMapMainBtn" type="button">本筋の目標に戻す</button>
+              <button class="btn sub" id="bigMapCloseBtn" type="button">ポーズに戻る（B）</button>
             </div>
           </div>
         </div>
@@ -629,7 +654,7 @@
       </div>
 
       <div class="underbar">
-        <span>操作：<kbd>WASD</kbd> 移動 ／ <kbd>←→</kbd> 振り向き ／ <kbd>1</kbd>〜<kbd>5</kbd> 武器選択 ／ 左クリック 射撃 ／ 右クリック長押し 狙う ／ <kbd>C</kbd> カメラで自動マーク（カメラ中は <kbd>E</kbd>／<kbd>Q</kbd>・ホイールで段階ズーム）／ <kbd>F</kbd> テイクダウン・調べる ／ <kbd>Ctrl</kbd> しゃがむ ／ <kbd>H</kbd> 回復 ／ <kbd>V</kbd> 投擲物の選択 ／ <kbd>G</kbd> 投げる ／ <kbd>Tab</kbd> クラフト（注射作成）／ パッド：Y短押し 回復の注射・Y長押し 狩猟の注射（LB／L3・<kbd>T</kbd>／<kbd>R</kbd> でも可）／ <kbd>Esc</kbd> ポーズ</span>
+        <span>操作：<kbd>WASD</kbd> 移動 ／ <kbd>←→</kbd> 振り向き ／ <kbd>1</kbd>〜<kbd>5</kbd> 武器選択 ／ 左クリック 射撃 ／ 右クリック長押し 狙う ／ <kbd>C</kbd> カメラで自動マーク（カメラ中は <kbd>E</kbd>／<kbd>Q</kbd>・ホイールで段階ズーム）／ <kbd>F</kbd> テイクダウン・調べる ／ <kbd>Ctrl</kbd> しゃがむ ／ <kbd>H</kbd> 回復 ／ <kbd>V</kbd> 投擲物の選択 ／ <kbd>G</kbd> 投げる ／ <kbd>Tab</kbd> クラフト（注射作成）／ <kbd>Shift</kbd> ダッシュ ／ <kbd>M</kbd> 大きいマップ ／ パッド：Y短押し 回復の注射・Y長押し 狩猟の注射（LB・<kbd>T</kbd>／<kbd>R</kbd> でも可）／ L3 ダッシュ ／ <kbd>Esc</kbd> ポーズ</span>
         <span>画面をクリックするとマウスで振り向けます（ポインターロック対応ブラウザのみ）／ <kbd>Alt</kbd>＋<kbd>Enter</kbd> でフルスクリーン</span>
       </div>
     </div>
@@ -665,7 +690,7 @@ var HQ = { id: 'J', name: '放送本部', cx: 42.5, cy: 5.5 };
 var TRANSMITTER = { x: 46.5, y: 3.5 };   /* 放送室の送信設備の位置 */
 var gameCleared = false;                 /* 制圧完了フラグ（セーブ対象） */
 var grid = [], spriteCells = {};
-var trees = [], crates = [], posts = [], ices = [];
+var trees = [], crates = [], posts = [], ices = [], garlands = [];
 var bushes = [], rocks = [], bushCells = {};   /* 草むら {x,y,snow} ／ 岩・雪のこぶ {x,y,kind}（spriteCells='rock'/'snow'） */
 var playerSpawn = { x: 2.5, y: 2.5 };
 
@@ -766,7 +791,9 @@ var REINFORCE = {
 
   /* 松の木 */
   var treePts = [[8,1],[18,2],[28,2],[6,4],[12,7],[42,12],[4,11],[27,14],[17,19],[24,20],
-                 [42,19],[6,19],[12,22],[20,27],[26,30],[8,29],[43,30],[15,9],[30,17],[4,26]];
+                 [42,19],[6,19],[12,22],[20,27],[26,30],[8,29],[43,30],[15,9],[30,17],[4,26],
+                 /* 増量分：野外の開けた場所と村の外れ（入口・ファストトラベル・スポーンは避ける） */
+                 [11,8],[3,20],[14,29],[22,16],[24,27],[44,2],[50,4],[26,28]];
   treePts.forEach(function(p){
     var gy = p[1] + OY;
     if (grid[gy][p[0]] === 0 && !spriteCells[p[0] + ',' + gy]){
@@ -821,7 +848,8 @@ var REINFORCE = {
   rect(36, 19, 46, 26, 1); set(36, 22, 0); set(41, 26, 0); set(42, 26, 0); set(45, 19, 3); set(37, 26, 3);
   rect(39, 21, 43, 24, 1); set(41, 24, 0);
   /* エリア2の松 */
-  [[4,4],[17,10],[30,13],[48,15],[24,26],[6,27],[50,28],[34,27],[12,17],[28,18],[3,14],[52,5],[19,3],[33,3]].forEach(function(p){
+  [[4,4],[17,10],[30,13],[48,15],[24,26],[6,27],[50,28],[34,27],[12,17],[28,18],[3,14],[52,5],[19,3],[33,3],
+   [10,4],[22,12],[48,10],[12,27]].forEach(function(p){
     var gy2 = p[1] + A2_SHIFT;
     if (grid[gy2][p[0]] === 0 && !spriteCells[p[0] + ',' + gy2]){
       trees.push({ x: p[0] + .5, y: gy2 + .5, kind: 'tree' });
@@ -865,13 +893,59 @@ var REINFORCE = {
     spriteCells[p.x + ',' + p.y] = 'crate';
   });
   /* 本部南の開けた雪原の松 */
-  [[28,3],[28,8],[20,6],[14,2],[8,8],[24,10]].forEach(function(p){
+  [[28,3],[28,8],[20,6],[14,2],[8,8],[24,10],[18,10],[12,4]].forEach(function(p){
     if (grid[p[1]][p[0]] === 0 && !spriteCells[p[0] + ',' + p[1]]){
       trees.push({ x: p[0] + .5, y: p[1] + .5, kind: 'tree' });
       spriteCells[p[0] + ',' + p[1]] = 'tree';
     }
   });
+  /* 追加の飾り（最終座標）：山の村の北入口を両脇から挟む祈祷旗の柱2本（入口セル自体は塞がない）と、
+     凍湖まわり＋エリア2中央の凍った水たまり（ices は元々通行を妨げない純粋な装飾） */
+  [[33,62],[37,62]].forEach(function(p){
+    if (grid[p[1]][p[0]] === 0 && !spriteCells[p[0] + ',' + p[1]]){
+      posts.push({ x: p[0] + .5, y: p[1] + .5, kind: 'post' });
+      spriteCells[p[0] + ',' + p[1]] = 'post';
+    }
+  });
+  [[11.5,33.5],[4.5,34.5],[12.5,30.5],[20.5,25.5]].forEach(function(p){
+    ices.push({ x: p[0], y: p[1], kind: 'ice' });
+  });
 })();
+/* ---------------- 祈祷旗のガーランド（装飾専用） ----------------
+   村・拠点・鐘の塔・祠の周りに、柱や木や建物の間へ渡した五色の小旗の連なり。
+   posts（祈祷旗の柱）とは別管理で、spriteCells には一切入れない：
+   当たり判定（cellBlocked）・視線判定（losClear）・隠れ場所の判定のどれにも
+   関与しない、頭上に渡すだけの純粋な飾り。座標はすべて最終マップ座標。
+   スプライトは3種を事前生成して使い回し、描画側も近距離だけに絞るので、
+   旗を増やしてもフレームレートにはほぼ影響しない。 */
+var GARLAND_DEFS = [
+  /* エリア1 */
+  [22.5, 50.5, 0], [23, 54.5, 1],                 /* A：山道の関所（鐘の塔T1の足元＋南入口の外） */
+  [35.5, 48.5, 2],                                /* C：岩山の砦（鐘の塔T2の近く） */
+  [32.5, 69.5, 0], [37.5, 68.5, 1], [34.5, 65.5, 2], [34.5, 72.5, 0], [34.5, 61.5, 1], /* B：山の村（庭2＋小屋の間＋柱の列＋北の入口の外） */
+  [48.5, 55.5, 1], [46.5, 57.5, 2],               /* D：要塞の庭 */
+  /* エリア2 */
+  [10.5, 22.5, 2], [14.5, 22.5, 0], [10.5, 25.5, 1], /* E：雪の村（庭2＋柵の外） */
+  [26.5, 17.5, 0], [28.5, 19.5, 2],               /* F：鉱山の拠点 */
+  [42.5, 23.5, 0], [39.5, 20.5, 1], [45.5, 20.5, 2], [42.5, 26.5, 1], /* G：高地の寺院（祠の前＋両脇の庭＋寺院前の柱の列） */
+  [16.5, 33.5, 0], [18.5, 34.5, 1],               /* H：凍湖の関所 */
+  [41.5, 32.5, 2], [44.5, 37.5, 0], [37.5, 35.5, 1], /* I：放送本部の前哨 */
+  [20.5, 28.5, 0], [22.5, 26.5, 2],               /* T3：北西の鐘の塔の足元 */
+  [33.5, 30.5, 1], [35.5, 28.5, 0],               /* T4：北東の鐘の塔の足元 */
+  [42.5, 8.5, 0], [37.5, 9.5, 1], [48.5, 9.5, 2], [41.5, 11.5, 1], /* J：放送本部（庭3＋正門の外） */
+  [26.5, 41.5, 2],                                /* 北の関所の門の北側 */
+  /* 増量分：村・拠点・本部の庭と関所の南側（頭上の飾りなので動線は塞がない） */
+  [29.5, 64.5, 1], [39.5, 64.5, 0],                /* B：山の村（小屋の前庭の両脇） */
+  [19.5, 52.5, 2],                                /* A：山道の関所の西の外 */
+  [50.5, 59.5, 0],                                /* D：要塞の南の庭 */
+  [8.5, 19.5, 1],                                 /* E：雪の村の北 */
+  [24.5, 21.5, 1],                                /* F：鉱山の拠点の南の外 */
+  [14.5, 30.5, 2],                                /* H：凍湖の関所の北の外 */
+  [41.5, 39.5, 2],                                /* I：放送本部の前哨の南門の外 */
+  [45.5, 7.5, 2],                                 /* J：放送本部の庭 */
+  [26.5, 43.5, 0]                                 /* 北の関所の門の南側（エリア1側） */
+];
+GARLAND_DEFS.forEach(function(d){ garlands.push({ x: d[0], y: d[1], v: d[2] }); });
 /* 薬草（採取すると注射の素材。時間で再出現） */
 var PLANT_DEFS = [
   { x: 6.5, y: 16.5 }, { x: 16.5, y: 20.5 }, { x: 25.5, y: 13.5 },
@@ -1001,9 +1075,17 @@ function makeWallTexture(kind){
     g.strokeStyle = 'rgba(38,44,42,.38)'; g.lineWidth = 2.5; g.lineCap = 'round';
     g.beginPath(); g.moveTo(56, 70); g.quadraticCurveTo(66, 88, 60, 108); g.quadraticCurveTo(56, 122, 62, 134); g.stroke();
     g.beginPath(); g.moveTo(188, 138); g.quadraticCurveTo(178, 156, 184, 172); g.stroke();
-    /* 苔：柔らかい楕円の重なりで下部に */
-    for (i = 0; i < 9; i++)
-      ellF(g, 16 + rnd() * 224, 232 + rnd() * 20, 16 + rnd() * 20, 8 + rnd() * 7, '#5d7a52', 0.20);
+    /* 石の段差に残る雪：各段の上端に薄く白を置く */
+    for (i = 0; i < 8; i++)
+      ellF(g, 14 + rnd() * 228, [64, 128, 194][i % 3] + rnd() * 4, 12 + rnd() * 16, 3 + rnd() * 2.4, '#ffffff', 0.30);
+    /* ひびの追加 */
+    g.strokeStyle = 'rgba(38,44,42,.32)'; g.lineWidth = 2.2;
+    g.beginPath(); g.moveTo(120, 150); g.quadraticCurveTo(114, 166, 121, 182); g.stroke();
+    /* 苔：柔らかい楕円の重なりで下部に（中ほどにも点々と） */
+    for (i = 0; i < 15; i++)
+      ellF(g, 16 + rnd() * 224, 224 + rnd() * 28, 16 + rnd() * 20, 8 + rnd() * 7, '#5d7a52', 0.20);
+    for (i = 0; i < 5; i++)
+      ellF(g, 20 + rnd() * 216, 120 + rnd() * 80, 8 + rnd() * 10, 4 + rnd() * 4, '#5d7a52', 0.13);
     var mg = g.createLinearGradient(0, 208, 0, 256);
     mg.addColorStop(0, 'rgba(84,104,80,0)'); mg.addColorStop(1, 'rgba(84,104,80,.32)');
     g.fillStyle = mg; g.fillRect(0, 208, S, 48);
@@ -1019,7 +1101,7 @@ function makeWallTexture(kind){
       g.fillStyle = 'rgba(0,0,0,.22)'; g.fillRect(px + 61, 0, 3, S);
       g.fillStyle = 'rgba(255,235,200,.10)'; g.fillRect(px + 2, 0, 3, S);
       g.strokeStyle = 'rgba(70,48,24,.35)'; g.lineWidth = 3; g.lineCap = 'round';
-      for (i = 0; i < 3; i++){
+      for (i = 0; i < 4; i++){
         var gx = px + 12 + rnd() * 38;
         g.beginPath(); g.moveTo(gx, -4);
         g.bezierCurveTo(gx + (rnd() * 10 - 5), 84, gx + (rnd() * 10 - 5), 170, gx + (rnd() * 6 - 3), 260);
@@ -1029,6 +1111,11 @@ function makeWallTexture(kind){
       ellF(g, kx, ky, 8, 11, 'rgba(56,36,16,.5)');
       ellF(g, kx, ky, 4.6, 6.6, 'rgba(40,24,10,.55)');
       ellF(g, kx, ky, 2, 3, 'rgba(24,14,5,.7)');
+      if (rnd() > 0.4){
+        var k2x = px + 14 + rnd() * 32, k2y = 26 + rnd() * 200;
+        ellF(g, k2x, k2y, 5.4, 7.4, 'rgba(56,36,16,.42)');
+        ellF(g, k2x, k2y, 2.8, 4, 'rgba(40,24,10,.5)');
+      }
     }
     fillRR(g, -4, 38, S + 8, 30, 7, '#54391f');
     fillRR(g, -4, 180, S + 8, 30, 7, '#54391f');
@@ -1037,6 +1124,11 @@ function makeWallTexture(kind){
     [[26, 53], [230, 53], [26, 195], [230, 195]].forEach(function(p){
       circF(g, p[0], p[1], 5, '#2e1e0e'); circF(g, p[0] - 1.6, p[1] - 1.6, 1.8, 'rgba(255,240,210,.5)');
     });
+    /* 横梁の上に積もった雪と、足元の苔の色 */
+    fillRR(g, -4, 36, S + 8, 6, 3, 'rgba(245,250,252,.75)');
+    fillRR(g, -4, 178, S + 8, 5, 2.5, 'rgba(245,250,252,.55)');
+    for (i = 0; i < 7; i++)
+      ellF(g, 12 + rnd() * 232, 244 + rnd() * 10, 10 + rnd() * 14, 4 + rnd() * 4, '#5d7a52', 0.22);
   } else if (kind === 4){
     /* 北の関所の鉄の門：丸みのある鉄格子＋柔らかい錆＋雪 */
     var bg = g.createLinearGradient(0, 0, 0, S);
@@ -1047,8 +1139,10 @@ function makeWallTexture(kind){
     barGrad.addColorStop(0.62, '#323a42'); barGrad.addColorStop(0.82, '#48535d'); barGrad.addColorStop(1, '#31383f');
     g.fillStyle = barGrad;
     for (x = 0; x < 6; x++) fillRR(g, x * 43 + 7, -6, 29, S + 12, 9, barGrad);
-    for (i = 0; i < 10; i++)
+    for (i = 0; i < 15; i++)
       ellF(g, 14 + rnd() * 228, 50 + rnd() * 180, 5 + rnd() * 10, 10 + rnd() * 22, '#96582c', 0.16);
+    for (i = 0; i < 8; i++)
+      ellF(g, 12 + rnd() * 232, 8 + rnd() * 30, 6 + rnd() * 10, 2.6 + rnd() * 2, '#ffffff', 0.4);
     fillRR(g, -4, 30, S + 8, 34, 7, '#22282e');
     fillRR(g, -4, 188, S + 8, 34, 7, '#22282e');
     fillRR(g, -4, 32, S + 8, 6, 3, 'rgba(255,255,255,.10)');
@@ -1090,15 +1184,15 @@ function makeWallTexture(kind){
     g.strokeStyle = '#ddd6c2'; g.lineWidth = 3.4; g.lineCap = 'round';
     g.beginPath(); g.moveTo(0, 24); g.quadraticCurveTo(128, 62, 256, 24); g.stroke();
     var flagCols = ['#3a6bc2', '#e8e4da', '#c23a2e', '#3f9e57', '#e8c832'];
-    for (i = 0; i < 5; i++){
-      var fx = 22 + i * 46, fy = 33 + Math.sin(i / 4 * Math.PI) * 13;
-      g.fillStyle = flagCols[i];
+    for (i = 0; i < 7; i++){
+      var fx = 8 + i * 35, fy = 31 + Math.sin(i / 6 * Math.PI) * 15;
+      g.fillStyle = flagCols[i % 5];
       g.beginPath();
-      g.moveTo(fx, fy); g.lineTo(fx + 34, fy + 3);
-      g.quadraticCurveTo(fx + 30, fy + 26, fx + 17, fy + 29);
-      g.quadraticCurveTo(fx + 4, fy + 26, fx, fy);
+      g.moveTo(fx, fy); g.lineTo(fx + 27, fy + 3);
+      g.quadraticCurveTo(fx + 24, fy + 24, fx + 13, fy + 27);
+      g.quadraticCurveTo(fx + 3, fy + 24, fx, fy);
       g.closePath(); g.fill();
-      ellF(g, fx + 17, fy + 25, 13, 3.4, '#000000', 0.13);
+      ellF(g, fx + 13, fy + 23, 10, 3, '#000000', 0.13);
     }
     /* 布の垂れ幕（白布＋赤い帯） */
     g.fillStyle = '#e9e1cd';
@@ -1112,6 +1206,30 @@ function makeWallTexture(kind){
     g.quadraticCurveTo(140, 90, 127, 84); g.quadraticCurveTo(114, 90, 104, 82);
     g.closePath(); g.fill();
     circF(g, 127, 38, 9, '#8c2f23'); circF(g, 127, 38, 4.4, '#e9e1cd');
+    /* 小旗の2段目：窓の下に渡した短い連なり（扉には掛からない左半分だけ） */
+    g.strokeStyle = '#ddd6c2'; g.lineWidth = 2.6;
+    g.beginPath(); g.moveTo(0, 192); g.quadraticCurveTo(75, 212, 150, 192); g.stroke();
+    for (i = 0; i < 4; i++){
+      var gx2 = 16 + i * 36, gy2 = 197 + Math.sin((i + 0.5) / 4 * Math.PI) * 8;
+      g.fillStyle = flagCols[(i + 2) % 5];
+      g.beginPath();
+      g.moveTo(gx2, gy2); g.lineTo(gx2 + 24, gy2 + 2);
+      g.quadraticCurveTo(gx2 + 21, gy2 + 19, gx2 + 12, gy2 + 21);
+      g.quadraticCurveTo(gx2 + 3, gy2 + 19, gx2, gy2);
+      g.closePath(); g.fill();
+    }
+    /* 垂れ幕の脇に下がる小旗の紐 */
+    g.strokeStyle = '#ddd6c2'; g.lineWidth = 2.2;
+    g.beginPath(); g.moveTo(94, 14); g.lineTo(94, 80); g.stroke();
+    for (i = 0; i < 3; i++){
+      var vy = 22 + i * 20;
+      g.fillStyle = flagCols[(i + 1) % 5];
+      g.beginPath();
+      g.moveTo(94, vy); g.lineTo(107, vy + 3);
+      g.quadraticCurveTo(105, vy + 12, 101, vy + 13);
+      g.quadraticCurveTo(95, vy + 12, 94, vy);
+      g.closePath(); g.fill();
+    }
     fillRR(g, -4, -4, S + 8, 9, 4, 'rgba(240,246,249,.85)');
   }
   return c;
@@ -1135,6 +1253,7 @@ function makeTreeSprite(){
   ellF(g, 52, 30, 17, 6, 'rgba(245,250,252,.9)');
   ellF(g, 66, 52, 20, 6, 'rgba(245,250,252,.75)');
   ellF(g, 48, 78, 22, 6, 'rgba(245,250,252,.6)');
+  ellF(g, 74, 64, 16, 5, 'rgba(245,250,252,.5)');
   ellF(g, 50, 36, 10, 7, 'rgba(255,255,255,.14)');
   return c;
 }
@@ -1156,16 +1275,52 @@ function makePostSprite(){
   fillRR(g, 21, 4, 6, 92, 3, '#5d4630');
   circF(g, 24, 7, 4.4, '#3d2c1a');
   g.strokeStyle = '#ddd6c2'; g.lineWidth = 1.8; g.lineCap = 'round';
-  g.beginPath(); g.moveTo(24, 10); g.quadraticCurveTo(10, 22, 3, 38); g.stroke();
-  g.beginPath(); g.moveTo(24, 10); g.quadraticCurveTo(38, 22, 45, 38); g.stroke();
+  g.beginPath(); g.moveTo(24, 10); g.quadraticCurveTo(9, 24, 2, 46); g.stroke();
+  g.beginPath(); g.moveTo(24, 10); g.quadraticCurveTo(39, 24, 46, 46); g.stroke();
   var cols = ['#3a6bc2', '#e8e4da', '#c23a2e', '#3f9e57', '#e8c832'];
-  for (var i = 0; i < 5; i++){
-    var lx = 19 - i * 4, ly = 15 + i * 5, rx = 26 + i * 4, ry = 15 + i * 5;
-    g.fillStyle = cols[i];
+  for (var i = 0; i < 6; i++){
+    var lx = 20.5 - i * 3.2, ly = 14 + i * 5.4, rx = 27.5 + i * 3.2, ry = 14 + i * 5.4;
+    g.fillStyle = cols[i % 5];
     g.beginPath(); g.moveTo(lx - 3.5, ly); g.lineTo(lx + 3.5, ly); g.quadraticCurveTo(lx + 3, ly + 8, lx, ly + 9.5); g.quadraticCurveTo(lx - 3, ly + 8, lx - 3.5, ly); g.closePath(); g.fill();
     g.beginPath(); g.moveTo(rx - 3.5, ry); g.lineTo(rx + 3.5, ry); g.quadraticCurveTo(rx + 3, ry + 8, rx, ry + 9.5); g.quadraticCurveTo(rx - 3, ry + 8, rx - 3.5, ry); g.closePath(); g.fill();
   }
   fillRR(g, 19.5, 11, 9, 11, 3, cols[2]);
+  return c;
+}
+function makeGarlandSprite(variant){
+  /* 祈祷旗のガーランド：頭上に渡す五色の小旗の連なり（装飾専用スプライト）。
+     下半分は透明にしてあり、描画側で持ち上げて描くので、旗だけが頭上に見える。
+     3バリエーションを事前生成して使い回す（手続き生成・追加の読み込みなし） */
+  var c = mkCanvas(512, 256), g = ctx2(c); g.scale(2, 2);
+  var cols = ['#3a6bc2', '#e8e4da', '#c23a2e', '#3f9e57', '#e8c832'];
+  var off = variant % 5;
+  function ropeFlag(cx, cy, w, h, col, rot){
+    g.save(); g.translate(cx, cy); g.rotate(rot);
+    g.fillStyle = col;
+    g.beginPath();
+    g.moveTo(-w / 2, 0); g.lineTo(w / 2, 0);
+    g.quadraticCurveTo(w * 0.32, h * 0.86, 0, h);
+    g.quadraticCurveTo(-w * 0.32, h * 0.86, -w / 2, 0);
+    g.closePath(); g.fill();
+    ellF(g, 0, h * 0.9, w * 0.36, h * 0.1, '#000000', 0.13);
+    g.restore();
+  }
+  function strand(x0, y0, sag, x1, y1, n, fw, fh){
+    var cxp = (x0 + x1) / 2, cyp = Math.max(y0, y1) + sag;
+    g.strokeStyle = '#ddd6c2'; g.lineWidth = 2; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(x0, y0); g.quadraticCurveTo(cxp, cyp, x1, y1); g.stroke();
+    for (var i = 0; i < n; i++){
+      var t = (i + 0.5) / n, mt = 1 - t;
+      var px = mt * mt * x0 + 2 * mt * t * cxp + t * t * x1;
+      var py = mt * mt * y0 + 2 * mt * t * cyp + t * t * y1;
+      var dx = 2 * mt * (cxp - x0) + 2 * t * (x1 - cxp);
+      var dy = 2 * mt * (cyp - y0) + 2 * t * (y1 - cyp);
+      ropeFlag(px, py, fw, fh, cols[(i + off) % 5], Math.atan2(dy, dx) * 0.55);
+    }
+    circF(g, x0, y0, 3, '#c9a23a'); circF(g, x1, y1, 3, '#c9a23a');
+  }
+  strand(6, 14, 26 + variant * 3, 250, 14, 9, 21, 25);
+  strand(16, 62, 20 + variant * 2, 240, 62, 7, 18, 21);
   return c;
 }
 function makeTowerSprite(){
@@ -1200,6 +1355,19 @@ function makeTowerSprite(){
   g.fillStyle = '#3a2c1c';
   g.beginPath(); g.moveTo(54, 256); g.lineTo(54, 226); g.quadraticCurveTo(64, 214, 74, 226); g.lineTo(74, 256); g.closePath(); g.fill();
   fillRR(g, 58, 148, 12, 16, 5, '#ffd98a');
+  /* 塔身に渡した祈祷旗の小連なり（鐘楼の下、窓の上） */
+  g.strokeStyle = '#ddd6c2'; g.lineWidth = 1.8; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(38, 120); g.quadraticCurveTo(64, 131, 90, 120); g.stroke();
+  var tcols = ['#3a6bc2', '#e8e4da', '#c23a2e', '#3f9e57', '#e8c832'];
+  for (var fi = 0; fi < 5; fi++){
+    var fx2 = 44 + fi * 10, fy2 = 124 + Math.sin((fi + 0.5) / 5 * Math.PI) * 4.4;
+    g.fillStyle = tcols[fi];
+    g.beginPath();
+    g.moveTo(fx2, fy2); g.lineTo(fx2 + 8, fy2 + 1);
+    g.quadraticCurveTo(fx2 + 7, fy2 + 9, fx2 + 4, fy2 + 10);
+    g.quadraticCurveTo(fx2 + 1, fy2 + 9, fx2, fy2);
+    g.closePath(); g.fill();
+  }
   circF(g, 64, 19, 4.2, '#e5482e'); circF(g, 62.6, 17.6, 1.5, 'rgba(255,255,255,.6)');
   return c;
 }
@@ -1594,6 +1762,72 @@ function makePersonSprite(kind){
   fillRR(g, 34.6, 24.8, 26.8, 4.8, 2.4, hat);
   return c;
 }
+function makeCivilianSprite(variant){
+  /* 住民（モブ）：本編のフラット絵柄。服の色と髪型のバリエーション6種。
+     人型の土台（personBase）は兵士・村人と共通で、色と頭部だけ差し替える */
+  var pals = [
+    { coat: '#c2571f', leg: '#3d4a5c', hair: 'cap',   hairCol: '#2e6f6a' },
+    { coat: '#2e6f6a', leg: '#6d5133', hair: 'bun',   hairCol: '#2b2118' },
+    { coat: '#e0d3ae', leg: '#7a3b2e', hair: 'short', hairCol: '#4a3220' },
+    { coat: '#5d8266', leg: '#3d3630', hair: 'hat',   hairCol: '#d9b45c' },
+    { coat: '#c26a8a', leg: '#44506b', hair: 'long',  hairCol: '#1f1a14' },
+    { coat: '#3f6ea8', leg: '#8c7a52', hair: 'bald',  hairCol: '#5a4632' }
+  ];
+  var p = pals[variant % pals.length];
+  var c = mkCanvas(192, 256), g = ctx2(c); g.scale(2, 2);
+  personBase(g, { leg: p.leg, boot: '#2b2622', coat: p.coat, belt: null });
+  fillRR(g, 30, 60, 36, 8, 4, 'rgba(0,0,0,.16)');
+  if (p.hair === 'cap'){
+    g.fillStyle = p.hairCol; g.beginPath(); g.arc(48, 29, 12.4, Math.PI, 0);
+    g.quadraticCurveTo(59, 32, 48, 30.4); g.quadraticCurveTo(37, 32, 35.6, 29); g.closePath(); g.fill();
+    fillRR(g, 34.6, 24.8, 26.8, 4.8, 2.4, p.hairCol);
+  } else if (p.hair === 'bun'){
+    g.fillStyle = p.hairCol; g.beginPath(); g.arc(48, 29, 12.2, Math.PI, 0);
+    g.quadraticCurveTo(59, 31, 48, 30); g.quadraticCurveTo(37, 31, 35.8, 29); g.closePath(); g.fill();
+    circF(g, 48, 17.5, 5, p.hairCol);
+  } else if (p.hair === 'short'){
+    g.fillStyle = p.hairCol; g.beginPath(); g.arc(48, 28, 11.8, Math.PI, 0);
+    g.quadraticCurveTo(57, 29, 48, 28.6); g.quadraticCurveTo(39, 29, 36.2, 28); g.closePath(); g.fill();
+  } else if (p.hair === 'hat'){
+    ellF(g, 48, 24, 17, 4.6, p.hairCol);
+    g.fillStyle = p.hairCol; g.beginPath(); g.arc(48, 25, 10.5, Math.PI, 0);
+    g.quadraticCurveTo(57, 27, 48, 26.4); g.quadraticCurveTo(39, 27, 37.5, 25); g.closePath(); g.fill();
+  } else if (p.hair === 'long'){
+    g.fillStyle = p.hairCol; g.beginPath(); g.arc(48, 29, 12.2, Math.PI, 0);
+    g.quadraticCurveTo(59, 31, 48, 30); g.quadraticCurveTo(37, 31, 35.8, 29); g.closePath(); g.fill();
+    fillRR(g, 34.5, 28, 6, 26, 3, p.hairCol); fillRR(g, 55.5, 28, 6, 26, 3, p.hairCol);
+  } else {
+    /* 薄毛＋あごひげ */
+    ellF(g, 37.5, 30, 2.6, 5, p.hairCol); ellF(g, 58.5, 30, 2.6, 5, p.hairCol);
+    ellF(g, 48, 41, 6, 2.6, p.hairCol, 0.8);
+  }
+  return c;
+}
+function makeGateSprite(){
+  /* 入口の門柱（囲いの入口の目印）：2本の柱＋横木＋柱の上の金色の玉＋琥珀色の明かり。
+     文字の看板は置かず、金の玉とゲートの形だけで入口と分かるようにする。
+     点滅はさせない静止表示（酔い対策）。入口セルは通行可のまま、見た目だけの目印 */
+  var c = mkCanvas(96, 192), g = ctx2(c); g.scale(2, 2);
+  ellF(g, 24, 92, 21, 3.6, 'rgba(0,0,0,.25)');
+  fillRR(g, 5, 24, 5.5, 68, 2.4, '#6d4c2a');
+  fillRR(g, 37.5, 24, 5.5, 68, 2.4, '#6d4c2a');
+  fillRR(g, 2, 17, 44, 7.5, 3.4, '#8a5a34');
+  /* 金色の玉（左右の柱の真上、横木の上に載せる）。台座＋球本体＋影＋ハイライトで
+     遠くからでも金の球と見分けられるようにする。アニメーションなしの静止画 */
+  [7.8, 40.2].forEach(function(bx){
+    fillRR(g, bx - 3.4, 15.2, 6.8, 2.6, 1.2, '#5d4020');
+    circF(g, bx, 10.4, 5.6, '#c9920e');
+    circF(g, bx - 0.7, 9.7, 4.7, '#e8c832');
+    circF(g, bx - 1.9, 7.9, 1.8, '#fff3c4');
+  });
+  /* 明かり（吊りランプ。光は点滅させない） */
+  g.strokeStyle = '#5d4020'; g.lineWidth = 1.6;
+  g.beginPath(); g.moveTo(24, 24.5); g.lineTo(24, 48); g.stroke();
+  circF(g, 24, 54, 6.4, 'rgba(255,210,60,.28)');
+  circF(g, 24, 54, 4.4, '#ffd23c'); circF(g, 24, 52.6, 1.7, '#fff3c4');
+  fillRR(g, 20.5, 46.5, 7, 3, 1.5, '#39424a');
+  return c;
+}
 function makeCartSprite(){
   /* 荷車：木の荷台＋大きな車輪＋積荷 */
   var c = mkCanvas(256, 192), g = ctx2(c); g.scale(2, 2);
@@ -1732,6 +1966,7 @@ function makeRockSprite(){
   g.quadraticCurveTo(68, 36, 58, 31);
   g.quadraticCurveTo(48, 36, 38, 33);
   g.closePath(); g.fill();
+  ellF(g, 30, 84, 10, 4, 'rgba(93,122,82,.35)'); ellF(g, 88, 86, 8, 3.4, 'rgba(93,122,82,.28)');
   /* 足元の小石 */
   ellF(g, 14, 88, 9, 5, '#757d7e'); ellF(g, 114, 89, 7, 4, '#757d7e');
   ellF(g, 12, 86, 6, 2.4, 'rgba(242,247,250,.8)');
@@ -1794,7 +2029,11 @@ var sprTree = makeTreeSprite(), sprCrate = makeCrateSprite(false), sprCrateSuppl
     sprCart = makeCartSprite(), sprLeopard = makeLeopardSprite(false), sprLeopardDead = makeLeopardSprite(true),
     sprIce = makeIceSprite(), sprTransmitter = makeTransmitterSprite(),
     sprBush = makeBushSprite(false), sprBushSnow = makeBushSprite(true),
-    sprRock = makeRockSprite(), sprSnowMound = makeSnowMoundSprite();
+    sprRock = makeRockSprite(), sprSnowMound = makeSnowMoundSprite(),
+    sprGate = makeGateSprite();
+var sprGarlands = [makeGarlandSprite(0), makeGarlandSprite(1), makeGarlandSprite(2)];
+var sprCivilians = [];
+for (var cvi = 0; cvi < 6; cvi++) sprCivilians.push(makeCivilianSprite(cvi));
 /* 敵兵の向き別スプライト表と選択ロジック。
    diff = 「敵→プレイヤー方向」−「敵の向き」の正規化角度。
    |diff| が小さい＝敵がこちらを向いている（正面絵）／ πに近い＝背を向けている（背面絵）／
@@ -1855,6 +2094,7 @@ function initAudio(){
   waveLfo.connect(waveLfoG); waveLfoG.connect(waves.gain); waveBase.connect(waves.gain);
   waveLfo.start(); waveBase.start();
   scheduleBroadcast();
+ startBgm();
 }
 function setVolume(v){
   volumeLevel = v;
@@ -1968,6 +2208,152 @@ function sfxJingle(win){
 
 <script>
 "use strict";
+/* ---------------- BGM ― 山岳風シンセ（全てシンセ生成・旋律はオリジナル） ----------------
+   探索＝撥弦（リュート風プラック）のアルペジオ＋笛系シンセの旋律＋低いドローン。
+   戦闘＝同じテーマのまま、戦闘バス（太鼓系の打撃＋速い撥弦リフ）をゲインでフェードイン。
+   切替条件は発見ピルと同じ「生存中の敵に alert がいるか」で、警戒が解けてから
+   約4秒は戦闘側を保持してから戻る（点滅的な往復を防ぐ）。ポーズ中は探索レイヤー。
+   開始と音量は既存の環境音と同じ：initAudio（ゲーム開始時）に始まり masterGain
+   （環境音の音量設定）を通る。環境音（山風・川）と将軍の放送とは別バスで、
+   BGM側の音量は控えめにして競合しないようにする。 */
+var BGM_BPM = 92, BGM_STEP_DUR = 60 / BGM_BPM / 2;   /* 8分音符 */
+var BGM_CHORDS = [   /* 4小節ループ：Dm → B♭ → F → C（山の短調） */
+  { bass: 38, tones: [62, 65, 69] },
+  { bass: 46, tones: [62, 65, 70] },
+  { bass: 41, tones: [65, 69, 72] },
+  { bass: 36, tones: [64, 67, 72] }
+];
+var BGM_MELODY = { 0: 74, 8: 72, 12: 69, 16: 70, 24: 74, 32: 72, 40: 69, 44: 67, 48: 69, 56: 65 };
+var bgmStarted = false, bgmStep = 0, bgmNext = 0, bgmTimer = null;
+var bgmGain = null, bgmBaseBus = null, bgmCombatBus = null, bgmNoiseBuf = null;
+var bgmMode = 'explore', bgmCombatUntil = 0;
+function bgmFreq(midi){ return 440 * Math.pow(2, (midi - 69) / 12); }
+function startBgm(){
+  if (!AC || bgmStarted) return;
+  bgmStarted = true;
+  bgmGain = AC.createGain(); bgmGain.gain.value = 0.4; bgmGain.connect(masterGain);
+  bgmBaseBus = AC.createGain(); bgmBaseBus.gain.value = 1; bgmBaseBus.connect(bgmGain);
+  bgmCombatBus = AC.createGain(); bgmCombatBus.gain.value = 0; bgmCombatBus.connect(bgmGain);
+  var len = AC.sampleRate, buf = AC.createBuffer(1, len, AC.sampleRate), d = buf.getChannelData(0);
+  for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  bgmNoiseBuf = buf;
+  bgmStep = 0; bgmNext = AC.currentTime + 0.08;
+  bgmTimer = setInterval(bgmTick, 42);
+}
+function bgmTick(){
+  if (!AC) return;
+  /* 音楽が止まったまま戻らない対策：画面の切り替えやOS側の音声割り込み、
+     ブラウザの自動停止などで AudioContext が suspended（iOSでは interrupted）
+     のままになると、BGMも環境音も効果音も全て止まったままになる。
+     再開（resume）を呼ぶのはゲーム開始時の initAudio だけで、ポーズや
+     大きいマップの開閉では誰も呼ばないため、そのまま固まってしまう。
+     ティックのたびに状態を見て、running でなければ resume を試みる
+     （ポーズ中・マップ表示中もこのティックは回り続けるので、開閉の前後でも
+     自力で復帰できる）。 */
+  if (AC.state !== 'running'){
+    try { var rp = AC.resume(); if (rp && rp.catch) rp.catch(function(){}); } catch (e) {}
+  }
+  var alert = false;
+  if (game.state === 'play' && typeof enemies !== 'undefined' && enemies){
+    for (var i = 0; i < enemies.length; i++){
+      if (enemies[i].alive && enemies[i].alert){ alert = true; break; }
+    }
+  }
+  if (alert) bgmCombatUntil = AC.currentTime + 4;
+  if (game.state !== 'play') bgmCombatUntil = 0;   /* ポーズ・タイトル等は探索レイヤー */
+  var want = AC.currentTime < bgmCombatUntil ? 'combat' : 'explore';
+  if (want !== bgmMode){
+    bgmMode = want;
+    bgmCombatBus.gain.setTargetAtTime(want === 'combat' ? 0.9 : 0, AC.currentTime, 0.45);
+  }
+  if (bgmNext < AC.currentTime - 0.5) bgmNext = AC.currentTime + 0.06;
+  while (bgmNext < AC.currentTime + 0.14){
+    bgmSchedule(bgmStep, bgmNext);
+    bgmStep = (bgmStep + 1) % 64;
+    bgmNext += BGM_STEP_DUR;
+  }
+}
+/* 膜鳴系（枠太鼓）：ピッチが落ちる正弦波 */
+function bgmDrum(t, f0, f1, dur, vol, dest){
+  var o = AC.createOscillator(); o.type = 'sine';
+  o.frequency.setValueAtTime(f0, t);
+  o.frequency.exponentialRampToValueAtTime(Math.max(30, f1), t + dur);
+  var g = AC.createGain(); g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.connect(g); g.connect(dest); o.start(t); o.stop(t + dur + 0.02);
+}
+function bgmNoiseHit(t, dur, vol, type, freq, q, dest){
+  var src = AC.createBufferSource(); src.buffer = bgmNoiseBuf;
+  src.playbackRate.value = 0.9 + Math.random() * 0.2;
+  var f = AC.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+  var g = AC.createGain(); g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  src.connect(f); f.connect(g); g.connect(dest);
+  src.start(t, Math.random() * 0.5, dur + 0.05); src.stop(t + dur + 0.05);
+}
+/* 撥弦系（リュート／ピーパ風）：速い減衰＋ローパス */
+function bgmPluck(t, midi, dur, vol, type, cutoff, dest){
+  var o = AC.createOscillator(); o.type = type; o.frequency.value = bgmFreq(midi);
+  var f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = cutoff;
+  var g = AC.createGain(); g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.connect(f); f.connect(g); g.connect(dest); o.start(t); o.stop(t + dur + 0.02);
+}
+/* 笛系シンセ：正弦波＋薄い三角波、ゆっくり立ち上がって長く減衰（ビブラート付き） */
+function bgmFlute(t, midi, dur, vol, dest){
+  var o = AC.createOscillator(); o.type = 'sine'; o.frequency.value = bgmFreq(midi);
+  var o2 = AC.createOscillator(); o2.type = 'triangle'; o2.frequency.value = bgmFreq(midi);
+  var vib = AC.createOscillator(); vib.frequency.value = 5.2;
+  var vibG = AC.createGain(); vibG.gain.value = bgmFreq(midi) * 0.004;
+  vib.connect(vibG); vibG.connect(o.frequency); vibG.connect(o2.frequency);
+  var f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 2600;
+  var g = AC.createGain();
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(vol, t + 0.09);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  var g2 = AC.createGain(); g2.gain.value = 0.35;
+  o.connect(f); o2.connect(g2); g2.connect(f); f.connect(g); g.connect(dest);
+  o.start(t); o.stop(t + dur + 0.02); o2.start(t); o2.stop(t + dur + 0.02);
+  vib.start(t); vib.stop(t + dur + 0.02);
+}
+function bgmBassNote(t, midi, dur){
+  var o = AC.createOscillator(); o.type = 'triangle'; o.frequency.value = bgmFreq(midi);
+  var f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 420;
+  var g = AC.createGain(); g.gain.setValueAtTime(0.16, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.connect(f); f.connect(g); g.connect(bgmBaseBus); o.start(t); o.stop(t + dur + 0.02);
+}
+function bgmSchedule(step, t){
+  var bar = (step / 16) | 0, s = step % 16, ch = BGM_CHORDS[bar];
+  var T = ch.tones;
+  /* ドローン（低音の持続）：小節頭に根音、8ステップ目に5度 */
+  if (s === 0) bgmBassNote(t, ch.bass, BGM_STEP_DUR * 9);
+  if (s === 8) bgmBassNote(t, ch.bass + 7, BGM_STEP_DUR * 7);
+  /* 撥弦アルペジオ（4ステップごとに和音を昇順＋戻り） */
+  if (s % 4 === 0){
+    var seq = [0, 1, 2, 1], ix = seq[(s / 4) | 0];
+    bgmPluck(t, T[ix] - 12, 0.22, 0.075, 'triangle', 1900, bgmBaseBus);
+  }
+  if (s === 14) bgmPluck(t, T[0] - 12, 0.16, 0.05, 'triangle', 1900, bgmBaseBus);
+  /* 枠太鼓（探索：控えめ） */
+  if (s === 0) bgmDrum(t, 150, 70, 0.22, 0.13, bgmBaseBus);
+  if (s === 8) bgmDrum(t, 190, 95, 0.16, 0.09, bgmBaseBus);
+  /* 風鈴のような高音のきらめき（小節頭に1音だけ、ごく小さく） */
+  if (s === 0 && bar % 2 === 0) bgmPluck(t, T[2] + 24, 0.5, 0.016, 'sine', 6000, bgmBaseBus);
+  /* 笛の旋律（探索レイヤーの主旋律） */
+  var mel = BGM_MELODY[step];
+  if (mel !== undefined) bgmFlute(t, mel, BGM_STEP_DUR * 5.2, 0.085, bgmBaseBus);
+  /* ---- 戦闘レイヤー（戦闘バスのゲインで出し入れ） ---- */
+  if (s % 2 === 0) bgmDrum(t, s % 4 === 2 ? 300 : 210, s % 4 === 2 ? 170 : 120, 0.09, 0.085, bgmCombatBus);
+  if (s === 6 || s === 14) bgmDrum(t, 130, 62, 0.24, 0.15, bgmCombatBus);
+  if (s % 2 === 0){
+    var cyc = [0, 1, 2, 1, 0, 2, 1, 2][(s / 2) | 0];
+    bgmPluck(t, T[cyc], 0.13, 0.055, 'square', 1500, bgmCombatBus);
+  }
+  if (mel !== undefined) bgmFlute(t, mel - 12, BGM_STEP_DUR * 2.4, 0.05, bgmCombatBus);
+  if (s % 4 === 2) bgmNoiseHit(t, 0.05, 0.02, 'highpass', 6800, 0.7, bgmCombatBus);
+}
+
 /* ---------------- Save（ブラウザのローカル保存） ----------------
    保持するのは「拠点の解放状況・鐘の塔・クラフト拡張・所持素材（皮）・XP・スキル」のみ */
 var SAVE_KEY = 'farIsleSaveV3';
@@ -1996,6 +2382,8 @@ function writeSave(){
       molotovs: player ? player.molotovs : MOLOTOV_CAP,
       owned: prog.owned,
       difficulty: difficulty,
+      objectiveMarker: objectiveMarkerOn,
+      waypoint: waypoint ? waypoint.key : null,
       cleared: gameCleared,
       gateOpen: !!liberated['D'],
       ammo: player ? { pis: player.pistolAmmo, ar: player.arAmmo, sg: player.shells, sn: player.sniperAmmo, arw: player.arrows } : null
@@ -2008,7 +2396,7 @@ function clearSave(){
 
 /* ---------------- Game state ---------------- */
 var game = { state: 'title', time: 0 };
-var player, enemies, boars, alarms, stats, revealed;
+var player, enemies, boars, alarms, stats, revealed, civilians;
 var liberated = {};               /* outpostId -> true */
 /* ---------------- Skills（虎＝攻撃／象＝防御） ---------------- */
 var SKILLS = {
@@ -2142,6 +2530,174 @@ function syncDifficultyUI(){
 var gridStep = null;
 var towerHold = 0, towerHoldTarget = null;
 
+/* ---------------- 進行方向マーカー（目標マーカー） ----------------
+   本家ファークライの目標マーカー式：クリアに向けた目標の方向に
+   ダイヤ型マーカー＋目標名＋距離を出す。目標は物語の進行に連動する：
+   第1段階＝エリア1の要塞（拠点D。解放で北の関所が開く区切り）、
+   要塞を解放したら第2段階＝最終要塞「放送本部」（指す位置は最奥の送信設備）、
+   エンディング到達後（gameCleared）はマーカーを消す（フリーローム）。
+   表示は静止のみ（点滅・上下動・拡大縮小などのアニメーションは付けない＝酔い対策）。
+   ON／OFFはポーズ画面で切り替え、セーブに保存する（既定はON。旧セーブに項目が無ければON）。 */
+var objectiveMarkerOn = true;
+/* ---------------- 地図の目的地（ウェイポイント） ----------------
+   大きいマップで選んだ行き先。設定中は進行方向マーカー（画面＋ミニマップ）が
+   本筋の目標ではなくこの目的地を指す。目的地に近づくと自動で解除され、
+   マーカーは本筋の目標に戻る。セーブ対象（キーは 'outpost:A' 形式。
+   座標と名前はキーから引き直すので、セーブにはキーだけを保存する）。 */
+var waypoint = null;
+function resolveWaypointKey(key){
+  if (!key || typeof key !== 'string') return null;
+  var p = key.split(':');
+  if (p[0] === 'outpost'){
+    var o = outpostById(p[1]);
+    if (o) return { key: key, x: o.cx, y: o.cy, name: o.name };
+  }
+  if (p[0] === 'tower'){
+    for (var i = 0; i < TOWERS.length; i++){
+      if (TOWERS[i].id === p[1]) return { key: key, x: TOWERS[i].x, y: TOWERS[i].y, name: TOWERS[i].name };
+    }
+  }
+  if (key === 'hq') return { key: 'hq', x: HQ.cx, y: HQ.cy, name: HQ.name };
+  /* 'event'（事件）はここでは解決しない：事件そのものがセーブ対象外なので、
+     続き読み込みで目的地として復元されることはない（プレイ中にマップで設定した
+     ときだけ waypoint に入り、事件の終了とともに解除される） */
+  return null;
+}
+/* ---------------- 囲いの入口への誘導 ----------------
+   拠点・要塞・放送本部は石壁や柵の囲いに囲まれていて、入口は数か所しかない。
+   目標マーカーが囲いの中心への直線だけを指すと、入口のない側（北・東など）から
+   近づいたときに壁の前で行き止まってしまう（実機報告）。
+   そこで、囲いの外にいる間はマーカーが「一番近い入口」を指し、入口をくぐって
+   中に入ったら本来の中心（目標）に戻るようにする。到達判定（checkWaypointArrival）は
+   従来どおり中心との距離で見るので、入口に着いただけでは目的地は解除されない。
+   座標はすべて最終マップ座標（シフト済み）。入口は buildMap() の囲い定義で
+   通行可（grid=0）にされているセル／2セル幅の開口部の中心に置く。
+   放送本部と要塞・前哨・教会は「外囲い＋内部の建物」の二重構造なので、
+   外→内の順に並べ、外の入口→建物の入口→中心、と段階的に案内する。 */
+function makeEnc(x0, y0, x1, y1, entrances){
+  return { x0: x0, y0: y0, x1: x1, y1: y1, entrances: entrances };
+}
+var OUTPOST_ENCLOSURES = {
+  /* A：南の入口（2セル幅） */
+  A: [makeEnc(19, 48, 26, 53, [{ x: 23, y: 53.5 }])],
+  /* B：村の柵。北の入口（2セル幅）と南の入口2か所 */
+  B: [makeEnc(28, 63, 41, 71, [{ x: 35, y: 63.5 }, { x: 30.5, y: 71.5 }, { x: 39.5, y: 71.5 }])],
+  /* C：西の入口 */
+  C: [makeEnc(31, 45, 40, 51, [{ x: 31.5, y: 48.5 }])],
+  /* D（要塞）：西の入口と南の入口（2セル幅）。中に入ったら兵舎の南入口へ */
+  D: [makeEnc(45, 54, 52, 62, [{ x: 45.5, y: 58.5 }, { x: 50, y: 62.5 }]),
+      makeEnc(47, 56, 50, 59, [{ x: 49, y: 59.5 }])],
+  /* E（海辺の村）は南の柵が一列あるだけで閉じた囲いではないので対象外 */
+  E: [],
+  /* F：南の入口（2セル幅）と西の入口 */
+  F: [makeEnc(22, 15, 31, 21, [{ x: 27, y: 21.5 }, { x: 22.5, y: 18.5 }])],
+  /* G：南の入口（2セル幅）。中に入ったら祠の南入口へ */
+  G: [makeEnc(38, 18, 47, 24, [{ x: 43, y: 24.5 }]),
+      makeEnc(41, 20, 44, 22, [{ x: 42.5, y: 22.5 }])],
+  /* H：南の入口（2セル幅）と西の入口 */
+  H: [makeEnc(13, 31, 20, 36, [{ x: 17, y: 36.5 }, { x: 13.5, y: 33.5 }])],
+  /* I（前哨）：西の入口と南の入口（2セル幅）。中に入ったら兵舎の南入口へ */
+  I: [makeEnc(36, 31, 46, 38, [{ x: 36.5, y: 34.5 }, { x: 42, y: 38.5 }]),
+      makeEnc(39, 33, 43, 36, [{ x: 41.5, y: 36.5 }])]
+};
+/* 放送本部：南の正門（2セル幅）と西の入口。中に入ったら放送棟の南入口へ */
+var HQ_ENCLOSURES = [
+  makeEnc(32, 1, 52, 10, [{ x: 42, y: 10.5 }, { x: 32.5, y: 6.5 }]),
+  makeEnc(43, 2, 50, 6, [{ x: 47, y: 6.5 }])
+];
+/* 鐘の塔のうち囲いの中にあるもの（T1＝拠点A内、T2＝拠点C内）は、その拠点の入口へ案内する */
+var TOWER_ENCLOSURE_OWNER = { T1: 'A', T2: 'C' };
+/* 全入口の一覧（マップの入口マークと現地の門柱スプライトで使う） */
+var ALL_ENTRANCES = [];
+Object.keys(OUTPOST_ENCLOSURES).forEach(function(k){
+  OUTPOST_ENCLOSURES[k].forEach(function(enc){
+    enc.entrances.forEach(function(e){ ALL_ENTRANCES.push({ x: e.x, y: e.y, owner: k }); });
+  });
+});
+HQ_ENCLOSURES.forEach(function(enc){
+  enc.entrances.forEach(function(e){ ALL_ENTRANCES.push({ x: e.x, y: e.y, owner: 'J' }); });
+});
+function pointInEnc(px, py, enc){
+  return px > enc.x0 && px < enc.x1 + 1 && py > enc.y0 && py < enc.y1 + 1;
+}
+function enclosuresForWaypointKey(key){
+  if (!key || typeof key !== 'string') return null;
+  var p = key.split(':');
+  if (p[0] === 'outpost') return OUTPOST_ENCLOSURES[p[1]] || null;
+  if (p[0] === 'tower'){
+    var owner = TOWER_ENCLOSURE_OWNER[p[1]];
+    return owner ? OUTPOST_ENCLOSURES[owner] : null;
+  }
+  if (key === 'hq') return HQ_ENCLOSURES;
+  return null;
+}
+/* 目標（base）が囲いの中にあり、プレイヤーがその囲いの外にいる間は、
+   一番近い入口を指す目標に差し替える（名前は「○○ 入口」になる）。
+   中に入れば元の目標をそのまま返す */
+function guidedTarget(base, encList){
+  if (!base || !player || !encList || !encList.length) return base;
+  for (var i = 0; i < encList.length; i++){
+    var enc = encList[i];
+    if (!pointInEnc(base.x, base.y, enc)) continue;   /* この囲いの外の目標は対象外 */
+    if (pointInEnc(player.x, player.y, enc)) continue; /* すでに入っている囲いは通過済み */
+    var best = null, bd = Infinity;
+    enc.entrances.forEach(function(e){
+      var d = Math.hypot(e.x - player.x, e.y - player.y);
+      if (d < bd){ bd = d; best = e; }
+    });
+    if (best) return { x: best.x, y: best.y, name: base.name + ' 入口', isEntrance: true, baseName: base.name };
+  }
+  return base;
+}
+/* 本筋の目標（目的地の影響を受けない素の進行目標） */
+function storyObjectiveTarget(){
+  if (gameCleared) return null;
+  if (!liberated['D']){
+    var d = outpostById('D');
+    if (!d) return null;
+    return { x: d.cx, y: d.cy, name: '要塞' };
+  }
+  return { x: TRANSMITTER.x, y: TRANSMITTER.y, name: '放送本部' };
+}
+function currentObjectiveTarget(){
+  if (waypoint){
+    var baseW = { x: waypoint.x, y: waypoint.y, name: waypoint.name };
+    return guidedTarget(baseW, enclosuresForWaypointKey(waypoint.key));
+  }
+  var s = storyObjectiveTarget();
+  if (!s) return null;
+  /* 第1段階（要塞）は拠点Dの囲い、第2段階（放送本部）は本部の囲いで誘導する */
+  return guidedTarget(s, !liberated['D'] ? OUTPOST_ENCLOSURES['D'] : HQ_ENCLOSURES);
+}
+/* 目的地への到達判定（プレイ中のみ）。着いたら解除して本筋に戻す。
+   クリア後に目的地が放送本部のまま残っていたら、そちらも解除する。
+   事件（カルマイベント）の目的地は例外：近づいても解除せず、事件の現在地に
+   追従し続け（輸送小隊は移動する）、事件が終わったら解除して本筋に戻す */
+function checkWaypointArrival(){
+  if (!waypoint || !player || player.dead) return;
+  if (waypoint.key === 'event'){
+    if (!activeEvent){
+      waypoint = null;
+      writeSave();
+      showMsg('事件は終わった ― 目的地を解除し、本筋の目標に戻った', 2.6);
+      return;
+    }
+    waypoint.x = activeEvent.x; waypoint.y = activeEvent.y;
+    waypoint.name = '事件：' + activeEvent.label;
+    return;
+  }
+  var reached = Math.hypot(waypoint.x - player.x, waypoint.y - player.y) < 3.6;
+  if (!reached && !(gameCleared && waypoint.key === 'hq')) return;
+  var name = waypoint.name;
+  waypoint = null;
+  writeSave();
+  showMsg('目的地「' + name + '」に到達 ― 本筋の目標に戻った', 2.6);
+  sfxMark();
+}
+function syncObjectiveMarkerUI(){
+  var s = document.getElementById('objMarkerSel');
+  if (s) s.value = objectiveMarkerOn ? 'on' : 'off';
+}
 var AMMO_CAPS = [{ pis: 24, ar: 90, sg: 12, sn: 8, arw: 10 }, { pis: 36, ar: 150, sg: 20, sn: 12, arw: 16 }, { pis: 48, ar: 240, sg: 28, sn: 16, arw: 24 }];
 var MED_CAPS = [2, 3, 4];
 var CRAFT_COSTS = [2, 4];         /* Lv1=皮2、Lv2=皮4 */
@@ -2245,6 +2801,38 @@ ENEMY_DEFS.forEach(function(d){ if (d.outpost && 'ABCD'.indexOf(d.outpost) >= 0)
 ENEMY_DEFS.forEach(function(d){ if (d.outpost && 'EFGHI'.indexOf(d.outpost) >= 0){ d.y += A2_SHIFT; if (d.wp) d.wp.forEach(function(w){ w[1] += A2_SHIFT; }); } });
 ANIMAL_DEFS.forEach(function(d){ if (d.a2) d.y += A2_SHIFT; else d.y += AREA_SHIFT; });
 
+/* ---------------- 住民（モブ）25人 ----------------
+   島に生活感を出すための住民。村や集落（拠点Bの山の村／拠点Eの雪の村）に多め、
+   道や拠点の外周・野原にまばらに配置する。座標は動物と同じ流儀
+   （エリア1は素の座標→AREA_SHIFT、エリア2は a2:true→A2_SHIFT）。
+   住民は専用の配列（civilians）だけで管理し、敵・動物のどの配列にも入れない：
+   プレイヤーの射撃対象（shootTargets）・カメラのマーク候補・投擲／爆発／炎の範囲判定・
+   敵の標的・野生動物の標的・ベイトの対象のいずれにも含まれず、
+   ダメージを受ける経路そのものが存在しない（倒れたり死んだりしない）。
+   敵の察知・警報にも一切関与しない（住民がいても発見メーターは動かない）。
+   セーブ対象にはせず、ロード時は定位置に再配置する。
+   ミニマップには表示しない。 */
+var CIVILIAN_DEFS = [
+  /* 山の村（拠点B）とその周辺：5人 */
+  { x: 32.5, y: 27.5, v: 0 }, { x: 36.5, y: 27.5, v: 1 }, { x: 34.5, y: 30.5, v: 2 },
+  { x: 31.5, y: 19.5, v: 3 }, { x: 38.5, y: 19.5, v: 4 },
+  /* エリア1の道・拠点外周・野原：6人 */
+  { x: 17.5, y: 18.5, v: 5 }, { x: 5.5, y: 12.5, v: 2 }, { x: 27.5, y: 11.5, v: 1 },
+  { x: 43.5, y: 16.5, v: 3 }, { x: 23.5, y: 25.5, v: 4 }, { x: 12.5, y: 30.5, v: 0 },
+  /* 雪の村（拠点E）とその周辺：5人 */
+  { x: 9.5, y: 10.5, v: 1, a2: true }, { x: 13.5, y: 10.5, v: 5, a2: true }, { x: 10.5, y: 14.5, v: 3, a2: true },
+  { x: 4.5, y: 12.5, v: 4, a2: true }, { x: 15.5, y: 14.5, v: 2, a2: true },
+  /* 凍湖（拠点H）周辺：3人 */
+  { x: 15.5, y: 27.5, v: 0, a2: true }, { x: 21.5, y: 22.5, v: 2, a2: true }, { x: 10.5, y: 22.5, v: 5, a2: true },
+  /* 高地の寺院（拠点G）周辺：2人 */
+  { x: 42.5, y: 14.5, v: 3, a2: true }, { x: 35.5, y: 10.5, v: 1, a2: true },
+  /* 鉱山（拠点F）周辺：2人 */
+  { x: 24.5, y: 13.5, v: 4, a2: true }, { x: 33.5, y: 6.5, v: 0, a2: true },
+  /* 前哨（拠点I）外周：1人／エリア2中央の野原：1人 */
+  { x: 33.5, y: 23.5, v: 2, a2: true }, { x: 24.5, y: 20.5, v: 5, a2: true }
+];
+CIVILIAN_DEFS.forEach(function(d){ if (d.a2) d.y += A2_SHIFT; else d.y += AREA_SHIFT; });
+
 /* ---------------- 隠れ場所の固定配置（草むら／岩／雪のこぶ） ----------------
    座標はすべて最終マップ座標（シフト済み）。セーブ対象にはしない。
    草むら：通行可。spriteCells に入れず bushCells で管理し、canSee() で効果を出す。
@@ -2298,13 +2886,17 @@ ANIMAL_DEFS.forEach(function(d){ if (d.a2) d.y += A2_SHIFT; else d.y += AREA_SHI
     [31,56],[32,56],[24,61],[28,62],[33,61],[36,61],[29,61],[30,68],[38,68],[26,66],
     [26,67],[43,56],[43,59],[47,63],[48,63],[44,48],[44,49],[14,66],[15,66],[20,68],
     [21,68],[23,43],[30,43],
+    /* 増量分：野外中心（拠点の内側には置かない） */
+    [9,60],[9,61],[36,44],[37,44],[17,63],[17,64],
     /* エリア2＋放送本部の庭 */
     [24,41],[29,41],[18,13],[19,13],[36,13],[37,13],[30,12],[31,12],[38,11],[39,11],
     [44,11],[45,11],[5,22],[5,23],[12,26],[13,26],[14,20],[24,23],[28,23],[20,20],
     [20,21],[23,29],[24,29],[30,31],[31,31],[26,26],[29,26],[40,27],[44,27],[39,21],
     [46,21],[11,29],[10,29],[11,34],[11,35],[15,37],[18,37],[33,33],[33,36],[38,33],
     [44,33],[39,39],[44,39],[49,24],[50,24],[49,33],[50,33],[4,30],[5,30],[16,39],
-    [17,39],[24,34],[25,34],[34,9],[48,9]
+    [17,39],[24,34],[25,34],[34,9],[48,9],
+    /* 増量分：野外中心 */
+    [4,20],[4,21],[27,16],[28,16],[50,36],[51,36],[23,37],[24,37]
   ];
   BUSH_DEFS.forEach(function(p){
     var x = p[0], y = p[1];
@@ -2373,6 +2965,8 @@ function resetGame(continued){
   gameCleared = false;
   prog = { hides: 0, craftAmmo: 0, craftMed: 0, xp: 0, sp: 0, pointsEarned: 0, skills: emptySkills(), karma: 0, herbs: 0, owned: defaultOwned() };
   postersPeeled = {};
+  objectiveMarkerOn = true; /* 進行方向マーカーは既定ON。続き読み込みでセーブ値があれば下で上書きされる */
+  waypoint = null; /* 地図の目的地。続き読み込みでセーブ値があれば下で復元される */
   var savedGrenades = GRENADE_CAP, savedMolotovs = MOLOTOV_CAP, savedAmmo = null;
   TOWERS.forEach(function(t){ t.stopped = false; });
   if (continued){
@@ -2381,6 +2975,8 @@ function resetGame(continued){
       liberated = sv.liberated || {};
       gameCleared = !!sv.cleared;
       if (sv.difficulty === 'easy' || sv.difficulty === 'normal') difficulty = sv.difficulty;
+      if (typeof sv.objectiveMarker === 'boolean') objectiveMarkerOn = sv.objectiveMarker;
+      waypoint = resolveWaypointKey(sv.waypoint);
       prog.hides = sv.hides | 0;
       prog.craftAmmo = Math.min(2, sv.craftAmmo | 0);
       prog.craftMed = Math.min(2, sv.craftMed | 0);
@@ -2403,7 +2999,7 @@ function resetGame(continued){
   }
   player = {
     x: playerSpawn.x, y: playerSpawn.y, angle: 0,
-    hp: maxHp(), crouch: false, weapon: 1,
+    hp: maxHp(), crouch: false, sprint: false, weapon: 1,
     fireCd: 0, bowCharge: -1, dead: false,
     pistolAmmo: ammoCaps().pis, arAmmo: ammoCaps().ar, shells: ammoCaps().sg, sniperAmmo: ammoCaps().sn,
     arrows: ammoCaps().arw, medkits: medCap(),
@@ -2427,6 +3023,7 @@ function resetGame(continued){
   }
   spawnWorldEnemies();
   boars = BOAR_HOMES.map(makeBoar);
+  civilians = CIVILIAN_DEFS.map(makeCivilian); /* 住民はセーブ対象外：毎回定位置に再配置 */
   plants = PLANT_DEFS.map(function(p){ return { x: p.x, y: p.y, active: true, respawnT: 0 }; });
   baits = [];
   projectiles = []; pendExplosions = []; fires = []; explosionFx = [];
@@ -2444,6 +3041,10 @@ function resetGame(continued){
   game.time = 0;
   towerHold = 0; towerHoldTarget = null;
   syncDifficultyUI();
+  /* セーブに目的地が残っているのにマーカー表示がOFFだと、続きから始めた途端に
+     目的地も本筋の目標も表示されなくなる。目的地がある場合はONで復元する */
+  if (waypoint && !objectiveMarkerOn) objectiveMarkerOn = true;
+  syncObjectiveMarkerUI();
   markRevealed();
   updateHUDStatic();
 }
@@ -2507,8 +3108,22 @@ document.addEventListener('keydown', function(e){
     if (!e.repeat && (e.code === 'ArrowUp' || e.code === 'KeyW')) moveCraftFocus(-1);
     return;
   }
+  if (game.state === 'bigmap'){
+    /* 大きいマップ表示中：矢印キーでマーク選択、Enter／Spaceで決定、Esc／Mでポーズに戻る */
+    if ((e.code === 'Escape' || e.code === 'KeyM') && !e.repeat){ closeBigMap(); return; }
+    if (!e.repeat){
+      var mdir = e.code === 'ArrowRight' ? 'right'
+        : e.code === 'ArrowLeft' ? 'left'
+        : e.code === 'ArrowDown' ? 'down'
+        : e.code === 'ArrowUp' ? 'up' : null;
+      if (mdir){ e.preventDefault(); moveBigMapSelection(mdir); }
+      else if (e.code === 'Enter' || e.code === 'Space'){ e.preventDefault(); decideBigMapMark(); }
+    }
+    return;
+  }
   if (game.state === 'play'){
     if (e.code === 'Tab' && !e.repeat){ openCraftPanel(); return; }
+    if (e.code === 'KeyM' && !e.repeat){ openBigMap(); return; }
     if (e.code === 'Digit1') setWeapon(0);
     if (e.code === 'Digit2') setWeapon(1);
     if (e.code === 'Digit3') setWeapon(2);
@@ -2527,9 +3142,13 @@ document.addEventListener('keydown', function(e){
     if (e.code === 'ControlLeft' || e.code === 'ControlRight'){
       if (!e.repeat) player.crouch = !player.crouch;
     }
+    if (e.code === 'ShiftLeft' || e.code === 'ShiftRight'){
+      if (!e.repeat) player.sprint = !player.sprint; /* Shift：ダッシュ切替（L3と同じトグル式。移動キーを離すと解除） */
+    }
     if (e.code === 'Escape') openPause();
-  } else if (game.state === 'pause' && e.code === 'Escape'){
-    closePause();
+  } else if (game.state === 'pause'){
+    if (e.code === 'Escape' && !e.repeat) closePause();
+    else if (e.code === 'KeyM' && !e.repeat) openBigMap();
   } else if (game.state === 'title' && e.code === 'Enter'){
     startGame(false);
   }
@@ -2671,7 +3290,7 @@ function updatePadDebug(gp){
     ' ／ 横入力：' + padRightStickX(gp).toFixed(2) +
     ' ／ R3（テイクダウン）：' + (padBtn(gp, 11) ? '押下中' : '―') +
     ' ／ Back（クラフト）：' + (padBtn(gp, 8) ? '押下中' : '―') +
-    ' ／ L3（回復の注射）：' + (padBtn(gp, 10) ? '押下中' : '―') +
+    ' ／ L3（ダッシュ）：' + (padBtn(gp, 10) ? '押下中' : '―') + (player && player.sprint ? '（ダッシュ中）' : '') +
     ' ／ Y（注射：短押し回復／長押し狩猟）：' + (padBtn(gp, 3) ? '押下中' : '―') +
     ' ／ axes: ' + parts.join(' ');
 }
@@ -2908,6 +3527,9 @@ function findShotTarget(maxJitter, maxDist){
   });
   return best;
 }
+/* 戦闘音の最新発生地点（住民が逃げる判定に使う。敵の察知は従来の noiseAlert／noiseAt が担当） */
+var combatNoise = { x: 0, y: 0, r: 0, t: -99 };
+function noteCombatNoise(x, y, r){ combatNoise.x = x; combatNoise.y = y; combatNoise.r = r; combatNoise.t = game.time; }
 function noiseAlert(radius, amount){
   enemies.forEach(function(en){
     if (!en.alive || en.alert) return;
@@ -2929,6 +3551,7 @@ function fireGun(){
   var w = WEAPONS[player.weapon];
   if (player[w.ammoKey] <= 0){ player.fireCd = 0.25; emptyClick(); return; }
   player[w.ammoKey]--;
+  noteCombatNoise(player.x, player.y, 10); /* 銃声：近くの住民が逃げる（敵の察知は従来の noiseAlert が担当） */
   muzzle = 0.06; stats.shots++;
   var cdMul = hasSkill('tiger', 1) ? 0.73 : 1;
   if (w.id === 'pistol'){
@@ -3237,7 +3860,10 @@ function spawnEvent(){
     if (Math.random() < 0.5){
       for (var i = 0; i < 2; i++){
         var w = makeBoar({ kind: 'wolf', x: spot.x + (i ? 2.2 : -2.2), y: spot.y + (i ? 1 : -1) });
-        w.eventRef = true; w.state = 'charge'; w.target = ally; w.provoked = true;
+        /* 動物は人物を対象にしない（住民と同じ扱い）：狼は味方を追いも噛みもせず、
+           周囲をうろついて威嚇するだけ。味方の危機は従来どおり「敵対者が近くにいる間の
+           HP減少」で表す。プレイヤーが近づけば、通常の標的判定で狼はプレイヤーに向かう */
+        w.eventRef = true; w.state = 'wander'; w.target = null; w.provoked = false;
         boars.push(w); hostiles.push(w);
       }
     } else {
@@ -3347,15 +3973,13 @@ function useHealSyringe(){
   showMsg('回復の注射 ― 体力が大きく回復した', 1.6);
   updateHUDStatic();
 }
-/* ---------------- Yボタン：注射（短押し／長押し） ----------------
-   Y（buttons[3]）は従来「武器切替（順送り）」だったが、武器切替は
-   十字キー右／左・ホイール・1〜5キーでも行える重複割り当てのため、
-   ユーザー要望によりYを注射の主ボタンにする。
+/* ---------------- Yボタン：注射専用（短押し／長押し） ----------------
+   Y（buttons[3]）は注射専用に固定する（武器切替にはならない）。
+   武器切替は十字キー右（順送り）／左（逆順）と1〜5キーが担う。
    ・短押し（離すまで0.4秒未満）：回復の注射を使う。
-     ただし回復の注射が使えない場面（所持なし／体力満タン）では、
-     従来通り武器切替（順送り）にフォールバックし、旧操作を残す。
+     回復の注射が使えない場面（所持なし／体力満タン）で押しても何も起きない。
    ・長押し（0.4秒以上保持した瞬間に発動）：狩猟の注射を使う。
-   従来の LB（狩猟）／L3（回復）／キーボード T・R は併用として残す。 */
+   LB（狩猟）／キーボード T・R も併用できる。L3はダッシュ専用で、回復の注射には使わない。 */
 var Y_LONG_PRESS = 0.4;
 var yBtnDown = false, yHoldTime = 0, yLongFired = false;
 function resetYBtn(){ yBtnDown = false; yHoldTime = 0; yLongFired = false; }
@@ -3374,8 +3998,9 @@ function updateYSyringe(gp, dt){
     var wasLong = yLongFired;
     resetYBtn();
     if (!wasLong){
+      /* Yは注射専用：使える場面だけ回復の注射を使う。
+         使えない場面で押しても何も起きない（武器切替は十字キー左右） */
       if (player.syrHeal > 0 && player.hp < maxHp()) useHealSyringe();
-      else cycleWeapon(1); /* 回復注射が使えない場面では従来のY＝武器切替 */
     }
   }
 }
@@ -3489,6 +4114,7 @@ function landThrowable(p){
     pendExplosions.push({ x: p.x, y: p.y, t: 0.55 });
     sfxTone(700, 420, 0.06, 0.08, 'square');
   } else if (p.type === 'molotov'){
+    noteCombatNoise(p.x, p.y, 8); /* 火炎瓶の破裂音：近くの住民が逃げる */
     fires.push({ x: p.x, y: p.y, t: 4.5, tick: 0 });
     explosionFx.push({ x: p.x, y: p.y, t: 0, fire: true });
     sfxTone(300, 90, 0.22, 0.16, 'sawtooth');
@@ -3508,6 +4134,7 @@ function sfxExplosion(){
   sfxTone(140, 40, 0.5, 0.3, 'sine');
 }
 function explodeGrenade(x, y){
+  noteCombatNoise(x, y, 12); /* 爆発音：近くの住民が逃げる。住民自身は範囲ダメージの対象に含まれない */
   sfxExplosion();
   explosionFx.push({ x: x, y: y, t: 0, fire: false });
   var R = 2.3;
@@ -3642,13 +4269,17 @@ function updatePlayer(dt, gp){
     if (Math.abs(ay) > 0.22) mz -= ay;
     /* 十字キー：上（12）カメラ／下（13）投擲物の選択／右（15）武器順送り／左（14）武器逆順（スナイパー構え中はズーム）のため、移動には割り当てない */
   }
+  /* ダッシュ解除：移動入力がなくなったら（スティックを戻す／キーを離す）ダッシュ状態を解く */
+  if (Math.hypot(mx, mz) < (rotMode === 'grid' ? 0.4 : 0.05)) player.sprint = false;
   if (rotMode === 'grid'){
     updateGridMove(dt, mx, mz);
   } else {
     var len = Math.hypot(mx, mz);
     if (len > 0.01){
       mx /= Math.max(1, len); mz /= Math.max(1, len);
-      var sp = (player.crouch ? (hasSkill('elephant', 4) ? 2.0 : 1.6) : 3.0) * dt;
+      /* ダッシュ中は通常速度の1.5倍（しゃがみ中はダッシュしない）。スタミナ制限なし。
+         視野角変化・画面の揺れは付けない（酔い対策）。察知・足音は既存の移動判定のまま */
+      var sp = (player.crouch ? (hasSkill('elephant', 4) ? 2.0 : 1.6) : (player.sprint ? 4.5 : 3.0)) * dt;
       var cos = Math.cos(player.angle), sin = Math.sin(player.angle);
       moveEntity(player, (cos * mz - sin * mx) * sp, (sin * mz + cos * mx) * sp, 0.22);
     }
@@ -3676,7 +4307,7 @@ function updatePlayer(dt, gp){
 }
 function updateGridMove(dt, mx, mz){
   if (gridStep){
-    gridStep.t += dt / 0.16;
+    gridStep.t += dt / (gridStep.dur || 0.16);
     if (gridStep.t >= 1){
       player.x = gridStep.tx; player.y = gridStep.ty; gridStep = null;
     } else {
@@ -3694,7 +4325,8 @@ function updateGridMove(dt, mx, mz){
   else { ox = -fy * Math.sign(mx); oy = fx * Math.sign(mx); }
   var ccx = Math.floor(player.x), ccy = Math.floor(player.y);
   if (!cellBlocked(ccx + ox, ccy + oy)){
-    gridStep = { fx: player.x, fy: player.y, tx: ccx + ox + 0.5, ty: ccy + oy + 0.5, t: 0 };
+    /* ダッシュ中は1マスの移動時間を1.5倍速にする（なめらか移動と同じ倍率） */
+    gridStep = { fx: player.x, fy: player.y, tx: ccx + ox + 0.5, ty: ccy + oy + 0.5, t: 0, dur: (player.sprint && !player.crouch) ? 0.16 / 1.5 : 0.16 };
   }
 }
 
@@ -3881,6 +4513,7 @@ function hurtPlayer(dmg){
   }
 }
 function enemyShoot(en, distP){
+  noteCombatNoise(en.x, en.y, 9); /* 敵の銃声：近くの住民が逃げる */
   if (en.hunter){
     /* ハンターの矢：静かで単発、そこそこ痛い */
     sfxBow(0.65);
@@ -3907,6 +4540,7 @@ function enemyShoot(en, distP){
 }
 /* 動物への射撃（襲ってくる動物への反撃。命中率・間隔は対プレイヤーと同水準） */
 function enemyShootAnimal(en, b, distA){
+  noteCombatNoise(en.x, en.y, 9); /* 動物への銃声も、近くの住民は戦闘と感じて逃げる */
   if (en.hunter){
     sfxBow(0.65);
     if (Math.random() < 0.45) damageBoar(b, 16, en);
@@ -4051,6 +4685,16 @@ function separateEnemies(){
 }
 
 /* --- animals（狼・ヤク） --- */
+function animalChargeMsg(b){
+  showMsg(b.kind === 'yak' ? 'ヤクが突進してくる！' : b.kind === 'leopard' ? '雪豹が突進してくる！' : '狼が突進してくる！', 1.8);
+}
+function isAnimalTarget(t){
+  if (!t) return false;
+  if (t === player) return true;
+  if (t.isPerson) return false;
+  if (civilians && civilians.indexOf(t) >= 0) return false;
+  return !!(enemies && enemies.indexOf(t) >= 0 && t.alive);
+}
 function updateBoar(b, dt){
   if (!b.alive){
     b.respawnT -= dt;
@@ -4071,7 +4715,7 @@ function updateBoar(b, dt){
         if (!isYak){
           var foe = null, fd = 1e9;
           enemies.forEach(function(en){
-            if (!en.alive) return;
+            if (!isAnimalTarget(en)) return; /* ベイトの襲撃先も敵兵だけ（住民・人物は選ばない） */
             var d = Math.hypot(en.x - bt.x, en.y - bt.y);
             if (d < fd){ fd = d; foe = en; }
           });
@@ -4088,11 +4732,14 @@ function updateBoar(b, dt){
           var dpB = Math.hypot(player.x - b.x, player.y - b.y);
           if (dpB < 2.8){ np = player; nd = dpB; }
           enemies.forEach(function(en){
-            if (!en.alive) return;
+            if (!isAnimalTarget(en)) return;
             var d = Math.hypot(en.x - b.x, en.y - b.y);
             if (d < 2.8 && d < nd){ np = en; nd = d; }
           });
-          if (np){ b.state = 'charge'; b.target = np; b.provoked = true; }
+          if (np && isAnimalTarget(np)){
+            b.state = 'charge'; b.target = np; b.provoked = true;
+            if (np === player) animalChargeMsg(b); /* ベイトのそばで牙をむいた場合も、襲撃者は野生の個体と分かるようにする */
+          }
         }
         return;
       }
@@ -4120,10 +4767,15 @@ function updateBoar(b, dt){
       if (d < huntRange && d < td){ tgt = en; td = d; }
     });
   }
-  if (b.state !== 'charge' && tgt){ b.state = 'charge'; b.target = tgt; }
+  if (tgt && !isAnimalTarget(tgt)) tgt = null; /* 念のための歯止め：対象はプレイヤー／敵兵だけ */
+  if (b.state !== 'charge' && tgt){
+    b.state = 'charge'; b.target = tgt;
+    if (tgt === player) animalChargeMsg(b); /* プレイヤーへ襲いかかる瞬間だけ、動物の名前で知らせる */
+  }
   if (b.state === 'charge'){
     var cur = b.target;
-    if (!cur || (cur !== player && !cur.alive) || Math.hypot(cur.x - b.x, cur.y - b.y) > (isYak ? 6 : b.provoked ? 11 : 8)){
+    /* 対象がプレイヤー／敵兵以外（住民・人物など）なら追跡も噛みつきもしない */
+    if (!isAnimalTarget(cur) || Math.hypot(cur.x - b.x, cur.y - b.y) > (isYak ? 6 : b.provoked ? 11 : 8)){
       b.state = 'wander'; b.target = null; b.waitT = 0.5; if (cur === player && !b.provoked) {} 
     } else {
       var dx = cur.x - b.x, dy = cur.y - b.y, d = Math.hypot(dx, dy);
@@ -4154,9 +4806,87 @@ function updateBoar(b, dt){
   var wsp = b.kind === 'yak' ? 0.5 : b.kind === 'leopard' ? 1.5 : 1.05;
   moveEntity(b, wx / wd * wsp * dt, wy / wd * wsp * dt, 0.3);
 }
-</script>
-<script>
-"use strict";
+
+/* --- 住民（モブ） ---
+   普段は定位置の周辺をゆっくり歩き回り、ときどき立ち止まる。
+   近くで戦闘が起きると（銃声・爆発の音／警戒中の敵／暴れている野生動物）、
+   危険から離れる方向へ走って逃げ、しばらく静かになったら元の周辺へ戻って歩き出す。
+   住民は civilians 配列の中だけで完結し、ダメージ・標的・察知の経路には一切入らない。 */
+function makeCivilian(def){
+  return {
+    x: def.x, y: def.y, homeX: def.x, homeY: def.y,
+    variant: def.v || 0, angle: Math.random() * 6.28,
+    tx: def.x, ty: def.y, waitT: Math.random() * 2,
+    state: 'wander', fleeT: 0, dangerX: def.x, dangerY: def.y, stuckT: 0
+  };
+}
+function civilianDanger(c){
+  /* 近くの危険があれば、その発生地点を返す（なければ null） */
+  var i, d;
+  if (game.time - combatNoise.t < 3.5){
+    d = Math.hypot(c.x - combatNoise.x, c.y - combatNoise.y);
+    if (d < combatNoise.r) return { x: combatNoise.x, y: combatNoise.y };
+  }
+  if (enemies) for (i = 0; i < enemies.length; i++){
+    var en = enemies[i];
+    if (en.alive && en.alert && Math.hypot(c.x - en.x, c.y - en.y) < 9) return { x: en.x, y: en.y };
+  }
+  if (boars) for (i = 0; i < boars.length; i++){
+    var b = boars[i];
+    if (b.alive && b.state === 'charge' && Math.hypot(c.x - b.x, c.y - b.y) < 7) return { x: b.x, y: b.y };
+  }
+  return null;
+}
+function updateCivilian(c, dt){
+  var danger = civilianDanger(c);
+  if (danger){
+    c.state = 'flee'; c.dangerX = danger.x; c.dangerY = danger.y; c.fleeT = 1.6;
+  }
+  if (c.state === 'flee'){
+    c.fleeT -= dt;
+    var dx = c.x - c.dangerX, dy = c.y - c.dangerY, dd = Math.hypot(dx, dy) || 1;
+    var spd = 2.9, ox = c.x, oy = c.y;
+    moveEntity(c, dx / dd * spd * dt, dy / dd * spd * dt, 0.22);
+    if (Math.hypot(c.x - ox, c.y - oy) < spd * dt * 0.25){
+      /* 壁に阻まれたら横へ逃がす */
+      moveEntity(c, -dy / dd * spd * dt, dx / dd * spd * dt, 0.22);
+    }
+    c.angle = lerpAngle(c.angle, Math.atan2(dy, dx), dt * 6);
+    if (c.fleeT <= 0 && !danger) c.state = 'return';
+    return;
+  }
+  if (c.state === 'return'){
+    var hx = c.homeX - c.x, hy = c.homeY - c.y, hd = Math.hypot(hx, hy);
+    if (hd < 0.6){
+      c.state = 'wander'; c.waitT = 0.5 + Math.random() * 1.5; c.tx = c.x; c.ty = c.y;
+      return;
+    }
+    c.angle = lerpAngle(c.angle, Math.atan2(hy, hx), dt * 5);
+    moveEntity(c, hx / hd * 1.7 * dt, hy / hd * 1.7 * dt, 0.22);
+    return;
+  }
+  /* wander：周辺をゆっくり歩く。立ち止まることもある */
+  if (c.waitT > 0){ c.waitT -= dt; return; }
+  var wx = c.tx - c.x, wy = c.ty - c.y, wd = Math.hypot(wx, wy);
+  if (wd < 0.35){
+    if (Math.random() < 0.45) c.waitT = 1 + Math.random() * 2.8;
+    c.tx = Math.max(1.2, Math.min(MW - 1.2, c.homeX + (Math.random() - 0.5) * 4.4));
+    c.ty = Math.max(1.2, Math.min(MH - 1.2, c.homeY + (Math.random() - 0.5) * 4.4));
+    return;
+  }
+  c.angle = lerpAngle(c.angle, Math.atan2(wy, wx), dt * 4);
+  var ox2 = c.x, oy2 = c.y;
+  moveEntity(c, wx / wd * 0.85 * dt, wy / wd * 0.85 * dt, 0.22);
+  if (Math.hypot(c.x - ox2, c.y - oy2) < 0.85 * dt * 0.2){
+    c.stuckT += dt;
+    if (c.stuckT > 0.8){
+      c.stuckT = 0;
+      c.tx = c.homeX + (Math.random() - 0.5) * 3;
+      c.ty = c.homeY + (Math.random() - 0.5) * 3;
+    }
+  } else c.stuckT = 0;
+}
+
 /* ---------------- Rendering ---------------- */
 var skyGrad = null, floorGrad = null, snowSkyGrad = null, snowFloorGrad = null;
 function buildGradients(){
@@ -4253,14 +4983,29 @@ function render(){
     var dist = side === 0 ? sdx - ddx : sdy - ddy;
     if (dist < 0.02) dist = 0.02;
     zbuf[x] = dist;
-    var lineH = H / dist;
-    var y0 = (H - lineH) / 2;
+ /* 酔い対策「大アップ止め」：変えるのは壁の見た目だけ。
+ 描画専用の距離 wallDist に下限を設け、壁に近づいても壁の縦描画が
+ 画面高の8割（H * 0.8）を超えて拡大しないところで止める。
+ lineH = H / wallDist が H * 0.8 以下 ⇔ wallDist >= 1 / 0.8。
+ 実距離 dist・zbuf・壁テクスチャの横位置・霧・当たり判定・移動は一切変えない。
+ 敵・動物・住民などのスプライトは対象外で、従来どおり実距離で描く。
+ 高さを止めた分、テクスチャは全高を lineH に潰して描かず、
+ 中央の帯だけを切り取って描く（texSrcY／texSrcH）。
+ 潰し方式だと近い列ほど縦圧縮率が変わり、距離の違う2面が接する建物の角で
+ 窓や屋根の線が折れて大きくゆがんで見えた。切り取り方式なら縦の縮尺が
+ 実距離どおり（H / dist / 256）で全列そろい、角でも模様がゆがまない。
+ dist >= wallDist の遠い壁では texSrcH = 256・texSrcY = 0 で従来と完全一致。 */
+ var wallDist = Math.max(dist, 1 / 0.8);
+ var lineH = H / wallDist;
+ var y0 = (H - lineH) / 2;
+ var texSrcH = 256 * dist / wallDist;
+ var texSrcY = (256 - texSrcH) / 2;
     var wallX = side === 0 ? player.y + dist * rdy : player.x + dist * rdx;
     wallX -= Math.floor(wallX);
     var texX = Math.floor(wallX * 256);
     if (side === 0 && rdx > 0) texX = 255 - texX;
     if (side === 1 && rdy < 0) texX = 255 - texX;
-    ctx.drawImage(wallTex[tile] || wallTex[1], texX, 0, 1, 256, x, y0, 1, lineH);
+    ctx.drawImage(wallTex[tile] || wallTex[1], texX, texSrcY, 1, texSrcH, x, y0, 1, lineH);
     if (side === 1){ ctx.fillStyle = 'rgba(10,20,15,.28)'; ctx.fillRect(x, y0, 1, lineH); }
     /* 距離の減衰＋軽い霧：遠い壁ほど地平線の色に霞ませる */
     if (dist > 4.5){
@@ -4274,7 +5019,13 @@ function render(){
   crates.forEach(function(t){ list.push({ img: t.outpost ? sprCrateSupply : sprCrate, x: t.x, y: t.y, hS: 0.6, wS: 0.85, low: true }); });
   bushes.forEach(function(t){ list.push({ img: t.snow ? sprBushSnow : sprBush, x: t.x, y: t.y, hS: 0.55, wS: 1.05, low: true }); });
   rocks.forEach(function(t){ list.push({ img: t.kind === 'snow' ? sprSnowMound : sprRock, x: t.x, y: t.y, hS: t.kind === 'snow' ? 0.5 : 0.72, wS: 1.0, low: true }); });
-  posts.forEach(function(t){ list.push({ img: sprPost, x: t.x, y: t.y, hS: 0.85, wS: 0.45, low: true }); });
+   posts.forEach(function(t){ list.push({ img: sprPost, x: t.x, y: t.y, hS: 0.85, wS: 0.45, low: true});});
+  garlands.forEach(function(t){
+    var gd2 = (t.x - player.x) * (t.x - player.x) + (t.y - player.y) * (t.y - player.y);
+    if (gd2 > 1225) return; /* 装飾は近距離（35セル）だけ描いて負荷を抑える */
+    list.push({ img: sprGarlands[t.v % sprGarlands.length], x: t.x, y: t.y, hS: 0.95, wS: 2.1, air: true });
+  });
+ if (typeof ALL_ENTRANCES!== 'undefined') ALL_ENTRANCES.forEach(function(t){ list.push({ img: sprGate, x: t.x, y: t.y, hS: 0.95, wS: 0.8, low: true});});
   ices.forEach(function(t){ list.push({ img: sprIce, x: t.x, y: t.y, hS: 0.24, wS: 1.6, low: true }); });
   TOWERS.forEach(function(t){ list.push({ img: sprTower, x: t.x, y: t.y, hS: 2.35, wS: 1.0, dim: t.stopped }); });
   list.push({ img: sprTransmitter, x: TRANSMITTER.x, y: TRANSMITTER.y, hS: 1.05, wS: 0.8, dim: gameCleared });
@@ -4309,7 +5060,10 @@ function render(){
     list.push({ img: b.alive ? (isYak ? sprYak : isLeo ? sprLeopard : sprWolf) : (isYak ? sprYakDead : isLeo ? sprLeopardDead : sprWolfDead), x: b.x, y: b.y,
                 hS: b.alive ? (isYak ? 0.85 : isLeo ? 0.55 : 0.58) : 0.26, wS: isYak ? 1.1 : isLeo ? 1.05 : 0.95, low: !b.alive, boar: b });
   });
-  list.forEach(function(s){ s.d2 = (s.x - player.x) * (s.x - player.x) + (s.y - player.y) * (s.y - player.y); });
+   if (civilians) civilians.forEach(function(c){
+ list.push({ img: sprCivilians[c.variant % sprCivilians.length], x: c.x, y: c.y, hS: 0.95, wS: 0.72});
+});
+ list.forEach(function(s){ s.d2 = (s.x - player.x) * (s.x - player.x) + (s.y - player.y) * (s.y - player.y);});
   list.sort(function(a, b){ return b.d2 - a.d2; });
   var invDet = 1 / (planeX * dirY - dirX * planeY);
   list.forEach(function(s){
@@ -4321,6 +5075,7 @@ function render(){
     var sh = size * s.hS, sw = size * s.wS;
     var sxC = (W / 2) * (1 + tx / ty);
     var bottom = H / 2 + size / 2;
+    if (s.air) bottom -= size * 0.6; /* ガーランドは頭上に渡す：足元ではなく頭の上に描く */
     var yTop = bottom - sh;
     var x0 = Math.floor(sxC - sw / 2), x1 = Math.floor(sxC + sw / 2);
     if (s.dim) ctx.globalAlpha = 0.45;
@@ -4718,8 +5473,27 @@ function drawMapOn(g, S, full){
     g.closePath(); g.fill();
     g.fillRect(o.cx * cw - 0.75, o.cy * chh - chh * 0.9, 1.5, chh * 1.1);
   });
-  alarms.forEach(function(al){
-    if (!al.active) return;
+  /* 囲いの入口の印（門の形）：拠点・要塞・放送本部の入口を常時出す。
+     目標マーカーや事件の印と同じく、未踏の場所でも隠さない（入口が
+     見つからないと進行できないため）。色は壁・拠点旗と被らない明るい黄 */
+  if (typeof ALL_ENTRANCES !== 'undefined'){
+    ALL_ENTRANCES.forEach(function(e){
+      var ex2 = e.x * cw, ey2 = e.y * chh;
+      var gw = Math.max(3.4, cw * 0.78), gh = Math.max(3.4, chh * 0.78);
+      g.fillStyle = '#ffe9a8';
+      g.strokeStyle = 'rgba(18,24,20,.9)'; g.lineWidth = Math.max(1, cw * 0.16);
+      g.beginPath();
+      g.moveTo(ex2 - gw / 2, ey2 + gh / 2);
+      g.lineTo(ex2 - gw / 2, ey2 - gh * 0.05);
+      g.quadraticCurveTo(ex2, ey2 - gh * 0.85, ex2 + gw / 2, ey2 - gh * 0.05);
+      g.lineTo(ex2 + gw / 2, ey2 + gh / 2);
+      g.closePath(); g.fill(); g.stroke();
+      g.fillStyle = '#7a2e1d';
+      g.beginPath(); g.arc(ex2, ey2 + gh * 0.08, Math.max(0.9, cw * 0.14), 0, 7); g.fill();
+    });
+  }
+   alarms.forEach(function(al){
+ if (!al.active) return;
     if (!full && !cellRevealed(al.cx, al.cy) && !al.marked) return;
     g.fillStyle = '#ff5a3c';
     g.fillRect(al.cx * cw + 1, al.cy * chh + 1, cw - 2, chh - 2);
@@ -4787,8 +5561,23 @@ function drawMapOn(g, S, full){
     g.fillStyle = '#fff'; g.font = 'bold ' + Math.max(8, cw) + 'px sans-serif'; g.textAlign = 'center';
     g.fillText('!', ex, ey + Math.max(3, cw * 0.35));
   }
-  g.fillStyle = '#fff';
-  g.beginPath(); g.arc(player.x * cw, player.y * chh, Math.max(2.2, cw * 0.4), 0, 7); g.fill();
+  /* 進行方向マーカー（ミニマップ）：現在の目標に黄色いダイヤを出す。
+     目標は常に知らせる（カルマイベントの印と同じ扱い）。OFF設定／クリア後は出さない */
+  if (objectiveMarkerOn){
+    var objT = currentObjectiveTarget();
+    if (objT){
+      var ox2 = objT.x * cw, oy2 = objT.y * chh, orr2 = Math.max(4, cw * 0.85);
+      g.fillStyle = '#ffd23c';
+      g.beginPath();
+      g.moveTo(ox2, oy2 - orr2); g.lineTo(ox2 + orr2, oy2); g.lineTo(ox2, oy2 + orr2); g.lineTo(ox2 - orr2, oy2);
+      g.closePath(); g.fill();
+      g.strokeStyle = 'rgba(18,24,20,.9)'; g.lineWidth = 1.2; g.stroke();
+      g.fillStyle = '#1c2a24';
+      g.beginPath(); g.arc(ox2, oy2, Math.max(1.2, orr2 * 0.28), 0, 7); g.fill();
+    }
+  }
+   g.fillStyle = '#fff';
+ g.beginPath(); g.arc(player.x * cw, player.y * chh, Math.max(2.2, cw * 0.4), 0, 7); g.fill();
   g.strokeStyle = '#fff'; g.lineWidth = 1.6;
   g.beginPath();
   g.moveTo(player.x * cw, player.y * chh);
@@ -4797,9 +5586,74 @@ function drawMapOn(g, S, full){
 }
 var MM_SCALE = 1; /* ミニマップの実解像度倍率（resizeCanvasで表示サイズ×DPRに追従させる） */
 function drawMinimap(){
-  mm.setTransform(MM_SCALE, 0, 0, MM_SCALE, 0, 0);
-  drawMapOn(mm, 148, false);
+ mm.setTransform(MM_SCALE, 0, 0, MM_SCALE, 0, 0);
+ drawMapOn(mm, 148, false);
 }
+
+var objMarkerEl = document.getElementById('objectiveMarker'),
+    objNameEl = document.getElementById('objName'),
+    objDistEl = document.getElementById('objDist'),
+    objArrowLEl = document.getElementById('objArrowL'),
+    objArrowREl = document.getElementById('objArrowR');
+var lastObjMarkerKey = '';
+function hideObjectiveMarker(){
+  if (objMarkerEl && objMarkerEl.style.display !== 'none') objMarkerEl.style.display = 'none';
+  lastObjMarkerKey = '';
+}
+function updateObjectiveMarker(){
+  if (!objMarkerEl || !player) { hideObjectiveMarker(); return; }
+  if (!objectiveMarkerOn || game.state !== 'play' || player.dead){ hideObjectiveMarker(); return; }
+  var t = currentObjectiveTarget();
+  if (!t){ hideObjectiveMarker(); return; }
+  var dx = t.x - player.x, dy = t.y - player.y;
+  var dist = Math.hypot(dx, dy);
+  if (dist < 1.0){ hideObjectiveMarker(); return; } /* 目標の真上では出さない */
+  var p = projectToScreen(t.x, t.y);
+  var mx, my, arrowL = '', arrowR = '';
+  /* 端寄せの余白：以前は左右34px（画面幅の約7%）だったが、テレビのオーバー
+     スキャンやブラウザのズームで画面端が見切れる環境では、画面外の目標を
+     示すマーカーがダイヤもラベルも視野の外に出て「目的地がでなくなった」
+     ように見えた。ダイヤとラベル全体が安全域に入るよう内側へ寄せる */
+  var MX = 64, TOP = 44, BOT = H - 56;
+  if (p && p.sx >= MX && p.sx <= W - MX){
+    /* 画面内：目標の位置（少し上）にそのまま出す */
+    mx = p.sx;
+    my = (H / 2 + p.size / 2) - p.size * 1.05 - 10;
+    if (my < TOP) my = TOP;
+    if (my > BOT) my = BOT;
+  } else {
+    /* 画面外：画面端に寄せる。左右は目標の相対角の符号で決める
+       （このエンジンでは相対角が正＝画面右側） */
+    var rel = Math.atan2(dy, dx) - player.angle;
+    while (rel > Math.PI) rel -= Math.PI * 2;
+    while (rel < -Math.PI) rel += Math.PI * 2;
+    if (p && rel > -Math.PI / 2 && rel < Math.PI / 2){
+      /* 前方だが視界の外：投影位置を端に丸める */
+      mx = Math.max(MX, Math.min(W - MX, p.sx));
+      my = (H / 2 + p.size / 2) - p.size * 1.05 - 10;
+      if (my < TOP) my = TOP;
+      if (my > BOT) my = BOT;
+    } else {
+      mx = rel >= 0 ? W - MX : MX;
+      my = H * 0.42;
+    }
+    if (mx <= MX) arrowL = '◀ '; else arrowR = ' ▶';
+  }
+  objMarkerEl.style.display = 'block';
+  objMarkerEl.style.left = (mx / W * 100) + '%';
+  objMarkerEl.style.top = (my / H * 100) + '%';
+  var distTxt = Math.max(1, Math.round(dist * 10)) + 'm';
+  var key = t.name + '|' + distTxt + '|' + arrowL + '|' + arrowR;
+  if (key !== lastObjMarkerKey){
+    lastObjMarkerKey = key;
+    objNameEl.textContent = t.name;
+    objDistEl.textContent = distTxt;
+    objArrowLEl.textContent = arrowL;
+    objArrowREl.textContent = arrowR;
+  }
+}
+
+
 
 /* ---------------- HUD ---------------- */
 var hpBarEl = document.getElementById('hpBar'),
@@ -4878,10 +5732,11 @@ var titleEl = document.getElementById('titleScreen'),
     pauseEl = document.getElementById('pauseScreen'),
     resultEl = document.getElementById('resultScreen'),
     endingEl = document.getElementById('endingScreen'),
-    craftEl = document.getElementById('craftScreen');
+    craftEl = document.getElementById('craftScreen'),
+ mapEl = document.getElementById('mapScreen');
 function showOnly(el){
-  [titleEl, pauseEl, resultEl, endingEl, craftEl].forEach(function(o){ o.hidden = o !== el; });
-  if (!el) [titleEl, pauseEl, resultEl, endingEl, craftEl].forEach(function(o){ o.hidden = true; });
+   [titleEl, pauseEl, resultEl, endingEl, craftEl, mapEl].forEach(function(o){ o.hidden = o!== el;});
+ if (!el) [titleEl, pauseEl, resultEl, endingEl, craftEl, mapEl].forEach(function(o){ o.hidden = true;});
 }
 function refreshContinueBtn(){
   var sv = loadSave();
@@ -4925,6 +5780,383 @@ function closePause(){
   game.state = 'play';
   showOnly(null);
 }
+/* ---------------- 大きいマップ（全体） ----------------
+   ポーズ画面の「大きいマップ」から開く（キーボードは M でも開ける。
+   パッドのボタン割り当ては増やさない：L3＝ダッシュ等は現行のまま）。
+   開いている間は game.state = 'bigmap' でワールド更新が止まる（ポーズと同じ扱い）。
+   閉じるとポーズ画面に戻る。描画は静止画のみ：開いたときと、選択中のマークや
+   目的地が変わったときだけ描き直す（アニメーションは付けない＝酔い対策にも沿う）。
+   地図の土台はミニマップと同じ drawMapOn（full=true）を使い、その上に
+   マークと地名ラベルを重ねる。 */
+var BIGMAP_S = 560;               /* マップの論理サイズ（px） */
+var bigMapSelKey = null;          /* 選択中マークのキー */
+function bigMapMarks(){
+  var marks = [];
+  OUTPOSTS.forEach(function(o){
+    marks.push({
+      key: 'outpost:' + o.id, kind: 'outpost', x: o.cx, y: o.cy, name: o.name,
+      sub: liberated[o.id] ? '解放済み（ファストトラベル可）' : '未解放',
+      color: liberated[o.id] ? '#58b06a' : '#e5482e'
+    });
+  });
+  TOWERS.forEach(function(t){
+    marks.push({
+      key: 'tower:' + t.id, kind: 'tower', x: t.x, y: t.y, name: t.name,
+      sub: t.stopped ? '停止済み（ファストトラベル可）' : '稼働中',
+      color: t.stopped ? '#57b8a2' : '#f2b63c'
+    });
+  });
+  marks.push({
+    key: 'hq', kind: 'hq', x: HQ.cx, y: HQ.cy, name: HQ.name,
+    sub: gameCleared ? '制圧済み' : '最終目標', color: '#e5482e'
+  });
+  /* 発生中の事件（カルマイベント）：ミニマップと同じ紫の印。発生中だけ出し、
+     目的地にもできる（事件が終わると目的地は自動で解除される） */
+  if (activeEvent){
+    marks.push({
+      key: 'event', kind: 'event', x: activeEvent.x, y: activeEvent.y,
+      name: '事件：' + activeEvent.label,
+      sub: '発生中（カルマイベント）', color: '#b45ae0'
+    });
+  }
+  /* 本筋の目標に一番近いマークを「本筋の目標」として印を付ける
+     （第1段階は要塞そのもの、第2段階は送信設備のそばの放送本部が該当する） */
+  var main = storyObjectiveTarget();
+  if (main){
+    var best = null, bd = 1e9;
+    marks.forEach(function(m){
+      if (m.kind === 'event') return; /* 事件は本筋の目標の候補にしない */
+      var d = Math.hypot(m.x - main.x, m.y - main.y);
+      if (d < bd){ bd = d; best = m; }
+    });
+    if (best && bd < 5) best.isMain = true;
+  }
+  return marks;
+}
+function bigMapMarkByKey(marks, key){
+  for (var i = 0; i < marks.length; i++) if (marks[i].key === key) return marks[i];
+  return null;
+}
+/* 隣接マーク（拠点Aと西の塔など）のラベルが重ならないよう、寄せる側を決める */
+var BIGMAP_LABEL_SIDE = { 'outpost:A': 'left', 'tower:T1': 'right', 'outpost:C': 'left', 'tower:T2': 'right' };
+function drawBigMap(){
+  var cvEl = document.getElementById('bigMapCanvas');
+  if (!cvEl) return;
+  var back = Math.round(BIGMAP_S * Math.min(2, window.devicePixelRatio || 1));
+  if (cvEl.width !== back || cvEl.height !== back){ cvEl.width = back; cvEl.height = back; }
+  var g = cvEl.getContext('2d');
+  g.setTransform(back / BIGMAP_S, 0, 0, back / BIGMAP_S, 0, 0);
+  drawMapOn(g, BIGMAP_S, true);
+  var S = BIGMAP_S, cw = S / MW, chh = S / MH;
+  var marks = bigMapMarks();
+  function px(m){ return m.x * cw; }
+  function py(m){ return m.y * chh; }
+  /* --- マーク本体 --- */
+  marks.forEach(function(m){
+    var x = px(m), y = py(m);
+    var isWp = !!(waypoint && waypoint.key === m.key);
+    var isSel = (m.key === bigMapSelKey);
+    if (m.kind === 'outpost'){
+      /* 旗（ミニマップと同じ形を大きく） */
+      g.fillStyle = m.color;
+      g.strokeStyle = 'rgba(12,18,14,.85)'; g.lineWidth = 1.6;
+      g.beginPath();
+      g.moveTo(x, y - 13); g.lineTo(x + 10, y - 6); g.lineTo(x, y - 6);
+      g.closePath(); g.fill(); g.stroke();
+      g.fillStyle = '#20291f';
+      g.fillRect(x - 1.1, y - 13, 2.2, 17);
+    } else if (m.kind === 'tower'){
+      /* 鐘の塔：屋根＋鐘の形。拠点と重なる塔は少しずらして描き、本当の位置に点を残す */
+      var ox = x, oy = y;
+      if (m.key === 'tower:T1'){ ox += 9; oy -= 8; }
+      if (m.key === 'tower:T2'){ ox += 9; oy -= 8; }
+      g.fillStyle = 'rgba(12,18,14,.9)';
+      g.beginPath(); g.arc(x, y, 2, 0, 7); g.fill();
+      g.fillStyle = m.color;
+      g.strokeStyle = 'rgba(12,18,14,.85)'; g.lineWidth = 1.6;
+      g.beginPath();
+      g.moveTo(ox - 8, oy - 4); g.lineTo(ox, oy - 13); g.lineTo(ox + 8, oy - 4);
+      g.closePath(); g.fill(); g.stroke();
+      g.beginPath(); g.arc(ox, oy + 1, 5.2, Math.PI * 0.95, Math.PI * 2.05); g.lineTo(ox + 3.4, oy + 6); g.lineTo(ox - 3.4, oy + 6); g.closePath(); g.fill(); g.stroke();
+      g.fillRect(ox - 1, oy + 6, 2, 3);
+    } else if (m.kind === 'event'){
+      /* 事件（カルマイベント）：紫の菱形＋！（ミニマップと同じ印を大きく） */
+      var er2 = 11;
+      g.fillStyle = '#b45ae0';
+      g.strokeStyle = '#ffffff'; g.lineWidth = 1.6;
+      g.beginPath();
+      g.moveTo(x, y - er2); g.lineTo(x + er2, y); g.lineTo(x, y + er2); g.lineTo(x - er2, y);
+      g.closePath(); g.fill(); g.stroke();
+      g.fillStyle = '#ffffff';
+      g.font = '700 15px sans-serif'; g.textAlign = 'center';
+      g.fillText('!', x, y + 5.5);
+      g.textAlign = 'left';
+    } else {
+      /* 放送本部：赤い星（ミニマップと同じ） */
+      var hr = 10;
+      g.fillStyle = m.color;
+      g.strokeStyle = '#ffd98a'; g.lineWidth = 1.6;
+      g.beginPath();
+      for (var si = 0; si < 10; si++){
+        var sa = -Math.PI / 2 + si * Math.PI / 5, sr = si % 2 ? hr * 0.45 : hr;
+        var sx2 = x + Math.cos(sa) * sr, sy2 = y + Math.sin(sa) * sr;
+        if (si === 0) g.moveTo(sx2, sy2); else g.lineTo(sx2, sy2);
+      }
+      g.closePath(); g.fill(); g.stroke();
+    }
+    /* いま指している目標（目的地または本筋の目標）には黄色い輪 */
+    var isTarget = isWp || (!waypoint && m.isMain);
+    if (isTarget){
+      g.strokeStyle = '#ffd23c'; g.lineWidth = 2.6;
+      g.beginPath(); g.arc(x, y - 3, 15, 0, 7); g.stroke();
+    }
+    /* 選択中は白い輪 */
+    if (isSel){
+      g.strokeStyle = '#ffffff'; g.lineWidth = 2.4;
+      g.beginPath(); g.arc(x, y - 3, 19, 0, 7); g.stroke();
+      g.strokeStyle = 'rgba(12,18,14,.8)'; g.lineWidth = 1.2;
+      g.beginPath(); g.arc(x, y - 3, 22, 0, 7); g.stroke();
+    }
+  });
+  /* --- 地名ラベル（マークの上に重ねて描く。背景つきで読みやすく） --- */
+  g.textBaseline = 'alphabetic';
+  marks.forEach(function(m){
+    var x = px(m), y = py(m);
+    var isWp = !!(waypoint && waypoint.key === m.key);
+    var sub = m.sub;
+    if (isWp) sub = '目的地に設定中';
+    else if (m.isMain && !waypoint) sub = '本筋の目標 ・ ' + m.sub;
+    else if (m.isMain && waypoint) sub = '本筋の目標 ・ ' + m.sub;
+    g.font = '700 15px "Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic",sans-serif';
+    var wName = g.measureText(m.name).width;
+    g.font = '11px "Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic",sans-serif';
+    var wSub = g.measureText(sub).width;
+    var w = Math.max(wName, wSub) + 12;
+    var side = BIGMAP_LABEL_SIDE[m.key] || 'center';
+    var lx = side === 'left' ? x - 14 - w : side === 'right' ? x + 14 : x - w / 2;
+    lx = Math.max(3, Math.min(S - w - 3, lx));
+    var ly = Math.max(3, y - 40);
+    g.fillStyle = 'rgba(8,14,11,.78)';
+    g.beginPath();
+    if (g.roundRect) g.roundRect(lx, ly, w, 31, 5); else g.rect(lx, ly, w, 31);
+    g.fill();
+    g.textAlign = 'left';
+    g.font = '700 15px "Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic",sans-serif';
+    g.fillStyle = isWp || (m.isMain && !waypoint) ? '#ffd98a' : '#f2f6f2';
+    g.fillText(m.name, lx + 6, ly + 15);
+    g.font = '11px "Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic",sans-serif';
+    g.fillStyle = '#cfe0d4';
+    g.fillText(sub, lx + 6, ly + 28);
+  });
+  /* --- 入口のラベル（門の印は drawMapOn が描く。ここで「入口」の文字を添える） --- */
+  if (typeof ALL_ENTRANCES !== 'undefined'){
+    g.font = '700 9.5px "Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic",sans-serif';
+    ALL_ENTRANCES.forEach(function(e){
+      var ex3 = e.x * cw, ey3 = e.y * chh;
+      var tw = g.measureText('入口').width + 7;
+      var lx3 = Math.max(2, Math.min(S - tw - 2, ex3 - tw / 2));
+      var ly3 = Math.max(2, Math.min(S - 14, ey3 + chh * 0.62));
+      g.fillStyle = 'rgba(8,14,11,.78)';
+      g.beginPath();
+      if (g.roundRect) g.roundRect(lx3, ly3, tw, 13, 3); else g.rect(lx3, ly3, tw, 13);
+      g.fill();
+      g.fillStyle = '#ffe9a8'; g.textAlign = 'left';
+      g.fillText('入口', lx3 + 3.5, ly3 + 10);
+    });
+  }
+  /* --- 自分の位置と向き（白い三角。drawMapOnの小さい印の上に大きく描き直す） --- */
+  if (player){
+    var pxx = player.x * cw, pyy = player.y * chh, pa = player.angle;
+    g.fillStyle = '#ffffff';
+    g.strokeStyle = 'rgba(12,18,14,.9)'; g.lineWidth = 1.8;
+    g.beginPath();
+    g.moveTo(pxx + Math.cos(pa) * 12, pyy + Math.sin(pa) * 12);
+    g.lineTo(pxx + Math.cos(pa + 2.5) * 8.5, pyy + Math.sin(pa + 2.5) * 8.5);
+    g.lineTo(pxx + Math.cos(pa - 2.5) * 8.5, pyy + Math.sin(pa - 2.5) * 8.5);
+    g.closePath(); g.fill(); g.stroke();
+  }
+  /* --- 北の印（マップの上が北） --- */
+  g.fillStyle = 'rgba(8,14,11,.78)';
+  g.beginPath();
+  if (g.roundRect) g.roundRect(S - 47, 6, 41, 22, 5); else g.rect(S - 47, 6, 41, 22);
+  g.fill();
+  g.fillStyle = '#f2f6f2'; g.font = '700 13px sans-serif'; g.textAlign = 'center';
+  g.fillText('北 ↑', S - 26, 21);
+  refreshBigMapInfo(marks);
+}
+function refreshBigMapInfo(marks){
+  marks = marks || bigMapMarks();
+  var info = document.getElementById('bigMapInfo');
+  var setBtn = document.getElementById('bigMapSetBtn');
+  var mainBtn = document.getElementById('bigMapMainBtn');
+  if (mainBtn) mainBtn.disabled = !waypoint;
+  var m = bigMapMarkByKey(marks, bigMapSelKey);
+  if (!info) return;
+  if (!m){ info.textContent = 'マークがありません'; if (setBtn) setBtn.disabled = true; return; }
+  if (setBtn) setBtn.disabled = false;
+  var dist = player ? Math.max(1, Math.round(Math.hypot(m.x - player.x, m.y - player.y) * 10)) : 0;
+  var isWp = !!(waypoint && waypoint.key === m.key);
+  var act;
+  if (isWp){ act = '目的地に設定中（もう一度選ぶと解除）'; if (setBtn) setBtn.textContent = '目的地を解除する'; }
+  else if (m.isMain && waypoint){ act = '選ぶと本筋の目標に戻る'; if (setBtn) setBtn.textContent = '本筋の目標に戻す'; }
+  else if (m.isMain){ act = 'いま指している本筋の目標'; if (setBtn){ setBtn.textContent = '本筋の目標を表示中'; setBtn.disabled = true; } }
+  else { act = '選ぶと目的地に設定'; if (setBtn) setBtn.textContent = '目的地に設定する'; }
+  info.innerHTML = '';
+  var b = document.createElement('b'); b.textContent = m.name;
+  info.appendChild(b);
+  var span = document.createElement('span');
+  span.className = 'mapSub';
+  span.textContent = ' ― ' + m.sub + ' ／ ここから約 ' + dist + 'm ／ ' + act;
+  info.appendChild(span);
+}
+/* 選択中のマークを目的地にする／解除する（本筋の目標を選ぶと本筋に戻る） */
+function decideBigMapMark(){
+  var marks = bigMapMarks();
+  var m = bigMapMarkByKey(marks, bigMapSelKey);
+  if (!m) return;
+  if (m.isMain || (waypoint && waypoint.key === m.key)){
+    if (waypoint){
+      waypoint = null;
+      writeSave();
+      showMsg('目的地を解除した ― 本筋の目標に戻った', 2.2);
+      sfxTone(520, 392, 0.14, 0.09, 'sine');
+    }
+  } else {
+    waypoint = { key: m.key, x: m.x, y: m.y, name: m.name };
+    /* 目的地を設定したのに進行方向マーカーがOFFだと、画面にもミニマップにも
+       一切出ず「目的地がでなくなった」状態になる。マーカー表示がOFFのときは
+       目的地の設定に合わせてONに戻す（ポーズ画面のプルダウンはパッドの
+       左右操作でも値が変わるため、意図せずOFFのまま保存されている場合の救済） */
+    var markerWasOff = !objectiveMarkerOn;
+    if (markerWasOff){ objectiveMarkerOn = true; syncObjectiveMarkerUI(); }
+    writeSave();
+    showMsg('目的地を設定：' + m.name + ' ― マーカーが目的地を指す' + (markerWasOff ? '（マーカー表示もONにした）' : ''), 2.4);
+    sfxMark();
+  }
+  drawBigMap();
+}
+/* 方向キーで「その方向に一番近いマーク」へ選択を移す */
+function moveBigMapSelection(dir){
+  var marks = bigMapMarks();
+  if (!marks.length) return;
+  var cur = bigMapMarkByKey(marks, bigMapSelKey);
+  if (!cur){ bigMapSelKey = marks[0].key; drawBigMap(); return; }
+  var vx = dir === 'right' ? 1 : dir === 'left' ? -1 : 0;
+  var vy = dir === 'down' ? 1 : dir === 'up' ? -1 : 0;
+  var best = null, bestScore = Infinity;
+  marks.forEach(function(m){
+    if (m.key === cur.key) return;
+    var dx = m.x - cur.x, dy = (m.y - cur.y) * (MW / MH); /* マップ表示の縦横比に合わせて補正 */
+    var along = dx * vx + dy * vy;
+    if (along <= 0.2) return;
+    var lat = Math.abs(dx * vy - dy * vx);
+    var score = along + lat * 2.2;
+    if (score < bestScore){ bestScore = score; best = m; }
+  });
+  if (best){ bigMapSelKey = best.key; drawBigMap(); }
+}
+function openBigMap(){
+  if (game.state !== 'pause' && game.state !== 'play') return;
+  if (!player) return;
+  var prevState = game.state;
+  if (document.pointerLockElement) document.exitPointerLock();
+  mouseFire = false;
+  try {
+    /* 初期選択：目的地があればそのマーク、なければ本筋の目標のマーク */
+    var marks = bigMapMarks();
+    var init = null;
+    if (waypoint) init = bigMapMarkByKey(marks, waypoint.key);
+    if (!init){ for (var i = 0; i < marks.length; i++) if (marks[i].isMain){ init = marks[i]; break; } }
+    if (!init && marks.length){
+      var bd = Infinity;
+      marks.forEach(function(m){
+        var d = Math.hypot(m.x - player.x, m.y - player.y);
+        if (d < bd){ bd = d; init = m; }
+      });
+    }
+    bigMapSelKey = init ? init.key : null;
+    showOnly(mapEl);
+    drawBigMap();
+  } catch (err) {
+    /* 開く途中で例外が出ても、状態だけ 'bigmap' に進んだまま画面はポーズの
+       ままで固まらないようにする（そうなるとボタンは二度と反応しなくなる）。
+       元の状態と画面に戻し、押し直せるようにする。 */
+    game.state = prevState;
+    showOnly(prevState === 'pause' ? pauseEl : null);
+    return;
+  }
+  /* 状態の切り替えは、地図の準備と描画が全部成功してから最後に行う */
+  game.state = 'bigmap';
+  var cvEl = document.getElementById('bigMapCanvas');
+  if (cvEl && cvEl.focus) try { cvEl.focus({ preventScroll: true }); } catch (err) { cvEl.focus(); }
+}
+function closeBigMap(){
+  if (game.state !== 'bigmap') return;
+  /* ポーズ画面に戻る（openPause は state='play' のときだけ通るので、
+     一瞬だけ play に戻してから開き直す。中身の再表示は openPause に任せる） */
+  game.state = 'play';
+  openPause();
+  var mb = document.getElementById('openMapBtn');
+  if (mb) setPauseFocus(mb);
+}
+var bigMapPadStickAt = 0;
+function updateBigMapPadNav(gp, now){
+  /* エッジは最初に全部読み切る（pause画面と同じ理由） */
+  var eR = padEdge(gp, 15), eL = padEdge(gp, 14), eD = padEdge(gp, 13), eU = padEdge(gp, 12);
+  var eA = padEdge(gp, 0), eB = padEdge(gp, 1), eStart = padEdge(gp, 9);
+  if (eB || eStart){ closeBigMap(); return; }
+  var dir = null;
+  if (eR) dir = 'right';
+  else if (eL) dir = 'left';
+  else if (eD) dir = 'down';
+  else if (eU) dir = 'up';
+  if (!dir){
+    var ax = gp.axes && gp.axes[0] ? gp.axes[0] : 0;
+    var ay = gp.axes && gp.axes[1] ? gp.axes[1] : 0;
+    if ((Math.abs(ax) > 0.6 || Math.abs(ay) > 0.6) && now - bigMapPadStickAt > 280){
+      if (Math.abs(ax) >= Math.abs(ay)) dir = ax > 0 ? 'right' : 'left';
+      else dir = ay > 0 ? 'down' : 'up';
+      bigMapPadStickAt = now;
+    }
+  }
+  if (dir){ moveBigMapSelection(dir); return; }
+  if (eA) decideBigMapMark();
+}
+/* マウス／タッチ：触れた位置に一番近いマークを選ぶ。クリック／タップで決定 */
+function bigMapEventMark(e){
+  var cvEl = document.getElementById('bigMapCanvas');
+  var r = cvEl.getBoundingClientRect();
+  if (!r.width || !r.height) return null;
+  var lx = (e.clientX - r.left) / r.width * BIGMAP_S;
+  var ly = (e.clientY - r.top) / r.height * BIGMAP_S;
+  var marks = bigMapMarks();
+  var cw = BIGMAP_S / MW, chh = BIGMAP_S / MH;
+  var best = null, bd = Infinity;
+  marks.forEach(function(m){
+    var d = Math.hypot(m.x * cw - lx, m.y * chh - ly);
+    if (d < bd){ bd = d; best = m; }
+  });
+  return bd <= 34 ? best : null;
+}
+document.getElementById('bigMapCanvas').addEventListener('mousemove', function(e){
+  if (game.state !== 'bigmap') return;
+  var m = bigMapEventMark(e);
+  if (m && m.key !== bigMapSelKey){ bigMapSelKey = m.key; drawBigMap(); }
+});
+document.getElementById('bigMapCanvas').addEventListener('click', function(e){
+  if (game.state !== 'bigmap') return;
+  var m = bigMapEventMark(e);
+  if (m){ bigMapSelKey = m.key; decideBigMapMark(); }
+});
+document.getElementById('bigMapSetBtn').addEventListener('click', function(){ decideBigMapMark(); });
+document.getElementById('bigMapMainBtn').addEventListener('click', function(){
+  if (!waypoint) return;
+  waypoint = null;
+  writeSave();
+  showMsg('目的地を解除した ― 本筋の目標に戻った', 2.2);
+  drawBigMap();
+});
+document.getElementById('bigMapCloseBtn').addEventListener('click', function(){ closeBigMap(); });
 /* ---------------- クラフトパネル（注射作成専用） ----------------
    CARRY YOUのクラフト画面と同じ形：プレイ中に専用ボタンで開き、
    開いている間は game.state = 'craft' にしてワールド更新を止める。
@@ -5387,6 +6619,7 @@ document.getElementById('syrHealBtn').addEventListener('click', function(){ craf
 document.getElementById('cpSyrHuntBtn').addEventListener('click', function(){ craftSyringe('hunt'); });
 document.getElementById('cpSyrHealBtn').addEventListener('click', function(){ craftSyringe('heal'); });
 document.getElementById('craftCloseBtn').addEventListener('click', function(){ closeCraftPanel(); });
+document.getElementById('openMapBtn').addEventListener('click', function(){ openBigMap();});
 document.getElementById('jumpSkillBtn').addEventListener('click', function(){
   var b = document.querySelector('#tigerList button:not([disabled]), #eleList button:not([disabled])');
   jumpToSection('secSkill', b);
@@ -5438,7 +6671,15 @@ function setSnowfall(on){
   document.getElementById('snowSelTitle').value = on ? 'on' : 'off';
 }
 document.getElementById('snowSel').addEventListener('change', function(e){ setSnowfall(e.target.value === 'on'); });
-document.getElementById('snowSelTitle').addEventListener('change', function(e){ setSnowfall(e.target.value === 'on'); });
+document.getElementById('snowSelTitle').addEventListener('change', function(e){ setSnowfall(e.target.value === 'on');});
+function setObjectiveMarker(on){
+ objectiveMarkerOn =!!on;
+ syncObjectiveMarkerUI();
+ /* 難易度と同じ扱い：プレイ中・ポーズ中の切替は即時反映し、そのままセーブにも残す */
+ if (game.state === 'play' || game.state === 'pause') writeSave();
+ updateObjectiveMarker();
+}
+document.getElementById('objMarkerSel').addEventListener('change', function(e){ setObjectiveMarker(e.target.value === 'on');});
 
 /* ---------------- Fullscreen & 解像度追従 ----------------
    ぼやけ対策：キャンバスの実解像度を「表示サイズ × デバイスピクセル密度」に
@@ -5552,7 +6793,7 @@ function loop(now){
         if (padEdge(gp, 13)) cycleThrowable(); /* 十字キー下：投擲物の選択 */
         if (padEdge(gp, 5)) throwSelected();   /* RB：投げる */
         if (padEdge(gp, 4)) useHuntSyringe();  /* LB：狩猟の注射 */
-        if (padEdge(gp, 10)) useHealSyringe(); /* L3：回復の注射（Viewはクラフト専用になったため、空いていたL3へ移設） */
+        if (padEdge(gp, 10)){ player.sprint = !player.sprint; } /* L3：ダッシュ切替（トグル式。もう一度押すか、スティックを戻すと解除。回復の注射はY短押し／Rキーが担う） */
         if (padEdge(gp, 8)) openCraftPanel();  /* View（Back）：クラフトパネルを開く（CARRY YOUと同じ割り当て） */
         if (game.state === 'play') updatePlayer(dt, gp);
       }
@@ -5564,11 +6805,13 @@ function loop(now){
       enemies.forEach(function(en){ updateEnemy(en, dt); });
       separateEnemies();
       boars.forEach(function(b){ updateBoar(b, dt); });
+      if (civilians) civilians.forEach(function(c){ updateCivilian(c, dt); });
       updateInteract(dt, gp);
       updateCameraMarking(dt);
       updateThrowables(dt);
       updateEvents(dt);
       markRevealed();
+      checkWaypointArrival();
     }
     if (dmgFlash > 0) dmgFlash = Math.max(0, dmgFlash - dt * 1.6);
     if (muzzle > 0) muzzle -= dt;
@@ -5583,6 +6826,9 @@ function loop(now){
       if (padEdge(gp, 9)) closePause();
       else if (game.state === 'pause') updatePausePadNav(gp, now);
     }
+  } else if (game.state === 'bigmap'){
+    /* 大きいマップ表示中はワールドを更新しない（ポーズと同じ扱い） */
+    if (gp) updateBigMapPadNav(gp, now);
   } else if (game.state === 'craft'){
     /* クラフトパネル表示中はワールドを更新しない（CARRY YOU式にゲームが止まる） */
     if (gp) updateCraftPadNav(gp, now);
@@ -5595,7 +6841,8 @@ function loop(now){
   } else if (game.state === 'ending'){
     render();
   }
-  if (game.state === 'play' || game.state === 'pause' || game.state === 'craft') render();
+  updateObjectiveMarker();
+  if (game.state === 'play' || game.state === 'pause' || game.state === 'craft' || game.state === 'bigmap') render();
 }
 resetGame(!!loadSave());
 game.state = 'title';
