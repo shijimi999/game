@@ -216,7 +216,6 @@
       .craftrow .cname{ font-weight:700; }
       .craftrow .cdesc{ color:var(--muted); font-size:12.5px; margin-top:2px; line-height:1.5; }
       .pips{ letter-spacing:.18em; color:var(--accent); font-size:13px; white-space:nowrap; }
-      .travelGrid{ display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
       .skillCols{ display:grid; grid-template-columns:1fr 1fr; gap:0 18px; }
       @media (max-width:560px){ .skillCols{ grid-template-columns:1fr; } }
       .skillCol h4{ margin:10px 0 4px; font-size:15px; letter-spacing:.05em; }
@@ -254,6 +253,10 @@
       #mapScreen .card{ max-width:720px; }
       #mapScreen .padFocus{ outline:3px solid var(--accent); outline-offset:2px; }
       #mapScreen button:focus-visible{ outline:3px solid var(--accent); outline-offset:2px; }
+      #skillScreen .card{ max-width:720px; }
+      #skillScreen .padFocus{ outline:3px solid var(--accent); outline-offset:2px; }
+      #skillScreen button:focus-visible{ outline:3px solid var(--accent); outline-offset:2px; }
+      #skillMsg{ min-height:1.5em; font-weight:700; }
       #bigMapCanvas{
         display:block; width:100%; max-width:600px; aspect-ratio:1/1; margin:8px auto 2px;
         border-radius:8px; border:1px solid var(--line); background:#0d1712; cursor:pointer;
@@ -292,6 +295,46 @@
         .padstatus{ margin-top:8px; font-size:12px; }
         .resultBig{ font-size:21px; }
         #resultMap{ width:150px; height:150px; }
+      }
+
+      /* ---------- タイトル画面（画像全面表示） ---------- */
+      #titleScreen{
+        background:transparent; padding:0; overflow:hidden;
+        flex-direction:column; align-items:stretch; justify-content:space-between;
+      }
+      .titleLogo{ padding:26px 16px 0; text-align:center; pointer-events:none; }
+      .titleLogoMain{
+        font-size:clamp(36px, 7.5vw, 68px); font-weight:900; letter-spacing:.14em; line-height:1.05;
+        color:#fff; text-shadow:0 2px 14px rgba(0,0,0,.65), 0 1px 3px rgba(0,0,0,.8);
+      }
+      .titleLogoMain .isle{ color:#ff8a5c; }
+      .titleBar{
+        display:flex; gap:10px; flex-wrap:wrap; justify-content:center; align-items:center;
+        padding:26px 12px calc(14px + env(safe-area-inset-bottom, 0px));
+        background:linear-gradient(to bottom, rgba(4,10,8,0), rgba(4,10,8,.52));
+      }
+      #titleScreen .btn{ box-shadow:0 2px 10px rgba(0,0,0,.35); }
+      #titleScreen .btn.sub{ background:rgba(8,14,11,.66); color:#eef6f0; border-color:rgba(255,255,255,.55); }
+      #titleScreen .padFocus{ outline:3px solid #ffd98a; outline-offset:2px; }
+      #titleScreen button:focus-visible{ outline:3px solid #ffd98a; outline-offset:2px; }
+      /* タイトル／操作説明の表示中はHUDを隠し、画像だけを見せる */
+      .stage:has(#titleScreen:not([hidden])) .hud,
+      .stage:has(#helpScreen:not([hidden])) .hud,
+      .stage:has(#titleScreen:not([hidden])) #crosshair,
+      .stage:has(#helpScreen:not([hidden])) #crosshair,
+      .stage:has(#titleScreen:not([hidden])) #objectiveMarker,
+      .stage:has(#helpScreen:not([hidden])) #objectiveMarker,
+      .stage:has(#titleScreen:not([hidden])) #cameraFrame,
+      .stage:has(#helpScreen:not([hidden])) #cameraFrame{ display:none !important; }
+      /* ---------- 操作説明画面 ---------- */
+      #helpScreen .card{ max-width:720px; display:flex; flex-direction:column; }
+      #helpScreen .padFocus{ outline:3px solid var(--accent); outline-offset:2px; }
+      #helpScreen button:focus-visible{ outline:3px solid var(--accent); outline-offset:2px; }
+      .helpScroll{ overflow:auto; min-height:0; flex:1 1 auto; -webkit-overflow-scrolling:touch; }
+      @media (max-width:640px){
+        .titleLogo{ padding-top:16px; }
+        #titleScreen .btn{ font-size:14.5px; padding:9px 16px; min-height:44px; }
+        .titleBar{ gap:8px; padding-left:8px; padding-right:8px; }
       }
     </style>
   </head>
@@ -346,66 +389,32 @@
           <button id="tSel" aria-label="投擲物を切り替える" style="right:174px;bottom:18px;width:58px;height:58px;font-size:12px;">投擲替</button>
         </div>
 
-        <!-- Title -->
+        <!-- Title ― 画像（ゲーム画面）を全面表示し、白いカードは置かない。
+             残るのはロゴと下端のボタンだけ。難易度・日差しの埃はポーズ画面へ、
+             操作表は「操作説明」ボタンから開く独立画面（helpScreen）へ移した -->
         <div class="overlay" id="titleScreen">
-          <div class="card titleCard">
-            <h1>FAR <span class="isle">TIDE</span></h1>
-            <p class="tagline">― 本番 ―　エリア1：島の西半分 ＋ エリア2：島の奥地 ＋ 最終要塞「放送本部」</p>
-            <div class="titleGrid">
-            <div>
-            <p class="story">
-              旅行で訪れた南国の島は、海賊ボス、バルガス船長の私兵団に支配されていた。
-              レジスタンスと手を組んだあなたの作戦は、島の解放。
-              まず西半分「エリア1」（拠点3つ＋要塞、電波塔2基）を解放すると北の関所が開き、
-              深いジャングルと古代遺跡の「エリア2：島の奥地」（拠点5つ、電波塔2基）へ進めるようになる。
-            </p>
-            <div class="mission">
-              <b>作戦目標</b>：エリア1の3拠点（入江の関所／浜の村／遺跡の砦）と東端の<b>要塞</b>を解放し、
-              電波塔2基を止めればエリア1制覇。要塞は兵士が多く警報装置も2つある難所だが、最初から挑める（報酬は大きい）。
-              <b>要塞を解放すると北の関所が開き、エリア2（島の奥地）へ進める。</b>エリア2は深いジャングル・浅瀬のラグーン・苔むした古代遺跡の地で、
-              拠点5つ（椰子の村／密林の拠点／古代の寺院／ラグーンの関所／放送本部の前哨）と電波塔2基がある。足の速い<b>トラ</b>（皮2枚・XP高め）に加え、水辺と遺跡の近くには硬くて痛い<b>コモドドラゴン</b>（皮2枚）、ジャングルには近づくと突進してくる俊足の<b>ヒクイドリ</b>（皮1枚）も棲んでいる。
-              解放した拠点・要塞では補給とファストトラベルが使える。緑色の箱だけが補給箱（その拠点を解放したあと使用可）。茶色の木箱はカバー用の箱で補給はできない。
-              島には野犬（群れで襲う）とスイギュウ（普段は大人しいが、近づきすぎると突進する大型）がいる。
-              倒せば「皮」（時々「肉」も）が手に入り、装備の拡張に使える。敵を倒す・拠点を解放するとXPが入り、
-              貯まるとスキルポイントで虎（攻撃）／象（防御）のスキルを取れる（ポーズ画面の上のほう「スキルツリー」で割り振る）。
-              道中では人質救出などの小事件が起きることがあり、解決すると<b>カルマ</b>が上がって特典がつく。
-              色の目立つ薬草を摘むと注射（狩猟／回復）が作れる（作り方は、プレイ中に <b>Start</b>／<kbd>Esc</kbd> で開くクラフトパネル。ポーズ画面の「注射（シリンジ）― 薬草クラフト」からも作れる）。船長のポスターは見つけたら剥がそう（全12枚）。
-              弓持ちの<b>ハンター</b>は気配が薄く、動物をけしかけてくるので注意。
-              隠れ場所として、野原や拠点の周りには<b>草むら</b>（エリア2では深い緑の茂み）が点々と生えていて、中でしゃがむと敵からほぼ見つからなくなる。
-              <b>ステルスも有効</b>：しゃがんで敵の背後に回り込めば、案内が出たところで <b>R3（右スティック押し込み）</b>／ <kbd>F</kbd> で<b>テイクダウン</b>（音もなく一撃。ファークライ4と同じ割り当て）。弓は静音で、石ころは音で敵を誘導できる。拠点の<b>警報装置</b>は先に近づいて無効化したり撃って壊したりでき、一度も発見されずに拠点を解放すると<b>未発見ボーナス（+50XP）</b>が入る。
-              開けた場所には<b>岩</b>と<b>砂のこぶ</b>もあり、ジャングルの木の幹とあわせて視線を遮る遮蔽になる（岩・砂のこぶは通り抜け不可）。
-              <b>武器は全5種</b>（ピストル／アサルトライフル／ショットガン／スナイパー／弓）。最初はピストル・AR・弓を所持。
-              <b>ショットガンは要塞の解放で、スナイパーはエリア2で最初の電波塔を止めると入手</b>できる。
-              <b>投擲物</b>は4種（石ころ＝音で注意逸らし／手榴弾＝範囲爆発／火炎瓶＝数秒燃える／肉＝ベイト）を使い分けられる。
-              選択は十字キー下か <kbd>V</kbd>、投げるのは RB か <kbd>G</kbd>。手榴弾と火炎瓶は敵が落とすことがあり、補給箱でも満タンになる。
-              <br><b>最終目標</b>：エリア2の最奥にある船長の本拠地<b>「放送本部」</b>にたどり着き、最奥の放送室で送信設備を操作して、船長の放送を止めること。
-              本部の守備は兵士12人規模だが、エリア2の拠点を解放するごとに警備が2人ずつ減っていく（最低でも半分は残る）。守備を全滅させる必要はなく、放送室にたどり着ければいい。
-            </div>
-            <div class="btnrow">
-              <button class="btn" id="startBtn">新しく始める</button>
-              <button class="btn sub" id="continueBtn" hidden>続きから（セーブあり）</button>
-              <button class="btn sub" id="fsBtnTitle" type="button">フルスクリーン</button>
-            </div>
-            <div><span id="clearedBadge" hidden>制圧完了 ― 島は解放された</span></div>
-            <div class="setrow" style="max-width:360px;">
-              <label for="diffSelTitle">難易度</label>
-              <select id="diffSelTitle">
-                <option value="easy">EASY（やさしい）</option>
-                <option value="normal" selected>NORMAL（標準）</option>
-              </select>
-            </div>
-            <p class="setnote" style="max-width:360px;">EASYでは、受けるダメージが約6割になり、敵に発見されにくく、敵の射撃も間隔が長めで当たりにくくなります。敵の人数や配置、動物の強さは変わりません。プレイ途中でもポーズ画面からいつでも切り替えられます（セーブに保存されます）。</p>
-            <div class="setrow" style="max-width:360px;">
-              <label for="snowSelTitle">日差しの埃</label>
-              <select id="snowSelTitle">
-                <option value="on" selected>ON（ゆっくり少量）</option>
-                <option value="off">OFF</option>
-              </select>
-            </div>
-            <span class="padstatus" id="titlePad"><span class="dot"></span><span id="titlePadText">コントローラー未接続</span></span>
-            </div>
-            <div>
-            <table class="controls">
+          <div class="titleLogo" aria-hidden="true">
+            <div class="titleLogoMain">FAR <span class="isle">TIDE</span></div>
+          </div>
+          <div class="titleBar">
+            <button class="btn" id="startBtn">新しく始める</button>
+            <button class="btn sub" id="continueBtn" hidden>続きから（セーブあり）</button>
+            <button class="btn sub" id="helpBtn" type="button">操作説明</button>
+            <button class="btn sub" id="fsBtnTitle" type="button">フルスクリーン</button>
+          </div>
+        </div>
+
+        <!-- Help（操作説明専用画面）― タイトル画面の「操作説明」ボタンから開く独立画面。
+             開いている間は game.state = 'help' にしてワールド更新を止める（タイトルと同じ扱い）。
+             操作表全文は helpScroll の中でスクロールして読め、「タイトルへ戻る」で戻れる。
+             パッドは十字キー／左スティックでスクロール、Aで戻るボタンを決定、
+             B／Back／Startでも戻れる -->
+        <div class="overlay" id="helpScreen" hidden>
+          <div class="card">
+            <h2>操作説明</h2>
+            <p class="setnote" style="margin-top:2px;">パッドは十字キー／左スティックでスクロール、<b>B</b>／<b>Back</b>／<b>Start</b>でタイトルに戻ります。キーボードは ↑↓ でスクロール、<kbd>Esc</kbd>で戻ります。</p>
+            <div class="helpScroll" id="helpScroll">
+<table class="controls">
               <tr><td>移動</td><td>左スティック ／ <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></td></tr>
               <tr><td>ダッシュ</td><td>L3（左スティック押し込み）／ <kbd>Shift</kbd> ― 押すとダッシュ状態になり、スティック（移動キー）を倒している間は通常の1.5倍の速さで走る。もう一度押すか、スティック（移動キー）を戻すと解除。スタミナ制限はない</td></tr>
               <tr><td>振り向き</td><td>右スティック ／ <kbd>←</kbd><kbd>→</kbd>（なめらかに回転・既定。ポーズ画面でスナップ等にも変更可）</td></tr>
@@ -423,23 +432,25 @@
               <tr><td>しゃがむ</td><td>B ／ <kbd>Ctrl</kbd>（遅くなるが見つかりにくい）</td></tr>
               <tr><td>隠れる（草むら）</td><td>草むら（エリア2では深い緑の茂み）の中に入ってしゃがむと、敵からほぼ見つからなくなる（至近距離は除く）。立ったままだと効果は弱い。隠れている間は画面左下に「隠れている」と出る</td></tr>
               <tr><td>遮蔽物</td><td>岩・砂のこぶ・ジャングルの木の幹は敵の視線を遮る。陰に回れば視線が切れて発見メーターが下がる。岩と砂のこぶは通り抜けできない</td></tr>
-              <tr><td>ポーズ・設定</td><td>Back（View）／ <kbd>Tab</kbd>（開いてすぐ上にスキル割り振りと注射クラフト。装備クラフト・ファストトラベル・難易度・回転方式・環境音もここ。パッドは十字キー／スティックで選択、Aで決定、BまたはBackで閉じる）</td></tr>
+              <tr><td>ポーズ・設定</td><td>Back（View）／ <kbd>Tab</kbd>（クイックメニューから大きいマップとスキルツリー（別画面）へ開ける。装備クラフト・難易度・回転方式・環境音もここ。パッドは十字キー／スティックで選択、Aで決定、BまたはBackで閉じる）</td></tr>
               <tr><td>フルスクリーン</td><td>画面右上の <b>⛶</b> ボタン ／ <kbd>Alt</kbd>＋<kbd>Enter</kbd>（解除は <kbd>Esc</kbd>）。16:9のまま黒帯つきで広がる</td></tr>
-              <tr><td>スキル</td><td>XPを貯めるとスキルポイントが入る。割り振りはポーズ画面の上のほう「スキルツリー」で、虎（攻撃）6種／象（防御）6種を段階式に取得</td></tr>
+              <tr><td>スキル</td><td>XPを貯めるとスキルポイントが入る。割り振りはポーズ画面から開く「スキルツリー」画面で、虎（攻撃）6種／象（防御）6種を段階式に取得</td></tr>
               <tr><td>投擲物の選択</td><td>十字キー下 ／ <kbd>V</kbd> ― 石ころ→手榴弾→火炎瓶→肉（ベイト）の順に切り替える。選択中の投擲物と残数は画面右下に常時表示</td></tr>
               <tr><td>投げる</td><td>RB ／ <kbd>G</kbd> ― 選択中の投擲物を放物線で投げる（壁に当たるとその場に落ちる）</td></tr>
               <tr><td>石ころ</td><td>無制限。着地点で音がして、近くの敵が音に気づいて見に行く（注意逸らし・ダメージなし）</td></tr>
               <tr><td>手榴弾</td><td>着弾後まもなく爆発。範囲内の敵・動物に大ダメージ、警報装置も壊せる。音が大きく周囲の敵が警戒・発見状態になる。所持上限3個（敵ドロップと補給箱で補充）</td></tr>
               <tr><td>火炎瓶</td><td>着弾で割れて数秒間その場が燃える。炎の中の敵・動物は継続ダメージ。所持上限3個（敵ドロップと補給箱で補充）</td></tr>
               <tr><td>肉（ベイト）</td><td>投擲枠の1つ。前方に肉を投げる。近くの野生動物が集まり、そばの敵を襲う。肉は動物を倒すと時々手に入る</td></tr>
-              <tr><td>クラフト（注射作成）</td><td>Start ／ <kbd>Esc</kbd> ― プレイ中に注射作成パネルを開く（開いている間はゲームが止まる。中は十字キー／左スティックで選択、Aで作成、BまたはStartで閉じる。キーボードは <kbd>Esc</kbd> で閉じる）。ポーズ画面の注射クラフト欄からも同じ作成ができる</td></tr>
-              <tr><td>狩猟の注射</td><td><b>Y長押し</b>（0.4秒以上）／ LB ／ <kbd>T</kbd> ― 25秒間、敵と動物が壁越しでも見える（作り方はクラフトパネル（Start／<kbd>Esc</kbd>）で薬草2。ポーズ画面でも作れる）</td></tr>
-              <tr><td>回復の注射</td><td><b>Y短押し</b> ／ <kbd>R</kbd> ― 体力を大きく即回復（作り方はクラフトパネル（Start／<kbd>Esc</kbd>）で薬草1。ポーズ画面でも作れる）。※Yは注射専用です。回復の注射が使えないとき（所持なし・体力満タン）にYを押しても武器切替にはなりません。武器切替は十字キー右（順送り）／左（逆順）と数字キーで行います</td></tr>
-              <tr><td>進行方向マーカー</td><td>クリアに向けた目標（まずエリア1の<b>要塞</b>、解放後は<b>放送本部</b>）の方向・名前・距離を、ダイヤ型のマーカーで画面とミニマップに表示する。目標が画面外のときは画面端に寄せて方向を示す。エンディング到達後は消える。ON／OFFはポーズ画面で切り替えられる（既定はON）</td></tr>
+              <tr><td>クラフト（注射作成）</td><td>Start ／ <kbd>Esc</kbd> ― プレイ中に注射作成パネルを開く（開いている間はゲームが止まる。中は十字キー／左スティックで選択、Aで作成、BまたはStartで閉じる。キーボードは <kbd>Esc</kbd> で閉じる）</td></tr>
+              <tr><td>狩猟の注射</td><td><b>Y長押し</b>（0.4秒以上）／ LB ／ <kbd>T</kbd> ― 25秒間、敵と動物が壁越しでも見える（作り方はクラフトパネル（Start／<kbd>Esc</kbd>）で薬草2）</td></tr>
+              <tr><td>回復の注射</td><td><b>Y短押し</b> ／ <kbd>R</kbd> ― 体力を大きく即回復（作り方はクラフトパネル（Start／<kbd>Esc</kbd>）で薬草1）。※Yは注射専用です。回復の注射が使えないとき（所持なし・体力満タン）にYを押しても武器切替にはなりません。武器切替は十字キー右（順送り）／左（逆順）と数字キーで行います</td></tr>
+              <tr><td>進行方向マーカー</td><td>クリアに向けた目標（まずエリア1の<b>要塞</b>、解放後は<b>放送本部</b>）の方向・名前・距離を、ダイヤ型のマーカーで画面とミニマップに表示する。目標が画面外のときは画面端に寄せて方向を示す。エンディング到達後は消える。常時表示される</td></tr>
               <tr><td>大きいマップ／目的地</td><td><kbd>M</kbd> ／ ポーズ画面のクイックメニュー先頭「大きいマップ（島全体）」― 島全体の地図で自分の位置と向き、拠点・電波塔・要塞・放送本部を地名つきで確認できる。マークを選ぶと<b>目的地</b>になり、進行方向マーカーがそこを指す（到達で自動解除、本筋のマークで手動復帰。目的地はセーブ保存）。囲いのある場所は、外にいる間マーカーが一番近い<b>入口</b>を指す（入口には金色の玉を載せた門柱が立っている）。発生中のカルマイベントも紫の印で表示され、目的地にできる</td></tr>
               <tr><td>薬草・ポスター</td><td>色の目立つ薬草と、壁の船長ポスターは近づいて <kbd>F</kbd> ／ X で採取・剥がし</td></tr>
             </table>
             </div>
+            <div class="btnrow">
+              <button class="btn" id="helpBackBtn" type="button">タイトルへ戻る（B）</button>
             </div>
           </div>
         </div>
@@ -452,10 +463,8 @@
               <div class="quickStatus" id="quickStatus">スキルポイント 0 ／ 薬草 ×0 ／ 注射 狩猟0・回復0</div>
               <div class="btnrow" style="margin-top:8px;">
                 <button class="btn small" id="openMapBtn" type="button">大きいマップ（島全体）</button>
-                <button class="btn small" id="jumpSkillBtn" type="button">スキルを割り振る</button>
-                <button class="btn small" id="jumpSyrBtn" type="button">注射（シリンジ）を作る</button>
+                <button class="btn small" id="jumpSkillBtn" type="button">スキルツリーを開く</button>
                 <button class="btn small sub" id="jumpCraftBtn" type="button">クラフト（装備拡張）</button>
-                <button class="btn small sub" id="jumpTravelBtn" type="button">ファストトラベル</button>
               </div>
             </div>
             <div class="setrow">
@@ -465,6 +474,7 @@
                 <option value="normal" selected>NORMAL（標準）</option>
               </select>
             </div>
+            <p class="setnote">EASYでは、受けるダメージが約六割になり、敵に発見されにくく、敵の射撃も間隔が長めで当たりにくくなります。敵の人数や配置、動物の強さは変わりません。プレイ途中でもポーズ画面からいつでも切り替えられます（セーブに保存されます）。</p>
             <div class="setrow">
               <label for="rotMode">回転方式</label>
               <select id="rotMode">
@@ -489,36 +499,6 @@
                 <option value="on" selected>ON（ゆっくり少量）</option>
                 <option value="off">OFF</option>
               </select>
-            </div>
-            <div class="setrow">
-              <label for="objMarkerSel">進行方向マーカー</label>
-              <select id="objMarkerSel">
-                <option value="on" selected>ON（目標の方向を表示）</option>
-                <option value="off">OFF</option>
-              </select>
-            </div>
-            <h3 id="secSkill">スキルツリー</h3>
-            <div class="skillInfo" id="skillInfo">XP 0 ／ スキルポイント 0</div>
-            <div class="skillCols">
-              <div class="skillCol"><h4 class="tiger">虎 ― 攻撃</h4><div id="tigerList"></div></div>
-              <div class="skillCol"><h4 class="ele">象 ― 防御</h4><div id="eleList"></div></div>
-            </div>
-
-            <h3 id="secSyringe">注射（シリンジ）</h3>
-            <p class="setnote" style="margin-top:0;">素材：<b id="herbCount">薬草 ×0</b></p>
-            <div class="craftrow">
-              <div>
-                <span class="cname">狩猟の注射</span> <span class="pips" id="syrHuntPips"></span>
-                <div class="cdesc">25秒間、敵と動物が壁越しでも見える。所持 <span id="syrHuntCount">0</span> 本</div>
-              </div>
-              <button class="btn small" id="syrHuntBtn">作る（薬草2）</button>
-            </div>
-            <div class="craftrow">
-              <div>
-                <span class="cname">回復の注射</span> <span class="pips" id="syrHealPips"></span>
-                <div class="cdesc">体力を70即回復。所持 <span id="syrHealCount">0</span> 本</div>
-              </div>
-              <button class="btn small" id="syrHealBtn">作る（薬草1）</button>
             </div>
             <p class="setnote" id="posterInfo">船長のポスター：0 / 12 枚剥がした</p>
 
@@ -546,14 +526,31 @@
             <h3>カルマ</h3>
             <div class="skillInfo" id="karmaInfo">カルマ Lv 0 / 6</div>
 
-            <h3 id="secTravel">ファストトラベル</h3>
-            <div class="travelGrid" id="travelGrid"></div>
-
             <div class="btnrow">
               <button class="btn" id="resumeBtn">再開する</button>
               <button class="btn sub" id="fsBtnPause" type="button">フルスクリーン</button>
               <button class="btn sub" id="restartBtn">セーブを消して最初から</button>
               <button class="btn sub" id="toTitleBtn">タイトルへ</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Skill tree（スキルツリー専用画面）― ポーズ画面のクイックメニュー
+             「スキルツリーを開く」から開く独立した画面。開いている間は
+             game.state = 'skill' にしてワールド更新を止める（ポーズと同じ扱い）。
+             閉じるとポーズ画面に戻る。虎／象の両系統を1画面で見渡せる -->
+        <div class="overlay" id="skillScreen" hidden>
+          <div class="card">
+            <h2>スキルツリー</h2>
+            <p class="setnote" style="margin-top:2px;">十字キー／左スティックで選択 ― <b>A</b>で取得 ― <b>B</b>または<b>Back</b>でポーズに戻ります。キーボードは矢印キーで選択・<b>Enter</b>で取得・<kbd>Esc</kbd>でポーズに戻ります。スキルは上の段から順にしか取れません（各1ポイント）。</p>
+            <div class="skillInfo" id="skillInfo">XP 0 ／ スキルポイント 0</div>
+            <p class="setnote" id="skillMsg" aria-live="polite"></p>
+            <div class="skillCols">
+              <div class="skillCol"><h4 class="tiger">虎 ― 攻撃</h4><div id="tigerList"></div></div>
+              <div class="skillCol"><h4 class="ele">象 ― 防御</h4><div id="eleList"></div></div>
+            </div>
+            <div class="btnrow">
+              <button class="btn" id="skillBackBtn" type="button">ポーズに戻る（B）</button>
             </div>
           </div>
         </div>
@@ -579,7 +576,7 @@
               </div>
               <button class="btn small" id="cpSyrHealBtn" type="button">作る（薬草1）</button>
             </div>
-            <p class="setnote">ボタンの割り当てについて：Startは、このクラフトパネル専用にしました（Back（View）はポーズ画面を開きます）。注射を「使う」操作は<b>Yボタンが主</b>です（<b>Y短押し＝回復の注射／Y長押し＝狩猟の注射</b>）。LB（狩猟）／キーボード <kbd>R</kbd>・<kbd>T</kbd> も併用できます。L3（左スティック押し込み）はダッシュ専用で、注射には使いません。Yは注射専用で、武器切替にはなりません。武器切替は十字キー右（順送り）／左（逆順）と数字キーで行います。ポーズ画面の注射クラフト欄からも、同じ作成ができます（作成処理は共通です）。</p>
+            <p class="setnote">ボタンの割り当てについて：Startは、このクラフトパネル専用にしました（Back（View）はポーズ画面を開きます）。注射を「使う」操作は<b>Yボタンが主</b>です（<b>Y短押し＝回復の注射／Y長押し＝狩猟の注射</b>）。LB（狩猟）／キーボード <kbd>R</kbd>・<kbd>T</kbd> も併用できます。L3（左スティック押し込み）はダッシュ専用で、注射には使いません。Yは注射専用で、武器切替にはなりません。武器切替は十字キー右（順送り）／左（逆順）と数字キーで行います。</p>
             <div class="btnrow">
               <button class="btn" id="craftCloseBtn" type="button">閉じる（B／Start）</button>
             </div>
@@ -597,9 +594,9 @@
             <div class="mapInfo" id="bigMapInfo">―</div>
             <div class="mapLegend">
               <span class="lg" style="background:#e5482e;"></span>未解放の拠点
-              <span class="lg" style="background:#58b06a;"></span>解放済みの拠点（ファストトラベル可）
+              <span class="lg" style="background:#58b06a;"></span>解放済みの拠点
               <span class="lg" style="background:#f2b63c;"></span>電波塔（稼働中）
-              <span class="lg" style="background:#57b8a2;"></span>電波塔（停止済み・ファストトラベル可）
+              <span class="lg" style="background:#57b8a2;"></span>電波塔（停止済み）
               <span class="lg" style="background:#ffd23c;"></span>いま指している目標／目的地
               <span class="lg" style="background:#ffe9a8;"></span>囲いの入口（門の印＋「入口」）
               <span class="lg" style="background:#b45ae0;"></span>発生中の事件（カルマ・目的地にできる）
@@ -664,7 +661,7 @@
 "use strict";
 /* ============================================================
    FAR TIDE ― 3式 ―  レイキャスティング疑似3D（南国の島・海賊・古代遺跡）
-   エリア1＋エリア2（島の奥地）＋最終要塞「放送本部」：拠点9つ／電波塔4基／野犬・スイギュウ・トラ・コモドドラゴン・ヒクイドリ／武器5種／クラフト／ファストトラベル／スキルツリー
+   エリア1＋エリア2（島の奥地）＋最終要塞「放送本部」：拠点9つ／電波塔4基／野犬・スイギュウ・トラ・コモドドラゴン・ヒクイドリ／武器5種／クラフト／スキルツリー
    酔い対策（第1弾と同一）：等速移動・慣性なし／回転速度上限／
    ヘッドボブなし／画面シェイクなし／視野角固定90度／照準常時表示
    ============================================================ */
@@ -2274,6 +2271,29 @@ function sfxBoarHit(){
   sfxTone(300, 90, 0.16, 0.16, 'sawtooth');
   setTimeout(function(){ sfxTone(240, 70, 0.14, 0.12, 'sawtooth'); }, 70);
 }
+/* テイクダウン時の人間のうめき声（「うがあ」）。Web Audio合成のみ（外部ファイルなし）。
+   ノコギリ波を低く沈ませ、細かい震え（LFO）とローパスの閉じで声っぽくする。
+   音量は既存の効果音（動物の打撃音0.16／テイクダウンの鈍音0.2）に合わせ控えめ。
+   呼ぶのは敵兵（人間）のテイクダウン時だけ。動物のテイクダウンでは鳴らさない */
+function sfxTakedownGroan(){
+  if (!AC) return;
+  var t = AC.currentTime;
+  var o = AC.createOscillator(); o.type = 'sawtooth';
+  o.frequency.setValueAtTime(185, t);
+  o.frequency.exponentialRampToValueAtTime(68, t + 0.32);
+  var lfo = AC.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 26;
+  var lfoG = AC.createGain(); lfoG.gain.value = 14;
+  lfo.connect(lfoG); lfoG.connect(o.frequency);
+  var f = AC.createBiquadFilter(); f.type = 'lowpass';
+  f.frequency.setValueAtTime(820, t);
+  f.frequency.exponentialRampToValueAtTime(240, t + 0.32);
+  var g = AC.createGain();
+  g.gain.setValueAtTime(0.001, t);
+  g.gain.exponentialRampToValueAtTime(0.16, t + 0.05);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.36);
+  o.connect(f); f.connect(g); g.connect(sfxGain);
+  o.start(t); o.stop(t + 0.4); lfo.start(t); lfo.stop(t + 0.4);
+}
 function sfxAlarmSiren(){
   if (!AC) return;
   var t = AC.currentTime;
@@ -2473,7 +2493,7 @@ function startBgm(){
 <script>
 "use strict";
 /* ---------------- Save（ブラウザのローカル保存） ----------------
-   保持するのは「拠点の解放状況・電波塔・クラフト拡張・所持素材（皮）・XP・スキル・進行方向マーカー設定」のみ */
+   保持するのは「拠点の解放状況・電波塔・クラフト拡張・所持素材（皮）・XP・スキル」のみ */
 var SAVE_KEY = 'far3SaveV1';
 function loadSave(){
   try {
@@ -2561,7 +2581,7 @@ function gainXP(n){
     prog.xp -= xpForNext();
     prog.pointsEarned++; prog.sp++; leveled = true;
   }
-  if (leveled){ sfxTone(880, 1320, 0.25, 0.12, 'triangle'); showMsg('スキルポイント +1！ ポーズ画面の上の「スキルを割り振る」から取れる', 2.6); }
+  if (leveled){ sfxTone(880, 1320, 0.25, 0.12, 'triangle'); showMsg('スキルポイント +1！ ポーズ画面の「スキルツリーを開く」から取れる', 2.6); }
   writeSave();
 }
 var detectedOutposts = {};        /* outpostId -> 発見されたことがある */
@@ -2645,9 +2665,9 @@ var rotMode = 'smooth';
 var difficulty = 'normal';
 function isEasy(){ return difficulty === 'easy'; }
 function syncDifficultyUI(){
-  var a = document.getElementById('diffSel'), b = document.getElementById('diffSelTitle');
+  /* 難易度のプルダウンはポーズ画面のみ（タイトルからは廃止） */
+  var a = document.getElementById('diffSel');
   if (a) a.value = difficulty;
-  if (b) b.value = difficulty;
 }
 var gridStep = null;
 /* ---------------- 進行方向マーカー（目標マーカー） ----------------
@@ -2657,7 +2677,8 @@ var gridStep = null;
    要塞を解放したら第2段階＝最終要塞「放送本部」（指す位置は最奥の送信設備）、
    エンディング到達後（gameCleared）はマーカーを消す（フリーローム）。
    表示は静止のみ（点滅・上下動・拡大縮小などのアニメーションは付けない＝酔い対策）。
-   ON／OFFはポーズ画面で切り替え、セーブに保存する（既定はON。旧セーブに項目が無ければON）。 */
+   マーカーは常時ON（OFF機能は廃止）。旧セーブにOFF値が残っていても無視して
+   常に表示する。変数は互換のため残すが、false になる経路は存在しない。 */
 var objectiveMarkerOn = true;
 /* ---------------- 地図の目的地（ウェイポイント） ----------------
    大きいマップで選んだ行き先。設定中は進行方向マーカー（画面＋ミニマップ）が
@@ -3109,7 +3130,7 @@ function makeBoar(def){
     x: def.x, y: def.y, angle: Math.random() * 6.28,
     hp: isYak ? 150 : def.kind === 'komodo' ? 120 : def.kind === 'leopard' ? 70 : def.kind === 'cassowary' ? 55 : 45, maxHp: isYak ? 150 : def.kind === 'komodo' ? 120 : def.kind === 'leopard' ? 70 : def.kind === 'cassowary' ? 55 : 45, alive: true, state: 'wander', marked: false, provoked: false,
     tx: def.x, ty: def.y, waitT: Math.random() * 2,
-    atkCd: 0, respawnT: 0, target: null
+    atkCd: 0, respawnT: 0, target: null, chargeMsgT: -99
   };
 }
 function makeBoarFromHome(home){ return makeBoar({ kind: 'wolf', x: home[0], y: home[1] }); }
@@ -3138,7 +3159,7 @@ function resetGame(continued){
   gameCleared = false;
   prog = { hides: 0, craftAmmo: 0, craftMed: 0, xp: 0, sp: 0, pointsEarned: 0, skills: emptySkills(), karma: 0, herbs: 0, owned: defaultOwned() };
   postersPeeled = {};
-  objectiveMarkerOn = true; /* 進行方向マーカーは既定ON。続き読み込みでセーブ値があれば下で上書きされる */
+  objectiveMarkerOn = true; /* 進行方向マーカーは常時ON（OFF機能は廃止。旧セーブのOFF値は読み込まない） */
   waypoint = null; /* 地図の目的地。続き読み込みでセーブ値があれば下で復元される */
   var savedGrenades = GRENADE_CAP, savedMolotovs = MOLOTOV_CAP, savedAmmo = null;
   TOWERS.forEach(function(t){ t.stopped = false; });
@@ -3148,7 +3169,7 @@ function resetGame(continued){
       liberated = sv.liberated || {};
       gameCleared = !!sv.cleared;
       if (sv.difficulty === 'easy' || sv.difficulty === 'normal') difficulty = sv.difficulty;
-      if (typeof sv.objectiveMarker === 'boolean') objectiveMarkerOn = sv.objectiveMarker;
+      /* 進行方向マーカーは常時ON：旧セーブに残ったOFF値は無視する */
       waypoint = resolveWaypointKey(sv.waypoint);
       prog.hides = sv.hides | 0;
       prog.craftAmmo = Math.min(2, sv.craftAmmo | 0);
@@ -3213,10 +3234,6 @@ function resetGame(continued){
   cameraMode = false; zoomLevel = 0; sniperZoom = 0; markProgress = 0; markTargetRef = null; markTargetKind = null;
   game.time = 0;
   towerHold = 0; towerHoldTarget = null;
-  /* セーブに目的地が残っているのにマーカー表示がOFFだと、続きから始めた途端に
-     目的地も本筋の目標も表示されなくなる。目的地がある場合はONで復元する
-     （目的地がないときの意図的なOFFはそのまま尊重する） */
-  if (waypoint && !objectiveMarkerOn) objectiveMarkerOn = true;
   syncDifficultyUI();
   syncObjectiveMarkerUI();
   markRevealed();
@@ -3296,6 +3313,37 @@ document.addEventListener('keydown', function(e){
     if (!e.repeat && (e.code === 'ArrowUp' || e.code === 'KeyW')) moveCraftFocus(-1);
     return;
   }
+  if (game.state === 'skill'){
+    /* スキルツリー画面表示中：Escでポーズに戻る、矢印／WASDでノード移動。
+       取得はフォーカス中のボタンをEnter（標準動作）。Tab（ポーズ側のキー）は
+       ここでは消費だけして何もしない（戻った先でポーズが閉じる事故を防ぐ） */
+    if (e.code === 'Escape' && !e.repeat){ e.preventDefault(); sfxCancel(); closeSkillPage(); return; }
+    if (e.code === 'Tab'){ return; }
+    if (!e.repeat && (e.code === 'ArrowRight' || e.code === 'KeyD')){ e.preventDefault(); moveSkillFocusGrid('right'); }
+    if (!e.repeat && (e.code === 'ArrowLeft' || e.code === 'KeyA')){ e.preventDefault(); moveSkillFocusGrid('left'); }
+    if (!e.repeat && (e.code === 'ArrowDown' || e.code === 'KeyS')){ e.preventDefault(); moveSkillFocusGrid('down'); }
+    if (!e.repeat && (e.code === 'ArrowUp' || e.code === 'KeyW')){ e.preventDefault(); moveSkillFocusGrid('up'); }
+    return;
+  }
+  if (game.state === 'help'){
+    /* 操作説明画面表示中：Escでタイトルに戻る、↑↓／WS・PageUp\/Downで表をスクロール。
+       Tab（ポーズ側のキー）はここでは消費だけして何もしない */
+    if (e.code === 'Escape' && !e.repeat){ e.preventDefault(); sfxCancel(); closeHelp(); return; }
+    if (e.code === 'Tab'){ return; }
+    if (!e.repeat && (e.code === 'ArrowDown' || e.code === 'KeyS')){ e.preventDefault(); scrollHelp(140); }
+    if (!e.repeat && (e.code === 'ArrowUp' || e.code === 'KeyW')){ e.preventDefault(); scrollHelp(-140); }
+    if (!e.repeat && e.code === 'PageDown'){ e.preventDefault(); scrollHelp(420); }
+    if (!e.repeat && e.code === 'PageUp'){ e.preventDefault(); scrollHelp(-420); }
+    return;
+  }
+  if (game.state === 'title'){
+    /* タイトル画面：矢印／WASDでボタンのフォーカス移動。Enterは下の既存分岐が担う */
+    if (!e.repeat && (e.code === 'ArrowRight' || e.code === 'KeyD')){ e.preventDefault(); moveTitleFocus('right'); }
+    if (!e.repeat && (e.code === 'ArrowLeft' || e.code === 'KeyA')){ e.preventDefault(); moveTitleFocus('left'); }
+    if (!e.repeat && (e.code === 'ArrowDown' || e.code === 'KeyS')){ e.preventDefault(); moveTitleFocus('down'); }
+    if (!e.repeat && (e.code === 'ArrowUp' || e.code === 'KeyW')){ e.preventDefault(); moveTitleFocus('up'); }
+    return;
+  }
   if (game.state === 'play'){
     if (e.code === 'KeyM' && !e.repeat){ openBigMap(); return; } /* M：大きいマップ（ポーズ経由と同じ画面） */
     if (e.code === 'Tab' && !e.repeat){ openPause(); return; }
@@ -3328,6 +3376,8 @@ document.addEventListener('keydown', function(e){
     else if (!e.repeat && e.code === 'ArrowDown') movePauseFocusGrid('down');
     else if (!e.repeat && e.code === 'ArrowUp') movePauseFocusGrid('up');
   } else if (game.state === 'title' && e.code === 'Enter'){
+    var aeT = document.activeElement;
+    if (aeT && titleEl.contains(aeT) && aeT.tagName === 'BUTTON') return; /* フォーカス中のボタンは標準のクリックに任せる */
     startGame(false);
   }
 });
@@ -3392,15 +3442,11 @@ window.addEventListener('gamepadconnected', function(e){
 });
 window.addEventListener('gamepaddisconnected', function(){ padConnected = false; refreshPadUI(); });
 function refreshPadUI(){
-  var t = document.getElementById('titlePad'), tt = document.getElementById('titlePadText');
+  /* タイトル画面のコントローラー状態表示は廃止した（画像全面表示のため）。
+     HUD側の表示だけを更新する */
   var h = document.getElementById('hudPad');
-  if (padConnected){
-    t.classList.add('on'); tt.textContent = 'コントローラー接続中：' + padName.slice(0, 42);
-    h.textContent = 'コントローラー接続中';
-  } else {
-    t.classList.remove('on'); tt.textContent = 'コントローラー未接続（キーボード／マウスでも遊べます）';
-    h.textContent = 'コントローラー未接続（キーボード／マウスでも遊べます）';
-  }
+  if (!h) return;
+  h.textContent = padConnected ? 'コントローラー接続中' : 'コントローラー未接続（キーボード／マウスでも遊べます）';
 }
 function getPad(){
   var gps = navigator.getGamepads ? navigator.getGamepads() : [];
@@ -4133,7 +4179,7 @@ function updateEvents(dt){
 function useHuntSyringe(){
   if (game.state !== 'play' || player.dead) return;
   if (huntT > 0){ showMsg('狩猟の注射はまだ効いている', 1.2); return; }
-  if (player.syrHunt <= 0){ showMsg('狩猟の注射がない（クラフト：Start／Escで薬草2から作れる。ポーズ画面でも可）', 1.6); return; }
+  if (player.syrHunt <= 0){ showMsg('狩猟の注射がない（クラフト：Start／Escで薬草2から作れる）', 1.6); return; }
   player.syrHunt--;
   huntT = 25;
   sfxTone(980, 1400, 0.2, 0.1, 'sine');
@@ -4143,7 +4189,7 @@ function useHuntSyringe(){
 function useHealSyringe(){
   if (game.state !== 'play' || player.dead) return;
   if (player.hp >= maxHp()){ showMsg('体力は満タンだ', 1.2); return; }
-  if (player.syrHeal <= 0){ showMsg('回復の注射がない（クラフト：Start／Escで薬草1から作れる。ポーズ画面でも可）', 1.6); return; }
+  if (player.syrHeal <= 0){ showMsg('回復の注射がない（クラフト：Start／Escで薬草1から作れる）', 1.6); return; }
   player.syrHeal--;
   player.hp = Math.min(maxHp(), player.hp + 70);
   sfxTone(620, 940, 0.22, 0.11, 'sine');
@@ -4195,21 +4241,9 @@ function craftSyringe(kind){
   updateHUDStatic();
 }
 function refreshSyrUI(){
-  var hc = document.getElementById('herbCount');
-  if (hc) hc.textContent = '薬草 ×' + prog.herbs;
-  var sh = document.getElementById('syrHuntCount'), sl = document.getElementById('syrHealCount');
-  if (sh) sh.textContent = player.syrHunt;
-  if (sl) sl.textContent = player.syrHeal;
-  var pip = '';
-  for (var i = 0; i < syrCap(); i++) pip += i < 3 ? '●' : '○';
-  var ph = document.getElementById('syrHuntPips'), pl = document.getElementById('syrHealPips');
-  if (ph) ph.textContent = pipFor(player.syrHunt);
-  if (pl) pl.textContent = pipFor(player.syrHeal);
-  var bh = document.getElementById('syrHuntBtn'), bl = document.getElementById('syrHealBtn');
-  if (bh) bh.disabled = prog.herbs < 2 || player.syrHunt >= syrCap();
-  if (bl) bl.disabled = prog.herbs < 1 || player.syrHeal >= syrCap();
-  /* クラフトパネル側も同じ表示に同期する（作成処理・表示更新はポーズ画面と共通。
-     二重管理にしないため、数値の出どころは prog.herbs / player.syrHunt / player.syrHeal のみ） */
+  /* 注射の作成・所持表示はクラフトパネル（Startで開く）側に一本化した
+     （ポーズ画面からは注射作成のボタン・項目を廃止）。
+     数値の出どころは prog.herbs / player.syrHunt / player.syrHeal のみ */
   var chc = document.getElementById('craftHerbCount');
   if (chc) chc.textContent = '薬草 ×' + prog.herbs;
   var csh = document.getElementById('cpSyrHuntCount'), csl = document.getElementById('cpSyrHealCount');
@@ -4595,6 +4629,7 @@ function updateInteract(dt, gp){
     checkEventProgress();
     if (hasSkill('tiger', 5)) player.hp = Math.min(maxHp(), player.hp + 20);
     sfxTone(150, 55, 0.22, 0.2, 'triangle');
+    sfxTakedownGroan(); /* 人間だけ「うがあ」といううめき声（動物のテイクダウンでは鳴らさない） */
     showMsg(en.heavy ? '重装兵をテイクダウン！' : 'テイクダウン', 1.4);
     checkOutpostClear(en.outpost);
   } else if (it.kind === 'takedownWolf' && tdEdge){
@@ -4892,8 +4927,14 @@ function separateEnemies(){
    すべてこの判定の対象範囲で選び、さらに突進中も毎フレームこの判定で検査して、
    万一それ以外のものが対象に入っていたら即座に突進をやめる（構造的な歯止め）。
    住民が暴れる動物から逃げるのは住民側の反応（civilianDanger）で、ここには関与しない */
-/* 野生動物がプレイヤーへ突進し始めたときの知らせ（突進ごとに1回、種名入り） */
+/* 野生動物がプレイヤーへ突進し始めたときの知らせ（突進ごとに1回、種名入り）。
+   同じ個体の警告は5秒に1回まで（クールダウン）。突進の出入りが繰り返されても
+   警告が hudMsg を張り付かせないための歯止めで、警告自体は従来どおり1.8秒で消え、
+   その後のメッセージは通常どおり差し替わる */
 function animalChargeMsg(b){
+  var nowT = (typeof game !== 'undefined' && game) ? game.time : 0;
+  if (b.chargeMsgT !== undefined && nowT - b.chargeMsgT < 5) return;
+  b.chargeMsgT = nowT;
   showMsg(b.kind === 'yak' ? 'スイギュウが突進してきた！' : b.kind === 'leopard' ? 'トラが襲ってきた！' : b.kind === 'komodo' ? 'コモドドラゴンが襲ってきた！' : b.kind === 'cassowary' ? 'ヒクイドリが突進してきた！' : '野犬が襲ってきた！', 1.8);
 }
 function isAnimalTarget(t){
@@ -4961,7 +5002,11 @@ function updateBoar(b, dt){
   var dp = Math.hypot(player.x - b.x, player.y - b.y);
   if (isYak){
     var yakRange = quiet ? 1.1 : 1.7;
-    if (b.provoked || dp < yakRange){ tgt = player; td = dp; }
+    /* 挑発済みでも捕捉は11マスまで（下の「諦める距離」11と一致させる）。
+       旧仕様は挑発済みだと距離無制限で捕捉するのに諦める距離が6だったため、
+       6マスより遠くで撃たれたスイギュウが「突進→即諦め→再突進」を毎フレーム
+       繰り返し、突進警告が表示され続けてメッセージが固まって見えた */
+    if ((b.provoked && dp < 11) || dp < yakRange){ tgt = player; td = dp; }
     enemies.forEach(function(en){
       if (!en.alive || !en.alert) return;
       var d = Math.hypot(en.x - b.x, en.y - b.y);
@@ -4984,7 +5029,7 @@ function updateBoar(b, dt){
   if (b.state === 'charge'){
     var cur = b.target;
     /* 対象がプレイヤー／敵兵以外（住民・人物など）なら追跡も噛みつきもしない（毎フレーム再検査） */
-    if (!isAnimalTarget(cur) || Math.hypot(cur.x - b.x, cur.y - b.y) > (isYak ? 6 : b.provoked ? 11 : 8)){
+    if (!isAnimalTarget(cur) || Math.hypot(cur.x - b.x, cur.y - b.y) > (b.provoked ? 11 : isYak ? 6 : 8)){
       b.state = 'wander'; b.target = null; b.waitT = 0.5; if (cur === player && !b.provoked) {} 
     } else {
       var dx = cur.x - b.x, dy = cur.y - b.y, d = Math.hypot(dx, dy);
@@ -5969,16 +6014,17 @@ var titleEl = document.getElementById('titleScreen'),
     resultEl = document.getElementById('resultScreen'),
     endingEl = document.getElementById('endingScreen'),
     craftEl = document.getElementById('craftScreen'),
-    mapEl = document.getElementById('mapScreen');
+    mapEl = document.getElementById('mapScreen'),
+    skillEl = document.getElementById('skillScreen'),
+    helpEl = document.getElementById('helpScreen');
 function showOnly(el){
-  [titleEl, pauseEl, resultEl, endingEl, craftEl, mapEl].forEach(function(o){ if (o) o.hidden = o !== el; });
-  if (!el) [titleEl, pauseEl, resultEl, endingEl, craftEl, mapEl].forEach(function(o){ if (o) o.hidden = true; });
+  [titleEl, pauseEl, resultEl, endingEl, craftEl, mapEl, skillEl, helpEl].forEach(function(o){ if (o) o.hidden = o !== el; });
+  if (!el) [titleEl, pauseEl, resultEl, endingEl, craftEl, mapEl, skillEl, helpEl].forEach(function(o){ if (o) o.hidden = true; });
 }
 function refreshContinueBtn(){
   var sv = loadSave();
   document.getElementById('continueBtn').hidden = !sv;
-  var badge = document.getElementById('clearedBadge');
-  if (badge) badge.hidden = !(sv && sv.cleared);
+  /* クリア状態のピル表示はタイトルから廃止した（画像全面表示のため） */
 }
 function startGame(continued){
   initAudio();
@@ -6007,7 +6053,6 @@ function openPause(){
   refreshCraftUI();
   refreshSkillUI();
   refreshSyrUI();
-  buildTravelUI();
   showOnly(pauseEl);
   var jb = document.getElementById('jumpSkillBtn');
   if (jb) setPauseFocus(jb);
@@ -6205,10 +6250,10 @@ function drawBigMap(){
     var st2 = storyObjectiveTarget();
     var cur = waypoint ? ('目的地：' + waypoint.name) : (st2 ? ('本筋の目標：' + st2.name) : '本筋の目標：なし（クリア済み）');
     var sub = '';
-    if (selM.kind === 'outpostLib') sub = '解放済み。ファストトラベルでも行けます';
+    if (selM.kind === 'outpostLib') sub = '解放済みの拠点です';
     else if (selM.kind === 'outpost') sub = '未解放の拠点です';
     else if (selM.kind === 'tower') sub = '稼働中の電波塔。近づいて止めると地図が開けます';
-    else if (selM.kind === 'towerDown') sub = '停止済みの電波塔。ファストトラベルでも行けます';
+    else if (selM.kind === 'towerDown') sub = '停止済みの電波塔です';
     else if (selM.kind === 'hq') sub = '放送本部。送信設備を止めればエンディングです';
     else if (selM.kind === 'event') sub = '発生中の事件。目的地にすると進行マーカーが追い続けます';
     var wpNote = (waypoint && waypoint.key === selM.key) ? ' ― いまの目的地です' : '';
@@ -6234,10 +6279,6 @@ function decideBigMapMark(){
     waypoint = { key: 'event', x: activeEvent.x, y: activeEvent.y, name: '事件：' + activeEvent.label };
   } else {
     waypoint = { key: m.key, x: m.x, y: m.y, name: m.name };
-  }
-  if (!objectiveMarkerOn){
-    objectiveMarkerOn = true;
-    syncObjectiveMarkerUI();
   }
   writeSave();
   showMsg('目的地を「' + waypoint.name + '」に設定 ― 進行方向マーカーが指します', 2.6);
@@ -6326,12 +6367,188 @@ function updateBigMapPadNav(dt){
   bigMapPadState.bx = bNow ? 1 : 0;
 }
 
+/* ---------------- スキルツリー画面（専用ページ） ----------------
+   ポーズ画面のクイックメニュー「スキルツリーを開く」から開く。
+   開いている間は game.state = 'skill'（ワールド更新を止める＝ポーズと同じ扱い）。
+   閉じるとポーズ画面に戻る。選択まわりはこの画面専用のグリッド移動で、
+   ポーズ画面のグリッドと同じ作法（見た目の並びに沿って上下左右）にする。
+   ★選択バグの修理：以前はスキルツリーがポーズ画面の中にあり、取得のたびに
+   refreshSkillUI() がボタン要素を作り直して、フォーカス中のボタンが消え、
+   フォーカスが body に落ちて十字キー移動が死んでいた（取得後に次のスキルへ
+   移動してもフォーカスされない症状）。ここでは取得後もフォーカスを
+   「次に取得できるスキル→最も近いノード→戻るボタン」の順で必ず有効な
+   ノードへ移し直す（restoreSkillFocus）。あわせて、取得できないスキルも
+   ボタンを無効化せずフォーカスを当てられるようにし（読める・選べる）、
+   取得可否は buySkill 側で判定して理由を skillMsg に出す */
+function skillFocusables(){
+  var els = skillEl.querySelectorAll('button');
+  var out = [];
+  for (var i = 0; i < els.length; i++){
+    if (!els[i].disabled) out.push(els[i]);
+  }
+  return out;
+}
+function setSkillFocus(el){
+  var all = skillEl.querySelectorAll('.padFocus');
+  for (var i = 0; i < all.length; i++) all[i].classList.remove('padFocus');
+  if (!el) return;
+  el.focus();
+  el.classList.add('padFocus');
+  if (el.scrollIntoView) el.scrollIntoView({ block: 'nearest' });
+}
+function skillGridRows(list){
+  var items = [];
+  for (var i = 0; i < list.length; i++){
+    var r = list[i].getBoundingClientRect();
+    if (!r.width && !r.height) continue;
+    items.push({ el: list[i], cx: r.left + r.width / 2, cy: r.top + r.height / 2, h: r.height || 1 });
+  }
+  items.sort(function(a, b){ return (a.cy - b.cy) || (a.cx - b.cx); });
+  var rows = [];
+  for (var j = 0; j < items.length; j++){
+    var it = items[j], row = rows[rows.length - 1];
+    if (row && Math.abs(it.cy - row.cy) <= Math.max(10, Math.min(it.h, row.h) * 0.55)){
+      row.items.push(it);
+      row.cy += (it.cy - row.cy) / row.items.length;
+    } else {
+      rows.push({ cy: it.cy, h: it.h, items: [it] });
+    }
+  }
+  for (var k = 0; k < rows.length; k++){
+    rows[k].items.sort(function(a, b){ return a.cx - b.cx; });
+  }
+  return rows;
+}
+function moveSkillFocusGrid(dir){
+  var rows = skillGridRows(skillFocusables());
+  if (!rows.length) return;
+  var active = document.activeElement;
+  var ri = -1, ci = -1, cur = null;
+  for (var i = 0; i < rows.length; i++){
+    for (var j = 0; j < rows[i].items.length; j++){
+      if (rows[i].items[j].el === active){ ri = i; ci = j; cur = rows[i].items[j]; }
+    }
+  }
+  if (ri < 0){ setSkillFocus(rows[0].items[0].el); return; }
+  var target = null;
+  if (dir === 'left' || dir === 'right'){
+    var rowItems = rows[ri].items;
+    var nci = ci + (dir === 'right' ? 1 : -1);
+    if (nci >= 0 && nci < rowItems.length){
+      target = rowItems[nci];
+    } else if (dir === 'right'){
+      target = rows[(ri + 1) % rows.length].items[0];
+    } else {
+      var prow = rows[(ri - 1 + rows.length) % rows.length];
+      target = prow.items[prow.items.length - 1];
+    }
+  } else {
+    var nri = (ri + (dir === 'down' ? 1 : -1) + rows.length) % rows.length;
+    var cand = rows[nri].items, bestD = Infinity;
+    for (var m = 0; m < cand.length; m++){
+      var d = Math.abs(cand[m].cx - cur.cx);
+      if (d < bestD){ bestD = d; target = cand[m]; }
+    }
+  }
+  if (target) setSkillFocus(target.el);
+}
+/* スキルボタン（tree:idx）を data-skill-key で引く */
+function skillButtonFor(tree, idx){
+  return skillEl.querySelector('button[data-skill-key="' + tree + ':' + idx + '"]');
+}
+/* 取得などで一覧が作り直されたあと、フォーカスを必ず有効なノードへ戻す。
+   優先順位：同じ系統で次に取得できるスキル → もう一方の系統で次に取得できる
+   スキル → 最も近いノード（同系統の次段→前段→他系統）→「ポーズに戻る」 */
+function restoreSkillFocus(tree, idx){
+  if (game.state !== 'skill') return;
+  function buyable(t, i){
+    return !prog.skills[t][i] && (i === 0 || prog.skills[t][i - 1]) && prog.sp >= 1;
+  }
+  var other = tree === 'tiger' ? 'elephant' : 'tiger';
+  var cand = null, i;
+  for (i = idx + 1; i < 6 && !cand; i++) if (buyable(tree, i)) cand = skillButtonFor(tree, i);
+  for (i = 0; i < 6 && !cand; i++) if (buyable(other, i)) cand = skillButtonFor(other, i);
+  for (i = idx - 1; i >= 0 && !cand; i--) if (buyable(tree, i)) cand = skillButtonFor(tree, i);
+  if (!cand){
+    var near = [];
+    for (i = idx + 1; i < 6; i++) near.push([tree, i]);
+    near.push([tree, idx]);
+    for (i = idx - 1; i >= 0; i--) near.push([tree, i]);
+    for (i = 0; i < 6; i++) near.push([other, i]);
+    for (i = 0; i < near.length && !cand; i++) cand = skillButtonFor(near[i][0], near[i][1]);
+  }
+  setSkillFocus(cand || document.getElementById('skillBackBtn'));
+}
+function setSkillMsg(text){
+  var m = document.getElementById('skillMsg');
+  if (m) m.textContent = text || '';
+}
+function openSkillPage(){
+  if (game.state !== 'pause') return;
+  game.state = 'skill';
+  refreshSkillUI();
+  setSkillMsg(prog.sp >= 1 ? 'スキルポイントが ' + prog.sp + ' ある。取るスキルを選んでください' : 'スキルポイントがない。XPを貯めるとポイントが入ります');
+  showOnly(skillEl);
+  /* 開いた直後のフォーカスは「最初に取得できるスキル」。なければ先頭ノード */
+  var first = null, t, i;
+  var trees = ['tiger', 'elephant'];
+  for (t = 0; t < 2 && !first; t++){
+    for (i = 0; i < 6; i++){
+      if (!prog.skills[trees[t]][i] && (i === 0 || prog.skills[trees[t]][i - 1])){ first = skillButtonFor(trees[t], i); break; }
+    }
+  }
+  if (!first) first = skillEl.querySelector('#tigerList button, #eleList button');
+  setSkillFocus(first || document.getElementById('skillBackBtn'));
+}
+function closeSkillPage(){
+  if (game.state !== 'skill') return;
+  game.state = 'pause';
+  /* 閉じた瞬間に押しっぱなしの B がポーズ側で「新たな押し直し」と誤検知され、
+     1回の B でツリーを閉じた上にポーズまで解除されないよう、現在状態で同期する
+     （大きいマップの closeBigMap と同じ対策） */
+  var gp1 = null;
+  try { gp1 = getPad(); } catch (err) { gp1 = null; }
+  if (gp1 && gp1.buttons){
+    for (var bi = 0; bi < gp1.buttons.length; bi++) padPrev[bi] = !!(gp1.buttons[bi] && gp1.buttons[bi].pressed);
+  }
+  showOnly(pauseEl);
+  var jb = document.getElementById('jumpSkillBtn');
+  if (jb) setPauseFocus(jb);
+}
+var skillStickAt = 0;
+function updateSkillPadNav(gp, now){
+  padEdge(gp, 9); /* Start（クラフト側）はツリー表示中は消費だけして何もしない */
+  if (padEdge(gp, 1) || padEdge(gp, 8)){ sfxCancel(); closeSkillPage(); return; }
+  var list = skillFocusables();
+  if (!list.length) return;
+  var dir = null;
+  if (padEdge(gp, 15)) dir = 'right';
+  else if (padEdge(gp, 14)) dir = 'left';
+  else if (padEdge(gp, 13)) dir = 'down';
+  else if (padEdge(gp, 12)) dir = 'up';
+  if (!dir){
+    var ax = gp.axes && gp.axes[0] ? gp.axes[0] : 0;
+    var ay = gp.axes && gp.axes[1] ? gp.axes[1] : 0;
+    if ((Math.abs(ax) > 0.6 || Math.abs(ay) > 0.6) && now - skillStickAt > 280){
+      if (Math.abs(ax) >= Math.abs(ay)) dir = ax > 0 ? 'right' : 'left';
+      else dir = ay > 0 ? 'down' : 'up';
+      skillStickAt = now;
+    }
+  }
+  if (dir){ moveSkillFocusGrid(dir); return; }
+  if (padEdge(gp, 0)){
+    var active = document.activeElement;
+    if (active && skillEl.contains(active) && !active.disabled) active.click();
+    else setSkillFocus(list[0]);
+  }
+}
+
 /* ---------------- クラフトパネル（注射作成専用） ----------------
    プレイ中に専用ボタンで開き、
    開いている間は game.state = 'craft' にしてワールド更新を止める。
    パッド：Start（buttons[9]）で開閉（Back（View, buttons[8]）はポーズ画面）。
    キーボード：開閉は Esc に割り当てた（Tab はポーズ画面）。
-   作成そのものはポーズ画面と共通の craftSyringe() を使う。 */
+   注射の作成はこのパネルが唯一の入口で、作成処理は craftSyringe() を使う。 */
 function openCraftPanel(){
   if (game.state !== 'play' || !player || player.dead) return;
   game.state = 'craft';
@@ -6523,8 +6740,12 @@ function updatePausePadNav(gp, now){
   }
   if (padEdge(gp, 0)){
     if (inPause){
-      if (active.tagName === 'SELECT') cycleSelect(active, 1);
-      else active.click();
+      /* プルダウンにフォーカスがあるときのAは押さない。Aは「決定」のつもりで
+         押されやすく、押すたびに値が静かに切り替わって即セーブされる事故の元
+         （進行方向マーカーがいつの間にかOFFになっていた実機報告：ポーズ中は
+         マーカー自体が見えないので、切替に気づく手がかりが無い）。
+         プルダウンの値変更は従来どおり左右（cycleSelect）に任せ、Aはボタン専用 */
+      if (active.tagName !== 'SELECT') active.click();
     } else {
       setPauseFocus(list[0]);
     }
@@ -6566,6 +6787,13 @@ function refreshCraftUI(){
 function refreshSkillUI(){
   var info = document.getElementById('skillInfo');
   if (info) info.innerHTML = 'XP：<b>' + prog.xp + ' / ' + xpForNext() + '</b>（次のポイントまで）　スキルポイント：<b>' + prog.sp + '</b>　取得済み：虎 ' + prog.skills.tiger.filter(Boolean).length + '/6 ・ 象 ' + prog.skills.elephant.filter(Boolean).length + '/6';
+  /* 作り直しでフォーカス中のボタンが消えるとフォーカスが body に落ちて
+     選択が死ぬ（取得後に次のスキルへ移動できないバグ）。作り直す前に
+     フォーカス中のスキルを控え、作り直したあと restoreSkillFocus で
+     有効なノードへ移し直す */
+  var focusKey = null;
+  var ae = document.activeElement;
+  if (game.state === 'skill' && ae && ae.dataset && ae.dataset.skillKey) focusKey = ae.dataset.skillKey;
   function build(tree, elId){
     var el = document.getElementById(elId);
     if (!el) return;
@@ -6581,7 +6809,11 @@ function refreshSkillUI(){
       var btn = document.createElement('button');
       btn.className = 'btn small' + (owned ? ' sub' : '');
       btn.textContent = owned ? '取得済み' : '取る（1P）';
-      btn.disabled = owned || !unlocked || prog.sp < 1;
+      /* 取得できないスキルも無効化しない。全ノードにフォーカスを当てて
+         読める・選べる状態にし、取得可否は buySkill が理由つきで弾く。
+         無効化するとパッドの移動先から消えて、並びが飛ぶ原因になる */
+      btn.disabled = false;
+      btn.dataset.skillKey = tree + ':' + i;
       btn.addEventListener('click', function(){ buySkill(tree, i); });
       row.appendChild(btn);
       el.appendChild(row);
@@ -6590,11 +6822,16 @@ function refreshSkillUI(){
   build('tiger', 'tigerList');
   build('elephant', 'eleList');
   refreshQuickStatus();
+  if (focusKey){
+    var parts = focusKey.split(':');
+    restoreSkillFocus(parts[0], parseInt(parts[1], 10) || 0);
+  }
 }
 function buySkill(tree, idx){
-  if (prog.skills[tree][idx]) return;
-  if (idx > 0 && !prog.skills[tree][idx - 1]) return;
-  if (prog.sp < 1) return;
+  var sk = SKILLS[tree][idx];
+  if (prog.skills[tree][idx]){ setSkillMsg('「' + sk.name + '」は取得済みです'); sfxCancel(); return; }
+  if (idx > 0 && !prog.skills[tree][idx - 1]){ setSkillMsg('「' + sk.name + '」はまだ取れません ― 前の段（第' + idx + '段）を先に取ってください'); sfxCancel(); return; }
+  if (prog.sp < 1){ setSkillMsg('スキルポイントが足りません ― XPを貯めるとポイントが入ります'); sfxCancel(); return; }
   prog.sp--;
   prog.skills[tree][idx] = true;
   if (tree === 'elephant' && (idx === 0 || idx === 1)){
@@ -6602,6 +6839,7 @@ function buySkill(tree, idx){
   }
   writeSave();
   sfxTone(740, 1100, 0.2, 0.12, 'triangle');
+  setSkillMsg('「' + sk.name + '」を取得した！（残りポイント ' + prog.sp + '）');
   refreshSkillUI();
   refreshCraftUI();
   if (player) updateHUDStatic();
@@ -6628,40 +6866,6 @@ function doCraft(kind){
   writeSave();
   sfxTone(660, 990, 0.2, 0.12, 'triangle');
   refreshCraftUI();
-}
-function buildTravelUI(){
-  var gridEl = document.getElementById('travelGrid');
-  gridEl.innerHTML = '';
-  function addBtn(label, x, y, refill, note){
-    var b = document.createElement('button');
-    b.className = 'btn small sub';
-    b.textContent = label;
-    b.addEventListener('click', function(){ travelTo(x, y, refill, label); });
-    gridEl.appendChild(b);
-  }
-  addBtn('登山口（山道の入口）', playerSpawn.x, playerSpawn.y, false);
-  OUTPOSTS.forEach(function(o){
-    if (liberated[o.id]) addBtn(o.name + '（補給あり）', o.travelX, o.travelY, true);
-  });
-  TOWERS.forEach(function(t){
-    if (t.stopped) addBtn(t.name, t.travelX, t.travelY, false);
-  });
-  if (gridEl.children.length <= 1){
-    var s = document.createElement('span');
-    s.className = 'setnote';
-    s.textContent = '（拠点を解放するか電波塔を止めると、行き先が増える）';
-    gridEl.appendChild(s);
-  }
-}
-function travelTo(x, y, refill, label){
-  player.x = x; player.y = y;
-  player.crouch = false;
-  gridStep = null;
-  if (refill){ refillSupplies(); updateHUDStatic(); }
-  markRevealed();
-  closePause();
-  sfxTone(440, 660, 0.18, 0.1, 'sine');
-  showMsg(label + 'へ移動した' + (refill ? ' ― 補給完了' : ''), 2);
 }
 /* ---------------- エンディング（送信設備の操作後） ----------------
    演出はフェードとテキストのみ。画面シェイク・強い閃光・滑らかなズームは入れない（酔い対策） */
@@ -6778,6 +6982,8 @@ function respawnPlayer(){
 }
 document.getElementById('startBtn').addEventListener('click', function(){ startGame(false); });
 document.getElementById('continueBtn').addEventListener('click', function(){ startGame(true); });
+document.getElementById('helpBtn').addEventListener('click', function(){ sfxSelect(); openHelp(); });
+document.getElementById('helpBackBtn').addEventListener('click', function(){ sfxCancel(); closeHelp(); });
 document.getElementById('openMapBtn').addEventListener('click', function(){ sfxSelect(); openBigMap(); });
 document.getElementById('bigMapCloseBtn').addEventListener('click', function(){ sfxCancel(); closeBigMap(); });
 document.getElementById('bigMapSetBtn').addEventListener('click', function(){ decideBigMapMark(); });
@@ -6813,27 +7019,21 @@ document.getElementById('bigMapMainBtn').addEventListener('click', function(){
 document.getElementById('resumeBtn').addEventListener('click', closePause);
 document.getElementById('craftAmmoBtn').addEventListener('click', function(){ doCraft('ammo'); });
 document.getElementById('craftMedBtn').addEventListener('click', function(){ doCraft('med'); });
-document.getElementById('syrHuntBtn').addEventListener('click', function(){ craftSyringe('hunt'); });
-document.getElementById('syrHealBtn').addEventListener('click', function(){ craftSyringe('heal'); });
-/* クラフトパネル側も同じ craftSyringe() を使う（作成処理は共通） */
+/* 注射の作成はクラフトパネル（Startで開く）側のみ。作成処理は craftSyringe() */
 document.getElementById('cpSyrHuntBtn').addEventListener('click', function(){ craftSyringe('hunt'); });
 document.getElementById('cpSyrHealBtn').addEventListener('click', function(){ craftSyringe('heal'); });
 document.getElementById('craftCloseBtn').addEventListener('click', function(){ closeCraftPanel(); });
 document.getElementById('jumpSkillBtn').addEventListener('click', function(){
-  var b = document.querySelector('#tigerList button:not([disabled]), #eleList button:not([disabled])');
-  jumpToSection('secSkill', b);
+  sfxSelect();
+  openSkillPage();
 });
-document.getElementById('jumpSyrBtn').addEventListener('click', function(){
-  var bh = document.getElementById('syrHuntBtn'), bl = document.getElementById('syrHealBtn');
-  jumpToSection('secSyringe', !bh.disabled ? bh : bl);
+document.getElementById('skillBackBtn').addEventListener('click', function(){
+  sfxCancel();
+  closeSkillPage();
 });
 document.getElementById('jumpCraftBtn').addEventListener('click', function(){
   var ab = document.getElementById('craftAmmoBtn'), mb = document.getElementById('craftMedBtn');
   jumpToSection('secCraft', !ab.disabled ? ab : mb);
-});
-document.getElementById('jumpTravelBtn').addEventListener('click', function(){
-  var b = document.querySelector('#travelGrid button');
-  jumpToSection('secTravel', b);
 });
 document.getElementById('restartBtn').addEventListener('click', function(){ startGame(false); });
 document.getElementById('againBtn').addEventListener('click', function(){ startGame(false); });
@@ -6853,7 +7053,6 @@ function setDifficulty(v){
   if (game.state === 'play' || game.state === 'pause') writeSave();
 }
 document.getElementById('diffSel').addEventListener('change', function(e){ setDifficulty(e.target.value); });
-document.getElementById('diffSelTitle').addEventListener('change', function(e){ setDifficulty(e.target.value); });
 document.getElementById('rotMode').addEventListener('change', function(e){
   rotMode = e.target.value;
   if (rotMode === 'grid'){
@@ -6866,20 +7065,10 @@ document.getElementById('volSel').addEventListener('change', function(e){
 });
 function setSnowfall(on){
   snowfallOn = on;
+  /* 日差しの埃のプルダウンはポーズ画面のみ（タイトルからは廃止） */
   document.getElementById('snowSel').value = on ? 'on' : 'off';
-  document.getElementById('snowSelTitle').value = on ? 'on' : 'off';
 }
 document.getElementById('snowSel').addEventListener('change', function(e){ setSnowfall(e.target.value === 'on'); });
-document.getElementById('snowSelTitle').addEventListener('change', function(e){ setSnowfall(e.target.value === 'on'); });
-function setObjectiveMarker(on){
-  objectiveMarkerOn = !!on;
-  syncObjectiveMarkerUI();
-  /* 難易度と同じ扱い：プレイ中・ポーズ中の切替は即時反映し、そのままセーブにも残す */
-  if (game.state === 'play' || game.state === 'pause') writeSave();
-  updateObjectiveMarker();
-}
-document.getElementById('objMarkerSel').addEventListener('change', function(e){ setObjectiveMarker(e.target.value === 'on'); });
-
 /* ---------------- Fullscreen & 解像度追従 ----------------
    ぼやけ対策：キャンバスの実解像度を「表示サイズ × デバイスピクセル密度」に
    追従させる（上限は幅2560）。フルスクリーン切替とリサイズのたびに再計算し、
@@ -6951,6 +7140,114 @@ document.addEventListener('webkitfullscreenchange', function(){ resizeCanvas(); 
 resizeCanvas();
 syncFsButtons();
 
+/* ---------------- タイトル画面のパッド操作／操作説明画面 ----------------
+   タイトルは画像全面表示＋下端のボタンだけ。パッドは十字キー／
+   左スティックでボタンにフォーカスを移し、Aで決定する。フォーカスが
+   無いときのA／Startは従来どおり即開始。
+   操作説明画面（help）はタイトルの「操作説明」ボタンから開く独立画面で、
+   十字キー／スティックで表をスクロールでき、B／Back／Startでタイトルに戻れる */
+var titleStickAt = 0;
+function titleFocusables(){
+  var els = titleEl.querySelectorAll('button');
+  var out = [];
+  for (var i = 0; i < els.length; i++) if (!els[i].hidden && !els[i].disabled) out.push(els[i]);
+  return out;
+}
+function setTitleFocus(el){
+  var all = titleEl.querySelectorAll('.padFocus');
+  for (var i = 0; i < all.length; i++) all[i].classList.remove('padFocus');
+  if (!el) return;
+  el.focus();
+  el.classList.add('padFocus');
+}
+function moveTitleFocus(dir){
+  var list = titleFocusables();
+  if (!list.length) return;
+  var idx = list.indexOf(document.activeElement);
+  var delta = (dir === 'right' || dir === 'down') ? 1 : -1;
+  var next = idx < 0 ? (delta > 0 ? 0 : list.length - 1) : (idx + delta + list.length) % list.length;
+  setTitleFocus(list[next]);
+  sfxMove();
+}
+function syncPadPrev(){
+  var gp1 = null;
+  try { gp1 = getPad(); } catch (err) { gp1 = null; }
+  if (gp1 && gp1.buttons){
+    for (var bi = 0; bi < gp1.buttons.length; bi++) padPrev[bi] = !!(gp1.buttons[bi] && gp1.buttons[bi].pressed);
+  }
+}
+function updateTitlePadNav(gp, now){
+  var dir = null;
+  if (padEdge(gp, 15)) dir = 'right';
+  else if (padEdge(gp, 14)) dir = 'left';
+  else if (padEdge(gp, 13)) dir = 'down';
+  else if (padEdge(gp, 12)) dir = 'up';
+  if (!dir){
+    var ax = gp.axes && gp.axes[0] ? gp.axes[0] : 0;
+    var ay = gp.axes && gp.axes[1] ? gp.axes[1] : 0;
+    if ((Math.abs(ax) > 0.6 || Math.abs(ay) > 0.6) && now - titleStickAt > 280){
+      if (Math.abs(ax) >= Math.abs(ay)) dir = ax > 0 ? 'right' : 'left';
+      else dir = ay > 0 ? 'down' : 'up';
+      titleStickAt = now;
+    }
+  }
+  if (dir){ moveTitleFocus(dir); return; }
+  if (padEdge(gp, 0)){
+    var active = document.activeElement;
+    if (active && titleEl.contains(active) && active.tagName === 'BUTTON' && !active.hidden && !active.disabled){ active.click(); }
+    else startGame(!!loadSave());
+    return;
+  }
+  if (padEdge(gp, 9)) startGame(!!loadSave());
+}
+function openHelp(){
+  if (game.state !== 'title') return;
+  game.state = 'help';
+  showOnly(helpEl);
+  var sc = document.getElementById('helpScroll');
+  if (sc) sc.scrollTop = 0;
+  syncPadPrev();
+  setHelpFocus(document.getElementById('helpBackBtn'));
+}
+function closeHelp(){
+  if (game.state !== 'help') return;
+  game.state = 'title';
+  syncPadPrev();
+  showOnly(titleEl);
+  setTitleFocus(document.getElementById('helpBtn'));
+}
+function setHelpFocus(el){
+  var all = helpEl.querySelectorAll('.padFocus');
+  for (var i = 0; i < all.length; i++) all[i].classList.remove('padFocus');
+  if (!el) return;
+  el.focus();
+  el.classList.add('padFocus');
+}
+var helpStickAt = 0;
+function scrollHelp(delta){
+  var sc = document.getElementById('helpScroll');
+  if (sc) sc.scrollTop += delta;
+}
+function updateHelpPadNav(gp, now){
+  if (padEdge(gp, 1) || padEdge(gp, 8) || padEdge(gp, 9)){ sfxCancel(); closeHelp(); return; }
+  var dir = 0;
+  if (padEdge(gp, 13)) dir = 1;
+  else if (padEdge(gp, 12)) dir = -1;
+  if (!dir){
+    var ay = gp.axes && gp.axes[1] ? gp.axes[1] : 0;
+    if (Math.abs(ay) > 0.6 && now - helpStickAt > 200){
+      dir = ay > 0 ? 1 : -1;
+      helpStickAt = now;
+    }
+  }
+  if (dir){ scrollHelp(dir * 140); return; }
+  if (padEdge(gp, 0)){
+    var active = document.activeElement;
+    if (active && helpEl.contains(active) && !active.disabled) active.click();
+    else setHelpFocus(document.getElementById('helpBackBtn'));
+  }
+}
+
 /* ---------------- Main loop ---------------- */
 var lastT = performance.now();
 var padDebugAt = 0;
@@ -6960,7 +7257,7 @@ function loop(now){
   lastT = now;
   var gp = getPad();
   if (gp && !padConnected){ padConnected = true; padName = gp.id || ''; refreshPadUI(); }
-  if ((game.state === 'pause' || game.state === 'title') && now - padDebugAt > 150){
+  if ((game.state === 'pause' || game.state === 'title' || game.state === 'help') && now - padDebugAt > 150){
     padDebugAt = now;
     updatePadDebug(gp);
   }
@@ -7032,8 +7329,18 @@ function loop(now){
   } else if (game.state === 'craft'){
     /* クラフトパネル表示中はワールドを更新しない（CARRY YOU式にゲームが止まる） */
     if (gp) updateCraftPadNav(gp, now);
+  } else if (game.state === 'skill'){
+    /* スキルツリー画面表示中はワールドを更新しない（ポーズと同じ扱い）。
+       パッド操作は専用の updateSkillPadNav が担う */
+    if (gp) updateSkillPadNav(gp, now);
   } else if (game.state === 'title'){
-    if (gp && (padEdge(gp, 0) || padEdge(gp, 9))) startGame(!!loadSave());
+    if (gp) updateTitlePadNav(gp, now);
+    player.angle += dt * 0.05;
+    render();
+  } else if (game.state === 'help'){
+    /* 操作説明画面表示中はワールドを更新しない（タイトルと同じ扱い）。
+       パッド操作は専用の updateHelpPadNav が担う */
+    if (gp) updateHelpPadNav(gp, now);
     player.angle += dt * 0.05;
     render();
   } else if (game.state === 'result'){
@@ -7042,7 +7349,7 @@ function loop(now){
     render();
   }
   updateObjectiveMarker();
-  if (game.state === 'play' || game.state === 'pause' || game.state === 'craft' || game.state === 'bigmap') render();
+  if (game.state === 'play' || game.state === 'pause' || game.state === 'craft' || game.state === 'bigmap' || game.state === 'skill') render();
 }
 resetGame(!!loadSave());
 game.state = 'title';
