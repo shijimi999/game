@@ -457,6 +457,13 @@
               </div>
               <button class="btn small" id="amigoGayoBtn" type="button">連れて行く</button>
             </div>
+            <div class="craftrow">
+              <div>
+                <span class="cname">なし</span> <span class="pips" id="amigoNoneMark"></span>
+                <div class="cdesc">アミーゴを連れて行かない（一人で行動する）</div>
+              </div>
+              <button class="btn small" id="amigoNoneBtn" type="button">連れて行かない</button>
+            </div>
             <div class="setrow">
               <label for="diffSel">難易度</label>
               <select id="diffSel">
@@ -590,6 +597,8 @@
               <span class="lg" style="background:#ffe9a8;"></span>囲いの入口（門の印＋「入口」）
               <span class="lg" style="background:#b45ae0;"></span>発生中の事件（カルマ・目的地にできる）
               <span class="lg" style="background:#ffffff;"></span>自分（三角の向きが正面）
+              <span class="lg" style="background:#2e86c8;"></span>海（入れない）
+              <span class="lg" style="background:#ecd39a;"></span>砂浜
             </div>
             <div class="btnrow">
               <button class="btn" id="bigMapSetBtn" type="button">目的地に設定する</button>
@@ -664,7 +673,7 @@ ctx.imageSmoothingEnabled = true;
 ctx.imageSmoothingQuality = 'high';
 
 /* ---------------- Map（手続き生成） ----------------
-   grid: 0 空 / 1 石壁 / 2 柵 / 3 見張り台
+   grid: 0 空 / 1 石壁 / 2 柵 / 3 見張り台 / 4 関所の門 / 5 海（進入不可の水面）
    spriteCells: tree（松） / crate / tower（鐘の塔） / alarm / post（祈祷旗）
                 / rock（岩） / snow（雪のこぶ） ― rock・snow は通行不可＋視線遮断
    bushes（草むら）は spriteCells に入れない（通り抜けられる隠れ場所）。
@@ -679,7 +688,7 @@ var HQ = { id: 'J', name: '放送本部', cx: 42.5, cy: 5.5 };
 var TRANSMITTER = { x: 46.5, y: 3.5 };   /* 放送室の送信設備の位置 */
 var gameCleared = false;                 /* 制圧完了フラグ（セーブ対象） */
 var grid = [], spriteCells = {};
-var trees = [], crates = [], posts = [], ices = [];
+var trees = [], crates = [], posts = [], ices = [], beaches = [];
 var bushes = [], rocks = [], bushCells = {};   /* 草むら {x,y,snow} ／ 岩・雪のこぶ {x,y,kind}（spriteCells='rock'/'snow'） */
 var playerSpawn = { x: 2.5, y: 2.5 };
 
@@ -746,6 +755,28 @@ var REINFORCE = {
     for (x = 0; x < MW; x++)
       grid[y][x] = (x === 0 || y === 0 || x === MW - 1 || y === MH - 1) ? 1 : 0;
   }
+  /* --- 海（タイル5：進入不可の水面。泳げない）＋砂浜 ---
+     北西の角と南西の角の空き地を海にする（豆野がマップに青く塗った範囲）。
+     海岸線は重要な配置を避けて引いた：
+     ・北西：放送本部（x32〜）と本部西の巡回路（x30.5）は陸のまま。南端は y12
+       （海辺の村・北西の鐘の塔・スイギュウの放牧地（14.5,16.5）には届かない）
+     ・南西：輸送小隊（カルマイベント）の進路 y60〜61 と、イベント発生地点
+       （12.5,62.5）周辺は陸のまま。南部のスイギュウ定位置（8.5,66.5）・薬草
+       （12.5,69.5）・住民定位置（12.5,72.5）・岩（12,68）も陸のポケットとして残す
+     ・東岸（東の鐘の塔の南〜要塞の北。豆野がマップに赤く塗った範囲）：
+       x43〜53（東端の外周セルまで）・y43〜51。その範囲に拠点・塔・警報・
+       敵配置と巡回路・動物・住民・薬草・ポスター・補給箱・イベント地点は
+       一切無い（実ファイルで全定義を確認済み）。沈むのは装飾の岩2つ
+       （(44,45)・(48,50)）と草むら2つ（(44,48)・(44,49)）だけ。
+       要塞の北壁（y54）の手前には陸2行（y52〜53）を残し、西入口・南入口への
+       到達性は従来どおり（到達性は BFS で別途確認済み）
+     海セルには後段の配置（木・岩・草むら）が cellFree／grid===0 の検査で
+     自動的に置かれなくなる。砂浜は海に接する陸セルを後段で beaches に集める */
+  function seaRect(x0, y0, x1, y1){ for (var sy = y0; sy <= y1; sy++) for (var sx = x0; sx <= x1; sx++) grid[sy][sx] = 5; }
+  seaRect(0, 0, 28, 12);      /* 北西の角 */
+  seaRect(0, 62, 9, 64);      /* 南西の角（北の帯） */
+  seaRect(0, 65, 6, 73);      /* 南西の角（西の帯） */
+  seaRect(43, 43, 53, 51);    /* 東岸（東の鐘の塔の南〜要塞の北） */
   function set(x, y, v){ y += OY; if (x > 0 && y > 0 && x < MW - 1 && y < MH - 1) grid[y][x] = v; }
   function hWall(x0, x1, y, v){ for (var i = x0; i <= x1; i++) set(i, y, v); }
   function vWall(x, y0, y1, v){ for (var i = y0; i <= y1; i++) set(x, i, v); }
@@ -885,6 +916,16 @@ var REINFORCE = {
       spriteCells[p[0] + ',' + p[1]] = 'tree';
     }
   });
+})();
+/* 砂浜：海（タイル5）に4方向で接する陸セル（タイル0）を集める。
+   3D表示では平たい砂スプライトを敷き、マップ表示では drawMapOn が同じ隣接判定で砂色に塗る */
+(function computeBeaches(){
+  for (var by = 0; by < MH; by++) for (var bx = 0; bx < MW; bx++){
+    if (grid[by][bx] !== 0) continue;
+    if ((bx > 0 && grid[by][bx - 1] === 5) || (bx < MW - 1 && grid[by][bx + 1] === 5) ||
+        (by > 0 && grid[by - 1][bx] === 5) || (by < MH - 1 && grid[by + 1][bx] === 5))
+      beaches.push({ x: bx + .5, y: by + .5 });
+  }
 })();
 /* 薬草（採取すると注射の素材。時間で再出現） */
 var PLANT_DEFS = [
@@ -1209,6 +1250,16 @@ function makeWallTextureTropic(kind){
     [[26, 53], [230, 53], [26, 195], [230, 195]].forEach(function(p){
       circF(g, p[0], p[1], 5, '#4a341e'); circF(g, p[0] - 1.6, p[1] - 1.6, 1.8, 'rgba(255,240,210,.5)');
     });
+  } else if (kind === 5){
+    /* 海（フォールバック用。水面の描画は render() が専用処理で行う） */
+    var wg5 = g.createLinearGradient(0, 0, 0, S);
+    wg5.addColorStop(0, '#3f9ad6'); wg5.addColorStop(1, '#2273b4');
+    g.fillStyle = wg5; g.fillRect(0, 0, S, S);
+    g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 3; g.lineCap = 'round';
+    for (i = 0; i < 7; i++){
+      var wy5 = 24 + i * 34, wx5 = (i % 2) * 60 + rnd() * 30;
+      g.beginPath(); g.moveTo(wx5, wy5); g.quadraticCurveTo(wx5 + 34, wy5 - 7, wx5 + 68, wy5); g.stroke();
+    }
   } else if (kind === 4){
     /* 北の関所の鉄の門 → ティール塗りの鉄格子（錆は控えめに） */
     var bg = g.createLinearGradient(0, 0, 0, S);
@@ -1269,7 +1320,7 @@ function makeWallTextureTropic(kind){
   }
   return c;
 }
-var wallTexA1 = [null, makeWallTextureTropic(1), makeWallTextureTropic(2), makeWallTextureTropic(3), makeWallTextureTropic(4)];
+var wallTexA1 = [null, makeWallTextureTropic(1), makeWallTextureTropic(2), makeWallTextureTropic(3), makeWallTextureTropic(4), makeWallTextureTropic(5)];
 
 function makeTreeSprite(){
   /* 松の木：柔らかい幹＋丸い樹冠の重なり＋雪 */
@@ -2393,6 +2444,18 @@ function makeLagoonSprite(){
   circF(g, 104, 20, 2.2, '#e86aa8'); circF(g, 22, 34, 1.9, '#f4f1e6'); circF(g, 98, 36, 1.7, '#e5484d');
   return c;
 }
+function makeBeachSprite(){
+  /* 砂浜（海に接する陸セルに敷く平たい砂地）：柔らかい砂の楕円＋波打ち際の泡。
+     ラグーンと同じ平たさで敷き、隣のセルへ少しはみ出させて帯がつながって見えるようにする */
+  var c = mkCanvas(256, 96), g = ctx2(c); g.scale(2, 2);
+  ellF(g, 64, 27, 63, 20, '#e7d096');
+  ellF(g, 64, 26, 56, 17, '#efdcab');
+  ellF(g, 60, 24, 40, 12, '#f4e7c0');
+  ellF(g, 30, 20, 14, 4, 'rgba(255,255,255,.5)');
+  ellF(g, 92, 32, 16, 4, 'rgba(190,160,95,.35)');
+  circF(g, 100, 18, 1.8, '#c9ae72'); circF(g, 24, 33, 1.6, '#c9ae72'); circF(g, 70, 36, 1.5, '#b39b6d');
+  return c;
+}
 function makeSandMoundSprite(){
   /* 砂のこぶ（旧・雪のこぶの南国版）：低く丸い砂の盛り上がり＋草＋小石。遮蔽性能は従来と同じ */
   var c = mkCanvas(256, 160), g = ctx2(c); g.scale(2, 2);
@@ -2439,7 +2502,7 @@ var sprTree = makeTreeSprite(), sprCrate = makeCrateSprite(false), sprCrateSuppl
     sprRock = makeRockSprite(), sprSnowMound = makeSnowMoundSprite(),
     sprPalm = makePalmSprite(), sprBanner = makeBannerSprite(), sprGate = makeGateSprite(), sprBushTropic = makeBushTropicSprite(),
     sprRockTropic = makeRockTropicSprite(), sprTowerTropic = makeTowerTropicSprite(),
-    sprLagoon = makeLagoonSprite(), sprSandMound = makeSandMoundSprite();
+    sprLagoon = makeLagoonSprite(), sprSandMound = makeSandMoundSprite(), sprBeach = makeBeachSprite();
 var sprCivilians = [];
 for (var cvi = 0; cvi < 6; cvi++) sprCivilians.push(makeCivilianSprite(cvi));
 /* 敵兵の向き別スプライト表と選択ロジック。
@@ -3415,7 +3478,7 @@ function resetGame(continued){
       /* 進行方向マーカーは常時ON：セーブに残っている objectiveMarker（OFF含む）は読まない */
       waypoint = resolveWaypointKey(sv.waypoint);
       var savedAmigoId = sv.amigoId === 'toro' ? 'caiman' : sv.amigoId; /* 旧セーブの「トロ」は後継の「カイマン」を選んでいる扱いに引き継ぐ */
-      if (savedAmigoId && AMIGO_DEFS[savedAmigoId]) amigoId = savedAmigoId;
+      if (savedAmigoId === 'none' || (savedAmigoId && AMIGO_DEFS[savedAmigoId])) amigoId = savedAmigoId; /* 'none'（連れて行かない）も有効な選択として引き継ぐ */
       prog.hides = sv.hides | 0;
       prog.craftAmmo = Math.min(2, sv.craftAmmo | 0);
       prog.craftMed = Math.min(2, sv.craftMed | 0);
@@ -3463,7 +3526,7 @@ function resetGame(continued){
   spawnWorldEnemies();
   boars = BOAR_HOMES.map(makeBoar);
   civilians = CIVILIAN_DEFS.map(makeCivilian); /* 住民はセーブ対象外：毎回定位置に再配置（アミーゴと同じ扱い） */
-  amigo = makeAmigo(); placeAmigoAtPlayer(); /* アミーゴのHP等の状態はセーブせず常に満タンでプレイヤーのそばから開始。選択（amigoId）だけセーブ対象 */
+  amigo = (amigoId === 'none') ? null : makeAmigo(); if (amigo) placeAmigoAtPlayer(); /* アミーゴのHP等の状態はセーブせず常に満タンでプレイヤーのそばから開始。選択（amigoId）だけセーブ対象。「なし」選択時は amigo=null（同行しない） */
   plants = PLANT_DEFS.map(function(p){ return { x: p.x, y: p.y, active: true, respawnT: 0 }; });
   baits = [];
   projectiles = []; pendExplosions = []; fires = []; explosionFx = [];
@@ -5422,21 +5485,28 @@ function updateCivilian(c, dt){
    爆発／炎の対象から外れ、皮もXPも出ない（狩りの対象外）。
    敵からの反撃だけは既存の「動物への射撃」経路（enemyShootAnimal→damageBoar）で受け、
    damageBoar の入口で isAmigo を damageAmigo に振り分ける。
+   行動は「主人公に張り付く」形ではなく、普段は少し離れた横〜斜め前について、
+   戦闘が始まったら主人公から lead マスの範囲で離れた敵を自分で選んで独立に戦う
+   （カイマンだけは遠くを追わず、主人公の少し前に陣取って近づく敵を迎え撃つ）。
+   戦果（キル／チコの足止め）はメッセージで知らせる。
    同行は常に1匹だけ。HP等の状態はセーブしない（読み込み時は満タンでプレイヤーのそばに
    再配置される）が、どの子を選んだか（amigoId）だけはセーブ対象で、
-   旧セーブに項目が無ければソルになる。 */
+   旧セーブに項目が無ければソルになる。
+   5つ目の選択肢「なし」（amigoId='none'）を選ぶと amigo=null で同行しない。
+   amigo への参照は各所で null ガード済み（描画・ミニマップ・updateAmigo・
+   damageAmigo・ステータス表示）なので、「なし」でも表示・動作は破綻しない。 */
 var AMIGO_DEFS = {
   /* ソル：戦闘型。従来のソルの挙動・強さそのまま（野生ジャガーHP70の2倍／威力22／間隔0.8） */
-  sol:   { id: 'sol',   name: 'ソル', type: '戦闘型', maxHp: 140, dmg: 22, atkCd: 0.8,  chase: 5.2, reach: 0.6,  followNear: 3.4, followFar: 5.4, holdTime: 0,   tagColor: '#7fe8da', mapColor: '#12a594' },
+  sol:   { id: 'sol',   name: 'ソル', type: '戦闘型', maxHp: 140, dmg: 22, atkCd: 0.8,  chase: 5.2, reach: 0.6,  followNear: 3.4, followFar: 5.4, holdTime: 0,   lead: 20, tagColor: '#7fe8da', mapColor: '#12a594' },
   /* チコ：かく乱型。足が速く、噛みつきで敵を少し止める。威力は小さい。HPは野生の野犬（45）より丈夫だが低め */
-  chico: { id: 'chico', name: 'チコ', type: 'かく乱型', maxHp: 90,  dmg: 8,  atkCd: 0.65, chase: 6.3, reach: 0.6,  followNear: 4.0, followFar: 6.4, holdTime: 1.5, tagColor: '#ffab9a', mapColor: '#d84b32' },
+  chico: { id: 'chico', name: 'チコ', type: 'かく乱型', maxHp: 90,  dmg: 8,  atkCd: 0.65, chase: 6.3, reach: 0.6,  followNear: 4.0, followFar: 6.4, holdTime: 1.5, lead: 20, tagColor: '#ffab9a', mapColor: '#d84b32' },
   /* カイマン：噛みつき型（旧「トロ」の後継枠）。アミーゴ専用のワニ（野生のワニは登場しない）。
      HPが高く噛みつきの一撃が重い（対敵ダメージ45）。陸上では足が遅いが、水辺・水中では速くなる（updateAmigo の CAIMAN_WATER_MUL） */
-  caiman:{ id: 'caiman', name: 'カイマン', type: '噛みつき型', maxHp: 260, dmg: 45, atkCd: 1.5,  chase: 3.8, reach: 0.85, followNear: 3.2, followFar: 4.9, holdTime: 0,   tagColor: '#a9e284', mapColor: '#5da244', evade: 0 },
+  caiman:{ id: 'caiman', name: 'カイマン', type: '噛みつき型', maxHp: 260, dmg: 45, atkCd: 1.5,  chase: 3.8, reach: 0.85, followNear: 3.2, followFar: 4.9, holdTime: 0,   lead: 8,  tagColor: '#a9e284', mapColor: '#5da244', evade: 0 },
   /* ガヨ：突撃型。アミーゴ専用の雄鶏（野生の鶏は登場しない）。4匹で一番速く、連続でつつく。
      一撃は一番小さいが攻撃間隔は一番短い。体が小さいので敵の攻撃が当たりにくい（evade＝回避率）。
      その代わりHPは4匹で一番低い */
-  gayo:  { id: 'gayo',  name: 'ガヨ', type: '突撃型', maxHp: 70,  dmg: 5,  atkCd: 0.35, chase: 7.5, reach: 0.5,  followNear: 3.9, followFar: 5.9, holdTime: 0,   tagColor: '#ffdf6b', mapColor: '#e8a317', evade: 0.45 }
+  gayo:  { id: 'gayo',  name: 'ガヨ', type: '突撃型', maxHp: 70,  dmg: 5,  atkCd: 0.35, chase: 7.5, reach: 0.5,  followNear: 3.9, followFar: 5.9, holdTime: 0,   lead: 27, tagColor: '#ffdf6b', mapColor: '#e8a317', evade: 0.45 }
 };
 var amigoId = 'sol'; /* 選択中のアミーゴ（セーブ対象） */
 function amigoDef(id){ return AMIGO_DEFS[id] || AMIGO_DEFS.sol; }
@@ -5451,14 +5521,30 @@ function makeAmigo(id){
     down: false, downT: 0, atkCd: 0, target: null, marked: false,
     dmg: def.dmg, atkCdMax: def.atkCd, chase: def.chase, reach: def.reach,
     followNear: def.followNear, followFar: def.followFar, holdTime: def.holdTime || 0,
+    lead: def.lead || 20, /* 戦闘時の行動範囲：主人公からこの距離（マス）までの敵を自分で選んで襲う。カイマンだけ小さい＝遠くを追わず迎撃役 */
     evade: def.evade || 0,
     stuckT: 0, sx: player.x, sy: player.y, wantMove: false, /* 行き詰まり検知用（updateAmigo） */
     progT: 0, progD: 1e9, goalKey: null, /* 目標への進展検知用（amigoProgress） */
     ignoreEn: null, ignoreT: 0, /* 壁越し等で到達できなかった敵をしばらく狙わない */
-    slideDirX: 1, slideDirY: 1 /* 壁沿いスライドの向きの記憶（moveAmigo） */
+    slideDirX: 1, slideDirY: 1, /* 壁沿いスライドの向きの記憶（moveAmigo） */
+    fx: undefined, fy: undefined, settled: false /* 追従目標の平滑化点とデッドゾーン状態（updateAmigo） */
   };
 }
 function switchAmigo(id){
+  /* 「なし」：アミーゴを同行させない。amigo を null にし、選択（amigoId='none'）だけ
+     セーブする。敵が旧アミーゴを標的にしていたら参照を外す（ダウン時と同じ処理）。
+     後から他の子を選べば switchAmigo の通常経路でプレイヤーのそばに現れて同行再開 */
+  if (id === 'none'){
+    if (!amigo && amigoId === 'none'){ refreshAmigoUI(); return; }
+    if (amigo && enemies) enemies.forEach(function(en){ if (en.animalFoe === amigo) en.animalFoe = null; });
+    amigoId = 'none';
+    amigo = null;
+    writeSave();
+    refreshAmigoUI();
+    refreshQuickStatus();
+    sfxTone(440, 330, 0.15, 0.08, 'triangle');
+    return;
+  }
   var def = amigoDef(id);
   if (amigo && amigo.amigoId === def.id){ refreshAmigoUI(); return; }
   amigoId = def.id;
@@ -5485,15 +5571,17 @@ function amigoSize(){
   return { h: 0.55, w: 1.05 };
 }
 function refreshAmigoUI(){
-  [['sol', 'amigoSolBtn', 'amigoSolMark'], ['chico', 'amigoChicoBtn', 'amigoChicoMark'], ['caiman', 'amigoCaimanBtn', 'amigoCaimanMark'], ['gayo', 'amigoGayoBtn', 'amigoGayoMark']].forEach(function(row){
+  [['sol', 'amigoSolBtn', 'amigoSolMark'], ['chico', 'amigoChicoBtn', 'amigoChicoMark'], ['caiman', 'amigoCaimanBtn', 'amigoCaimanMark'], ['gayo', 'amigoGayoBtn', 'amigoGayoMark'], ['none', 'amigoNoneBtn', 'amigoNoneMark']].forEach(function(row){
     var b = document.getElementById(row[1]), m = document.getElementById(row[2]);
-    var cur = !!amigo && amigo.amigoId === row[0];
-    if (b){ b.textContent = cur ? '同行中' : '連れて行く'; b.disabled = cur; }
-    if (m) m.textContent = cur ? '●同行中' : '';
+    var isNone = row[0] === 'none';
+    var cur = isNone ? !amigo : (!!amigo && amigo.amigoId === row[0]);
+    if (b){ b.textContent = cur ? (isNone ? '選択中' : '同行中') : (isNone ? '連れて行かない' : '連れて行く'); b.disabled = cur; }
+    if (m) m.textContent = cur ? (isNone ? '●選択中' : '●同行中') : '';
   });
 }
 function placeAmigoAtPlayer(){
   if (!amigo || !player) return;
+  amigo.fx = undefined; amigo.fy = undefined; amigo.settled = false; /* 瞬間移動したら平滑化した追従目標も作り直す */
   var bx = -Math.cos(player.angle), by = -Math.sin(player.angle);
   var px = -by, py = bx;
   var spots = [
@@ -5581,6 +5669,34 @@ function amigoProgress(key, dist, dt, engaged){
     amigo.sx = amigo.x; amigo.sy = amigo.y; amigo.stuckT = 0; amigo.wantMove = false;
   }
 }
+/* --- アミーゴの動きの滑らかさ（追従・陣取りまわり） ---
+   従来は「理想の位置取り」を毎フレーム直接追いかけていたため、プレイヤーの
+   振り向きで目標点が横〜斜め前へ回るたびに小刻みな追従補正が入り、細かく動いて見えた。
+   ・目標点は amigo.fx/fy に平滑化して保持し、理想点へは速度上限つきで寄せる
+     （振り向きに連れた回転にも、点そのものがゆっくり追うのでアミーゴが振り回されない）
+   ・アミーゴ本体はデッドゾーン（止まる／動き出すのしきい値をずらしたヒステリシス）を
+     持ち、近づくほど減速して寄る。プレイヤーが静止すればアミーゴもその場で落ち着く
+   ・向きは amigoTurnTo で角速度に上限をつけ、急な反転や小刻みな向き直しを抑える
+   戦闘中の追跡・攻撃・進展検知・張り付き復帰には触れない（向きの上限だけ戦闘にも効く） */
+function amigoTurnTo(target, maxRate, dt){
+  var d = (target - amigo.angle) % (Math.PI * 2);
+  if (d > Math.PI) d -= Math.PI * 2;
+  if (d < -Math.PI) d += Math.PI * 2;
+  var step = maxRate * dt;
+  amigo.angle += Math.max(-step, Math.min(step, d));
+}
+/* 理想点 (ix, iy) へ平滑化した目標点を寄せ、目標点を返す。
+   平滑点が壁の中に入ったら、検証済みの理想点へ即座に合わせ直す */
+function amigoSmoothGoal(ix, iy, dt){
+  if (amigo.fx === undefined){ amigo.fx = ix; amigo.fy = iy; }
+  var dx = ix - amigo.fx, dy = iy - amigo.fy, d = Math.hypot(dx, dy);
+  if (d > 1e-4){
+    var move = Math.min(d * (1 - Math.exp(-dt * 6.5)), 10 * dt);
+    amigo.fx += dx / d * move; amigo.fy += dy / d * move;
+    if (pointBlocked(amigo.fx, amigo.fy, 0.3)){ amigo.fx = ix; amigo.fy = iy; }
+  }
+  return { x: amigo.fx, y: amigo.fy };
+}
 function updateAmigo(dt){
   if (!amigo || !player || player.dead) return;
   if (amigo.ignoreT > 0) amigo.ignoreT -= dt;
@@ -5597,8 +5713,11 @@ function updateAmigo(dt){
   amigo.atkCd -= dt;
   /* カイマンは水辺・水中（ラグーンの浅瀬）にいると移動が速くなる。陸上では通常速度（遅め）のまま */
   var spdMul = (amigo.amigoId === 'caiman' && amigoInWater(amigo.x, amigo.y)) ? CAIMAN_WATER_MUL : 1;
-  /* 離れすぎたらプレイヤーの近くに再配置（リスポーン等の瞬間移動への追随も兼ねる） */
-  if (Math.hypot(player.x - amigo.x, player.y - amigo.y) > 16){ placeAmigoAtPlayer(); amigo.goalKey = null; amigo.progD = 1e9; amigo.progT = 0; return; }
+  /* 離れすぎたらプレイヤーの近くに再配置（リスポーン等の瞬間移動への追随も兼ねる）。
+     戦闘時の独立行動では主人公から最大で lead（27）＋追跡の行き過ぎ分まで離れるのが
+     正常なので、しきい値はそれより大きく取る。リードを超えただけなら戦闘ブロック側で
+     目標を捨て、追尾で自分の足で戻ってくる */
+  if (Math.hypot(player.x - amigo.x, player.y - amigo.y) > 34){ placeAmigoAtPlayer(); amigo.goalKey = null; amigo.progD = 1e9; amigo.progT = 0; return; }
   /* めり込み・行き詰まりからの復帰：
      ・今いる場所自体が塞がれている（壁にめり込んでいる）→ 即座にプレイヤーのそばの空きへ戻す
      ・動こうとしているのに、ほとんど動けないまま 1.2 秒たった（角に張り付いた等）→ 同じく戻す
@@ -5627,23 +5746,43 @@ function updateAmigo(dt){
     }
   } else { amigo.sx = amigo.x; amigo.sy = amigo.y; amigo.stuckT = 0; }
   amigo.wantMove = false;
-  /* 戦闘：戦闘中のときだけ、近くの警戒中の敵を襲う（威力・間隔・速度はアミーゴごと）。
+  /* 戦闘：戦闘中のときだけ襲う（威力・間隔・速度はアミーゴごと）。
      プレイヤーがしゃがんでいる間は仕掛けず、側で待機する。
-     未発見の間は自分から襲わないので、発見メーターにも影響しない */
+     未発見の間は自分から襲わないので、発見メーターにも影響しない。
+     【独立行動】狙うのは主人公の近くの敵ではなく、主人公から離れた敵を優先して
+     自分で選ぶ。行動範囲は主人公から lead マスまで（ガヨは広め、カイマンは迎撃専用で
+     狭い）。戦闘が終わるか、目標がリードの外へ出るか、自分が離れすぎたら目標を捨てて
+     追尾に戻り、主人公のもとへ帰ってくる */
   if (!player.crouch && amigoCombatActive()){
-    var tgt = null, td = 1e9;
-    enemies.forEach(function(en){
-      if (!en.alive || !en.alert) return;
+    var lead = amigo.lead || 20;
+    var pdOf = function(en){ return Math.hypot(en.x - player.x, en.y - player.y); };
+    var usable = function(en){
+      if (!en.alive || !en.alert) return false;
       /* 到達できずに戻された敵はしばらく狙わない。ただし視線が通るようになったら
          （角を回ってきた等）その場で狙い直す */
-      if (amigo.ignoreT > 0 && en === amigo.ignoreEn && !losClear(amigo.x, amigo.y, en.x, en.y)) return;
-      var d = Math.hypot(en.x - amigo.x, en.y - amigo.y);
-      if (d < td){ td = d; tgt = en; }
-    });
-    if (tgt && td < 11){
+      if (amigo.ignoreT > 0 && en === amigo.ignoreEn && !losClear(amigo.x, amigo.y, en.x, en.y)) return false;
+      return pdOf(en) <= lead;
+    };
+    var tgt = null;
+    /* 自分がリードを大きく超えていたら、目標の有効性によらず戦闘をやめて帰還する
+       （下の追尾で主人公のもとへ戻る）。新規の目標選びもその間はしない */
+    var selfFar = Math.hypot(amigo.x - player.x, amigo.y - player.y) > lead + 5;
+    /* 今の目標がまだ有効なら維持する（遠くの敵同士で目移りして右往左往しないため） */
+    if (!selfFar && amigo.target && usable(amigo.target)) tgt = amigo.target;
+    if (!tgt && !selfFar){
+      /* 新規の目標は「主人公から一番離れた敵」を選ぶ：主人公の近くの敵は主人公が
+         担当し、アミーゴは別個に遠くで活躍する形にする */
+      var bestPd = -1;
+      enemies.forEach(function(en){
+        if (!usable(en)) return;
+        var pd = pdOf(en);
+        if (pd > bestPd){ bestPd = pd; tgt = en; }
+      });
+    }
+    if (tgt){
       amigo.target = tgt;
       var dx = tgt.x - amigo.x, dy = tgt.y - amigo.y, d = Math.hypot(dx, dy);
-      amigo.angle = lerpAngle(amigo.angle, Math.atan2(dy, dx), dt * 7);
+      amigoTurnTo(Math.atan2(dy, dx), 5.5, dt); /* 追跡の移動・性能は従来どおり。向きだけ角速度に上限をつける */
       /* 噛みつきは視線が通るときだけ（壁越しには当たらない）。射程内でも壁が
          間にあるときは、回り込もうとして動き続ける（進展が無ければ amigoProgress が諦める） */
       var canHit = d <= amigo.reach && losClear(amigo.x, amigo.y, tgt.x, tgt.y);
@@ -5653,41 +5792,92 @@ function updateAmigo(dt){
       else if (amigo.atkCd <= 0){
         amigo.atkCd = amigo.atkCdMax;
         sfxBoarHit();
+        var wasAlive = tgt.alive;
         damageEnemy(tgt, amigo.dmg, amigo); /* 敵は動物への反撃としてアミーゴに撃ち返す。最後の一撃でも拠点解放になる */
-        if (amigo.holdTime && tgt.alive) tgt.holdT = Math.max(tgt.holdT || 0, amigo.holdTime); /* チコの噛みつき：噛んだ敵は少しの間足が止まる */
+        if (wasAlive && !tgt.alive){
+          /* 戦果の見える化：視界の外で倒しても分かるよう、名前入りで知らせる */
+          showMsg(amigo.name + 'が敵を倒した！', 2.2);
+        } else if (amigo.holdTime && tgt.alive){
+          /* チコの噛みつき：噛んだ敵は少しの間足が止まる。新しく足止めしたときだけ知らせる */
+          var newlyHeld = !(tgt.holdT > 0);
+          tgt.holdT = Math.max(tgt.holdT || 0, amigo.holdTime);
+          if (newlyHeld) showMsg(amigo.name + 'が敵を足止めした！', 1.8);
+        }
         moveEntity(amigo, -dx * 0.5, -dy * 0.5, 0.3);
       }
       amigoProgress(tgt, d, dt, canHit);
       return;
     }
+    if (amigo.amigoId === 'caiman'){
+      /* カイマンは足が遅いので遠くの敵を追わない：迎撃範囲に敵がいない間は
+         主人公の少し前に出て陣取り、近づいてくる敵のほうを向いて待つ */
+      amigo.target = null;
+      var fwdX = Math.cos(player.angle), fwdY = Math.sin(player.angle);
+      var postX = player.x + fwdX * 2.3 - fwdY * 0.5, postY = player.y + fwdY * 2.3 + fwdX * 0.5;
+      if (pointBlocked(postX, postY, 0.3)){ postX = player.x + fwdX * 2.3 + fwdY * 0.5; postY = player.y + fwdY * 2.3 - fwdX * 0.5; }
+      if (pointBlocked(postX, postY, 0.3)){ postX = player.x; postY = player.y; }
+      var pgoal = amigoSmoothGoal(postX, postY, dt);
+      var pdx = pgoal.x - amigo.x, pdy = pgoal.y - amigo.y, pdd = Math.hypot(pdx, pdy);
+      /* 陣取りも追従と同じ滑らかさ：デッドゾーン（止まる 0.45／動き出す 0.85）＋減速して寄る */
+      if (amigo.settled){ if (pdd > 0.85) amigo.settled = false; }
+      else if (pdd < 0.45) amigo.settled = true;
+      if (!amigo.settled && pdd > 1e-4){
+        amigo.wantMove = true;
+        var pspd = (pdd > 4 ? amigo.followFar : amigo.followNear) * spdMul * Math.min(1, 0.45 + pdd / 0.9);
+        var pstep = Math.min(pspd * dt, pdd);
+        amigoTurnTo(Math.atan2(pdy, pdx), 3.2, dt);
+        moveAmigo(pdx / pdd * pstep, pdy / pdd * pstep);
+        amigoProgress('post', pdd, dt, false);
+      } else {
+        var nearEn = null, nearD = 1e9;
+        enemies.forEach(function(en){
+          if (!en.alive || !en.alert) return;
+          var ed = Math.hypot(en.x - amigo.x, en.y - amigo.y);
+          if (ed < nearD){ nearD = ed; nearEn = en; }
+        });
+        if (nearEn) amigoTurnTo(Math.atan2(nearEn.y - amigo.y, nearEn.x - amigo.x), 2.6, dt);
+        amigo.goalKey = null; amigo.progD = 1e9; amigo.progT = 0;
+      }
+      return;
+    }
   }
   amigo.target = null;
-  /* 追尾：プレイヤーの少し後ろに付く。離れたときは速く追いつく */
+  /* 追尾：主人公に張り付かず、少し離れた横〜斜め前に付く。一人称の視界の端に
+     姿が入りやすい位置取りで、距離も従来（真後ろ約1.5マス）より遠め（約2.5マス）。
+     離れたときは速く追いつく */
   var bx = -Math.cos(player.angle), by = -Math.sin(player.angle);
   var px = -by, py = bx;
-  var fx = player.x + bx * 1.35 + px * 0.55, fy = player.y + by * 1.35 + py * 0.55;
+  var fx = player.x - bx * 0.9 + px * 2.3, fy = player.y - by * 0.9 + py * 2.3;
   /* 追尾先が壁の中にあるとき（プレイヤーが壁を背に立ったとき等）は、空いている側の位置に寄せる。
      そのまま壁の中の点を目指すと、アミーゴが壁に張り付いて動けなくなるため */
   if (pointBlocked(fx, fy, 0.3)){
     var altSpots = [
-      [bx * 1.35 - px * 0.55, by * 1.35 - py * 0.55],
-      [px * 1.3, py * 1.3], [-px * 1.3, -py * 1.3],
-      [-bx * 1.2, -by * 1.2], [0, 0]
+      [-bx * 0.9 - px * 2.3, -by * 0.9 - py * 2.3],
+      [bx * 2.1 + px * 1.7, by * 2.1 + py * 1.7], [bx * 2.1 - px * 1.7, by * 2.1 - py * 1.7],
+      [-bx * 2.4, -by * 2.4], [0, 0]
     ];
     for (var ai = 0; ai < altSpots.length; ai++){
       var ax2 = player.x + altSpots[ai][0], ay2 = player.y + altSpots[ai][1];
       if (!pointBlocked(ax2, ay2, 0.3)){ fx = ax2; fy = ay2; break; }
     }
   }
-  var fdx = fx - amigo.x, fdy = fy - amigo.y, fd = Math.hypot(fdx, fdy);
-  if (fd > 0.55){
+  var goal = amigoSmoothGoal(fx, fy, dt);
+  var fdx = goal.x - amigo.x, fdy = goal.y - amigo.y, fd = Math.hypot(fdx, fdy);
+  /* デッドゾーン：平滑化した目標の近く（0.4）で止まり、ずれが 0.85 を超えるまで
+     動かない。プレイヤーが静止・小刻みに振り向く程度ではアミーゴは微動しない */
+  if (amigo.settled){ if (fd > 0.85) amigo.settled = false; }
+  else if (fd < 0.4) amigo.settled = true;
+  if (!amigo.settled && fd > 1e-4){
     amigo.wantMove = true;
-    var spd = (fd > 4 ? amigo.followFar : amigo.followNear) * spdMul, step = Math.min(spd * dt, fd);
-    amigo.angle = lerpAngle(amigo.angle, Math.atan2(fdy, fdx), dt * 6);
+    /* 減速は最後の1マス弱だけに絞る：歩行速度（3.0）より followNear が速いおかげで
+       目標へ到達→静止→再追従の循環が保たれ、進展検知（amigoProgress）が
+       「距離が縮まない＝到達不能」と誤判定して救出テレポートするのを防ぐ */
+    var spd = (fd > 4 ? amigo.followFar : amigo.followNear) * spdMul * Math.min(1, 0.45 + fd / 0.9), step = Math.min(spd * dt, fd);
+    amigoTurnTo(Math.atan2(fdy, fdx), 3.4, dt);
     moveAmigo(fdx / fd * step, fdy / fd * step);
     amigoProgress('follow', fd, dt, false);
   } else {
-    amigo.angle = lerpAngle(amigo.angle, player.angle, dt * 4);
+    amigoTurnTo(player.angle, 2.2, dt);
     amigo.goalKey = null; amigo.progD = 1e9; amigo.progT = 0;
   }
 }
@@ -5851,10 +6041,22 @@ function render(){
     var texX = Math.floor(wallX * 256);
     if (side === 0 && rdx > 0) texX = 255 - texX;
     if (side === 1 && rdy < 0) texX = 255 - texX;
-    /* 壁テクスチャは全域で南国（コロニアル）セット。関所をまたいでも表示は切り替わらず混ざらない */
-    var texSet = wallTexA1;
-    ctx.drawImage(texSet[tile] || texSet[1], texX, texSrcY, 1, texSrcH, x, y0, 1, lineH);
-    if (side === 1){ ctx.fillStyle = 'rgba(10,20,15,.28)'; ctx.fillRect(x, y0, 1, lineH); }
+    if (tile === 5){
+      /* 海：壁として描かず、地平線（H/2）から壁の底辺までを水面として塗る。
+         zbuf は実距離 dist のままなので、手前の水面より奥のスプライトは従来どおり隠れる。
+         底辺は壁と同じ lineH 基準にそろえ、海岸で地面と段差が出ないようにする */
+      var wBot = H / 2 + lineH / 2;
+      ctx.fillStyle = '#2e86c8';
+      ctx.fillRect(x, H / 2, 1, wBot - H / 2);
+      ctx.fillStyle = 'rgba(150,215,240,.30)';
+      ctx.fillRect(x, H / 2, 1, Math.max(1, (wBot - H / 2) * 0.3));
+      if (dist < 9){ ctx.fillStyle = 'rgba(245,255,255,.5)'; ctx.fillRect(x, wBot - 2, 1, 2); } /* 波打ち際の泡 */
+    } else {
+      /* 壁テクスチャは全域で南国（コロニアル）セット。関所をまたいでも表示は切り替わらず混ざらない */
+      var texSet = wallTexA1;
+      ctx.drawImage(texSet[tile] || texSet[1], texX, texSrcY, 1, texSrcH, x, y0, 1, lineH);
+      if (side === 1){ ctx.fillStyle = 'rgba(10,20,15,.28)'; ctx.fillRect(x, y0, 1, lineH); }
+    }
     /* 距離の減衰＋軽い霧：遠い壁ほど暖かい地平線の色に霞ませる */
     if (dist > 4.5){
       var fogA = Math.min(0.52, (dist - 4.5) / 22);
@@ -5874,6 +6076,7 @@ function render(){
      遠くからでも開口部が見分けられるようにする静止表示の目印 */
   if (typeof ALL_ENTRANCES !== 'undefined') ALL_ENTRANCES.forEach(function(t){ list.push({ img: sprGate, x: t.x, y: t.y, hS: 0.95, wS: 0.8, low: true }); });
   ices.forEach(function(t){ list.push({ img: sprLagoon, x: t.x, y: t.y, hS: 0.24, wS: 1.6, low: true }); });
+  beaches.forEach(function(t){ list.push({ img: sprBeach, x: t.x, y: t.y, hS: 0.22, wS: 1.75, low: true }); });
   TOWERS.forEach(function(t){ list.push({ img: sprTowerTropic, x: t.x, y: t.y, hS: 2.35, wS: 1.0, dim: t.stopped }); });
   list.push({ img: sprTransmitter, x: TRANSMITTER.x, y: TRANSMITTER.y, hS: 1.05, wS: 0.8, dim: gameCleared });
   alarms.forEach(function(al){ list.push({ img: sprAlarm, x: al.x, y: al.y, hS: 0.8, wS: 0.55, low: true, dim: !al.active }); });
@@ -5956,18 +6159,8 @@ function render(){
     ctx.strokeText(txt, s.screen.sx, iy);
     ctx.fillText(txt, s.screen.sx, iy);
   });
-  /* アミーゴの頭上に、選んだ子の名前タグを小さく表示 */
-  list.forEach(function(s){
-    if (!s.amigoRef || !s.screen) return;
-    if (s.screen.depth > 20) return;
-    if (!losClear(player.x, player.y, s.amigoRef.x, s.amigoRef.y)) return;
-    ctx.font = 'bold 10px sans-serif';
-    ctx.fillStyle = s.amigoRef.down ? '#b9c4c2' : amigoDef(s.amigoRef.amigoId).tagColor;
-    ctx.strokeStyle = 'rgba(0,0,0,.7)'; ctx.lineWidth = 3;
-    var tagY = s.screen.top - 5;
-    ctx.strokeText(s.amigoRef.name, s.screen.sx, tagY);
-    ctx.fillText(s.amigoRef.name, s.screen.sx, tagY);
-  });
+  /* アミーゴの頭上の名前タグは出さない（豆野の指定）。名前はポーズ画面の状態表示・
+     戦果メッセージ・ミニマップの印で引き続き分かる */
   drawMarkedIcons();
   drawThrowablesFx();
   drawViewmodel();
@@ -6325,6 +6518,10 @@ function drawMapOn(g, S, full){
     else if (t === 2) g.fillStyle = '#3f9a92';
     else if (t === 3) g.fillStyle = '#a3854f';
     else if (t === 4) g.fillStyle = '#2f7f78';
+    else if (t === 5) g.fillStyle = '#2e86c8';   /* 海 */
+    else if ((x > 0 && grid[y][x - 1] === 5) || (x < MW - 1 && grid[y][x + 1] === 5) ||
+             (y > 0 && grid[y - 1][x] === 5) || (y < MH - 1 && grid[y + 1][x] === 5))
+      g.fillStyle = '#ecd39a';                  /* 砂浜（海に接する陸） */
     else g.fillStyle = '#7d9a4e';
     g.fillRect(x * cw, y * chh, Math.ceil(cw), Math.ceil(chh));
     var sc = spriteCells[x + ',' + y];
@@ -7307,7 +7504,7 @@ function refreshQuickStatus(){
       ? 'アミーゴ「' + amigo.name + '」（' + amigoDef(amigo.amigoId).type + '）：' + (amigo.down
           ? '<b>ダウン中</b>（復帰まで約 ' + Math.ceil(amigo.downT) + ' 秒）'
           : '<b>元気</b>（HP ' + Math.ceil(amigo.hp) + ' / ' + amigo.maxHp + '）')
-      : 'アミーゴ：―';
+      : 'アミーゴ：<b>なし</b>（連れて行っていない）';
   }
 }
 function jumpToSection(id, focusEl){
@@ -7718,7 +7915,7 @@ function respawnPlayer(){
   boars = BOAR_HOMES.map(makeBoar);
   player.hp = maxHp(); player.dead = false;
   player.x = spot.x; player.y = spot.y;
-  amigo = makeAmigo(); placeAmigoAtPlayer();
+  amigo = (amigoId === 'none') ? null : makeAmigo(); if (amigo) placeAmigoAtPlayer(); /* 「なし」選択時は復帰後も同行しない */
   player.bowCharge = -1;
   refillSupplies();
   updateHUDStatic();
@@ -7737,6 +7934,7 @@ document.getElementById('amigoSolBtn').addEventListener('click', function(){ pre
 document.getElementById('amigoChicoBtn').addEventListener('click', function(){ preservePauseFocus(function(){ switchAmigo('chico'); }); });
 document.getElementById('amigoCaimanBtn').addEventListener('click', function(){ preservePauseFocus(function(){ switchAmigo('caiman'); }); });
 document.getElementById('amigoGayoBtn').addEventListener('click', function(){ preservePauseFocus(function(){ switchAmigo('gayo'); }); });
+document.getElementById('amigoNoneBtn').addEventListener('click', function(){ preservePauseFocus(function(){ switchAmigo('none'); }); });
 /* クラフトパネル側も同じ craftSyringe() を使う（作成処理は共通） */
 document.getElementById('cpSyrHuntBtn').addEventListener('click', function(){ craftSyringe('hunt'); });
 document.getElementById('cpSyrHealBtn').addEventListener('click', function(){ craftSyringe('heal'); });
