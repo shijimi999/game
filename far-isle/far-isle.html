@@ -387,7 +387,7 @@
               <tr><td>ショットガン（要塞解放で入手）</td><td>近距離で6ペレットが拡散し大ダメージ、遠距離では弱い。音は大きい。弾はシェル枠</td></tr>
               <tr><td>スナイパー（エリア2の最初の鐘の塔で入手）</td><td>超長射程・一発大ダメージ（重装にも有効）、連射は遅い。構え中（LT／右クリック）は <kbd>E</kbd>／<kbd>Q</kbd>・ホイール・十字キー左右でステップ式ズーム（4段階・瞬間切替）</td></tr>
               <tr><td>テイクダウン</td><td>R3（右スティック押し込み）／ <kbd>F</kbd> ― 敵の背後・側面に近づくと案内が表示される（ファークライ4と同じ割り当て）。「？」で気づかれかけている途中でも決められるが、完全に発見された敵（戦闘中）にはできない。野生の野犬は状態・向きを問わず、テイクダウン距離に入れば同じ操作で倒せる</td></tr>
-              <tr><td>調べる</td><td>X ／ <kbd>F</kbd> ― 薬草採取・ポスター剥がし・警報装置の無効化・補給など。テイクダウンとはボタンが別なので誤爆しない</td></tr>
+              <tr><td>調べる</td><td>X ／ <kbd>F</kbd> ― 薬草採取・USBメモリの回収・警報装置の無効化・補給など。テイクダウンとはボタンが別なので誤爆しない</td></tr>
               <tr><td>回復（包帯を使う）</td><td>A ／ <kbd>H</kbd>（体力＋45）</td></tr>
               <tr><td>しゃがむ</td><td>B ／ <kbd>Ctrl</kbd>（遅くなるが見つかりにくい）</td></tr>
               <tr><td>隠れる（草むら）</td><td>熱帯の茂み（草むら）の中に入ってしゃがむと、敵からほぼ見つからなくなる（至近距離は除く）。立ったままだと効果は弱い。隠れている間は画面左下に「隠れている」と出る</td></tr>
@@ -406,7 +406,7 @@
               <tr><td>クラフト（注射作成）</td><td>Start ／ <kbd>Esc</kbd> ― プレイ中に注射作成パネルを開く（開いている間はゲームが止まる。中は十字キー／左スティックで選択、Aで作成、BまたはStartで閉じる。キーボードの <kbd>C</kbd> はカメラで使用中のため、開閉キーは <kbd>Esc</kbd>）</td></tr>
               <tr><td>狩猟の注射</td><td><b>Y長押し</b>（0.4秒以上）／ LB ／ <kbd>T</kbd> ― 25秒間、敵と動物が壁越しでも見える（作り方はクラフトパネル（Start／<kbd>Esc</kbd>）で薬草2）</td></tr>
               <tr><td>回復の注射</td><td><b>Y短押し</b> ／ <kbd>R</kbd> ― 体力を大きく即回復（作り方はクラフトパネル（Start／<kbd>Esc</kbd>）で薬草1）。※Yは注射専用です。回復の注射が使えないとき（所持なし・体力満タン）にYを押しても何も起きません。武器切替は十字キー右（順送り）／左（逆順）と数字キーで行います</td></tr>
-              <tr><td>薬草・ポスター</td><td>色の目立つ薬草と、壁の将軍ポスターは近づいて <kbd>F</kbd> ／ X で採取・剥がし</td></tr>
+              <tr><td>薬草・USBメモリ</td><td>色の目立つ薬草と、各地に置かれたUSBメモリは近づいて <kbd>F</kbd> ／ X で採取・回収</td></tr>
             </table>
             <div class="btnrow">
               <button class="btn" id="helpBackBtn" type="button">戻る</button>
@@ -497,7 +497,7 @@
                 <option value="off">OFF</option>
               </select>
             </div>
-            <p class="setnote" id="posterInfo">将軍のポスター：0 / 12 枚剥がした</p>
+            <p class="setnote" id="posterInfo">USBメモリ：0 / 12 個回収した</p>
 
             <h3>武器 ― 所持と弾薬</h3>
             <p class="setnote" id="weaponInfo">武器情報を読み込み中…</p>
@@ -617,7 +617,7 @@
             <div class="bonus" id="bonusBox">未発見解放 ― 誰にも気づかれずに制圧した拠点がある（解放時にボーナス +50XP）</div>
             <table class="stats">
               <tr><td>解放した拠点・要塞</td><td id="stOutposts">0 / 4</td></tr>
-              <tr><td>カルマ／剥がしたポスター</td><td id="stKarma">Lv 0 ／ 0 枚</td></tr>
+              <tr><td>カルマ／回収したUSBメモリ</td><td id="stKarma">Lv 0 ／ 0 個</td></tr>
               <tr><td>止めた鐘の塔</td><td id="stTowers">0 / 2</td></tr>
               <tr><td>倒した兵士</td><td id="stKills">0</td></tr>
               <tr><td>うちテイクダウン</td><td id="stTd">0</td></tr>
@@ -765,7 +765,7 @@ var REINFORCE = {
        （12.5,69.5）・住民定位置（12.5,72.5）・岩（12,68）も陸のポケットとして残す
      ・東岸（東の鐘の塔の南〜要塞の北。豆野がマップに赤く塗った範囲）：
        x43〜53（東端の外周セルまで）・y43〜51。その範囲に拠点・塔・警報・
-       敵配置と巡回路・動物・住民・薬草・ポスター・補給箱・イベント地点は
+       敵配置と巡回路・動物・住民・薬草・USBメモリ・補給箱・イベント地点は
        一切無い（実ファイルで全定義を確認済み）。沈むのは装飾の岩2つ
        （(44,45)・(48,50)）と草むら2つ（(44,48)・(44,49)）だけ。
        要塞の北壁（y54）の手前には陸2行（y52〜53）を残し、西入口・南入口への
@@ -935,7 +935,8 @@ var PLANT_DEFS = [
 ];
 PLANT_DEFS.forEach(function(p){ if (p.a2) p.y += A2_SHIFT; else p.y += AREA_SHIFT; });
 var plants = [];
-/* 将軍のポスター（壁際の目印。全12枚、剥がす収集要素。通行は妨げない） */
+/* USBメモリ（全12個、回収する収集要素。配置は旧ポスターと同一。通行は妨げない。
+   セーブ互換のため内部名（POSTER_DEFS／postersPeeled）とセーブ項目名は旧名のまま） */
 var POSTER_DEFS = [
   { id: 'p1', x: 16.5, y: 18.5 }, { id: 'p2', x: 20.5, y: 12.5 },
   { id: 'p3', x: 31.5, y: 26.5 }, { id: 'p4', x: 35.5, y: 26.5 },
@@ -1779,25 +1780,25 @@ function makePlantSprite(){
   flower(16, 20, '#e86aa8'); flower(34, 13, '#f2f2f2'); flower(48, 24, '#e86aa8'); flower(26, 32, '#ffb84d');
   return c;
 }
-function makePosterSprite(){
-  /* 将軍のポスター：少し丸みのある紙＋赤地に顔のシルエットと星 */
+function makeUsbSprite(){
+  /* USBメモリ：金属コネクタ（USB-Aプラグ）＋オレンジ色の本体＋黄色の帯と緑のLED。
+     キャンバス寸法は旧ポスターと同じ（表示サイズは呼び出し側で少し小さくする） */
   var c = mkCanvas(128, 192), g = ctx2(c); g.scale(2, 2);
-  fillRR(g, 2, 2, 60, 92, 4, '#e8e0cc');
-  fillRR(g, 7, 7, 50, 82, 3, '#a33327');
-  g.fillStyle = '#ffd23c';
-  g.beginPath();
-  var cx = 32, cy = 22;
-  for (var i = 0; i < 10; i++){
-    var a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 4.2 : 9.4;
-    var px = cx + Math.cos(a) * r, py = cy + Math.sin(a) * r;
-    if (i === 0) g.moveTo(px, py); else g.lineTo(px, py);
-  }
-  g.closePath(); g.fill();
-  circF(g, 32, 51, 13, '#2b2b33');
-  g.fillStyle = '#2b2b33';
-  g.beginPath(); g.moveTo(18, 90); g.lineTo(19, 66); g.quadraticCurveTo(32, 58, 45, 66); g.lineTo(46, 90); g.closePath(); g.fill();
-  fillRR(g, 23, 43, 18, 4.6, 2.3, '#e8e0cc');
-  fillRR(g, 11, 81, 42, 4.6, 2.3, '#ffd23c');
+  /* 金属コネクタ */
+  fillRR(g, 23, 3, 18, 22, 2, '#c9ccd4');
+  fillRR(g, 23, 3, 18, 5, 2, '#eef1f5');
+  fillRR(g, 26.8, 11, 4.2, 6, 1, '#4a4e57');
+  fillRR(g, 33, 11, 4.2, 6, 1, '#4a4e57');
+  /* 首元のカラー */
+  fillRR(g, 19, 25, 26, 6, 2, '#2b2f36');
+  /* 本体 */
+  fillRR(g, 15, 31, 34, 60, 7, '#d95f16');
+  fillRR(g, 15, 31, 34, 15, 7, '#ee7c2e');
+  fillRR(g, 20, 36, 6, 50, 3, 'rgba(255,255,255,.18)');
+  /* アクセント帯とLED */
+  fillRR(g, 15, 58, 34, 6, 0, '#ffd23c');
+  circF(g, 32, 79, 3.6, '#7dff8a');
+  circF(g, 32, 79, 1.7, '#eaffea');
   return c;
 }
 function makeMeatSprite(){
@@ -2487,7 +2488,7 @@ var sprTree = makeTreeSprite(), sprCrate = makeCrateSprite(false), sprCrateSuppl
     sprSoldier = makeSoldierSprite('normal'), sprHeavy = makeSoldierSprite('heavy'), sprCorpse = makeSoldierSprite('dead'),
     sprWolf = makeWolfSprite(false), sprWolfDead = makeWolfSprite(true),
     sprYak = makeYakSprite(false), sprYakDead = makeYakSprite(true),
-    sprHunter = makeHunterSprite(), sprPlant = makePlantSprite(), sprPoster = makePosterSprite(),
+    sprHunter = makeHunterSprite(), sprPlant = makePlantSprite(), sprUsb = makeUsbSprite(),
     sprSoldierB = makeSoldierBackSprite('normal'), sprSoldierS = makeSoldierSideSprite('normal'),
     sprHeavyB = makeSoldierBackSprite('heavy'), sprHeavyS = makeSoldierSideSprite('heavy'),
     sprHunterB = makeHunterBackSprite(), sprHunterS = makeHunterSideSprite(),
@@ -4597,8 +4598,8 @@ function refreshSyrUI(){
   if (ki) ki.innerHTML = 'カルマ Lv：<b>' + prog.karma + ' / 6</b>　' +
     (prog.karma >= 6 ? '（最大 ― 村人みんなの信頼を得ている）' : '次の特典まで：事件をあと1件解決');
   var pi = document.getElementById('posterInfo');
-  if (pi) pi.textContent = '将軍のポスター：' + posterCount() + ' / ' + POSTER_DEFS.length + ' 枚剥がした' +
-    (posterCount() >= POSTER_DEFS.length ? '（全部剥がした！）' : '');
+  if (pi) pi.textContent = 'USBメモリ：' + posterCount() + ' / ' + POSTER_DEFS.length + ' 個回収した' +
+    (posterCount() >= POSTER_DEFS.length ? '（全部回収した！）' : '');
   refreshQuickStatus();
 }
 function pipFor(n){
@@ -4929,7 +4930,7 @@ function currentInteract(){
   for (i = 0; i < POSTER_DEFS.length; i++){
     var po = POSTER_DEFS[i];
     if (!postersPeeled[po.id] && Math.hypot(po.x - player.x, po.y - player.y) < 1.6)
-      return { kind: 'poster', ref: po, label: '将軍のポスターを剥がす', hold: false };
+      return { kind: 'poster', ref: po, label: 'USBメモリを回収する', hold: false };
   }
   return null;
 }
@@ -4940,7 +4941,7 @@ function updateInteract(dt, gp){
   var actEdge = actHeld && !actPrev;
   actPrev = actHeld;
   /* テイクダウン専用入力：パッドはファークライ4と同じR3（右スティック押し込み＝buttons[11]）。
-     X（buttons[2]）は「調べる」専用に分離し、敵のそばで薬草・ポスター・警報装置を
+     X（buttons[2]）は「調べる」専用に分離し、敵のそばで薬草・USBメモリ・警報装置を
      調べたいときの誤爆（逆も含む）を防ぐ。キーボードFとタッチボタンは従来通り両方に効く。 */
   var tdHeld = !!keys['KeyF'] || (gp && padBtn(gp, 11)) || touchFlags.act;
   var tdEdge = tdHeld && !tdPrev;
@@ -4989,12 +4990,12 @@ function updateInteract(dt, gp){
   } else if (it.kind === 'poster' && actEdge){
     postersPeeled[it.ref.id] = true;
     var pc = posterCount();
-    sfxTone(300, 140, 0.18, 0.12, 'sawtooth');
+    sfxTone(880, 1320, 0.14, 0.1, 'square');
     if (pc >= POSTER_DEFS.length){
       gainXP(150);
-      showMsg('ポスターを全部剥がした！（' + pc + '/' + POSTER_DEFS.length + '）報酬XP +150', 2.8);
+      showMsg('USBメモリを全部回収した！（' + pc + '/' + POSTER_DEFS.length + '）報酬XP +150', 2.8);
     } else {
-      showMsg('ポスターを剥がした（' + pc + '/' + POSTER_DEFS.length + '）', 1.6);
+      showMsg('USBメモリを回収した（' + pc + '/' + POSTER_DEFS.length + '）', 1.6);
     }
     writeSave();
   } else if (it.kind === 'tower'){
@@ -5496,17 +5497,25 @@ function updateCivilian(c, dt){
    amigo への参照は各所で null ガード済み（描画・ミニマップ・updateAmigo・
    damageAmigo・ステータス表示）なので、「なし」でも表示・動作は破綻しない。 */
 var AMIGO_DEFS = {
+  /* 移動速度（chase／followNear／followFar）は全員カイマンの値に統一
+     （chase 2.66／followNear 2.24／followFar 3.43）。
+     HP・威力・攻撃間隔・リーチ・リード・回避は不変。
+     カイマンの水辺倍率 CAIMAN_WATER_MUL（1.7倍）はカイマン専用のまま（spdMul として chase／follow に乗る）
+     ※chase 2.66 は敵の最大接近速度（ハンター2.4）より速く、followFar 3.43 は主人公の
+       歩行速度（3.0）より速いので、追跡・迎撃（リード8マス）と陣取り・追従は破綻しない。
+       followNear 2.24 は歩行速度を下回るため近距離帯ではやや遅れるが、追従系の進展検知は
+       プレイヤー近傍（8マス以内）ではタイマーを貯めず、置いていかれた場合は救出で戻る */
   /* ソル：戦闘型。従来のソルの挙動・強さそのまま（野生ジャガーHP70の2倍／威力22／間隔0.8） */
-  sol:   { id: 'sol',   name: 'ソル', type: '戦闘型', maxHp: 140, dmg: 22, atkCd: 0.8,  chase: 5.2, reach: 0.6,  followNear: 3.4, followFar: 5.4, holdTime: 0,   lead: 20, tagColor: '#7fe8da', mapColor: '#12a594' },
-  /* チコ：かく乱型。足が速く、噛みつきで敵を少し止める。威力は小さい。HPは野生の野犬（45）より丈夫だが低め */
-  chico: { id: 'chico', name: 'チコ', type: 'かく乱型', maxHp: 90,  dmg: 8,  atkCd: 0.65, chase: 6.3, reach: 0.6,  followNear: 4.0, followFar: 6.4, holdTime: 1.5, lead: 20, tagColor: '#ffab9a', mapColor: '#d84b32' },
+  sol:   { id: 'sol',   name: 'ソル', type: '戦闘型', maxHp: 140, dmg: 22, atkCd: 0.8,  chase: 2.66, reach: 0.6,  followNear: 2.24, followFar: 3.43, holdTime: 0,   lead: 20, tagColor: '#7fe8da', mapColor: '#12a594' },
+  /* チコ：かく乱型。噛みつきで敵を少し止める。威力は小さい。HPは野生の野犬（45）より丈夫だが低め */
+  chico: { id: 'chico', name: 'チコ', type: 'かく乱型', maxHp: 90,  dmg: 8,  atkCd: 0.65, chase: 2.66, reach: 0.6,  followNear: 2.24, followFar: 3.43, holdTime: 1.5, lead: 20, tagColor: '#ffab9a', mapColor: '#d84b32' },
   /* カイマン：噛みつき型（旧「トロ」の後継枠）。アミーゴ専用のワニ（野生のワニは登場しない）。
      HPが高く噛みつきの一撃が重い（対敵ダメージ45）。陸上では足が遅いが、水辺・水中では速くなる（updateAmigo の CAIMAN_WATER_MUL） */
-  caiman:{ id: 'caiman', name: 'カイマン', type: '噛みつき型', maxHp: 260, dmg: 45, atkCd: 1.5,  chase: 3.8, reach: 0.85, followNear: 3.2, followFar: 4.9, holdTime: 0,   lead: 8,  tagColor: '#a9e284', mapColor: '#5da244', evade: 0 },
-  /* ガヨ：突撃型。アミーゴ専用の雄鶏（野生の鶏は登場しない）。4匹で一番速く、連続でつつく。
+  caiman:{ id: 'caiman', name: 'カイマン', type: '噛みつき型', maxHp: 260, dmg: 45, atkCd: 1.5,  chase: 2.66, reach: 0.85, followNear: 2.24, followFar: 3.43, holdTime: 0,   lead: 8,  tagColor: '#a9e284', mapColor: '#5da244', evade: 0 },
+  /* ガヨ：突撃型。アミーゴ専用の雄鶏（野生の鶏は登場しない）。連続でつつく。
      一撃は一番小さいが攻撃間隔は一番短い。体が小さいので敵の攻撃が当たりにくい（evade＝回避率）。
      その代わりHPは4匹で一番低い */
-  gayo:  { id: 'gayo',  name: 'ガヨ', type: '突撃型', maxHp: 70,  dmg: 5,  atkCd: 0.35, chase: 7.5, reach: 0.5,  followNear: 3.9, followFar: 5.9, holdTime: 0,   lead: 27, tagColor: '#ffdf6b', mapColor: '#e8a317', evade: 0.45 }
+  gayo:  { id: 'gayo',  name: 'ガヨ', type: '突撃型', maxHp: 70,  dmg: 5,  atkCd: 0.35, chase: 2.66, reach: 0.5,  followNear: 2.24, followFar: 3.43, holdTime: 0,   lead: 27, tagColor: '#ffdf6b', mapColor: '#e8a317', evade: 0.45 }
 };
 var amigoId = 'sol'; /* 選択中のアミーゴ（セーブ対象） */
 function amigoDef(id){ return AMIGO_DEFS[id] || AMIGO_DEFS.sol; }
@@ -5524,7 +5533,7 @@ function makeAmigo(id){
     lead: def.lead || 20, /* 戦闘時の行動範囲：主人公からこの距離（マス）までの敵を自分で選んで襲う。カイマンだけ小さい＝遠くを追わず迎撃役 */
     evade: def.evade || 0,
     stuckT: 0, sx: player.x, sy: player.y, wantMove: false, /* 行き詰まり検知用（updateAmigo） */
-    progT: 0, progD: 1e9, goalKey: null, /* 目標への進展検知用（amigoProgress） */
+    progT: 0, progD: 1e9, progHi: 1e9, goalKey: null, /* 目標への進展検知用（amigoProgress） */
     ignoreEn: null, ignoreT: 0, /* 壁越し等で到達できなかった敵をしばらく狙わない */
     slideDirX: 1, slideDirY: 1, /* 壁沿いスライドの向きの記憶（moveAmigo） */
     fx: undefined, fy: undefined, settled: false /* 追従目標の平滑化点とデッドゾーン状態（updateAmigo） */
@@ -5652,17 +5661,32 @@ function moveAmigo(dx, dy){
   }
 }
 /* 目標への「進展」検知：動こうとしているのに目標までの距離が縮まらないまま
-   2.2秒たったら、壁の向こう側など到達できない目標とみなしてプレイヤーのそばへ戻す。
+   一定時間（戦闘目標は2.2秒／追従・陣取りは6秒）たったら、壁の向こう側など
+   到達できない目標とみなしてプレイヤーのそばへ戻す。
    変位だけを見る従来検知では、壁沿いを少しずつ這っている間は「動けている」扱いに
    なって永久に張り付くことがあったため。戦闘中なら、その敵はしばらく狙わない
    （戻された直後に同じ敵へ一直線に戻って再び張り付くループを断つ）。
    視線が通るようになれば amigoIgnore の判定側で即座に狙い直す */
 function amigoProgress(key, dist, dt, engaged){
-  if (engaged){ amigo.goalKey = key; amigo.progD = dist; amigo.progT = 0; return; }
-  if (amigo.goalKey !== key){ amigo.goalKey = key; amigo.progD = dist; amigo.progT = 0; return; }
-  if (dist < amigo.progD - 0.1){ amigo.progD = dist; amigo.progT = 0; return; }
+  var followLike = (key === 'follow' || key === 'post');
+  if (engaged){ amigo.goalKey = key; amigo.progD = dist; amigo.progHi = dist; amigo.progT = 0; return; }
+  if (amigo.goalKey !== key){ amigo.goalKey = key; amigo.progD = dist; amigo.progHi = dist; amigo.progT = 0; return; }
+  if (followLike){
+    /* 追従／陣取りは目標点自体がプレイヤーと一緒に動くうえ、移動速度を全員
+       カイマンに揃えたことで followNear が歩行速度（3.0）を下回る全員は
+       近距離帯では一時的に距離が開き、followNear／followFar の境界（4マス）付近で
+       行き来しながら付いていく。その動きを到達不能と誤判定しないよう、追従系は
+       プレイヤーの近く（8マス以内）にいる間は進展タイマーを貯めない（壁に張り付いた
+       場合は変位ベースの行き詰まり検知が 1.2 秒で救出する）。遠くに置いていかれた
+       場合だけ「ピークから 0.1 縮んだら進展あり」として数え、猶予 6 秒で救出する。
+       戦闘目標は従来どおり（最短距離の更新で判定・猶予 2.2 秒） */
+    if (player && Math.hypot(amigo.x - player.x, amigo.y - player.y) <= 8){ amigo.progD = dist; amigo.progHi = dist; amigo.progT = 0; return; }
+    if (dist > amigo.progHi) amigo.progHi = dist;
+    if (dist < amigo.progHi - 0.1){ amigo.progD = dist; amigo.progHi = dist; amigo.progT = 0; return; }
+  } else if (dist < amigo.progD - 0.1){ amigo.progD = dist; amigo.progT = 0; return; }
   amigo.progT += dt;
-  if (amigo.progT >= 2.2){
+  var progLimit = followLike ? 6 : 2.2;
+  if (amigo.progT >= progLimit){
     if (amigo.target){ amigo.ignoreEn = amigo.target; amigo.ignoreT = 8; amigo.target = null; }
     placeAmigoAtPlayer();
     amigo.goalKey = null; amigo.progD = 1e9; amigo.progT = 0;
@@ -5869,9 +5893,10 @@ function updateAmigo(dt){
   else if (fd < 0.4) amigo.settled = true;
   if (!amigo.settled && fd > 1e-4){
     amigo.wantMove = true;
-    /* 減速は最後の1マス弱だけに絞る：歩行速度（3.0）より followNear が速いおかげで
-       目標へ到達→静止→再追従の循環が保たれ、進展検知（amigoProgress）が
-       「距離が縮まない＝到達不能」と誤判定して救出テレポートするのを防ぐ */
+    /* 減速は最後の1マス弱だけに絞る。速度統一で followNear が歩行速度（3.0）を
+       下回るため近距離帯でやや遅れ、境界付近で行き来しながら付いていく形になる。
+       その間の「距離が縮まない」状態を到達不能と誤判定しないよう、追従系の
+       進展検知は amigoProgress 側でプレイヤー近傍では貯めない作りにしてある */
     var spd = (fd > 4 ? amigo.followFar : amigo.followNear) * spdMul * Math.min(1, 0.45 + fd / 0.9), step = Math.min(spd * dt, fd);
     amigoTurnTo(Math.atan2(fdy, fdx), 3.4, dt);
     moveAmigo(fdx / fd * step, fdy / fd * step);
@@ -6094,7 +6119,7 @@ function render(){
     if (p.active) list.push({ img: sprPlant, x: p.x, y: p.y, hS: 0.5, wS: 0.55, low: true });
   });
   POSTER_DEFS.forEach(function(p){
-    if (!postersPeeled[p.id]) list.push({ img: sprPoster, x: p.x, y: p.y, hS: 0.78, wS: 0.52, low: true });
+    if (!postersPeeled[p.id]) list.push({ img: sprUsb, x: p.x, y: p.y, hS: 0.68, wS: 0.45, low: true });
   });
   baits.forEach(function(bt){
     list.push({ img: sprMeat, x: bt.x, y: bt.y, hS: 0.3, wS: 0.4, low: true });
@@ -7889,7 +7914,7 @@ function showResult(mode){
     stSkillsEl.textContent = skN + ' / 12';
   }
   var stKarmaEl = document.getElementById('stKarma');
-  if (stKarmaEl) stKarmaEl.textContent = 'Lv ' + prog.karma + ' ／ ' + posterCount() + ' 枚';
+  if (stKarmaEl) stKarmaEl.textContent = 'Lv ' + prog.karma + ' ／ ' + posterCount() + ' 個';
   document.getElementById('stTowers').textContent = TOWERS.filter(function(t){ return t.stopped; }).length + ' / ' + TOWERS.length;
   document.getElementById('stKills').textContent = stats.kills + ' 人';
   document.getElementById('stTd').textContent = stats.takedowns + ' 回';
